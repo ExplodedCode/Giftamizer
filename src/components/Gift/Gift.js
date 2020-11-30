@@ -1,14 +1,10 @@
 import React from 'react';
 
 import { useCookies } from 'react-cookie';
-import { BrowserRouter, Route, Switch, Redirect, Link } from 'react-router-dom';
-
-import useMediaQuery from '@material-ui/core/useMediaQuery';
-import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
+import { Route, Switch, Link } from 'react-router-dom';
 
 import clsx from 'clsx';
 import { makeStyles } from '@material-ui/core/styles';
-import CssBaseline from '@material-ui/core/CssBaseline';
 import Drawer from '@material-ui/core/Drawer';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -16,23 +12,24 @@ import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
-import ExitToAppIcon from '@material-ui/icons/ExitToApp';
-import SvgIcon from '@material-ui/core/SvgIcon';
-
-import Button from '@material-ui/core/Button';
-import Tooltip from '@material-ui/core/Tooltip';
-import Dialog from '@material-ui/core/Dialog';
-import Container from '@material-ui/core/Container';
 
 import NavLinks from './NavLinks';
 
-// auth
-import CircularProgress from '@material-ui/core/CircularProgress';
-import firebase from 'firebase';
+// gift
+import Dashboard from './Dashboard';
+import Items from './Items/Items';
 
-import Groups from './Group/Groups';
+import Lists from './Lists/Lists';
+import List from './Lists/List/Items';
 
-import { logout } from '../../firebase/auth';
+import Groups from './Groups/Groups';
+import Group from './Groups/Group/Group';
+import MemberItems from './Groups/Group/Members/Items';
+import ListItems from './Groups/Group/Members/List/Items';
+
+import ShoppingList from './ShoppingList/Items';
+
+import Me from './Me/Me';
 
 const drawerWidth = 240;
 
@@ -111,7 +108,7 @@ const useStyles = makeStyles((theme) => ({
 	},
 }));
 
-export default function Dashboard() {
+export default function Gift() {
 	const [cookies, setCookie] = useCookies(['DrawerOpen']);
 
 	const classes = useStyles();
@@ -137,11 +134,11 @@ export default function Dashboard() {
 					<Typography component={Link} to='/' variant='h6' color='inherit' noWrap className={classes.title}>
 						{title}
 					</Typography>
-					<Tooltip title='Logout' placement='left'>
+					{/* <Tooltip title='Logout' placement='left'>
 						<IconButton color='inherit' onClick={logout}>
 							<ExitToAppIcon />
 						</IconButton>
-					</Tooltip>
+					</Tooltip> */}
 				</Toolbar>
 			</AppBar>
 
@@ -164,7 +161,21 @@ export default function Dashboard() {
 				{/* <div className={classes.appBarSpacer} /> */}
 				<div>
 					<Switch>
-						<Route exact path='/gift/groups' component={(props) => <Groups {...props} setTitle={setTitle} token={firebase.auth().currentUser.xa} />} />
+						<Route exact path='/gift' component={(props) => <Dashboard {...props} setTitle={setTitle} />} />
+
+						<Route exact path='/gift/groups' component={(props) => <Groups {...props} setTitle={setTitle} />} />
+						<Route exact path='/gift/group/:group' component={(props) => <Group {...props} setTitle={setTitle} />} />
+						<Route exact path='/gift/group/:group/member/:member' component={(props) => <MemberItems {...props} setTitle={setTitle} />} />
+						<Route exact path='/gift/group/:group/member/:member/list/:list' component={(props) => <ListItems {...props} setTitle={setTitle} />} />
+
+						<Route exact path='/gift/items' component={(props) => <Items {...props} setTitle={setTitle} />} />
+
+						<Route exact path='/gift/lists' component={(props) => <Lists {...props} setTitle={setTitle} />} />
+						<Route exact path='/gift/list/:list' component={(props) => <List {...props} setTitle={setTitle} />} />
+
+						<Route exact path='/gift/shopping' component={(props) => <ShoppingList {...props} setTitle={setTitle} />} />
+
+						<Route exact path='/gift/me' component={(props) => <Me {...props} setTitle={setTitle} />} />
 					</Switch>
 				</div>
 			</main>

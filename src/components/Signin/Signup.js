@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
 import CssBaseline from '@material-ui/core/CssBaseline';
@@ -11,6 +11,11 @@ import Grid from '@material-ui/core/Grid';
 import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
+
+import { signupWithEmailPassword } from '../../firebase/auth';
+
+import Alert from '../Alert';
+import Snackbar from '@material-ui/core/Snackbar';
 
 function Copyright() {
 	return (
@@ -58,6 +63,15 @@ const useStyles = makeStyles((theme) => ({
 export default function SignInSide() {
 	const classes = useStyles();
 
+	const [fullname, setFullname] = useState('');
+	const [email, setEmail] = useState('');
+	const [password, setPassword] = useState('');
+
+	const [alert, setAlert] = React.useState({ open: false, message: '', severity: 'info' });
+	const handleClose = (event, reason) => {
+		setAlert({ open: false, message: alert.message, severity: alert.severity });
+	};
+
 	return (
 		<Grid container component='main' className={classes.root}>
 			<CssBaseline />
@@ -71,23 +85,87 @@ export default function SignInSide() {
 						Sign up
 					</Typography>
 					<Grid container spacing={2} style={{ marginTop: 8 }}>
-						<Grid item xs={12} sm={6}>
-							<TextField autoComplete='fname' name='firstName' variant='outlined' required fullWidth id='firstName' label='First Name' autoFocus />
-						</Grid>
-						<Grid item xs={12} sm={6}>
-							<TextField variant='outlined' required fullWidth id='lastName' label='Last Name' name='lastName' autoComplete='lname' />
+						<Grid item xs={12}>
+							<TextField
+								variant='outlined'
+								required
+								fullWidth
+								label='Full Name'
+								autoComplete='name'
+								autoFocus
+								value={fullname}
+								onChange={(event) => setFullname(event.target.value)}
+								onKeyDown={(e) => {
+									if (e.key === 'Enter') {
+										signupWithEmailPassword(email, password, fullname).then((result) => {
+											if (result.code) {
+												setAlert({ open: true, message: 'Invalid email or password too short', severity: 'warning' });
+											}
+										});
+									}
+								}}
+							/>
 						</Grid>
 						<Grid item xs={12}>
-							<TextField variant='outlined' required fullWidth id='email' label='Email Address' name='email' autoComplete='email' />
+							<TextField
+								variant='outlined'
+								required
+								fullWidth
+								label='Email Address'
+								autoComplete='email'
+								value={email}
+								onChange={(event) => setEmail(event.target.value)}
+								onKeyDown={(e) => {
+									if (e.key === 'Enter') {
+										signupWithEmailPassword(email, password, fullname).then((result) => {
+											if (result.code) {
+												setAlert({ open: true, message: 'Invalid email or password too short', severity: 'warning' });
+											}
+										});
+									}
+								}}
+							/>
 						</Grid>
 						<Grid item xs={12}>
-							<TextField variant='outlined' required fullWidth name='password' label='Password' type='password' id='password' autoComplete='current-password' />
+							<TextField
+								variant='outlined'
+								required
+								fullWidth
+								label='Password'
+								type='password'
+								autoComplete='current-password'
+								value={password}
+								onChange={(event) => setPassword(event.target.value)}
+								onKeyDown={(e) => {
+									if (e.key === 'Enter') {
+										signupWithEmailPassword(email, password, fullname).then((result) => {
+											if (result.code) {
+												setAlert({ open: true, message: 'Invalid email or password too short', severity: 'warning' });
+											}
+										});
+									}
+								}}
+							/>
 						</Grid>
 						{/* <Grid item xs={12}>
 							<FormControlLabel control={<Checkbox value='allowExtraEmails' color='primary' />} label='I want to receive inspiration, marketing promotions and updates via email.' />
 						</Grid> */}
 					</Grid>
-					<Button type='submit' fullWidth variant='contained' color='primary' className={classes.submit}>
+					<Button
+						type='submit'
+						fullWidth
+						variant='contained'
+						color='primary'
+						className={classes.submit}
+						onClick={() => {
+							signupWithEmailPassword(email, password, fullname).then((result) => {
+								if (result.code) {
+									setAlert({ open: true, message: 'Invalid email or password too short', severity: 'warning' });
+								}
+							});
+						}}
+						disabled={!(fullname.length > 1 && email.length > 4 && email.includes('@') && email.includes('.') && password.length > 7)}
+					>
 						Sign Up
 					</Button>
 					<Grid container justify='flex-end'>
@@ -97,8 +175,16 @@ export default function SignInSide() {
 							</Link>
 						</Grid>
 					</Grid>
+					<Box mt={5}>
+						<Copyright />
+					</Box>
 				</div>
 			</Grid>
+			<Snackbar open={alert.open} autoHideDuration={3500} onClose={handleClose}>
+				<Alert onClose={handleClose} severity={alert.severity}>
+					{alert.message}
+				</Alert>
+			</Snackbar>
 		</Grid>
 	);
 }
