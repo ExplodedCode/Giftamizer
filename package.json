@@ -12,8 +12,10 @@
     "@testing-library/react": "^9.5.0",
     "@testing-library/user-event": "^7.2.1",
     "body-parser": "^1.19.0",
+    "clsx": "^1.1.1",
     "cors": "^2.8.5",
     "express": "^4.17.1",
+    "firebase": "^8.1.1",
     "material-ui-popup-state": "^1.6.1",
     "moment": "^2.29.0",
     "mysql": "^2.18.1",
@@ -22,13 +24,14 @@
     "react-addons-update": "^15.6.2",
     "react-cookie": "^4.0.3",
     "react-dom": "^16.13.1",
+    "react-image-file-resizer": "^0.3.8",
     "react-router-dom": "^5.2.0",
     "react-scripts": "^3.4.3",
     "react-swipeable-views": "^0.13.9",
     "react-tooltip": "^4.2.7"
   },
   "scripts": {
-    "start": "node api/api.js",
+    "start": "react-scripts start",
     "test": "react-scripts start",
     "build": "react-scripts build",
     "eject": "react-scripts eject"
