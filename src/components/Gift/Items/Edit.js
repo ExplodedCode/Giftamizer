@@ -78,7 +78,7 @@ export default function SpeedDialTooltipOpen(props) {
 							setLoadingMetadata(true);
 							var urlQuery = e.clipboardData.getData('Text');
 
-							fetch('http://localhost:8080/api/metadata?url=' + urlQuery, {
+							fetch('https://giftamizer.com/api/metadata?url=' + urlQuery, {
 								method: 'GET',
 								headers: {
 									'Content-Type': 'application/json',
