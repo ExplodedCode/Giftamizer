@@ -1,14 +1,29 @@
-import React from 'react';
+import React, { Component } from 'react';
 
 import { useCookies } from 'react-cookie';
-import { BrowserRouter, Route, Switch, Link } from 'react-router-dom';
+import { BrowserRouter, Route, Switch, Link, Redirect } from 'react-router-dom';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
-import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
+import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 
 import { makeStyles } from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
 
+import CircularProgress from '@material-ui/core/CircularProgress';
+
+import { firebaseAuth, db } from './firebase/constants';
+
 import Landing from './components/Landing';
+import Signin from './components/Signin/Signin';
+import Signup from './components/Signin/Signup';
+import Gift from './components/Gift/Gift';
+
+function PrivateRoute({ component: Component, authed, ...rest }) {
+	return <Route {...rest} render={(props) => (authed ? <Component {...props} /> : <Redirect to={{ pathname: '/signin', state: { from: props.location } }} />)} />;
+}
+
+function PublicRoute({ component: Component, authed, ...rest }) {
+	return <Route {...rest} render={(props) => (authed ? <Redirect to='/gift' /> : <Component {...props} />)} />;
+}
 
 const drawerWidth = 240;
 
@@ -87,51 +102,143 @@ const useStyles = makeStyles((theme) => ({
 	},
 }));
 
-export default function Dashboard() {
-	const [cookies, setCookie] = useCookies(['DrawerOpen']);
+// export default function Dashboard() {
+// 	const [cookies, setCookie] = useCookies(['DrawerOpen']);
 
-	const classes = useStyles();
-	const [open, setOpen] = React.useState(cookies.DrawerOpen === 'true' ? true : JSON.stringify(cookies).indexOf('DrawerOpen') === -1 ? true : false);
-	const [title, setTitle] = React.useState('Dashboard');
+// 	const classes = useStyles();
+// 	const [open, setOpen] = React.useState(cookies.DrawerOpen === 'true' ? true : JSON.stringify(cookies).indexOf('DrawerOpen') === -1 ? true : false);
+// 	const [title, setTitle] = React.useState('Dashboard');
 
-	const handleDrawerOpen = () => {
-		setCookie('DrawerOpen', true, { path: '/' });
-		setOpen(true);
-	};
-	const handleDrawerClose = () => {
-		setCookie('DrawerOpen', false, { path: '/' });
-		setOpen(false);
-	};
+// 	const handleDrawerOpen = () => {
+// 		setCookie('DrawerOpen', true, { path: '/' });
+// 		setOpen(true);
+// 	};
+// 	const handleDrawerClose = () => {
+// 		setCookie('DrawerOpen', false, { path: '/' });
+// 		setOpen(false);
+// 	};
 
-	const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
-	const theme = React.useMemo(
-		() =>
-			createMuiTheme({
-				palette: {
-					type: prefersDarkMode ? 'dark' : 'light',
-					primary: {
-						light: '#15c4ff',
-						main: '#4caf50',
-						dark: '#357a38',
-						contrastText: '#fff',
-					},
-					secondary: {
-						light: '#ff7961',
-						main: '#f44336',
-						dark: '#ba000d',
-						contrastText: '#000',
-					},
+// 	const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+// 	const theme = React.useMemo(
+// 		() =>
+// 			createMuiTheme({
+// 				palette: {
+// 					type: prefersDarkMode ? 'dark' : 'light',
+// 					primary: {
+// 						light: '#15c4ff',
+// 						main: '#4caf50',
+// 						dark: '#357a38',
+// 						contrastText: '#fff',
+// 					},
+// 					secondary: {
+// 						light: '#ff7961',
+// 						main: '#f44336',
+// 						dark: '#ba000d',
+// 						contrastText: '#000',
+// 					},
+// 				},
+// 			}),
+// 		[prefersDarkMode]
+// 	);
+
+// 	return (
+// 		<div className={classes.root}>
+// 			<ThemeProvider theme={theme}>
+// 				<CssBaseline />
+// 				<Landing />
+// 			</ThemeProvider>
+// 		</div>
+// 	);
+// }
+
+export default class App extends Component {
+	constructor(props) {
+		super(props);
+		this.state = {
+			authed: false,
+			loading: true,
+			user: null,
+		};
+
+		// this.prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+
+		this.default = createMuiTheme({
+			palette: {
+				// type: this.prefersDarkMode ? 'dark' : 'light',
+				primary: {
+					light: '#6fbf73',
+					main: '#4caf50',
+					dark: '#357a38',
+					contrastText: '#fff',
 				},
-			}),
-		[prefersDarkMode]
-	);
+				secondary: {
+					light: '#f6685e',
+					main: '#f44336',
+					dark: '#aa2e25',
+					contrastText: '#000',
+				},
+			},
+		});
 
-	return (
-		<div className={classes.root}>
-			<ThemeProvider theme={theme}>
+		this.removeListener = firebaseAuth().onAuthStateChanged((user) => {
+			if (user) {
+				this.setState(
+					{
+						user: user,
+						authed: true,
+					},
+					() => {
+						this.setState({ loading: false });
+						// var themeRef = db.collection('/locations/' + user.uid + '/preferences').doc('theme');
+						// themeRef.onSnapshot((doc) => {
+						// 	if (doc.exists) {
+						// 		this.default = createMuiTheme({
+						// 			palette: {
+						// 				type: doc.data().type,
+						// 				primary: {
+						// 					light: doc.data().light,
+						// 					main: doc.data().main,
+						// 					dark: doc.data().dark,
+						// 					contrastText: doc.data().contrastText,
+						// 				},
+						// 			},
+						// 		});
+						// 		this.setState({ loading: false });
+						// 	} else {
+						// 		this.setState({ loading: false });
+						// 	}
+						// });
+					}
+				);
+			} else {
+				console.log(user);
+				this.setState({
+					user: null,
+					authed: false,
+					loading: false,
+				});
+			}
+		});
+	}
+
+	render() {
+		return this.state.loading === true ? (
+			<MuiThemeProvider theme={this.default}>
 				<CssBaseline />
-				<Landing />
-			</ThemeProvider>
-		</div>
-	);
+				<CircularProgress style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, margin: 'auto' }} />
+			</MuiThemeProvider>
+		) : (
+			<MuiThemeProvider theme={this.default}>
+				<CssBaseline />
+				<BrowserRouter>
+					<Switch>
+						<PublicRoute authed={this.state.authed} exact path='/' component={Landing} />
+						<PublicRoute authed={this.state.authed} exact path='/signin' component={Signin} />
+						<PublicRoute authed={this.state.authed} exact path='/signup' component={Signup} />
+						<PrivateRoute authed={this.state.authed} path='/gift' component={(props) => <Gift {...props} user={this.state.user} />} />
+					</Switch>
+				</BrowserRouter>
+			</MuiThemeProvider>
+		);
+	}
 }
