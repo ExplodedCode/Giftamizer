@@ -30,9 +30,7 @@ export default function FormDialog({ group }) {
 					<TextField autoFocus margin='dense' id='name' label='Email Address' type='email' fullWidth />
 				</DialogContent>
 				<DialogActions>
-					<Button onClick={handleClose} color='primary'>
-						Cancel
-					</Button>
+					<Button onClick={handleClose}>Cancel</Button>
 					<Button onClick={handleClose} color='primary'>
 						Invite
 					</Button>

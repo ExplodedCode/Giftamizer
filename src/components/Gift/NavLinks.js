@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 
 import Avatar from '@material-ui/core/Avatar';
 
-import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
@@ -11,12 +10,15 @@ import ListItemAvatar from '@material-ui/core/ListItemAvatar';
 import ListSubheader from '@material-ui/core/ListSubheader';
 import Divider from '@material-ui/core/Divider';
 
-import HomeIcon from '@material-ui/icons/Home';
+import NewReleasesIcon from '@material-ui/icons/NewReleases';
 import ListAltIcon from '@material-ui/icons/ListAlt';
 import GroupIcon from '@material-ui/icons/Group';
 import ShoppingCartIcon from '@material-ui/icons/ShoppingCart';
 
-import { getUserProfile } from '../../firebase/auth';
+import AccountCircleIcon from '@material-ui/icons/AccountCircle';
+import LockIcon from '@material-ui/icons/Lock';
+
+import { getUserProfile, logout } from '../../firebase/auth';
 
 class navMenu extends React.Component {
 	constructor(props) {
@@ -31,7 +33,6 @@ class navMenu extends React.Component {
 
 	componentDidMount() {
 		getUserProfile().then((result) => {
-			console.log(result);
 			this.setState({ user: result });
 		});
 	}
@@ -47,12 +48,11 @@ class navMenu extends React.Component {
 						<ListItemText primary={this.state.user && this.state.user.displayName} secondary={this.state.user && this.state.user.email} />
 					</ListItem>
 					<Divider />
-					<ListSubheader inset>Giftamizer</ListSubheader>
 					<ListItem component={Link} to='/gift' button>
 						<ListItemIcon>
-							<HomeIcon />
+							<NewReleasesIcon />
 						</ListItemIcon>
-						<ListItemText primary='Dashboard' />
+						<ListItemText primary='Whats New' />
 					</ListItem>
 					<ListItem component={Link} to='/gift/items' button>
 						<ListItemIcon>
@@ -78,6 +78,22 @@ class navMenu extends React.Component {
 						</ListItemIcon>
 						<ListItemText primary='Shopping List' />
 					</ListItem>
+
+					<Divider />
+					<ListSubheader inset>Account</ListSubheader>
+					<ListItem component={Link} to='/gift/me' button>
+						<ListItemIcon>
+							<AccountCircleIcon />
+						</ListItemIcon>
+						<ListItemText primary='My Account' />
+					</ListItem>
+					<ListItem button onClick={logout}>
+						<ListItemIcon>
+							<LockIcon />
+						</ListItemIcon>
+						<ListItemText primary='Logout' />
+					</ListItem>
+
 					{/* <ListItem component={Link} to='/tdf/support' button disabled>
 						<ListItemIcon>
 							<ListAltIcon />

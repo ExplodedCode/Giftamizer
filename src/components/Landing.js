@@ -9,8 +9,6 @@ import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
-import IconButton from '@material-ui/core/IconButton';
-import MenuIcon from '@material-ui/icons/Menu';
 
 import Container from '@material-ui/core/Container';
 import Grid from '@material-ui/core/Grid';
@@ -25,9 +23,6 @@ import orange from '@material-ui/core/colors/orange';
 class Landing extends React.Component {
 	constructor(props) {
 		super(props);
-		this.state = {
-			image: 'pennair.png',
-		};
 
 		this.style = {
 			landing: {
@@ -49,7 +44,7 @@ class Landing extends React.Component {
 		const { width, theme } = this.props;
 		console.log(theme.palette.primary[theme.palette.type]);
 
-		this.style.color = theme.palette.primary[theme.palette.type == 'dark' ? theme.palette.type : 'main'];
+		this.style.color = theme.palette.primary[theme.palette.type === 'dark' ? theme.palette.type : 'main'];
 
 		return (
 			<div style={{ flexGrow: 1 }}>
@@ -64,7 +59,7 @@ class Landing extends React.Component {
 					</Toolbar>
 				</AppBar>
 
-				<Container style={{ paddingTop: 96 }}>
+				<Container style={{ paddingTop: 20, marginBottom: 96 }}>
 					<Grid container spacing={3}>
 						<Grid container item sm={12} md={6} spacing={3}>
 							<Grid item xs={12}>
@@ -193,21 +188,15 @@ function getMarginForCards(width) {
 	switch (width) {
 		case 'xs':
 			return 0;
-			break;
 		case 'sm':
 			return -35;
-			break;
 		case 'md':
 			return -35;
-			break;
 		case 'lg':
 			return -55;
-			break;
 		case 'xl':
 			return -55;
-			break;
 		default:
 			return 0;
-			break;
 	}
 }
