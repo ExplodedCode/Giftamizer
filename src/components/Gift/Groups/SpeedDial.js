@@ -1,15 +1,15 @@
 import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import Button from '@material-ui/core/Button';
 import Backdrop from '@material-ui/core/Backdrop';
 import SpeedDial from '@material-ui/lab/SpeedDial';
-import SpeedDialIcon from '@material-ui/lab/SpeedDialIcon';
-import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
 
 import GroupIcon from '@material-ui/icons/Group';
 
 import PersonAddIcon from '@material-ui/icons/PersonAdd';
 import GroupAddIcon from '@material-ui/icons/GroupAdd';
+
+import CreateGroup from './Create';
+import Join from './Join';
 
 const useStyles = makeStyles((theme) => ({
 	root: {
@@ -24,12 +24,7 @@ const useStyles = makeStyles((theme) => ({
 	},
 }));
 
-const actions = [
-	{ icon: <PersonAddIcon />, name: 'Join' },
-	{ icon: <GroupAddIcon />, name: 'Create' },
-];
-
-export default function SpeedDialTooltipOpen() {
+export default function SpeedDialTooltipOpen(props) {
 	const classes = useStyles();
 	const [open, setOpen] = React.useState(false);
 
@@ -45,8 +40,8 @@ export default function SpeedDialTooltipOpen() {
 		<div style={{ position: 'fixed', bottom: 8, right: 8 }}>
 			<Backdrop open={open} style={{ zIndex: 50 }} />
 			<SpeedDial ariaLabel='SpeedDial tooltip example' className={classes.speedDial} icon={<GroupIcon />} onClose={handleClose} onOpen={handleOpen} open={open}>
-				<SpeedDialAction key={'Join'} icon={<PersonAddIcon />} tooltipTitle={'Join'} tooltipOpen onClick={handleClose} />
-				<SpeedDialAction key={'Create'} icon={<GroupAddIcon />} tooltipTitle={'Create'} tooltipOpen onClick={handleClose} />
+				<Join key={'Join'} icon={<PersonAddIcon />} tooltipTitle={'Join'} tooltipOpen getGroups={props.getGroups} />
+				<CreateGroup key={'Create'} icon={<GroupAddIcon />} tooltipTitle={'Create'} tooltipOpen getGroups={props.getGroups} />
 			</SpeedDial>
 		</div>
 	);

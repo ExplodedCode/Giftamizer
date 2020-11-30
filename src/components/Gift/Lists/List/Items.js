@@ -2,21 +2,21 @@ import React from 'react';
 
 import Container from '@material-ui/core/Container';
 import Grid from '@material-ui/core/Grid';
-import Typography from '@material-ui/core/Typography';
 
-import CreateItem from './Create';
-import ItemCard from './ItemCard';
+import ItemCard from '../../Items/ItemCard';
 
-import { getMyItems } from '../../../firebase/gift/items';
+import { getMyItems } from '../../../../firebase/gift/items';
+
+import EditList from './Edit';
+import CreateItem from '../../Items/Create';
 
 class Landing extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {
+			list: this.props.match.params.list,
 			items: [],
-			loading: true,
 		};
-		props.setTitle('My Items');
 	}
 
 	componentDidMount() {
@@ -24,14 +24,16 @@ class Landing extends React.Component {
 	}
 
 	getItems = () => {
-		getMyItems().then((result) => {
+		getMyItems(this.state.list).then((result) => {
 			var items = [];
 			//Do whatever you want with the result value
 			if (result !== 'error') {
 				result.forEach(function (doc) {
 					items.push({ ...doc.data(), id: doc.id });
 				});
-				this.setState({ items: items, loading: false });
+				this.setState({ items: items });
+			} else {
+				console.log('error');
 			}
 		});
 	};
@@ -43,19 +45,13 @@ class Landing extends React.Component {
 					<Grid container spacing={3}>
 						{this.state.items.map((item, i) => (
 							<Grid key={item.id} item xs={12}>
-								<ItemCard getItems={this.getItems} item={item} />
+								<ItemCard getItems={this.getItems} item={item} inList />
 							</Grid>
 						))}
 					</Grid>
-					{this.state.items.length === 0 && !this.state.loading && (
-						<Grid item xs={12} style={{ textAlign: 'center' }}>
-							<Typography variant='h5' gutterBottom style={{ marginTop: 100 }}>
-								You don't have any items.
-							</Typography>
-						</Grid>
-					)}
 				</Container>
-				<CreateItem getItems={this.getItems} />
+				<EditList list={this.props.match.params.list} getItems={this.getItems} />
+				<CreateItem list={this.props.match.params.list} getItems={this.getItems} />
 			</div>
 		);
 	}

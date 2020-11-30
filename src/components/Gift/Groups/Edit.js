@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { rgbToHex, withStyles, useTheme } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core/styles';
 import * as colors from '@material-ui/core/colors';
 import Grid from '@material-ui/core/Grid';
 import Radio from '@material-ui/core/Radio';
@@ -9,7 +9,6 @@ import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import CheckIcon from '@material-ui/icons/Check';
 import Slider from '@material-ui/core/Slider';
-import { capitalize } from '@material-ui/core/utils';
 
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
@@ -25,10 +24,6 @@ import RadioGroup from '@material-ui/core/RadioGroup';
 import FormControl from '@material-ui/core/FormControl';
 import TextField from '@material-ui/core/TextField';
 
-import SaveIcon from '@material-ui/icons/Save';
-import CircularProgress from '@material-ui/core/CircularProgress';
-
-import { db, storage } from '../../../firebase/constants';
 import { editMyGroup } from '../../../firebase/gift/groups';
 
 import Alert from '../../Alert';
@@ -172,9 +167,7 @@ function ColorTool(props) {
 	};
 
 	const colorPicker = (intent) => {
-		const intentInput = state[`${intent}Input`];
 		const intentShade = state[`${intent}Shade`];
-		const color = state[`${intent}`];
 
 		var sliderEnabled = false;
 
@@ -221,7 +214,7 @@ function ColorTool(props) {
 									icon={<div className={classes.radioIcon} style={{ backgroundColor }} />}
 									checkedIcon={
 										<div className={classes.radioIconSelected} style={{ backgroundColor }}>
-											<CheckIcon style={{ fontSize: 30 }} style={{ color: state.textShade === 'dark' ? '#000000de' : '#fff' }} />
+											<CheckIcon style={{ color: state.textShade === 'dark' ? '#000000de' : '#fff', fontSize: 30 }} />
 										</div>
 									}
 								/>
@@ -273,27 +266,30 @@ function ColorTool(props) {
 							</Grid>
 						</Grid>
 					</Grid>
-					<img src={state.backgroundValue} />
+					{state.backgroundValue.length > 15 && <img alt='group' style={{ maxWidth: '100%', maxHeight: 200, marginTop: 8 }} src={state.backgroundValue} />}
 				</DialogContent>
 				<DialogActions>
-					<Button onClick={handleClose} color='primary'>
-						Cancel
-					</Button>
+					<Button onClick={handleClose}>Cancel</Button>
 					<Button
 						onClick={() => {
-							editMyGroup({ id: props.group.id, backgroundType: state.backgroundType, backgroundValue: state.primary, name: state.groupName, textShade: state.textShade }).then(
-								(result) => {
-									if (result === 'ok') {
-										setAlert({ open: true, message: 'Group details saved!', severity: 'success' });
-										handleClose();
-										props.getGroups();
-									} else {
-										setAlert({ open: true, message: 'Error while saving details', severity: 'error' });
-									}
+							editMyGroup({
+								id: props.group.id,
+								backgroundType: state.backgroundType,
+								backgroundValue: state.backgroundType === 'color' ? state.primary : state.backgroundValue,
+								name: state.groupName,
+								textShade: state.textShade,
+							}).then((result) => {
+								if (result === 'ok') {
+									setAlert({ open: true, message: 'Group details saved!', severity: 'success' });
+									handleClose();
+									props.getGroups();
+								} else {
+									setAlert({ open: true, message: 'Error while saving details', severity: 'error' });
 								}
-							);
+							});
 						}}
 						color='primary'
+						disabled={!(state.groupName.trim().length > 0 && (state.backgroundType === 'color' ? state.primary : state.backgroundValue).length !== 0)}
 					>
 						Save
 					</Button>
