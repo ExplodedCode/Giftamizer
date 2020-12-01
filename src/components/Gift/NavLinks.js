@@ -52,7 +52,7 @@ class navMenu extends React.Component {
 						<ListItemIcon>
 							<NewReleasesIcon />
 						</ListItemIcon>
-						<ListItemText primary='Whats New' />
+						<ListItemText primary="What's New" />
 					</ListItem>
 					<ListItem component={Link} to='/gift/items' button>
 						<ListItemIcon>
