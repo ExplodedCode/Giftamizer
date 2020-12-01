@@ -13,6 +13,7 @@ import Badge from '@material-ui/core/Badge';
 
 import ListAltIcon from '@material-ui/icons/ListAlt';
 import GroupIcon from '@material-ui/icons/Group';
+import WarningIcon from '@material-ui/icons/Warning';
 
 const StyledBadge = withStyles((theme) => ({
 	badge: {
@@ -43,9 +44,9 @@ class Landing extends React.Component {
 					<Typography variant='subtitle1'>
 						If you had an account previously you items and groups have been transfered. If you find any issues please contact Evan via email <a href='mailto:evan@trowbridge.tech'>here</a>.
 					</Typography>
-					<Typography variant='subtitle1'>Some items that had either quotation marks or anglospheres may need fixed.</Typography>
+					<Typography variant='subtitle1'>Smoe items that had either quotation marks or apostrophes may need fixed.</Typography>
 					<br />
-					<Typography variant='h5'>What NEW!</Typography>
+					<Typography variant='h5'>What's NEW!</Typography>
 					<List>
 						<ListItem>
 							<ListItemIcon>
@@ -61,7 +62,7 @@ class Landing extends React.Component {
 									<i className='fas fa-gift' style={{ fontSize: '1.19rem', marginLeft: 2 }} />
 								</StyledBadge>
 							</ListItemIcon>
-							<ListItemText primary='Asign items to the groups you want them to show up in.' secondary='Items are asigned to lists' />
+							<ListItemText primary='Asign items to the groups you want them to show up in. Paste links to autofill info.' secondary='Items are asigned to lists' />
 						</ListItem>
 						<ListItem>
 							<ListItemIcon>
@@ -78,6 +79,23 @@ class Landing extends React.Component {
 								</StyledBadge>
 							</ListItemIcon>
 							<ListItemText primary='Create a lists for your kids (or pet😉)' secondary='These lists will display separately from yours.' />
+						</ListItem>
+					</List>
+					<br />
+					<br />
+					<Typography variant='h5'>Known Issues:</Typography>
+					<List>
+						<ListItem>
+							<ListItemIcon>
+								<WarningIcon />
+							</ListItemIcon>
+							<ListItemText primary="Uploading images from the mobile app doesn't work" secondary='Desktop is working' />
+						</ListItem>
+						<ListItem>
+							<ListItemIcon>
+								<WarningIcon />
+							</ListItemIcon>
+							<ListItemText primary='Pasting links from mobile may not work' secondary='Desktop is working' />
 						</ListItem>
 					</List>
 				</Container>
