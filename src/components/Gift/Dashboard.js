@@ -44,7 +44,7 @@ class Landing extends React.Component {
 					<Typography variant='subtitle1'>
 						If you had an account previously you items and groups have been transfered. If you find any issues please contact Evan via email <a href='mailto:evan@trowbridge.tech'>here</a>.
 					</Typography>
-					<Typography variant='subtitle1'>Smoe items that had either quotation marks or apostrophes may need fixed.</Typography>
+					<Typography variant='subtitle1'>Some items that had either quotation marks or apostrophes may need fixed.</Typography>
 					<br />
 					<Typography variant='h5'>What's NEW!</Typography>
 					<List>
