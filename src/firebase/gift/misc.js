@@ -1,35 +1,36 @@
 import React, { useEffect } from 'react';
 
-import { db } from '../constants';
+import socketIOClient from 'socket.io-client';
+
+import { db, firebaseAuth } from '../constants';
 
 import Chip from '@material-ui/core/Chip';
 
+var socket = socketIOClient(window.location.hostname.includes('localhost') ? '//localhost:8080' : '//' + window.location.hostname);
+
 export function GroupChip({ groupId }) {
-	const [name, setName] = React.useState('');
+	const [group, setGroup] = React.useState('...');
 
 	useEffect(() => {
 		getGroup(groupId).then((result) => {
-			setName(result);
+			setGroup(result.name);
 		});
 	});
 
-	return <Chip size='small' label={name} style={{ marginRight: 4 }} />;
+	return <Chip size='small' key={Math.random()} label={group} style={{ marginRight: 4 }} />;
 }
 function getGroup(groupId) {
-	var docRef = db.collection('groups').doc(groupId);
-
-	return docRef
-		.get()
-		.then(function (doc) {
-			if (doc.exists) {
-				return doc.data().name;
-			} else {
-				return 'Group not found!';
-			}
-		})
-		.catch(function (error) {
-			return 'Error getting group!';
+	return new Promise((resolve, reject) => {
+		socket.emit('req:listGroupName', {
+			groupId: groupId,
+			userId: firebaseAuth().currentUser.uid,
 		});
+
+		socket.on('res:listGroupName:' + groupId, (result) => {
+			socket.off('res:listGroupName:' + groupId);
+			resolve(result);
+		});
+	});
 }
 
 export function ListChip({ listId }) {

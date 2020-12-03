@@ -280,11 +280,12 @@ function ColorTool(props) {
 								textShade: state.textShade,
 							}).then((result) => {
 								if (result === 'ok') {
-									setAlert({ open: true, message: 'Group details saved!', severity: 'success' });
+									setAlert({ open: true, message: 'Group created!', severity: 'success' });
 									handleClose();
+									props.handleSpeedDialClose();
 									props.getGroups();
 								} else {
-									setAlert({ open: true, message: 'Error while saving details', severity: 'error' });
+									setAlert({ open: true, message: 'Error while creating group!', severity: 'error' });
 								}
 							});
 						}}

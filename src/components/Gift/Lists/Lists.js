@@ -12,10 +12,11 @@ import Avatar from '@material-ui/core/Avatar';
 
 import CreateList from './Create';
 
-import { getMyLists } from '../../../firebase/gift/lists';
 import { GroupChip } from '../../../firebase/gift/misc';
 
 import ListAltIcon from '@material-ui/icons/ListAlt';
+
+import { firebaseAuth } from '../../../firebase/constants';
 
 class Landing extends React.Component {
 	constructor(props) {
@@ -28,21 +29,30 @@ class Landing extends React.Component {
 	}
 
 	componentDidMount() {
+		// this.props.socket.emit('join', 'myLists:' + firebaseAuth().currentUser.uid);
 		this.getlists();
 	}
 
 	getlists = () => {
-		getMyLists().then((result) => {
-			var lists = [];
-			//Do whatever you want with the result value
-			if (result !== 'error') {
-				result.forEach(function (doc) {
-					lists.push({ ...doc.data(), id: doc.id });
+		this.props.socket.emit('req:listsData', firebaseAuth().currentUser.uid);
+		this.props.socket.on('res:listsData', (result) => {
+			if (result) {
+				this.setState({
+					lists: result,
+					loading: false,
 				});
-				this.setState({ lists: lists, loading: false });
+			} else {
+				this.setState({
+					loading: false,
+				});
 			}
 		});
 	};
+
+	componentWillUnmount() {
+		// this.props.socket.emit('leave', 'myLists:' + firebaseAuth().currentUser.uid);
+		this.props.socket.off('req:listsData');
+	}
 
 	render() {
 		return (
@@ -58,7 +68,7 @@ class Landing extends React.Component {
 
 					<List>
 						{this.state.lists.map((list, i) => (
-							<ListItem button component={Link} to={'/gift/list/' + list.id}>
+							<ListItem button component={Link} to={'/gift/list/' + list._id}>
 								<ListItemAvatar>
 									<Avatar>{list.isForChild ? <i className='fas fa-baby-carriage' style={{ fontSize: '1.19rem', marginLeft: 2 }} /> : <ListAltIcon />}</Avatar>
 								</ListItemAvatar>

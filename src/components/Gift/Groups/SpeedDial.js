@@ -9,7 +9,7 @@ import PersonAddIcon from '@material-ui/icons/PersonAdd';
 import GroupAddIcon from '@material-ui/icons/GroupAdd';
 
 import CreateGroup from './Create';
-import Join from './Join';
+import JoinGroup from './Join';
 
 const useStyles = makeStyles((theme) => ({
 	root: {
@@ -40,8 +40,8 @@ export default function SpeedDialTooltipOpen(props) {
 		<div style={{ position: 'fixed', bottom: 8, right: 8 }}>
 			<Backdrop open={open} style={{ zIndex: 50 }} />
 			<SpeedDial ariaLabel='SpeedDial tooltip example' className={classes.speedDial} icon={<GroupIcon />} onClose={handleClose} onOpen={handleOpen} open={open}>
-				<Join key={'Join'} icon={<PersonAddIcon />} tooltipTitle={'Join'} tooltipOpen getGroups={props.getGroups} />
-				<CreateGroup key={'Create'} icon={<GroupAddIcon />} tooltipTitle={'Create'} tooltipOpen getGroups={props.getGroups} />
+				<JoinGroup key={'Join'} icon={<PersonAddIcon />} tooltipTitle={'Join'} tooltipOpen getGroups={props.getGroups} handleSpeedDialClose={handleClose} />
+				<CreateGroup key={'Create'} icon={<GroupAddIcon />} tooltipTitle={'Create'} tooltipOpen getGroups={props.getGroups} handleSpeedDialClose={handleClose} />
 			</SpeedDial>
 		</div>
 	);
