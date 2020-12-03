@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 
+import socketIOClient from 'socket.io-client';
+
 import { BrowserRouter, Route, Switch, Redirect } from 'react-router-dom';
 import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 
@@ -13,6 +15,8 @@ import Landing from './components/Landing';
 import Signin from './components/Signin/Signin';
 import Signup from './components/Signin/Signup';
 import Gift from './components/Gift/Gift';
+
+var socket; // define socket
 
 function PrivateRoute({ component: Component, authed, ...rest }) {
 	return <Route {...rest} render={(props) => (authed ? <Component {...props} /> : <Redirect to={{ pathname: '/signin', state: { from: props.location } }} />)} />;
@@ -29,7 +33,10 @@ export default class App extends Component {
 			authed: false,
 			loading: true,
 			user: null,
+			endpoint: window.location.hostname.includes('localhost') ? '//localhost:8080' : '//' + window.location.hostname,
 		};
+
+		socket = socketIOClient(this.state.endpoint); // initialize socket
 
 		// this.prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
 
@@ -86,7 +93,7 @@ export default class App extends Component {
 						<PublicRoute authed={this.state.authed} exact path='/' component={Landing} />
 						<PublicRoute authed={this.state.authed} exact path='/signin' component={Signin} />
 						<PublicRoute authed={this.state.authed} exact path='/signup' component={Signup} />
-						<PrivateRoute authed={this.state.authed} path='/gift' component={(props) => <Gift {...props} user={this.state.user} />} />
+						<PrivateRoute authed={this.state.authed} path='/gift' component={(props) => <Gift {...props} user={this.state.user} socket={socket} />} />
 					</Switch>
 				</BrowserRouter>
 			</MuiThemeProvider>

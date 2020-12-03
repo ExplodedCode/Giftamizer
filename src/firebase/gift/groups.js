@@ -1,51 +1,34 @@
-import firebase from 'firebase';
+import { firebaseAuth } from '../constants';
 
-import { db, firebaseAuth } from '../constants';
-
-export function getMyGroups() {
-	var docRef = db.collection('groups').where('members', 'array-contains', firebaseAuth().currentUser.uid).orderBy('name');
-
-	return docRef
-		.get()
-		.then(function (querySnapshot) {
-			return querySnapshot;
-		})
-		.catch(function (error) {
-			console.log('Error getting documents: ', error);
-			return 'error';
-		});
-}
+import socketIOClient from 'socket.io-client';
+var socket = socketIOClient(window.location.hostname.includes('localhost') ? '//localhost:8080' : '//' + window.location.hostname);
 
 export function editMyGroup(group) {
-	var groupRef = db.collection('groups').doc(group.id);
-
-	return groupRef
-		.set(group, { merge: true })
-		.then(function (docRef) {
-			return 'ok';
-		})
-		.catch(function (error) {
-			return error;
+	return new Promise((resolve, reject) => {
+		socket.emit('set:group', {
+			...group,
+			editor: firebaseAuth().currentUser.uid,
 		});
+
+		socket.on('res:set:group', (result) => {
+			socket.off('res:set:group');
+			resolve(result);
+		});
+	});
 }
 
 export function createGroup(group) {
 	const id = guid_get();
 
-	var groupRef = db.collection('groups').doc(id);
-
 	group.id = id;
 	group.owner = firebaseAuth().currentUser.uid;
 	group.members = [firebaseAuth().currentUser.uid];
 
-	return groupRef
-		.set(group, { merge: true })
-		.then(function (docRef) {
-			return 'ok';
-		})
-		.catch(function (error) {
-			return error;
-		});
+	return new Promise((resolve, reject) => {
+		socket.emit('add:group', group);
+		socket.emit('req:groupsData', firebaseAuth().currentUser.uid);
+		resolve('ok');
+	});
 }
 function guid_get() {
 	function s4() {
@@ -57,38 +40,16 @@ function guid_get() {
 }
 
 export function joinGroup(groupId) {
-	var docRef = db.collection('groups').doc(groupId);
-
-	return docRef
-		.get()
-		.then(function (doc) {
-			if (doc.exists) {
-				joinGroupAct(groupId);
-			} else {
-				// doc.data() will be undefined in this case
-				return 'notfound';
-			}
-		})
-		.catch(function (error) {
-			console.log('Error getting document:', error);
-			return 'error';
+	return new Promise((resolve, reject) => {
+		socket.emit('join:group', {
+			groupId: groupId,
+			userId: firebaseAuth().currentUser.uid,
 		});
-}
-function joinGroupAct(groupId) {
-	var groupRef = db.collection('groups').doc(groupId);
 
-	return groupRef
-		.set(
-			{
-				members: firebase.firestore.FieldValue.arrayUnion(firebaseAuth().currentUser.uid),
-			},
-			{ merge: true }
-		)
-		.then(function (docRef) {
-			return 'ok';
-		})
-		.catch(function (error) {
-			console.log('Error writting document:', error);
-			return 'error';
+		socket.on('res:join:group', (result) => {
+			socket.emit('req:groupsData', firebaseAuth().currentUser.uid);
+			socket.off('res:join:group');
+			resolve(result);
 		});
+	});
 }

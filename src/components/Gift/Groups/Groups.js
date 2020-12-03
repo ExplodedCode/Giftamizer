@@ -7,7 +7,7 @@ import Typography from '@material-ui/core/Typography';
 import SpeedDial from './SpeedDial';
 import GroupCard from './GroupCard';
 
-import { getMyGroups } from '../../../firebase/gift/groups';
+import { firebaseAuth } from '../../../firebase/constants';
 
 class Landing extends React.Component {
 	constructor(props) {
@@ -20,21 +20,30 @@ class Landing extends React.Component {
 	}
 
 	componentDidMount() {
+		this.props.socket.emit('join', 'myGroups:' + firebaseAuth().currentUser.uid);
 		this.getGroups();
 	}
 
 	getGroups = () => {
-		getMyGroups().then((result) => {
-			var groups = [];
-			//Do whatever you want with the result value
-			if (result !== 'error') {
-				result.forEach(function (doc) {
-					groups.push(doc.data());
+		this.props.socket.emit('req:groupsData', firebaseAuth().currentUser.uid);
+		this.props.socket.on('res:groupsData', (result) => {
+			if (result) {
+				this.setState({
+					groups: result,
+					loading: false,
 				});
-				this.setState({ groups: groups, loading: false });
+			} else {
+				this.setState({
+					loading: false,
+				});
 			}
 		});
 	};
+
+	componentWillUnmount() {
+		this.props.socket.emit('leave', 'myGroups:' + firebaseAuth().currentUser.uid);
+		this.props.socket.off('req:groupsData');
+	}
 
 	render() {
 		return (
@@ -43,7 +52,7 @@ class Landing extends React.Component {
 					<Grid container spacing={3}>
 						{this.state.groups.map((group, i) => (
 							<Grid key={group.id} item xl={3} lg={4} md={6} sm={12} xs={12}>
-								<GroupCard getGroups={this.getGroups} group={group} />
+								<GroupCard socket={this.props.socket} getGroups={this.getGroups} group={group} />
 							</Grid>
 						))}
 						{this.state.groups.length === 0 && !this.state.loading && (
@@ -55,7 +64,7 @@ class Landing extends React.Component {
 						)}
 					</Grid>
 				</Container>
-				<SpeedDial getGroups={this.getGroups} />
+				<SpeedDial socket={this.props.socket} getGroups={this.getGroups} />
 			</div>
 		);
 	}
