@@ -65,13 +65,17 @@ export default function FormDialog(props) {
 						onClick={() => {
 							if (inviteCode.length === 12) {
 								joinGroup(inviteCode).then((result) => {
-									if (result === 'error') {
-										setAlert({ open: true, message: 'Error joining group!', severity: 'error' });
-									} else {
-										setAlert({ open: true, message: 'Joined group.', severity: 'success' });
+									if (result === 'notfound') {
+										setAlert({ open: true, message: 'Group not found!', severity: 'error' });
 										handleClose();
+										props.handleSpeedDialClose();
+									} else {
+										setAlert({ open: true, message: 'Joined group!', severity: 'success' });
+										handleClose();
+										props.handleSpeedDialClose();
 										props.getGroups();
 									}
+									setInviteCode('');
 								});
 							}
 						}}

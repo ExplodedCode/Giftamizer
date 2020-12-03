@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+import CircularProgress from '@material-ui/core/CircularProgress';
+
 import Avatar from '@material-ui/core/Avatar';
 
 import ListItem from '@material-ui/core/ListItem';
@@ -18,7 +20,8 @@ import ShoppingCartIcon from '@material-ui/icons/ShoppingCart';
 import AccountCircleIcon from '@material-ui/icons/AccountCircle';
 import LockIcon from '@material-ui/icons/Lock';
 
-import { getUserProfile, logout } from '../../firebase/auth';
+import { logout } from '../../firebase/auth';
+import { firebaseAuth } from '../../firebase/constants';
 
 class navMenu extends React.Component {
 	constructor(props) {
@@ -27,81 +30,96 @@ class navMenu extends React.Component {
 			open: true,
 
 			user: null,
-			name: '',
+			loading: true,
 		};
 	}
 
 	componentDidMount() {
-		getUserProfile().then((result) => {
-			this.setState({ user: result });
+		this.props.socket.emit('req:userData', firebaseAuth().currentUser.uid);
+		this.props.socket.on('res:userData', (result) => {
+			console.log(result);
+			if (result) {
+				this.setState({
+					user: result,
+					loading: false,
+				});
+			} else {
+				this.setState({
+					user: { email: <span style={{ color: 'red' }}>Error loading user info!</span> },
+					loading: false,
+				});
+			}
 		});
 	}
 
 	render() {
-		return (
-			<div>
-				<div>
-					<ListItem>
-						<ListItemAvatar>
-							<Avatar alt='Profile' src={this.state.user ? this.state.user.photoURL : '/images/GiftamizerIcon.png'} />
-						</ListItemAvatar>
-						<ListItemText primary={this.state.user && this.state.user.displayName} secondary={this.state.user && this.state.user.email} />
-					</ListItem>
-					<Divider />
-					<ListItem component={Link} to='/gift' button>
-						<ListItemIcon>
-							<NewReleasesIcon />
-						</ListItemIcon>
-						<ListItemText primary="What's New" />
-					</ListItem>
-					<ListItem component={Link} to='/gift/items' button>
-						<ListItemIcon>
-							<i className='fas fa-gift' style={{ fontSize: '1.19rem', marginLeft: 2 }} />
-						</ListItemIcon>
-						<ListItemText primary='Items' />
-					</ListItem>
-					<ListItem component={Link} to='/gift/lists' button>
-						<ListItemIcon>
-							<ListAltIcon />
-						</ListItemIcon>
-						<ListItemText primary='Lists' />
-					</ListItem>
-					<ListItem component={Link} to='/gift/groups' button>
-						<ListItemIcon>
-							<GroupIcon />
-						</ListItemIcon>
-						<ListItemText primary='Groups' />
-					</ListItem>
-					<ListItem component={Link} to='/gift/shopping' button>
-						<ListItemIcon>
-							<ShoppingCartIcon />
-						</ListItemIcon>
-						<ListItemText primary='Shopping List' />
-					</ListItem>
+		return this.state.loading ? (
+			<React.Fragment>
+				<CircularProgress style={{ margin: 'auto' }} />
+			</React.Fragment>
+		) : (
+			<React.Fragment>
+				<ListItem>
+					<ListItemAvatar>
+						<Avatar alt='Profile' src={this.state.user ? this.state.user.photoURL : '/images/GiftamizerIcon.png'} />
+					</ListItemAvatar>
+					<ListItemText primary={this.state.user && this.state.user.displayName} secondary={this.state.user && this.state.user.email} />
+				</ListItem>
+				<Divider />
+				<ListItem component={Link} to='/gift' button>
+					<ListItemIcon>
+						<NewReleasesIcon />
+					</ListItemIcon>
+					<ListItemText primary="What's New" />
+				</ListItem>
+				<ListItem component={Link} to='/gift/items' button>
+					<ListItemIcon>
+						<i className='fas fa-gift' style={{ fontSize: '1.19rem', marginLeft: 2 }} />
+					</ListItemIcon>
+					<ListItemText primary='Items' />
+				</ListItem>
+				<ListItem component={Link} to='/gift/lists' button>
+					<ListItemIcon>
+						<ListAltIcon />
+					</ListItemIcon>
+					<ListItemText primary='Lists' />
+				</ListItem>
+				<ListItem component={Link} to='/gift/groups' button>
+					<ListItemIcon>
+						<GroupIcon />
+					</ListItemIcon>
+					<ListItemText primary='Groups' />
+				</ListItem>
+				<ListItem component={Link} to='/gift/shopping' button>
+					<ListItemIcon>
+						<ShoppingCartIcon />
+					</ListItemIcon>
+					<ListItemText primary='Shopping List' />
+				</ListItem>
 
-					<Divider />
-					<ListSubheader inset>Account</ListSubheader>
-					<ListItem component={Link} to='/gift/me' button>
-						<ListItemIcon>
-							<AccountCircleIcon />
-						</ListItemIcon>
-						<ListItemText primary='My Account' />
-					</ListItem>
-					<ListItem button onClick={logout}>
-						<ListItemIcon>
-							<LockIcon />
-						</ListItemIcon>
-						<ListItemText primary='Logout' />
-					</ListItem>
+				<Divider />
+				<ListSubheader inset>Account</ListSubheader>
+				<ListItem component={Link} to='/gift/me' button>
+					<ListItemIcon>
+						<AccountCircleIcon />
+					</ListItemIcon>
+					<ListItemText primary='My Account' />
+				</ListItem>
+				<ListItem button onClick={logout}>
+					<ListItemIcon>
+						<LockIcon />
+					</ListItemIcon>
+					<ListItemText primary='Logout' />
+				</ListItem>
 
-					{/* <ListItem component={Link} to='/tdf/support' button disabled>
+				{/* <ListItem component={Link} to='/tdf/support' button disabled>
 						<ListItemIcon>
 							<ListAltIcon />
 						</ListItemIcon>
 						<ListItemText primary='Events' />
 					</ListItem> */}
 
-					{/* <ListItem component={Link} to='/tribute/vendors' button>
+				{/* <ListItem component={Link} to='/tribute/vendors' button>
 						<ListItemIcon>
 							<StoreIcon />
 						</ListItemIcon>
@@ -117,8 +135,7 @@ class navMenu extends React.Component {
 							</ListItem>
 						</List>
 					</div> */}
-				</div>
-			</div>
+			</React.Fragment>
 		);
 	}
 }

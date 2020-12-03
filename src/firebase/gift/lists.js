@@ -1,57 +1,28 @@
 import { db, firebaseAuth } from '../constants';
 
-export function getMyLists() {
-	var docRef = db.collection('lists').where('owner', '==', firebaseAuth().currentUser.uid).orderBy('name');
-
-	return docRef
-		.get()
-		.then(function (querySnapshot) {
-			querySnapshot.forEach(function (doc) {
-				// doc.data() is never undefined for query doc snapshots
-				console.log(doc.id, ' => ', doc.data());
-			});
-
-			return querySnapshot;
-		})
-		.catch(function (error) {
-			console.log('Error getting documents: ', error);
-			return 'error';
-		});
-}
+import socketIOClient from 'socket.io-client';
+var socket = socketIOClient(window.location.hostname.includes('localhost') ? '//localhost:8080' : '//' + window.location.hostname);
 
 export function getMyGroups() {
-	var docRef = db.collection('groups').where('members', 'array-contains', firebaseAuth().currentUser.uid).orderBy('name');
+	return new Promise((resolve, reject) => {
+		socket.emit('req:listsMyGroups', firebaseAuth().currentUser.uid);
 
-	return docRef
-		.get()
-		.then(function (querySnapshot) {
-			var groups = [];
-			querySnapshot.forEach(function (doc) {
-				groups.push({ name: doc.data().name, id: doc.data().id });
-			});
-			return groups;
-		})
-		.catch(function (error) {
-			console.log('Error getting documents: ', error);
-			return 'error';
+		socket.on('res:listsMyGroups', (result) => {
+			console.log(result);
+			socket.off('res:listsMyGroups');
+			resolve(result);
 		});
+	});
 }
 
 export function createList(name, groups, isForChild) {
-	var listsRef = db.collection('lists');
+	var list = { name: name, groups: groups, isForChild: isForChild, owner: firebaseAuth().currentUser.uid };
 
-	var list = { name: name, groups: groups, isForChild: isForChild };
-
-	list.owner = firebaseAuth().currentUser.uid;
-
-	return listsRef
-		.add(list, { merge: true })
-		.then(function (docRef) {
-			return 'ok';
-		})
-		.catch(function (error) {
-			return error;
-		});
+	return new Promise((resolve, reject) => {
+		socket.emit('add:list', list);
+		socket.emit('req:listsData', firebaseAuth().currentUser.uid);
+		resolve('ok');
+	});
 }
 
 export function editList(id, name, groups, isForChild) {

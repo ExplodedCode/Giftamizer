@@ -108,8 +108,10 @@ const useStyles = makeStyles((theme) => ({
 	},
 }));
 
-export default function Gift() {
+export default function Gift(props) {
 	const [cookies, setCookie] = useCookies(['DrawerOpen']);
+
+	var socket = props.socket;
 
 	const classes = useStyles();
 	const [open, setOpen] = React.useState(cookies.DrawerOpen === 'true' ? true : JSON.stringify(cookies).indexOf('DrawerOpen') === -1 ? true : false);
@@ -154,28 +156,28 @@ export default function Gift() {
 						<ChevronLeftIcon />
 					</IconButton>
 				</div>
-				<NavLinks />
+				<NavLinks socket={socket} />
 			</Drawer>
 
 			<main className={classes.content}>
 				{/* <div className={classes.appBarSpacer} /> */}
 				<div>
 					<Switch>
-						<Route exact path='/gift' component={(props) => <Dashboard {...props} setTitle={setTitle} />} />
+						<Route exact path='/gift' component={(props) => <Dashboard {...props} setTitle={setTitle} socket={socket} />} />
 
-						<Route exact path='/gift/groups' component={(props) => <Groups {...props} setTitle={setTitle} />} />
-						<Route exact path='/gift/group/:group' component={(props) => <Group {...props} setTitle={setTitle} />} />
-						<Route exact path='/gift/group/:group/member/:member' component={(props) => <MemberItems {...props} setTitle={setTitle} />} />
-						<Route exact path='/gift/group/:group/member/:member/list/:list' component={(props) => <ListItems {...props} setTitle={setTitle} />} />
+						<Route exact path='/gift/groups' component={(props) => <Groups {...props} setTitle={setTitle} socket={socket} />} />
+						<Route exact path='/gift/group/:group' component={(props) => <Group {...props} setTitle={setTitle} socket={socket} />} />
+						<Route exact path='/gift/group/:group/member/:member' component={(props) => <MemberItems {...props} setTitle={setTitle} socket={socket} />} />
+						<Route exact path='/gift/group/:group/member/:member/list/:list' component={(props) => <ListItems {...props} setTitle={setTitle} socket={socket} />} />
 
-						<Route exact path='/gift/items' component={(props) => <Items {...props} setTitle={setTitle} />} />
+						<Route exact path='/gift/items' component={(props) => <Items {...props} setTitle={setTitle} socket={socket} />} />
 
-						<Route exact path='/gift/lists' component={(props) => <Lists {...props} setTitle={setTitle} />} />
-						<Route exact path='/gift/list/:list' component={(props) => <List {...props} setTitle={setTitle} />} />
+						<Route exact path='/gift/lists' component={(props) => <Lists {...props} setTitle={setTitle} socket={socket} />} />
+						<Route exact path='/gift/list/:list' component={(props) => <List {...props} setTitle={setTitle} socket={socket} />} />
 
-						<Route exact path='/gift/shopping' component={(props) => <ShoppingList {...props} setTitle={setTitle} />} />
+						<Route exact path='/gift/shopping' component={(props) => <ShoppingList {...props} setTitle={setTitle} socket={socket} />} />
 
-						<Route exact path='/gift/me' component={(props) => <Me {...props} setTitle={setTitle} />} />
+						<Route exact path='/gift/me' component={(props) => <Me {...props} setTitle={setTitle} socket={socket} />} />
 					</Switch>
 				</div>
 			</main>
