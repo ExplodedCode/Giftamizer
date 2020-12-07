@@ -1,158 +1,74 @@
-import firebase from 'firebase';
+import { firebaseAuth } from '../constants';
 
-import { db, firebaseAuth } from '../constants';
-
-export function getMyItems(listID = '') {
-	var docRef = db.collection('items').where('owner', '==', firebaseAuth().currentUser.uid).orderBy('name');
-	if (listID !== '') {
-		docRef = db.collection('items').where('owner', '==', firebaseAuth().currentUser.uid).where('lists', 'array-contains', listID).orderBy('name');
-	}
-
-	console.log(listID);
-
-	return docRef
-		.get()
-		.then(function (querySnapshot) {
-			querySnapshot.forEach(function (doc) {
-				// doc.data() is never undefined for query doc snapshots
-				console.log(doc.id, ' => ', doc.data());
-			});
-
-			return querySnapshot;
-		})
-		.catch(function (error) {
-			console.log('Error getting documents: ', error);
-			return 'error';
-		});
-}
+import socketIOClient from 'socket.io-client';
+var socket = socketIOClient(window.location.hostname.includes('localhost') ? '//localhost:8080' : '//' + window.location.hostname);
 
 export function getMyLists() {
-	var docRef = db.collection('lists').where('owner', '==', firebaseAuth().currentUser.uid).orderBy('name');
+	return new Promise((resolve, reject) => {
+		socket.emit('req:listsData', firebaseAuth().currentUser.uid);
+		socket.on('res:listsData', (result) => {
+			if (result) {
+				var lists = [];
+				result.forEach((list) => {
+					lists.push({ name: list.name, id: list._id });
+				});
 
-	return docRef
-		.get()
-		.then(function (querySnapshot) {
-			var lists = [];
-			querySnapshot.forEach(function (doc) {
-				lists.push({ name: doc.data().name, id: doc.id });
-			});
-			return lists;
-		})
-		.catch(function (error) {
-			console.log('Error getting documents: ', error);
-			return 'error';
+				socket.off('res:listsData');
+				resolve(lists);
+			} else {
+				socket.off('res:listsData');
+				return 'error';
+			}
 		});
-}
-
-export function editMyGroup(group) {
-	var groupRef = db.collection('groups').doc(group.id);
-
-	return groupRef
-		.set(group, { merge: true })
-		.then(function (docRef) {
-			return 'ok';
-		})
-		.catch(function (error) {
-			return error;
-		});
+	});
 }
 
 export function createItem(item) {
-	var itemsRef = db.collection('items');
-
 	item.owner = firebaseAuth().currentUser.uid;
 
-	console.log(item);
-
-	return itemsRef
-		.add(item, { merge: true })
-		.then(function (docRef) {
-			return 'ok';
-		})
-		.catch(function (error) {
-			return error;
-		});
-}
-
-export function joinGroup(groupId) {
-	var docRef = db.collection('groups').doc(groupId);
-
-	return docRef
-		.get()
-		.then(function (doc) {
-			if (doc.exists) {
-				joinGroupAct(groupId);
-			} else {
-				// doc.data() will be undefined in this case
-				return 'notfound';
-			}
-		})
-		.catch(function (error) {
-			console.log('Error getting document:', error);
-			return 'error';
-		});
-}
-function joinGroupAct(groupId) {
-	var groupRef = db.collection('groups').doc(groupId);
-
-	return groupRef
-		.set(
-			{
-				members: firebase.firestore.FieldValue.arrayUnion(firebaseAuth().currentUser.uid),
-			},
-			{ merge: true }
-		)
-		.then(function (docRef) {
-			return 'ok';
-		})
-		.catch(function (error) {
-			console.log('Error writting document:', error);
-			return 'error';
-		});
+	return new Promise((resolve, reject) => {
+		socket.emit('add:item', item);
+		socket.emit('req:itemsData', firebaseAuth().currentUser.uid);
+		resolve('ok');
+	});
 }
 
 export function editItem(id, item) {
-	var itemsRef = db.collection('items').doc(id);
-
-	return itemsRef
-		.set(item, { merge: true })
-		.then(function (docRef) {
-			return 'ok';
-		})
-		.catch(function (error) {
-			return error;
+	return new Promise((resolve, reject) => {
+		socket.emit('set:item', {
+			_id: id,
+			...item,
+			editor: firebaseAuth().currentUser.uid,
 		});
+
+		socket.on('res:set:item', (result) => {
+			socket.off('res:set:item');
+			resolve(result);
+		});
+	});
 }
 
 export function deleteItem(id) {
-	var itemsRef = db.collection('items').doc(id);
-
-	return itemsRef
-		.delete()
-		.then(function () {
-			return 'ok';
-		})
-		.catch(function (error) {
-			console.error('Error removing document: ', error);
-			return 'error';
+	return new Promise((resolve, reject) => {
+		socket.emit('req:deleteItem', { itemId: id, userId: firebaseAuth().currentUser.uid });
+		socket.on('res:deleteItem', (result) => {
+			socket.off('res:deleteItem');
+			resolve(result);
 		});
+	});
 }
 
-export function setStatus(id, status, takenBy) {
-	var itemsRef = db.collection('items').doc(id);
-
-	return itemsRef
-		.set(
-			{
-				status: status,
-				takenBy: takenBy,
-			},
-			{ merge: true }
-		)
-		.then(function (docRef) {
-			return 'ok';
-		})
-		.catch(function (error) {
-			return error;
+export function setStatus(id, status) {
+	return new Promise((resolve, reject) => {
+		socket.emit('set:itemStatus', {
+			itemId: id,
+			status: status,
+			takenBy: firebaseAuth().currentUser.uid,
 		});
+
+		socket.on('res:itemStatus', (result) => {
+			socket.off('res:itemStatus');
+			resolve('ok');
+		});
+	});
 }

@@ -61,7 +61,7 @@ export default function MediaControlCard({ item, getItems, inList }) {
 						))}
 					</CardContent>
 					<div className={classes.controls}>
-						<DeleteItem item={item.id} getItems={getItems} setAlert={setAlert} inList />
+						<DeleteItem item={item._id} getItems={getItems} setAlert={setAlert} inList />
 						<EditItem item={item} getItems={getItems} />
 						<Button href={item.url} target='_blank' style={{ color: '#2196f3' }}>
 							{extractDomain(item.url)}

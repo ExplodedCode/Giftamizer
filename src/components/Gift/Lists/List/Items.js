@@ -5,7 +5,7 @@ import Grid from '@material-ui/core/Grid';
 
 import ItemCard from '../../Items/ItemCard';
 
-import { getMyItems } from '../../../../firebase/gift/items';
+import { firebaseAuth } from '../../../../firebase/constants';
 
 import EditList from './Edit';
 import CreateItem from '../../Items/Create';
@@ -24,16 +24,18 @@ class Landing extends React.Component {
 	}
 
 	getItems = () => {
-		getMyItems(this.state.list).then((result) => {
-			var items = [];
-			//Do whatever you want with the result value
-			if (result !== 'error') {
-				result.forEach(function (doc) {
-					items.push({ ...doc.data(), id: doc.id });
+		this.props.socket.emit('req:listItemsData', { userId: firebaseAuth().currentUser.uid, listId: this.props.match.params.list });
+		this.props.socket.on('res:listItemsData', (result) => {
+			console.log(result);
+			if (result) {
+				this.setState({
+					items: result,
+					loading: false,
 				});
-				this.setState({ items: items });
 			} else {
-				console.log('error');
+				this.setState({
+					loading: false,
+				});
 			}
 		});
 	};

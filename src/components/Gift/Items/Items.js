@@ -7,7 +7,7 @@ import Typography from '@material-ui/core/Typography';
 import CreateItem from './Create';
 import ItemCard from './ItemCard';
 
-import { getMyItems } from '../../../firebase/gift/items';
+import { firebaseAuth } from '../../../firebase/constants';
 
 class Landing extends React.Component {
 	constructor(props) {
@@ -24,14 +24,18 @@ class Landing extends React.Component {
 	}
 
 	getItems = () => {
-		getMyItems().then((result) => {
-			var items = [];
-			//Do whatever you want with the result value
-			if (result !== 'error') {
-				result.forEach(function (doc) {
-					items.push({ ...doc.data(), id: doc.id });
+		this.props.socket.emit('req:itemsData', firebaseAuth().currentUser.uid);
+		this.props.socket.on('res:itemsData', (result) => {
+			console.log(result);
+			if (result) {
+				this.setState({
+					items: result,
+					loading: false,
 				});
-				this.setState({ items: items, loading: false });
+			} else {
+				this.setState({
+					loading: false,
+				});
 			}
 		});
 	};
@@ -40,22 +44,23 @@ class Landing extends React.Component {
 		return (
 			<div>
 				<Container style={{ paddingTop: 20, marginBottom: 96 }}>
-					<Grid container spacing={3}>
-						{this.state.items.map((item, i) => (
-							<Grid key={item.id} item xs={12}>
-								<ItemCard getItems={this.getItems} item={item} />
-							</Grid>
-						))}
-					</Grid>
-					{this.state.items.length === 0 && !this.state.loading && (
+					{this.state.items.length === 0 && !this.state.loading ? (
 						<Grid item xs={12} style={{ textAlign: 'center' }}>
 							<Typography variant='h5' gutterBottom style={{ marginTop: 100 }}>
 								You don't have any items.
 							</Typography>
 						</Grid>
+					) : (
+						<Grid container spacing={3}>
+							{this.state.items.map((item, i) => (
+								<Grid key={item.id} item xs={12}>
+									<ItemCard getItems={this.getItems} item={item} />
+								</Grid>
+							))}
+						</Grid>
 					)}
 				</Container>
-				<CreateItem getItems={this.getItems} />
+				<CreateItem getItems={this.getItems} isMobile={this.props.isMobile} />
 			</div>
 		);
 	}

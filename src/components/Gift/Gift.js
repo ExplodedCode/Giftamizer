@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { isMobile } from 'react-device-detect';
+
 import { useCookies } from 'react-cookie';
 import { Route, Switch, Link } from 'react-router-dom';
 
@@ -14,6 +16,7 @@ import MenuIcon from '@material-ui/icons/Menu';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 
 import NavLinks from './NavLinks';
+import NavMobile from './NavMobile';
 
 // gift
 import Dashboard from './Dashboard';
@@ -31,7 +34,7 @@ import ShoppingList from './ShoppingList/Items';
 
 import Me from './Me/Me';
 
-const drawerWidth = 240;
+const drawerWidth = isMobile ? 0 : 240;
 
 const useStyles = makeStyles((theme) => ({
 	root: {
@@ -97,7 +100,7 @@ const useStyles = makeStyles((theme) => ({
 		flexGrow: 1,
 		height: 'calc(100vh - 64px)',
 		overflow: 'auto',
-		marginTop: 64,
+		marginTop: isMobile ? 56 : 64,
 	},
 	container: {
 		paddingTop: theme.spacing(4),
@@ -130,56 +133,56 @@ export default function Gift(props) {
 		<div className={classes.root}>
 			<AppBar position='absolute' className={clsx(classes.appBar, open && classes.appBarShift)}>
 				<Toolbar className={classes.toolbar}>
-					<IconButton edge='start' color='inherit' aria-label='open drawer' onClick={handleDrawerOpen} className={clsx(classes.menuButton, open && classes.menuButtonHidden)}>
-						<MenuIcon />
-					</IconButton>
+					{!isMobile && (
+						<IconButton edge='start' color='inherit' aria-label='open drawer' onClick={handleDrawerOpen} className={clsx(classes.menuButton, open && classes.menuButtonHidden)}>
+							<MenuIcon />
+						</IconButton>
+					)}
 					<Typography component={Link} to='/' variant='h6' color='inherit' noWrap className={classes.title}>
 						{title}
 					</Typography>
-					{/* <Tooltip title='Logout' placement='left'>
-						<IconButton color='inherit' onClick={logout}>
-							<ExitToAppIcon />
-						</IconButton>
-					</Tooltip> */}
 				</Toolbar>
 			</AppBar>
 
-			<Drawer
-				variant='permanent'
-				classes={{
-					paper: clsx(classes.drawerPaper, !open && classes.drawerPaperClose),
-				}}
-				open={open}
-			>
-				<div className={classes.toolbarIcon}>
-					<IconButton onClick={handleDrawerClose}>
-						<ChevronLeftIcon />
-					</IconButton>
-				</div>
-				<NavLinks socket={socket} />
-			</Drawer>
+			{!isMobile && (
+				<Drawer
+					variant='permanent'
+					classes={{
+						paper: clsx(classes.drawerPaper, !open && classes.drawerPaperClose),
+					}}
+					open={open}
+				>
+					<div className={classes.toolbarIcon}>
+						<IconButton onClick={handleDrawerClose}>
+							<ChevronLeftIcon />
+						</IconButton>
+					</div>
+					<NavLinks socket={socket} />
+				</Drawer>
+			)}
 
 			<main className={classes.content}>
 				{/* <div className={classes.appBarSpacer} /> */}
-				<div>
+				<div style={{ paddingBottom: isMobile ? 64 : 0 }}>
 					<Switch>
-						<Route exact path='/gift' component={(props) => <Dashboard {...props} setTitle={setTitle} socket={socket} />} />
+						<Route exact path='/gift' component={(props) => <Dashboard {...props} setTitle={setTitle} socket={socket} isMobile={isMobile} />} />
 
-						<Route exact path='/gift/groups' component={(props) => <Groups {...props} setTitle={setTitle} socket={socket} />} />
-						<Route exact path='/gift/group/:group' component={(props) => <Group {...props} setTitle={setTitle} socket={socket} />} />
-						<Route exact path='/gift/group/:group/member/:member' component={(props) => <MemberItems {...props} setTitle={setTitle} socket={socket} />} />
-						<Route exact path='/gift/group/:group/member/:member/list/:list' component={(props) => <ListItems {...props} setTitle={setTitle} socket={socket} />} />
+						<Route exact path='/gift/groups' component={(props) => <Groups {...props} setTitle={setTitle} socket={socket} isMobile={isMobile} />} />
+						<Route exact path='/gift/group/:group' component={(props) => <Group {...props} setTitle={setTitle} socket={socket} isMobile={isMobile} />} />
+						<Route exact path='/gift/group/:group/member/:member' component={(props) => <MemberItems {...props} setTitle={setTitle} socket={socket} isMobile={isMobile} />} />
+						<Route exact path='/gift/group/:group/member/:member/list/:list' component={(props) => <ListItems {...props} setTitle={setTitle} socket={socket} isMobile={isMobile} />} />
 
-						<Route exact path='/gift/items' component={(props) => <Items {...props} setTitle={setTitle} socket={socket} />} />
+						<Route exact path='/gift/items' component={(props) => <Items {...props} setTitle={setTitle} socket={socket} isMobile={isMobile} />} />
 
-						<Route exact path='/gift/lists' component={(props) => <Lists {...props} setTitle={setTitle} socket={socket} />} />
-						<Route exact path='/gift/list/:list' component={(props) => <List {...props} setTitle={setTitle} socket={socket} />} />
+						<Route exact path='/gift/lists' component={(props) => <Lists {...props} setTitle={setTitle} socket={socket} isMobile={isMobile} />} />
+						<Route exact path='/gift/list/:list' component={(props) => <List {...props} setTitle={setTitle} socket={socket} isMobile={isMobile} />} />
 
-						<Route exact path='/gift/shopping' component={(props) => <ShoppingList {...props} setTitle={setTitle} socket={socket} />} />
+						<Route exact path='/gift/shopping' component={(props) => <ShoppingList {...props} setTitle={setTitle} socket={socket} isMobile={isMobile} />} />
 
-						<Route exact path='/gift/me' component={(props) => <Me {...props} setTitle={setTitle} socket={socket} />} />
+						<Route exact path='/gift/me' component={(props) => <Me {...props} setTitle={setTitle} socket={socket} isMobile={isMobile} />} />
 					</Switch>
 				</div>
+				{isMobile && <NavMobile />}
 			</main>
 		</div>
 	);

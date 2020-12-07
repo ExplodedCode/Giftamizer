@@ -64,7 +64,7 @@ class Landing extends React.Component {
 						)}
 					</Grid>
 				</Container>
-				<SpeedDial socket={this.props.socket} getGroups={this.getGroups} />
+				<SpeedDial socket={this.props.socket} getGroups={this.getGroups} isMobile={this.props.isMobile} />
 			</div>
 		);
 	}

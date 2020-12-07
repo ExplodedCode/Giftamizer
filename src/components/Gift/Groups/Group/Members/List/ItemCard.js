@@ -34,7 +34,7 @@ const useStyles = makeStyles((theme) => ({
 	},
 }));
 
-export default function MediaControlCard({ item }) {
+export default function MediaControlCard({ item, getListItems }) {
 	const classes = useStyles();
 
 	const [alert, setAlert] = React.useState({ open: false, message: '', severity: 'info' });
@@ -56,13 +56,24 @@ export default function MediaControlCard({ item }) {
 					</CardContent>
 					<div className={classes.controls}>
 						{item.status === 'available' || !item.status ? (
-							<Button color='primary' onClick={() => setStatus(item.id, 'planned', firebaseAuth().currentUser.uid)}>
+							<Button
+								color='primary'
+								onClick={() => {
+									setStatus(item._id, 'planned').then(() => {
+										getListItems();
+									});
+								}}
+							>
 								Available
 							</Button>
 						) : item.status === 'planned' ? (
 							<Button
 								style={{ color: '#ffab40', cursor: item.takenBy === firebaseAuth().currentUser.uid ? 'pointer' : 'not-allowed', pointerEvents: 'all' }}
-								onClick={() => setStatus(item.id, 'unavailable', firebaseAuth().currentUser.uid)}
+								onClick={() => {
+									setStatus(item._id, 'unavailable').then(() => {
+										getListItems();
+									});
+								}}
 								disabled={item.takenBy !== firebaseAuth().currentUser.uid}
 							>
 								Planned
@@ -70,7 +81,11 @@ export default function MediaControlCard({ item }) {
 						) : item.status === 'unavailable' ? (
 							<Button
 								style={{ color: '#f44336', cursor: item.takenBy === firebaseAuth().currentUser.uid ? 'pointer' : 'not-allowed', pointerEvents: 'all' }}
-								onClick={() => setStatus(item.id, 'available', firebaseAuth().currentUser.uid)}
+								onClick={() => {
+									setStatus(item._id, 'available').then(() => {
+										getListItems();
+									});
+								}}
 								disabled={item.takenBy !== firebaseAuth().currentUser.uid}
 							>
 								Unavailable

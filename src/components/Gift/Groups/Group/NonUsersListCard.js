@@ -19,7 +19,7 @@ export default function GroupCard({ group, list, getMembers, owner }) {
 	return (
 		<div>
 			<Card>
-				<CardActionArea component={Link} to={'/gift/group/' + group + '/member/' + list.owner + '/list/' + list.id}>
+				<CardActionArea component={Link} to={'/gift/group/' + group + '/member/' + list.owner + '/list/' + list._id}>
 					<CardMedia style={{ fontSize: '1000%', textAlign: 'center', backgroundColor: '#4caf50', color: '#fff' }}>{list.name.charAt(0).toUpperCase()}</CardMedia>
 					<CardContent>
 						<Typography gutterBottom variant='h5' component='h2'>

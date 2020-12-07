@@ -27,11 +27,6 @@ const useStyles = makeStyles((theme) => ({
 		transform: 'translateZ(0px)',
 		flexGrow: 1,
 	},
-	speedDial: {
-		position: 'absolute',
-		bottom: theme.spacing(2),
-		right: theme.spacing(2),
-	},
 }));
 
 export default function SpeedDialTooltipOpen(props) {
@@ -77,7 +72,16 @@ export default function SpeedDialTooltipOpen(props) {
 
 	return (
 		<div style={{ position: 'fixed', bottom: 8, right: 8 }}>
-			<Fab color='primary' aria-label='add' className={classes.speedDial} onClick={handleOpen}>
+			<Fab
+				color='primary'
+				aria-label='add'
+				style={{
+					position: 'absolute',
+					right: 8,
+					bottom: props.isMobile ? 64 : 8,
+				}}
+				onClick={handleOpen}
+			>
 				<AddIcon />
 			</Fab>
 			<Dialog open={open} onClose={handleClose} aria-labelledby='form-dialog-title'>
@@ -95,10 +99,12 @@ export default function SpeedDialTooltipOpen(props) {
 							setUrl(event.target.value);
 						}}
 						onPaste={(e) => {
-							setLoadingMetadata(true);
+							setUrl(e.clipboardData.getData('Text'));
 							var urlQuery = e.clipboardData.getData('Text');
 
-							fetch('https://giftamizer.com/api/metadata?url=' + urlQuery, {
+							setLoadingMetadata(true);
+
+							fetch('http://localhost:8080/api/metadata?url=' + urlQuery, {
 								method: 'GET',
 								headers: {
 									'Content-Type': 'application/json',
@@ -113,10 +119,16 @@ export default function SpeedDialTooltipOpen(props) {
 									});
 								} else {
 									return response.json().then((data) => {
-										if (data.image.startsWith('/') && !data.image.startsWith('//')) {
-											setImage(urlQuery.split('/')[0] + '//' + urlQuery.split('/')[2] + data.image);
-										} else {
-											setImage(data.image);
+										console.log(data.image);
+
+										try {
+											if (data.image.startsWith('/') && !data.image.startsWith('//')) {
+												setImage(urlQuery.split('/')[0] + '//' + urlQuery.split('/')[2] + data.image);
+											} else {
+												setImage(data.image);
+											}
+										} catch (error) {
+											console.log(error);
 										}
 
 										setName(data.title);
