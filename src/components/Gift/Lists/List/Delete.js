@@ -1,13 +1,18 @@
 import React from 'react';
+
+import { useHistory } from 'react-router-dom';
+
 import Button from '@material-ui/core/Button';
 import Popper from '@material-ui/core/Popper';
 import PopupState, { bindToggle, bindPopper } from 'material-ui-popup-state';
 import Fade from '@material-ui/core/Fade';
 import Paper from '@material-ui/core/Paper';
 
-import { deleteList } from '../../../firebase/gift/lists';
+import { deleteList } from '../../../../firebase/gift/lists';
 
 export default function PopperPopupState(props) {
+	const history = useHistory();
+
 	return (
 		<PopupState variant='popper' popupId='demo-popup-popper'>
 			{(popupState) => (
@@ -33,8 +38,7 @@ export default function PopperPopupState(props) {
 												if (result === 'ok') {
 													props.setAlert({ open: true, message: 'List deleted!', severity: 'success' });
 													bindToggle(popupState);
-													props.closeModal();
-													props.getlists();
+													history.push('/gift/lists');
 												} else {
 													props.setAlert({ open: true, message: 'Error deleting list!', severity: 'error' });
 												}

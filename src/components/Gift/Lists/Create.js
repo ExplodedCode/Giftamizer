@@ -68,7 +68,16 @@ export default function SpeedDialTooltipOpen(props) {
 
 	return (
 		<div style={{ position: 'fixed', bottom: 8, right: 8 }}>
-			<Fab color='primary' aria-label='add' className={classes.speedDial} onClick={handleOpen}>
+			<Fab
+				color='primary'
+				aria-label='add'
+				style={{
+					position: 'absolute',
+					right: 8,
+					bottom: props.isMobile ? 64 : 8,
+				}}
+				onClick={handleOpen}
+			>
 				<AddIcon />
 			</Fab>
 			<Dialog open={open} onClose={handleClose} aria-labelledby='form-dialog-title'>
