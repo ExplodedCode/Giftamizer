@@ -1,5 +1,7 @@
 const urlMetadata = require('url-metadata');
+
 const amazonScraper = require('amazon-buddy');
+const amazonAsin = require('amazon-asin');
 
 module.exports = function (e, db) {
 	var module = {};
@@ -7,16 +9,16 @@ module.exports = function (e, db) {
 	//  /api/syncUsers/:location/:tenant/:group
 	module.get = async (request, response, next) => {
 		try {
-			var amazonRegex = RegExp('(http|https)://www.amazon.com/([\\w-]+/)?(dp|gp/product)/(\\w+/)?(\\w{10})');
+			var amazonID = amazonAsin.syncParseAsin(request.query.url).ASIN;
 
-			if (request.query.url.match(amazonRegex)) {
-				var amazonID = '';
-				m = request.query.url.match(amazonRegex);
-				if (m) {
-					amazonID = m[5];
-				}
-
+			if (amazonID) {
 				const product = await amazonScraper.asin({ asin: amazonID });
+
+				console.log(
+					product.result[0].variants.filter((obj) => {
+						return obj.asin === amazonID;
+					})[0]
+				);
 
 				var image = product.result[0].variants.filter((obj) => {
 					return obj.asin === amazonID;
@@ -27,17 +29,17 @@ module.exports = function (e, db) {
 					description: product.result[0].description,
 					image: image,
 				});
+			} else {
+				urlMetadata(request.query.url).then(
+					function (metadata) {
+						response.send(metadata);
+					},
+					function (error) {
+						// failure handler
+						response.status(500).send({ error: 'error' });
+					}
+				);
 			}
-
-			urlMetadata(request.query.url).then(
-				function (metadata) {
-					response.send(metadata);
-				},
-				function (error) {
-					// failure handler
-					response.status(500).send({ error: 'error' });
-				}
-			);
 		} catch (error) {
 			console.log(error);
 			response.status(500).send({ error: 'error' });

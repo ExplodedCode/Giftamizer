@@ -12,6 +12,10 @@ import Alert from '../../Alert';
 
 import { db, firebaseAuth } from '../../../firebase/constants';
 
+import Button from '@material-ui/core/Button';
+import { logout } from '../../../firebase/auth';
+import LockIcon from '@material-ui/icons/Lock';
+
 class Printing extends Component {
 	constructor(props) {
 		super(props);
@@ -28,7 +32,7 @@ class Printing extends Component {
 
 			loading: true,
 		};
-		props.setTitle('Theme');
+		props.setTitle('My Account');
 	}
 
 	componentDidMount() {
@@ -92,6 +96,13 @@ class Printing extends Component {
 						<Grid item xs={12}>
 							<ColorTool settings={this.state} />
 						</Grid>
+						{this.props.isMobile && (
+							<Grid item xs={12}>
+								<Button variant='contained' color='default' startIcon={<LockIcon />} onClick={logout} fullWidth>
+									Logout
+								</Button>
+							</Grid>
+						)}
 					</Grid>
 				</Paper>
 				<Snackbar open={this.state.snackbarOpen} autoHideDuration={5000} onClose={this.handleSnackbarClose}>

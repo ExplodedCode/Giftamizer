@@ -37,8 +37,8 @@ export default function SpeedDialTooltipOpen(props) {
 	};
 
 	return (
-		<div style={{ position: 'fixed', bottom: 8, right: 8 }}>
-			<Backdrop open={open} style={{ zIndex: 50 }} />
+		<div style={{ position: 'fixed', bottom: props.isMobile ? 56 : 0, right: 0 }}>
+			{/* <Backdrop open={open} style={{ zIndex: 50 }} /> */}
 			<SpeedDial ariaLabel='SpeedDial tooltip example' className={classes.speedDial} icon={<GroupIcon />} onClose={handleClose} onOpen={handleOpen} open={open}>
 				<JoinGroup key={'Join'} icon={<PersonAddIcon />} tooltipTitle={'Join'} tooltipOpen getGroups={props.getGroups} handleSpeedDialClose={handleClose} />
 				<CreateGroup key={'Create'} icon={<GroupAddIcon />} tooltipTitle={'Create'} tooltipOpen getGroups={props.getGroups} handleSpeedDialClose={handleClose} />

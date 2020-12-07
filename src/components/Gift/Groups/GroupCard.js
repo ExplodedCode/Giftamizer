@@ -22,7 +22,7 @@ const useStyles = makeStyles({
 	},
 });
 
-export default function GroupCard({ group, getGroups }) {
+export default function GroupCard({ group, getGroups, socket }) {
 	const classes = useStyles();
 
 	return (
@@ -45,7 +45,7 @@ export default function GroupCard({ group, getGroups }) {
 				</CardContent>
 			</CardActionArea>
 			<CardActions>
-				<Invite group={group} />
+				<Invite group={group} socket={socket} />
 				{group.owner === firebaseAuth().currentUser.uid && <Edit group={group} getGroups={getGroups} />}
 			</CardActions>
 		</Card>

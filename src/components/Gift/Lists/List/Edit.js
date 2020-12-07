@@ -20,7 +20,7 @@ import Autocomplete from '@material-ui/lab/Autocomplete';
 import Alert from '../../../Alert';
 import Snackbar from '@material-ui/core/Snackbar';
 
-import Delete from '../Delete';
+import Delete from './Delete';
 
 import { editList, getMyGroups, getListDetails } from '../../../../firebase/gift/lists';
 
@@ -105,7 +105,7 @@ export default function SpeedDialTooltipOpen(props) {
 					/>
 				</DialogContent>
 				<DialogActions>
-					<Delete list={props.list} setAlert={setAlert} closeModal={handleClose} getItems={props.getItems} />
+					<Delete list={props.list} setAlert={setAlert} closeModal={handleClose} />
 					<Button onClick={handleClose}>Cancel</Button>
 					<Button
 						onClick={() => {

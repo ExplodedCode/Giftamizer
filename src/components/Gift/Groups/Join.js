@@ -69,6 +69,11 @@ export default function FormDialog(props) {
 										setAlert({ open: true, message: 'Group not found!', severity: 'error' });
 										handleClose();
 										props.handleSpeedDialClose();
+									}
+									if (result === 'alreadyjoined') {
+										setAlert({ open: true, message: 'Already in group!', severity: 'warning' });
+										handleClose();
+										props.handleSpeedDialClose();
 									} else {
 										setAlert({ open: true, message: 'Joined group!', severity: 'success' });
 										handleClose();

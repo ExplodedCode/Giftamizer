@@ -58,14 +58,6 @@ class Landing extends React.Component {
 		return (
 			<div>
 				<Container style={{ paddingTop: 20, marginBottom: 96 }}>
-					{/* <Grid container spacing={3}>
-						{this.state.lists.map((lists, i) => (
-							<Grid key={lists.id} item xs={12}>
-								<ItemCard getlists={this.getlists} lists={lists} />
-							</Grid>
-						))}
-					</Grid> */}
-
 					<List>
 						{this.state.lists.map((list, i) => (
 							<ListItem button component={Link} to={'/gift/list/' + list._id}>
@@ -91,7 +83,7 @@ class Landing extends React.Component {
 						</Typography>
 					)}
 				</Container>
-				<CreateList getlists={this.getlists} />
+				<CreateList getlists={this.getlists} isMobile={this.props.isMobile} />
 			</div>
 		);
 	}

@@ -8,7 +8,6 @@ export function getMyGroups() {
 		socket.emit('req:listsMyGroups', firebaseAuth().currentUser.uid);
 
 		socket.on('res:listsMyGroups', (result) => {
-			console.log(result);
 			socket.off('res:listsMyGroups');
 			resolve(result);
 		});
@@ -26,50 +25,39 @@ export function createList(name, groups, isForChild) {
 }
 
 export function editList(id, name, groups, isForChild) {
-	var listsRef = db.collection('lists').doc(id);
-
-	var list = { name: name, groups: groups, isForChild: isForChild };
+	var list = { _id: id, name: name, groups: groups, isForChild: isForChild };
 
 	list.owner = firebaseAuth().currentUser.uid;
 
-	return listsRef
-		.set(list, { merge: true })
-		.then(function (docRef) {
-			return 'ok';
-		})
-		.catch(function (error) {
-			return error;
+	return new Promise((resolve, reject) => {
+		socket.emit('set:list', {
+			...list,
+			editor: firebaseAuth().currentUser.uid,
 		});
+
+		socket.on('res:set:list', (result) => {
+			socket.off('res:set:list');
+			resolve(result);
+		});
+	});
 }
 
 export function deleteList(id) {
-	var listsRef = db.collection('lists').doc(id);
-
-	return listsRef
-		.delete()
-		.then(function () {
-			return 'ok';
-		})
-		.catch(function (error) {
-			console.error('Error removing document: ', error);
-			return 'error';
+	return new Promise((resolve, reject) => {
+		socket.emit('req:deleteList', { listId: id, userId: firebaseAuth().currentUser.uid });
+		socket.on('res:deleteList', (result) => {
+			socket.off('res:deleteList');
+			resolve(result);
 		});
+	});
 }
 
 export function getListDetails(list) {
-	var docRef = db.collection('lists').doc(list);
-
-	return docRef
-		.get()
-		.then(function (doc) {
-			if (doc.exists) {
-				return doc.data();
-			} else {
-				return 'not found';
-			}
-		})
-		.catch(function (error) {
-			console.log('Error getting documents: ', error);
-			return 'error';
+	return new Promise((resolve, reject) => {
+		socket.emit('req:listData', list);
+		socket.on('res:listData', (result) => {
+			socket.off('res:listData');
+			resolve(result);
 		});
+	});
 }

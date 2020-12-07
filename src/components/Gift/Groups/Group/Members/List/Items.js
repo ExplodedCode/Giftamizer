@@ -24,47 +24,35 @@ class Landing extends React.Component {
 		if (!this.state.didLoad) {
 			this.getListItems();
 		}
+
+		this.props.socket.emit('join', 'livelist:' + this.props.match.params.list);
+		this.props.socket.on('res:updateLiveList', () => {
+			this.props.socket.emit('req:getListItemsFromGroup', { listId: this.props.match.params.list });
+		});
 	}
 
 	getListItems = () => {
-		this.setState({ items: [] });
-
-		db.collection('items')
-			.where('lists', 'array-contains', this.props.match.params.list)
-			.where('owner', '==', this.props.match.params.member)
-			.onSnapshot((snapshot) => {
-				snapshot.docChanges().forEach((change) => {
-					if (change.type === 'added') {
-						var item = { ...change.doc.data(), id: change.doc.id };
-						if (
-							this.state.items.filter(
-								(e) =>
-									e.id === item.id &&
-									e.name === item.name &&
-									e.description === item.description &&
-									e.url === item.url &&
-									e.name === item.name &&
-									e.status === item.status &&
-									e.takenBy === item.takenBy
-							).length === 0
-						) {
-							this.setState({ items: [...this.state.items, item] });
-						}
-					}
-					if (change.type === 'modified') {
-						var itemItem = { ...change.doc.data(), id: change.doc.id };
-						var MtempItems = this.state.items;
-						MtempItems[this.state.items.indexOf(this.state.items.filter((e) => e.id === itemItem.id)[0])] = itemItem;
-						this.setState({ items: MtempItems });
-					}
-					if (change.type === 'removed') {
-						var RtempItems = this.state.items;
-						delete RtempItems[this.state.items.indexOf(this.state.items.filter((e) => e.id === change.doc.id)[0])];
-						this.setState({ items: RtempItems });
-					}
+		this.props.socket.emit('req:getListItemsFromGroup', { listId: this.props.match.params.list });
+		this.props.socket.on('res:getListItemsFromGroup', (result) => {
+			if (result) {
+				this.setState({
+					items: result,
+					loading: false,
 				});
-			});
+			} else {
+				this.setState({
+					loading: false,
+				});
+			}
+		});
 	};
+
+	componentWillUnmount() {
+		this.props.socket.emit('leave', 'livelist:' + this.props.match.params.list);
+
+		this.props.socket.off('res:updateLiveList');
+		this.props.socket.off('res:getListItemsFromGroup');
+	}
 
 	render() {
 		return (
@@ -73,7 +61,7 @@ class Landing extends React.Component {
 					<Grid container spacing={3}>
 						{this.state.items.map((item, i) => (
 							<Grid item xs={12}>
-								<ItemCard item={item} />
+								<ItemCard item={item} list={this.props.match.params.list} getListItems={this.getListItems} />
 							</Grid>
 						))}
 						{this.state.items.length === 0 && !this.state.loading && (
