@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/importer/firestore to mongodb/node_modules
 /.pnp
 .pnp.js
 

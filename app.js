@@ -83,7 +83,14 @@ async function start(db, server, io) {
 			// add user data
 			socket.on('add:userData', (reqData) => {
 				collection_users.insert({ ...reqData }).then(() => {
-					console.log('New User! ' + reqData.uid + ' - ' + reqData.displayName + ' - ' + reqData.email);
+					// console.log('New User! ' + reqData.uid + ' - ' + reqData.displayName + ' - ' + reqData.email);
+				});
+			});
+
+			// set user data
+			socket.on('set:userData', (userData) => {
+				collection_users.update({ uid: userData.uid }, { $set: { ...userData.display } }).then(() => {
+					// console.log('user updated User! ' + userData.uid);
 				});
 			});
 
@@ -104,7 +111,7 @@ async function start(db, server, io) {
 			// create group
 			socket.on('add:group', (reqData) => {
 				collection_groups.insert({ ...reqData }).then(() => {
-					console.log('New Group! ' + reqData.id + ' - ' + reqData.name);
+					// console.log('New Group! ' + reqData.id + ' - ' + reqData.name);
 				});
 			});
 
@@ -119,6 +126,20 @@ async function start(db, server, io) {
 						});
 					} else {
 						io.to(socket.id).emit('res:set:group', 'notfound');
+					}
+				});
+			});
+
+			// remove member
+			socket.on('del:member', (data) => {
+				collection_groups.findOne({ id: data.groupId }).then((doc) => {
+					if (doc && doc.owner === data.user) {
+						collection_groups.update({ id: data.groupId }, { $pull: { members: data.userId } }).then(() => {
+							// ====================================================== needs emit to group members view!!
+							io.to(socket.id).emit('res:del:member', 'ok');
+						});
+					} else {
+						io.to(socket.id).emit('res:del:member', 'notfound');
 					}
 				});
 			});
@@ -144,11 +165,11 @@ async function start(db, server, io) {
 			// get members
 			socket.on('req:groupMembers', ({ groupId, userId }) => {
 				collection_groups.findOne({ id: groupId }).then((group) => {
-					collection_users.find({ $and: [{ uid: { $in: group.members } }, { uid: { ne: userId } }] }).then((members) => {
+					collection_users.find({ $and: [{ uid: { $in: group.members } }, { uid: { $ne: userId } }] }).then((members) => {
 						io.to(socket.id).emit('res:groupMembers', members);
 					});
 					// if (membersOutput.length === group.members.length) {
-					// 	console.log(membersOutput);
+					// 	// console.log(membersOutput);
 					// 	io.to(socket.id).emit('res:groupMembers', membersOutput);
 					// }
 				});
@@ -156,7 +177,7 @@ async function start(db, server, io) {
 
 			// get non-user lists in group
 			socket.on('req:nonUserLists', ({ groupId }) => {
-				console.log(groupId);
+				// console.log(groupId);
 				collection_lists.find({ groups: groupId, isForChild: true }).then((members) => {
 					io.to(socket.id).emit('res:nonUserLists', members);
 				});
@@ -169,7 +190,7 @@ async function start(db, server, io) {
 			// ============================================ ▽ List Data ▽
 			const collection_lists = db.get('lists'); // initialize collection
 
-			// get user lists
+			// get my lists
 			socket.on('req:listsData', (userId) => {
 				collection_lists.find({ owner: userId }).then((docs) => {
 					io.to(socket.id).emit('res:listsData', docs);
@@ -200,7 +221,7 @@ async function start(db, server, io) {
 			// create list
 			socket.on('add:list', (reqData) => {
 				collection_lists.insert({ ...reqData }).then(() => {
-					console.log('New list! ' + reqData.id + ' - ' + reqData.name);
+					// console.log('New list! ' + reqData.id + ' - ' + reqData.name);
 				});
 			});
 
@@ -208,10 +229,11 @@ async function start(db, server, io) {
 			socket.on('set:list', (data) => {
 				collection_lists.findOne({ _id: data._id }).then((doc) => {
 					if (doc && doc.owner === data.editor) {
-						delete data.owner;
+						delete data.editor;
 						collection_lists.update({ _id: data._id }, { $set: { ...data } }).then(() => {
 							// ====================================================== needs emit to group members view!!
 							io.to(socket.id).emit('res:set:list', 'ok');
+							io.to('liveitems:' + doc.owner).emit('res:updateLiveItems', null);
 						});
 					} else {
 						io.to(socket.id).emit('res:set:list', 'notfound');
@@ -228,6 +250,7 @@ async function start(db, server, io) {
 						});
 					} else {
 						io.to(socket.id).emit('res:deleteList', 'notfound');
+						io.to('liveitems:' + doc.owner).emit('res:updateLiveItems', null);
 					}
 				});
 			});
@@ -249,7 +272,8 @@ async function start(db, server, io) {
 			// create user items
 			socket.on('add:item', (reqData) => {
 				collection_items.insert({ ...reqData }).then(() => {
-					console.log('New list! ' + reqData.id + ' - ' + reqData.name);
+					// console.log('New item! ' + reqData.id + ' - ' + reqData.name);
+					io.to('liveitems:' + reqData.owner).emit('res:updateLiveItems', null);
 				});
 			});
 
@@ -263,16 +287,38 @@ async function start(db, server, io) {
 			// set item
 			socket.on('set:item', (data) => {
 				collection_items.findOne({ _id: data._id }).then((doc) => {
-					console.log(doc, data);
+					// console.log(doc, data);
 					if (doc && doc.owner === data.editor) {
-						delete data.owner;
+						delete data.editor;
 						collection_items.update({ _id: data._id }, { $set: { ...data } }).then(() => {
 							// ====================================================== needs emit to group members view!!
 							io.to(socket.id).emit('res:set:item', 'ok');
+
+							// console.log('liveitems:' + doc.owner);
+
+							io.to('liveitems:' + doc.owner).emit('res:updateLiveItems', null);
+							doc.lists.forEach((list) => {
+								io.to('livelist:' + list).emit('res:updateLiveList', null);
+							});
 						});
 					} else {
 						io.to(socket.id).emit('res:set:item', 'notfound');
 					}
+				});
+			});
+
+			// get users items by group
+			socket.on('req:userItemsData', (data) => {
+				collection_lists.find({ owner: data.userId, groups: data.groupId }).then((lists) => {
+					var listIds = [];
+					lists.forEach((list) => {
+						if (!list.isForChild) {
+							listIds.push(String(list._id));
+						}
+					});
+					collection_items.find({ owner: data.userId, lists: { $in: listIds } }).then((items) => {
+						io.to(socket.id).emit('res:userItemsData', items);
+					});
 				});
 			});
 
@@ -289,6 +335,7 @@ async function start(db, server, io) {
 					if (doc && doc.owner === userId) {
 						collection_items.remove({ owner: userId, _id: itemId }).then((docs) => {
 							io.to(socket.id).emit('res:deleteItem', 'ok');
+							io.to('liveitems:' + doc.owner).emit('res:updateLiveItems', null);
 						});
 					} else {
 						io.to(socket.id).emit('res:deleteItem', 'notfound');
@@ -309,6 +356,7 @@ async function start(db, server, io) {
 
 						doc.lists.forEach((list) => {
 							io.to('livelist:' + list).emit('res:updateLiveList', 'update');
+							io.to('liveitems:' + doc.owner).emit('res:updateLiveItems', null);
 						});
 					} else {
 						io.to(socket.id).emit('res:itemStatus', 'notfound');
@@ -320,6 +368,13 @@ async function start(db, server, io) {
 			socket.on('req:getListItemsFromGroup', ({ listId }) => {
 				collection_items.find({ lists: listId }).then((docs) => {
 					io.to(socket.id).emit('res:getListItemsFromGroup', docs);
+				});
+			});
+
+			// get my shopping list
+			socket.on('req:getShoppingList', ({ userId }) => {
+				collection_items.find({ takenBy: userId, status: { $in: ['planned', 'unavailable'] } }).then((items) => {
+					io.to(socket.id).emit('res:getShoppingList', items);
 				});
 			});
 
@@ -351,6 +406,6 @@ async function start(db, server, io) {
 			}
 		});
 	} catch (error) {
-		console.log(error);
+		// console.log(error);
 	}
 }

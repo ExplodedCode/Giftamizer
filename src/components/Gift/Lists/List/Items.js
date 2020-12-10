@@ -53,7 +53,7 @@ class Landing extends React.Component {
 					</Grid>
 				</Container>
 				<EditList list={this.props.match.params.list} getItems={this.getItems} />
-				<CreateItem list={this.props.match.params.list} getItems={this.getItems} />
+				<CreateItem list={this.props.match.params.list} getItems={this.getItems} isMobile={this.props.isMobile} />
 			</div>
 		);
 	}
