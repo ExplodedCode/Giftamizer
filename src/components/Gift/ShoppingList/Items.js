@@ -6,7 +6,7 @@ import Typography from '@material-ui/core/Typography';
 
 import ItemCard from './ItemCard';
 
-import { db, firebaseAuth } from '../../../firebase/constants';
+import { firebaseAuth } from '../../../firebase/constants';
 
 class Landing extends React.Component {
 	constructor(props) {
@@ -20,49 +20,25 @@ class Landing extends React.Component {
 	}
 
 	componentDidMount() {
-		if (!this.state.didLoad) {
-			this.getMemberItems();
-		}
+		this.getShopingList();
 	}
 
-	getMemberItems = () => {
+	getShopingList = () => {
 		this.setState({ items: [] });
 
-		db.collection('items')
-			.where('takenBy', '==', firebaseAuth().currentUser.uid)
-			.where('status', '==', 'planned')
-			.onSnapshot((snapshot) => {
-				snapshot.docChanges().forEach((change) => {
-					if (change.type === 'added') {
-						var item = { ...change.doc.data(), id: change.doc.id };
-						if (
-							this.state.items.filter(
-								(e) =>
-									e.id === item.id &&
-									e.name === item.name &&
-									e.description === item.description &&
-									e.url === item.url &&
-									e.name === item.name &&
-									e.status === item.status &&
-									e.takenBy === item.takenBy
-							).length === 0
-						) {
-							this.setState({ items: [...this.state.items, item] });
-						}
-					}
-					if (change.type === 'modified') {
-						var tempItem = { ...change.doc.data(), id: change.doc.id };
-						var MtempItems = this.state.items;
-						MtempItems[this.state.items.indexOf(this.state.items.filter((e) => e.id === tempItem.id)[0])] = tempItem;
-						this.setState({ items: MtempItems });
-					}
-					if (change.type === 'removed') {
-						var RtempItems = this.state.items;
-						delete RtempItems[this.state.items.indexOf(this.state.items.filter((e) => e.id === change.doc.id)[0])];
-						this.setState({ items: RtempItems });
-					}
+		this.props.socket.emit('req:getShoppingList', { userId: firebaseAuth().currentUser.uid });
+		this.props.socket.on('res:getShoppingList', (result) => {
+			if (result) {
+				this.setState({
+					items: result,
+					loading: false,
 				});
-			});
+			} else {
+				this.setState({
+					loading: false,
+				});
+			}
+		});
 	};
 
 	render() {
@@ -72,7 +48,7 @@ class Landing extends React.Component {
 					<Grid container spacing={3}>
 						{this.state.items.map((item, i) => (
 							<Grid item xs={12}>
-								<ItemCard item={item} />
+								<ItemCard item={item} getShopingList={this.getShopingList} />
 							</Grid>
 						))}
 						{this.state.items.length === 0 && (

@@ -6,87 +6,40 @@ import Typography from '@material-ui/core/Typography';
 
 import ItemCard from './ItemCard';
 
-import { db, firebaseAuth } from '../../../../../firebase/constants';
+import { firebaseAuth } from '../../../../../firebase/constants';
 
 class Landing extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {
 			items: [],
-			lists: [],
 			owner: null,
-			didLoad: false,
 			loading: true,
 		};
 	}
 
 	componentDidMount() {
-		if (!this.state.didLoad) {
-			this.getMemberList();
-		}
+		this.getMemberItems();
+
+		this.props.socket.emit('join', 'liveitems:' + this.props.match.params.member);
+		this.props.socket.on('res:updateLiveItems', () => {
+			this.props.socket.emit('req:userItemsData', { userId: this.props.match.params.member, groupId: this.props.match.params.group });
+		});
 	}
 
-	getMemberList = () => {
-		this.setState({ lists: [] });
-
-		db.collection('lists')
-			.where('groups', 'array-contains', this.props.match.params.group)
-			.where('owner', '==', this.props.match.params.member)
-			.where('isForChild', '==', false)
-
-			.onSnapshot((querySnapshot) => {
-				var lists = [];
-				querySnapshot.forEach(function (doc) {
-					lists.push(doc.id);
-				});
-				this.setState({ lists: lists }, () => {
-					this.getMemberItems();
-				});
-			});
-		this.setState({ loading: false });
-	};
-
 	getMemberItems = () => {
-		this.setState({ items: [] });
-
-		console.log('start');
-
-		this.state.lists.forEach((list) => {
-			db.collection('items')
-				.where('lists', 'array-contains', list)
-				.where('owner', '==', this.props.match.params.member)
-				.onSnapshot((snapshot) => {
-					snapshot.docChanges().forEach((change) => {
-						if (change.type === 'added') {
-							var item = { ...change.doc.data(), id: change.doc.id };
-							if (
-								this.state.items.filter(
-									(e) =>
-										e.id === item.id &&
-										e.name === item.name &&
-										e.description === item.description &&
-										e.url === item.url &&
-										e.name === item.name &&
-										e.status === item.status &&
-										e.takenBy === item.takenBy
-								).length === 0
-							) {
-								this.setState({ items: [...this.state.items, item] });
-							}
-						}
-						if (change.type === 'modified') {
-							var itemItem = { ...change.doc.data(), id: change.doc.id };
-							var MtempItems = this.state.items;
-							MtempItems[this.state.items.indexOf(this.state.items.filter((e) => e.id === itemItem.id)[0])] = itemItem;
-							this.setState({ items: MtempItems });
-						}
-						if (change.type === 'removed') {
-							var RtempItems = this.state.items;
-							delete RtempItems[this.state.items.indexOf(this.state.items.filter((e) => e.id === change.doc.id)[0])];
-							this.setState({ items: RtempItems });
-						}
-					});
+		this.props.socket.emit('req:userItemsData', { userId: this.props.match.params.member, groupId: this.props.match.params.group });
+		this.props.socket.on('res:userItemsData', (result) => {
+			if (result) {
+				this.setState({
+					items: result,
+					loading: false,
 				});
+			} else {
+				this.setState({
+					loading: false,
+				});
+			}
 		});
 	};
 
@@ -100,7 +53,7 @@ class Landing extends React.Component {
 						<Grid container spacing={3}>
 							{this.state.items.map((item, i) => (
 								<Grid item xs={12}>
-									<ItemCard item={item} />
+									<ItemCard item={item} getMemberItems={this.getMemberItems} />
 								</Grid>
 							))}
 							{this.state.items.length === 0 && !this.state.loading && (

@@ -131,8 +131,8 @@ export default function SpeedDialTooltipOpen(props) {
 											console.log(error);
 										}
 
-										setName(data.title);
-										setDescription(data.description);
+										setName(data.title.substring(0, 75));
+										setDescription(data.description.substring(0, 220));
 										setUrl(urlQuery);
 										setLoadingMetadata(false);
 									});

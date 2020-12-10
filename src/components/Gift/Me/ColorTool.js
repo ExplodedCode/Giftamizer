@@ -157,7 +157,13 @@ function ColorTool(props) {
 			backgroundValue: state.backgroundType === 'color' ? state.primary : state.backgroundValue,
 			displayName: state.displayName,
 		}).then((result) => {
-			setState({ ...state, saveloading: false });
+			if (result === 'ok') {
+				setState({ ...state, saveloading: false });
+				props.openSnackber('Account saved!', 'success');
+			} else {
+				setState({ ...state, saveloading: false });
+				props.openSnackber('Error saving account!', 'error');
+			}
 		});
 	};
 

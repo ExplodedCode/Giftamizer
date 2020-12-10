@@ -1,15 +1,14 @@
-import { db, firebaseAuth } from '../constants';
+import { firebaseAuth } from '../constants';
+
+import socketIOClient from 'socket.io-client';
+var socket = socketIOClient(window.location.hostname.includes('localhost') ? '//localhost:8080' : '//' + window.location.hostname);
 
 export function saveAccountDisplay(display) {
-	var groupRef = db.collection('users').doc(firebaseAuth().currentUser.uid);
-
-	return groupRef
-		.set(display, { merge: true })
-		.then(function (docRef) {
-			return 'ok';
-		})
-		.catch(function (error) {
-			console.log('Error writting document:', error);
-			return 'error';
+	return new Promise((resolve, reject) => {
+		socket.emit('set:userData', {
+			uid: firebaseAuth().currentUser.uid,
+			display: display,
 		});
+		resolve('ok');
+	});
 }

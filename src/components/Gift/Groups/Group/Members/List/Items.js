@@ -6,8 +6,6 @@ import Typography from '@material-ui/core/Typography';
 
 import ItemCard from './ItemCard';
 
-import { db } from '../../../../../../firebase/constants';
-
 class Landing extends React.Component {
 	constructor(props) {
 		super(props);

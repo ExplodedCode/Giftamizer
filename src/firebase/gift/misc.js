@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 
 import socketIOClient from 'socket.io-client';
 
-import { db, firebaseAuth } from '../constants';
+import { firebaseAuth } from '../constants';
 
 import Chip from '@material-ui/core/Chip';
 

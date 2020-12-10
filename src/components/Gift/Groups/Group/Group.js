@@ -9,8 +9,6 @@ import NonUsersListCard from './NonUsersListCard';
 
 import { firebaseAuth } from '../../../../firebase/constants';
 
-import { getGroupMemberIds, getUserInfo, getNonUserLists } from '../../../../firebase/gift/members';
-
 class Landing extends React.Component {
 	constructor(props) {
 		super(props);
