@@ -61,7 +61,7 @@ export default function SpeedDialTooltipOpen(props) {
 				Edit
 			</Button>
 			<Dialog open={open} onClose={handleClose} aria-labelledby='form-dialog-title'>
-				<DialogTitle id='form-dialog-title'>Add Item</DialogTitle>
+				<DialogTitle id='form-dialog-title'>Edit Item</DialogTitle>
 				<DialogContent>
 					<DialogContentText>Fill out the details below, or copy & paste a URL and will we wil autofill the details.</DialogContentText>
 					<TextField autoFocus margin='dense' label='Name' fullWidth value={name} onChange={(event) => setName(event.target.value)} disabled={loadingMetadata} />
@@ -99,8 +99,8 @@ export default function SpeedDialTooltipOpen(props) {
 											setImage(data.image);
 										}
 
-										setName(data.title);
-										setDescription(data.description);
+										setName(data.title.substring(0, 75) + (data.title.length > 60 ? '…' : ''));
+										setDescription(data.description.substring(0, 220) + (data.description.length > 200 ? '…' : ''));
 										setUrl(urlQuery);
 										setLoadingMetadata(false);
 									});

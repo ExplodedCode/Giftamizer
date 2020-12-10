@@ -1,4 +1,4 @@
-import { db, firebaseAuth } from '../constants';
+import { firebaseAuth } from '../constants';
 
 import socketIOClient from 'socket.io-client';
 var socket = socketIOClient(window.location.hostname.includes('localhost') ? '//localhost:8080' : '//' + window.location.hostname);

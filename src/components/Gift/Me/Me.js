@@ -40,40 +40,49 @@ class Printing extends Component {
 	}
 
 	getThemeSettings = () => {
-		var themeRef = db.collection('users').doc(firebaseAuth().currentUser.uid);
-
-		themeRef
-			.get()
-			.then((doc) => {
-				console.log(doc.data());
-				if (doc.exists && doc.data().backgroundType && doc.data().backgroundValue) {
+		this.props.socket.emit('req:userData', firebaseAuth().currentUser.uid);
+		this.props.socket.on('res:userData', (result) => {
+			if (result) {
+				if (result.backgroundType && result.backgroundValue) {
 					this.setState({
-						main: doc.data().backgroundValue,
-						textShade: doc.data().textShade,
-						backgroundType: doc.data().backgroundType,
-						backgroundValue: doc.data().backgroundValue,
-						displayName: doc.data().displayName,
-						image: doc.data().image,
+						main: result.backgroundValue,
+						textShade: result.textShade,
+						backgroundType: result.backgroundType,
+						backgroundValue: result.backgroundValue,
+						displayName: result.displayName,
+						image: result.image,
 						loading: false,
 					});
 				} else {
 					this.setState({
-						displayName: doc.data().displayName,
+						displayName: result.displayName,
 						backgroundType: 'color',
 						loading: false,
 					});
 				}
-			})
-			.catch((error) => {
-				console.log('Error getting document:', error);
-				this.setState({ loading: false });
-			});
+			} else {
+				this.setState({
+					loading: false,
+				});
+			}
+		});
+
+		// var themeRef = db.collection('users').doc(firebaseAuth().currentUser.uid);
+
+		// themeRef
+		// 	.get()
+		// 	.then((doc) => {
+		// 		console.log(doc.data());
+		// 	})
+		// 	.catch((error) => {
+		// 		console.log('Error getting document:', error);
+		// 		this.setState({ loading: false });
+		// 	});
 	};
 
 	handleSnackbarClose = () => {
 		this.setState({
 			snackbarOpen: false,
-			snackbarMessage: '',
 		});
 	};
 	handleSnackbarOpen = (message, severity) => {
@@ -94,7 +103,7 @@ class Printing extends Component {
 				<Paper elevation={9} style={{ paddingLeft: 12, paddingRight: 12, margin: 8, marginTop: 20 }}>
 					<Grid container spacing={3}>
 						<Grid item xs={12}>
-							<ColorTool settings={this.state} />
+							<ColorTool settings={this.state} openSnackber={this.handleSnackbarOpen} />
 						</Grid>
 						{this.props.isMobile && (
 							<Grid item xs={12}>

@@ -13,6 +13,10 @@ import Badge from '@material-ui/core/Badge';
 
 import ListAltIcon from '@material-ui/icons/ListAlt';
 import GroupIcon from '@material-ui/icons/Group';
+
+import StorageIcon from '@material-ui/icons/Storage';
+import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
+
 import WarningIcon from '@material-ui/icons/Warning';
 
 const StyledBadge = withStyles((theme) => ({
@@ -80,6 +84,25 @@ class Landing extends React.Component {
 							</ListItemIcon>
 							<ListItemText primary='Create a lists for your kids (or pet😉)' secondary='These lists will display separately from yours.' />
 						</ListItem>
+						<ListItem>
+							<ListItemIcon>
+								<StyledBadge badgeContent={'NEW'} color='secondary'>
+									<StorageIcon />
+								</StyledBadge>
+							</ListItemIcon>
+							<ListItemText
+								primary='New server & database.'
+								secondary={
+									<span>
+										Allows for more complex <i className='fas fa-gift' style={{ fontSize: '0.8rem', paddingLeft: 1, color: '#4caf50' }} />
+										<ArrowForwardIcon style={{ fontSize: '1rem', marginBottom: -3, paddingLeft: 2, color: '#000' }} />
+										<ListAltIcon style={{ fontSize: '1rem', marginBottom: -3, paddingLeft: 2, color: '#2196f3' }} />
+										<ArrowForwardIcon style={{ fontSize: '1rem', marginBottom: -3, paddingLeft: 2, color: '#000' }} />
+										<GroupIcon style={{ fontSize: '1rem', marginBottom: -3, paddingLeft: 2, color: '#f44336' }} /> linking
+									</span>
+								}
+							/>
+						</ListItem>
 					</List>
 					<br />
 					<br />
@@ -90,12 +113,6 @@ class Landing extends React.Component {
 								<WarningIcon />
 							</ListItemIcon>
 							<ListItemText primary="Uploading images from the mobile app doesn't work" secondary='Desktop is working' />
-						</ListItem>
-						<ListItem>
-							<ListItemIcon>
-								<WarningIcon />
-							</ListItemIcon>
-							<ListItemText primary='Pasting links from mobile may not work' secondary='Desktop is working' />
 						</ListItem>
 					</List>
 				</Container>
