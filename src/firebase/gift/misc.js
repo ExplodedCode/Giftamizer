@@ -6,7 +6,7 @@ import { firebaseAuth } from '../constants';
 
 import Chip from '@material-ui/core/Chip';
 
-var socket = socketIOClient(window.location.hostname.includes('localhost') ? '//localhost:8080' : '//' + window.location.hostname);
+var socket = socketIOClient('https://api.giftamizer.com');
 
 export function GroupChip({ groupId }) {
 	const [group, setGroup] = React.useState('');

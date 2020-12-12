@@ -26,6 +26,7 @@ const StyledBadge = withStyles((theme) => ({
 		padding: 6,
 		height: 10,
 		fontSize: '0.55rem',
+		zIndex: 0,
 	},
 }))(Badge);
 
@@ -98,13 +99,13 @@ class Landing extends React.Component {
 										<ArrowForwardIcon style={{ fontSize: '1rem', marginBottom: -3, paddingLeft: 2, color: '#000' }} />
 										<ListAltIcon style={{ fontSize: '1rem', marginBottom: -3, paddingLeft: 2, color: '#2196f3' }} />
 										<ArrowForwardIcon style={{ fontSize: '1rem', marginBottom: -3, paddingLeft: 2, color: '#000' }} />
-										<GroupIcon style={{ fontSize: '1rem', marginBottom: -3, paddingLeft: 2, color: '#f44336' }} /> linking
+										<GroupIcon style={{ fontSize: '1rem', marginBottom: -3, paddingLeft: 2, color: '#f44336' }} /> linking.
 									</span>
 								}
 							/>
 						</ListItem>
 					</List>
-					<br />
+					{/* <br />
 					<br />
 					<Typography variant='h5'>Known Issues:</Typography>
 					<List>
@@ -114,7 +115,7 @@ class Landing extends React.Component {
 							</ListItemIcon>
 							<ListItemText primary="Uploading images from the mobile app doesn't work" secondary='Desktop is working' />
 						</ListItem>
-					</List>
+					</List> */}
 				</Container>
 			</div>
 		);
