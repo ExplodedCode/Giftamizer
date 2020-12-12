@@ -19,9 +19,9 @@ module.exports = function (e, db) {
 	//  /api/syncUsers/:location/:tenant/:group
 	module.sendInvite = async (request, response, next) => {
 		try {
-			var email = request.query.email ?? '';
-			var code = request.query.code ?? '';
-			var name = request.query.name ?? '';
+			var email = request.query.email || '';
+			var code = request.query.code || '';
+			var name = request.query.name || '';
 
 			if (code.trim().length !== 12) {
 				response.status(500).send({ error: 'invalid code' });
