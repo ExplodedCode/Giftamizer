@@ -1,4 +1,3 @@
-const path = require('path');
 var express = require('express');
 const http = require('http');
 var cors = require('cors');
@@ -7,7 +6,7 @@ var bodyParser = require('body-parser');
 const port = process.env.PORT || 8080;
 
 const socketIO = require('socket.io');
-var connection_string = 'mongodb://root:qMhUXkqtFuvt4M6vdL6X@azure.trowbridge.tech:27017/Giftamizer?authSource=admin';
+var connection_string = 'mongodb://root:qMhUXkqtFuvt4M6vdL6X@4b3b1bdc0795:27017/Giftamizer?authSource=admin';
 
 var app = express();
 app.use(
@@ -16,8 +15,6 @@ app.use(
 		optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
 	})
 );
-
-app.use(express.static(path.join(__dirname, '/build')));
 
 // Body Parser Middleware
 app.use(bodyParser.json());
@@ -388,24 +385,7 @@ async function start(db, server, io) {
 		});
 		// ============================================ △ MongoDB △
 		//
-
-		//
-		//
-		//
-		//
-		//
-		//
-		// ============= ▽ Handles any requests that don't match the ones above ▽
-		app.get('*', async (req, res) => {
-			try {
-				res.sendFile(path.join(__dirname + '/build/index.html'));
-				console;
-			} catch (error) {
-				console.error(error.message);
-				response.status(500).send(error);
-			}
-		});
 	} catch (error) {
-		// console.log(error);
+		console.log(error);
 	}
 }

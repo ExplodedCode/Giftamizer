@@ -1,7 +1,7 @@
 import { firebaseAuth } from '../constants';
 
 import socketIOClient from 'socket.io-client';
-var socket = socketIOClient(window.location.hostname.includes('localhost') ? '//localhost:8080' : '//' + window.location.hostname);
+var socket = socketIOClient('https://api.giftamizer.com');
 
 export function getMyLists() {
 	return new Promise((resolve, reject) => {

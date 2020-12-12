@@ -33,7 +33,7 @@ export default class App extends Component {
 			authed: false,
 			loading: true,
 			user: null,
-			endpoint: window.location.hostname.includes('localhost') ? '//localhost:8080' : '//' + window.location.hostname,
+			endpoint: 'https://api.giftamizer.com',
 		};
 
 		socket = socketIOClient(this.state.endpoint); // initialize socket
