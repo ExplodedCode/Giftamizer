@@ -5,9 +5,11 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.ClipData;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.net.MailTo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -137,26 +139,33 @@ public class MainActivity extends AppCompatActivity {
         }
         webView.setWebViewClient(new Callback());
         webView.loadUrl(webview_url);
+
+        webView.setWebViewClient(new WebViewClient() {
+             public boolean shouldOverrideUrlLoading(WebView paramAnonymousWebView, String paramAnonymousString) {
+
+
+
+
+                 StringBuilder localStringBuilder = new StringBuilder();
+                 localStringBuilder.append(paramAnonymousString);
+                 Log.v("browser", localStringBuilder.toString());
+
+                 if ((paramAnonymousString != null) && (!paramAnonymousString.startsWith(webview_url)) && ((paramAnonymousString.startsWith("http://")) || (paramAnonymousString.startsWith("https://")))) {
+                     paramAnonymousWebView.getContext().startActivity(new Intent("android.intent.action.VIEW", Uri.parse(paramAnonymousString)));
+                     return true;
+                 } else if (paramAnonymousString.startsWith("mailto:")) {
+
+                     paramAnonymousWebView.getContext().startActivity(new Intent(Intent.ACTION_SENDTO, Uri.parse(paramAnonymousString)));
+                     return true;
+
+                 }
+                 return false;
+             }
+         });
+
         webView.setWebChromeClient(new WebChromeClient() {
 
-            /*--
-            openFileChooser is not a public Android API and has never been part of the SDK.
-            handling input[type="file"] requests for android API 16+; I've removed support below API 21 as it was failing to work along with latest APIs.
-            --*/
-        /*    public void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType, String capture) {
-                file_data = uploadMsg;
-                Intent i = new Intent(Intent.ACTION_GET_CONTENT);
-                i.addCategory(Intent.CATEGORY_OPENABLE);
-                i.setType(file_type);
-                if (multiple_files) {
-                    i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-                }
-                startActivityForResult(Intent.createChooser(i, "File Chooser"), file_req_code);
-            }
-        */
-            /*-- handling input[type="file"] requests for android API 21+ --*/
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
-
                 if(file_permission() && Build.VERSION.SDK_INT >= 21) {
                     file_path = filePathCallback;
                     Intent takePictureIntent = null;
@@ -313,5 +322,15 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onConfigurationChanged(Configuration newConfig){
         super.onConfigurationChanged(newConfig);
+    }
+
+    private Intent newEmailIntent(Context context, String address, String subject, String body, String cc) {
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.putExtra(Intent.EXTRA_EMAIL, new String[] { address });
+        intent.putExtra(Intent.EXTRA_TEXT, body);
+        intent.putExtra(Intent.EXTRA_SUBJECT, subject);
+        intent.putExtra(Intent.EXTRA_CC, cc);
+        intent.setType("message/rfc822");
+        return intent;
     }
 }

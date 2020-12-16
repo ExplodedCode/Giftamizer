@@ -16,6 +16,9 @@ import Signin from './components/Signin/Signin';
 import Signup from './components/Signin/Signup';
 import Gift from './components/Gift/Gift';
 
+import PrivacyPolicy from './components/PrivacyPolicy';
+import TermsConditions from './components/TermsConditions';
+
 var socket; // define socket
 
 function PrivateRoute({ component: Component, authed, ...rest }) {
@@ -91,6 +94,8 @@ export default class App extends Component {
 				<BrowserRouter>
 					<Switch>
 						<PublicRoute authed={this.state.authed} exact path='/' component={Landing} />
+						<Route exact path='/policy' component={PrivacyPolicy} />
+						<Route exact path='/terms' component={TermsConditions} />
 						<PublicRoute authed={this.state.authed} exact path='/signin' component={Signin} />
 						<PublicRoute authed={this.state.authed} exact path='/signup' component={Signup} />
 						<PrivateRoute authed={this.state.authed} path='/gift' component={(props) => <Gift {...props} user={this.state.user} socket={socket} />} />
