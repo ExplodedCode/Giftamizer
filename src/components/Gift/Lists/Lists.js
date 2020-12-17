@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import Container from '@material-ui/core/Container';
 import Typography from '@material-ui/core/Typography';
 
+import Alert from '@material-ui/lab/Alert';
+
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemAvatar from '@material-ui/core/ListItemAvatar';
@@ -24,6 +26,8 @@ class Landing extends React.Component {
 		this.state = {
 			lists: [],
 			loading: true,
+
+			showAssignError: false,
 		};
 		props.setTitle('My Lists');
 	}
@@ -40,6 +44,16 @@ class Landing extends React.Component {
 				this.setState({
 					lists: result,
 					loading: false,
+				});
+
+				var showAssignError = false;
+				result.forEach((lists) => {
+					if (lists.groups.length == 0) {
+						showAssignError = true;
+					}
+				});
+				this.setState({
+					showAssignError: showAssignError,
 				});
 			} else {
 				this.setState({
@@ -58,6 +72,12 @@ class Landing extends React.Component {
 		return (
 			<div>
 				<Container style={{ paddingTop: 20, marginBottom: 96 }}>
+					{this.state.showAssignError && (
+						<Alert severity='warning' style={{ marginBottom: 16 }}>
+							<b>A lists is not assigned to a group!</b> — In order for items to show up in groups they must be assigned to a list and lists must be assigned to a group.
+							<b> Add a group in the list settings.</b>
+						</Alert>
+					)}
 					<List>
 						{this.state.lists.map((list, i) => (
 							<ListItem button component={Link} to={'/gift/list/' + list._id}>

@@ -4,8 +4,12 @@ import Container from '@material-ui/core/Container';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 
+import Alert from '@material-ui/lab/Alert';
+
 import MemberCard from './MemberCard';
 import NonUsersListCard from './NonUsersListCard';
+
+import Invite from '../Invite';
 
 import { firebaseAuth } from '../../../../firebase/constants';
 
@@ -18,13 +22,17 @@ class Landing extends React.Component {
 			owner: null,
 			didLoad: false,
 			loading: true,
+
+			showAssignError: false,
 		};
+		props.setTitle('My Groups');
 	}
 
 	componentDidMount() {
 		if (!this.state.didLoad) {
 			this.getMembers();
 			this.getMembersNonUsersLists();
+			this.getlists();
 		}
 	}
 
@@ -62,15 +70,41 @@ class Landing extends React.Component {
 		});
 	};
 
+	getlists = () => {
+		this.props.socket.emit('req:listsData', firebaseAuth().currentUser.uid);
+		this.props.socket.on('res:listsData', (result) => {
+			if (result) {
+				var showAssignError = true;
+				result.forEach((lists) => {
+					if (lists.groups.includes(this.props.match.params.group)) {
+						showAssignError = false;
+					}
+				});
+				this.setState({
+					showAssignError: showAssignError,
+				});
+			}
+		});
+	};
+
 	render() {
 		return (
 			<div>
 				<Container style={{ paddingTop: 20, marginBottom: 96 }}>
+					{this.state.showAssignError && (
+						<Alert severity='warning' style={{ marginBottom: 16 }}>
+							<b>You are not sharing any lists with this group!</b> — In order for items to show up in groups they must be assigned to a list and lists must be assigned to the group.
+						</Alert>
+					)}
+
 					<Grid container spacing={3}>
 						{this.state.members.length === 0 && this.state.nonUsersLists.length === 0 && !this.state.loading ? (
 							<Grid item xs={12} style={{ textAlign: 'center' }}>
 								<Typography variant='h5' gutterBottom style={{ marginTop: 100 }}>
 									This group has no members, invite some friends and family!
+									<br />
+									<br />
+									<Invite socket={this.props.socket} group={this.props.match.params.group} fromNoMembers />
 								</Typography>
 							</Grid>
 						) : (
