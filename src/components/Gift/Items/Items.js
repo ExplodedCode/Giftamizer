@@ -4,6 +4,8 @@ import Container from '@material-ui/core/Container';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 
+import Alert from '@material-ui/lab/Alert';
+
 import CreateItem from './Create';
 import ItemCard from './ItemCard';
 
@@ -15,6 +17,8 @@ class Landing extends React.Component {
 		this.state = {
 			items: [],
 			loading: true,
+
+			showAssignError: false,
 		};
 		props.setTitle('My Items');
 	}
@@ -32,6 +36,16 @@ class Landing extends React.Component {
 					items: result,
 					loading: false,
 				});
+
+				var showAssignError = false;
+				result.forEach((item) => {
+					if (item.lists.length == 0) {
+						showAssignError = true;
+					}
+				});
+				this.setState({
+					showAssignError: showAssignError,
+				});
 			} else {
 				this.setState({
 					loading: false,
@@ -44,6 +58,12 @@ class Landing extends React.Component {
 		return (
 			<div>
 				<Container style={{ paddingTop: 20, marginBottom: 96 }}>
+					{this.state.showAssignError && (
+						<Alert severity='warning' style={{ marginBottom: 16 }}>
+							<b>An item is not assigned to a lists!</b> — In order for items to show up in groups they must be assigned to a list and lists must be assigned to a group.
+						</Alert>
+					)}
+
 					{this.state.items.length === 0 && !this.state.loading ? (
 						<Grid item xs={12} style={{ textAlign: 'center' }}>
 							<Typography variant='h5' gutterBottom style={{ marginTop: 100 }}>

@@ -3,9 +3,12 @@ import React from 'react';
 import Container from '@material-ui/core/Container';
 import Grid from '@material-ui/core/Grid';
 
+import Alert from '@material-ui/lab/Alert';
+
 import ItemCard from '../../Items/ItemCard';
 
 import { firebaseAuth } from '../../../../firebase/constants';
+import { getListDetails } from '../../../../firebase/gift/lists';
 
 import EditList from './Edit';
 import CreateItem from '../../Items/Create';
@@ -16,6 +19,8 @@ class Landing extends React.Component {
 		this.state = {
 			list: this.props.match.params.list,
 			items: [],
+
+			showAssignError: false,
 		};
 	}
 
@@ -24,6 +29,9 @@ class Landing extends React.Component {
 	}
 
 	getItems = () => {
+		this.setState({
+			showAssignError: false,
+		});
 		this.props.socket.emit('req:listItemsData', { userId: firebaseAuth().currentUser.uid, listId: this.props.match.params.list });
 		this.props.socket.on('res:listItemsData', (result) => {
 			console.log(result);
@@ -37,6 +45,17 @@ class Landing extends React.Component {
 					loading: false,
 				});
 			}
+			this.getListGroupsError();
+		});
+	};
+
+	getListGroupsError = () => {
+		getListDetails(this.props.match.params.list).then((result) => {
+			if (result.groups.length == 0) {
+				this.setState({
+					showAssignError: true,
+				});
+			}
 		});
 	};
 
@@ -44,6 +63,12 @@ class Landing extends React.Component {
 		return (
 			<div>
 				<Container style={{ paddingTop: 20, marginBottom: 96 }}>
+					{this.state.showAssignError && (
+						<Alert severity='warning' style={{ marginBottom: 16, marginTop: 64 }}>
+							<b>This list is not assigned to a group!</b> — In order for items to show up in groups they must be assigned to a list and lists must be assigned to a group.
+							<b> Add a group in the list settings.</b>
+						</Alert>
+					)}
 					<Grid container spacing={3}>
 						{this.state.items.map((item, i) => (
 							<Grid key={item.id} item xs={12}>
