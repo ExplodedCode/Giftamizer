@@ -13,7 +13,7 @@ import Snackbar from '@material-ui/core/Snackbar';
 
 import { firebaseAuth } from '../../../firebase/constants';
 
-export default function FormDialog({ socket, group }) {
+export default function FormDialog({ socket, group, fromNoMembers }) {
 	const [open, setOpen] = React.useState(false);
 	const [loading, setLoading] = React.useState(false);
 	const [inviteEmail, setInviteEmail] = React.useState('');
@@ -67,7 +67,7 @@ export default function FormDialog({ socket, group }) {
 
 	return (
 		<div>
-			<Button size='small' color='primary' onClick={handleClickOpen}>
+			<Button size={fromNoMembers ? 'large' : 'small'} variant={fromNoMembers ? 'contained' : 'text'} color='primary' onClick={handleClickOpen}>
 				Invite
 			</Button>
 			<Dialog open={open} onClose={handleClose} aria-labelledby='form-dialog-title'>

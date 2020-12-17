@@ -7,6 +7,7 @@ const port = process.env.PORT || 8080;
 
 const socketIO = require('socket.io');
 var connection_string = 'mongodb://***REMOVED***/Giftamizer?authSource=admin';
+// var connection_string = 'mongodb://root:***REMOVED***@***REMOVED***:27017/Giftamizer?authSource=admin';
 
 var app = express();
 app.use(

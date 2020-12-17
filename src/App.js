@@ -37,6 +37,7 @@ export default class App extends Component {
 			loading: true,
 			user: null,
 			endpoint: 'https://api.giftamizer.com',
+			// endpoint: 'http://localhost:8080',
 		};
 
 		socket = socketIOClient(this.state.endpoint); // initialize socket
