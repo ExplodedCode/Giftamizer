@@ -1,5 +1,4 @@
 import React from 'react';
-import { makeStyles } from '@material-ui/core/styles';
 
 import Fab from '@material-ui/core/Fab';
 import AddIcon from '@material-ui/icons/Add';
@@ -21,16 +20,7 @@ import Snackbar from '@material-ui/core/Snackbar';
 
 import { getMyLists, createItem } from '../../../firebase/gift/items';
 
-const useStyles = makeStyles((theme) => ({
-	root: {
-		height: 380,
-		transform: 'translateZ(0px)',
-		flexGrow: 1,
-	},
-}));
-
 export default function SpeedDialTooltipOpen(props) {
-	const classes = useStyles();
 	const [open, setOpen] = React.useState(false);
 	const handleOpen = () => {
 		setOpen(true);
@@ -112,14 +102,14 @@ export default function SpeedDialTooltipOpen(props) {
 							}).then((response) => {
 								if (!response.ok) {
 									response.json().then((error) => {
-										console.log(error);
+										// console.log(error);
 										setImage('');
 										setUrl(urlQuery);
 										setLoadingMetadata(false);
 									});
 								} else {
 									return response.json().then((data) => {
-										console.log(data.image);
+										// console.log(data.image);
 
 										try {
 											if (data.image.startsWith('/') && !data.image.startsWith('//')) {
@@ -128,7 +118,7 @@ export default function SpeedDialTooltipOpen(props) {
 												setImage(data.image);
 											}
 										} catch (error) {
-											console.log(error);
+											// console.log(error);
 										}
 
 										setName(data.title.substring(0, 75));

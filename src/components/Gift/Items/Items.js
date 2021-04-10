@@ -30,7 +30,6 @@ class Landing extends React.Component {
 	getItems = () => {
 		this.props.socket.emit('req:itemsData', firebaseAuth().currentUser.uid);
 		this.props.socket.on('res:itemsData', (result) => {
-			console.log(result);
 			if (result) {
 				this.setState({
 					items: result,
@@ -39,7 +38,7 @@ class Landing extends React.Component {
 
 				var showAssignError = false;
 				result.forEach((item) => {
-					if (item.lists.length == 0) {
+					if (item.lists.length === 0) {
 						showAssignError = true;
 					}
 				});

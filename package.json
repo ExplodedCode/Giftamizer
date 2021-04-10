@@ -18,6 +18,7 @@
     "firebase": "^8.1.1",
     "http": "0.0.1-security",
     "material-ui-popup-state": "^1.7.1",
+    "mongodb": "^3.6.5",
     "monk": "^7.3.2",
     "nodemailer": "^6.4.16",
     "path": "^0.12.7",

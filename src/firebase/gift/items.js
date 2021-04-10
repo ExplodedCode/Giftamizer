@@ -1,7 +1,7 @@
-import { firebaseAuth } from '../constants';
+import { firebaseAuth, endpoint } from '../constants';
 
 import socketIOClient from 'socket.io-client';
-var socket = socketIOClient('https://api.giftamizer.com');
+var socket = socketIOClient(endpoint);
 
 export function getMyLists() {
 	return new Promise((resolve, reject) => {

@@ -63,8 +63,8 @@ public class MainActivity extends AppCompatActivity {
             Uri[] results = null;
 
             /*-- if file request cancelled; exited camera. we need to send null value to make future attempts workable --*/
-            if (resultCode == Activity.RESULT_CANCELED) {
-                if (requestCode == file_req_code) {
+            if (resultCode === Activity.RESULT_CANCELED) {
+                if (requestCode === file_req_code) {
                     file_path.onReceiveValue(null);
                     return;
                 }
@@ -72,8 +72,8 @@ public class MainActivity extends AppCompatActivity {
 
             /*-- continue if response is positive --*/
             if(resultCode== Activity.RESULT_OK){
-                if(requestCode == file_req_code){
-                    if(null == file_path){
+                if(requestCode === file_req_code){
+                    if(null === file_path){
                         return;
                     }
 
@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
                         stringData = null;
                     }
 
-                    if (clipData == null && stringData == null && cam_file_data != null) {
+                    if (clipData === null && stringData === null && cam_file_data != null) {
                         results = new Uri[]{Uri.parse(cam_file_data)};
                     }else{
                         if (clipData != null) { // checking if multiple files selected or not
@@ -105,9 +105,9 @@ public class MainActivity extends AppCompatActivity {
             file_path.onReceiveValue(results);
             file_path = null;
         }else{
-            if(requestCode == file_req_code){
-                if(null == file_data) return;
-                Uri result = intent == null || resultCode != RESULT_OK ? null : intent.getData();
+            if(requestCode === file_req_code){
+                if(null === file_data) return;
+                Uri result = intent === null || resultCode != RESULT_OK ? null : intent.getData();
                 file_data.onReceiveValue(result);
                 file_data = null;
             }
@@ -194,7 +194,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
 
-                    if (fileChooserParams.getAcceptTypes().length == 0) {   //no `accept` parameter was specified, allow both photo and video
+                    if (fileChooserParams.getAcceptTypes().length === 0) {   //no `accept` parameter was specified, allow both photo and video
                         includePhoto = true;
                         includeVideo = true;
                     }
@@ -306,8 +306,8 @@ public class MainActivity extends AppCompatActivity {
     /*-- back/down key handling --*/
     @Override
     public boolean onKeyDown(int keyCode, @NonNull KeyEvent event){
-        if(event.getAction() == KeyEvent.ACTION_DOWN){
-            if (keyCode == KeyEvent.KEYCODE_BACK) {
+        if(event.getAction() === KeyEvent.ACTION_DOWN){
+            if (keyCode === KeyEvent.KEYCODE_BACK) {
                 if (webView.canGoBack()) {
                     webView.goBack();
                 } else {

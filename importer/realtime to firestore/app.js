@@ -1982,7 +1982,7 @@ for (const [groupKey, group] of Object.entries(realtimeData.group)) {
 	for (const [userKey, user] of Object.entries(realtimeData.users)) {
 		if (user.groups) {
 			for (const [groupsKey, userGroup] of Object.entries(user.groups)) {
-				if (userGroup == groupKey) {
+				if (userGroup === groupKey) {
 					newGroup.members.push(userKey);
 				}
 			}
@@ -2028,7 +2028,7 @@ console.log(
 var itemsExport = [];
 for (const [userKey, user] of Object.entries(realtimeData.users)) {
 	for (const [itemskey, items] of Object.entries(realtimeData.items)) {
-		if (itemskey == userKey) {
+		if (itemskey === userKey) {
 			for (const [itemkey, item] of Object.entries(items)) {
 				var newItem = {
 					description: item.item_desc,
@@ -2040,7 +2040,7 @@ for (const [userKey, user] of Object.entries(realtimeData.users)) {
 					],
 					name: item.item_name,
 					owner: userKey,
-					status: item.acquired == 'no' ? 'available' : item.acquired == 'planned' ? 'planned' : item.acquired == 'yes' ? 'unavailable' : 'available',
+					status: item.acquired === 'no' ? 'available' : item.acquired === 'planned' ? 'planned' : item.acquired === 'yes' ? 'unavailable' : 'available',
 					takenBy: item.takenbyID != undefined ? item.takenbyID : '',
 					url: item.item_link,
 				};
@@ -2055,11 +2055,11 @@ for (const [userKey, user] of Object.entries(realtimeData.users)) {
 console.log(groupsExport, listsExport, usersExport, itemsExport);
 
 itemsExport.forEach((item) => {
-	console.log(item);
+	// console.log(item);
 	db.collection('items')
 		.add(item)
 		.then(function (docRef) {
-			console.log('Document written with ID: ', docRef.id);
+			// console.log('Document written with ID: ', docRef.id);
 		})
 		.catch(function (error) {
 			console.error('Error adding document: ', error);

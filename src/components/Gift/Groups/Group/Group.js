@@ -56,7 +56,7 @@ class Landing extends React.Component {
 		this.props.socket.emit('req:nonUserLists', { groupId: this.props.match.params.group });
 		this.props.socket.on('res:nonUserLists', (result) => {
 			if (result) {
-				console.log(result);
+				// console.log(result);
 				this.setState({
 					nonUsersLists: result,
 					loading: false,

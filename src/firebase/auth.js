@@ -1,7 +1,7 @@
-import { firebaseAuth } from './constants';
+import { firebaseAuth, endpoint } from './constants';
 
 import socketIOClient from 'socket.io-client';
-var socket = socketIOClient('https://api.giftamizer.com');
+var socket = socketIOClient(endpoint);
 
 export function signupWithEmailPassword(email, password, name) {
 	return firebaseAuth()
@@ -29,7 +29,15 @@ export function loginWithEmail(email, password) {
 }
 
 export function resetPassword(email) {
-	return firebaseAuth().sendPasswordResetEmail(email);
+	return firebaseAuth()
+		.sendPasswordResetEmail(email)
+		.then(function () {
+			// Email sent.
+			return 'ok';
+		})
+		.catch(function (error) {
+			return 'error';
+		});
 }
 
 export function logout() {
@@ -37,7 +45,7 @@ export function logout() {
 }
 
 export function saveUser(user, name) {
-	console.log('signup', user, name);
+	// console.log('signup', user, name);
 
 	var colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50', '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800', '#ff5722'];
 
