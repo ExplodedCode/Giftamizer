@@ -2,11 +2,11 @@ import React, { useEffect } from 'react';
 
 import socketIOClient from 'socket.io-client';
 
-import { firebaseAuth } from '../constants';
+import { firebaseAuth, endpoint } from '../constants';
 
 import Chip from '@material-ui/core/Chip';
 
-var socket = socketIOClient('https://api.giftamizer.com');
+var socket = socketIOClient(endpoint);
 
 export function GroupChip({ groupId }) {
 	const [group, setGroup] = React.useState('');
@@ -53,7 +53,6 @@ function getList(listId) {
 		socket.emit('req:listName', {
 			listId: listId,
 		});
-		console.log(listId);
 
 		socket.on('res:listName:' + listId, (result) => {
 			socket.off('res:listName:' + listId);

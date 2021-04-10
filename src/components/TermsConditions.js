@@ -11,14 +11,6 @@ import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 
 import Container from '@material-ui/core/Container';
-import Grid from '@material-ui/core/Grid';
-import Paper from '@material-ui/core/Paper';
-import Avatar from '@material-ui/core/Avatar';
-
-import green from '@material-ui/core/colors/green';
-import red from '@material-ui/core/colors/red';
-import blue from '@material-ui/core/colors/blue';
-import orange from '@material-ui/core/colors/orange';
 
 class Landing extends React.Component {
 	constructor(props) {
@@ -41,8 +33,8 @@ class Landing extends React.Component {
 	}
 
 	render() {
-		const { width, theme } = this.props;
-		console.log(theme.palette.primary[theme.palette.type]);
+		const { theme } = this.props;
+		// console.log(theme.palette.primary[theme.palette.type]);
 
 		this.style.color = theme.palette.primary[theme.palette.type === 'dark' ? theme.palette.type : 'main'];
 

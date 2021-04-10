@@ -82,13 +82,13 @@ firestoredb
 				getLinkImage(item);
 
 				// mongodb_collection_items.insert({ ...list }).then((listNew) => {
-				// 	console.log(doc.id + ': ' + listNew._id);
+				// 	// console.log(doc.id + ': ' + listNew._id);
 				// });
 			}
 		});
 	})
 	.catch(function (error) {
-		console.log('Error getting documents: ', error);
+		// console.log('Error getting documents: ', error);
 	});
 
 async function getLinkImage(item) {
@@ -116,7 +116,7 @@ async function getLinkImage(item) {
 
 				if (image.startsWith('/') && !image.startsWith('//')) {
 					image = item.url.split('/')[0] + '//' + item.url.split('/')[2] + image;
-					console.log(item.url, image);
+					// console.log(item.url, image);
 				}
 
 				// console.log('image!!!:', image);
@@ -137,13 +137,13 @@ async function getLinkImage(item) {
 					},
 					function (error) {
 						// failure handler
-						// 	console.log('error:', item.url);
+						// 	// console.log('error:', item.url);
 						writeItem(item);
 					}
 				);
 			}
 		} catch (error) {
-			// 	console.log('error:', AmProduct);
+			// 	// console.log('error:', AmProduct);
 			writeItem(item);
 		}
 	} else {
@@ -155,7 +155,7 @@ async function getLinkImage(item) {
 function writeItem(item) {
 	// mongodb_collection_items.insert({ ...item }).then((listNew) => {
 	// 	if (item.image !== '') {
-	// 		console.log('New Item:', item);
+	// 		// console.log('New Item:', item);
 	// 	}
 	// });
 }

@@ -17,7 +17,7 @@ import GroupIcon from '@material-ui/icons/Group';
 import StorageIcon from '@material-ui/icons/Storage';
 import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 
-import WarningIcon from '@material-ui/icons/Warning';
+// import WarningIcon from '@material-ui/icons/Warning';
 
 const StyledBadge = withStyles((theme) => ({
 	badge: {
@@ -47,7 +47,8 @@ class Landing extends React.Component {
 					<Typography variant='h5'>Welcome to the new and improved Giftamizer!</Typography>
 					<br />
 					<Typography variant='subtitle1'>
-						If you had an account previously you items and groups have been transfered. If you find any issues please contact Evan via email <a href='mailto:evan@trowbridge.tech'>here</a>.
+						If you had an account previously you items and groups have been transferred. If you find any issues please contact Evan via email <a href='mailto:evan@trowbridge.tech'>here</a>
+						.
 					</Typography>
 					<Typography variant='subtitle1'>Some items that had either quotation marks or apostrophes may need fixed.</Typography>
 					<br />
@@ -59,7 +60,7 @@ class Landing extends React.Component {
 									<ListAltIcon />
 								</StyledBadge>
 							</ListItemIcon>
-							<ListItemText primary='Create lists that can move between groups.' secondary='Lists are asigned to groups' />
+							<ListItemText primary='Create lists that can move between groups.' secondary='Lists are assigned to groups' />
 						</ListItem>
 						<ListItem>
 							<ListItemIcon>
@@ -67,7 +68,7 @@ class Landing extends React.Component {
 									<i className='fas fa-gift' style={{ fontSize: '1.19rem', marginLeft: 2 }} />
 								</StyledBadge>
 							</ListItemIcon>
-							<ListItemText primary='Asign items to the groups you want them to show up in. Paste links to autofill info.' secondary='Items are asigned to lists' />
+							<ListItemText primary='Assign items to the groups you want them to show up in. Paste links to autofill info.' secondary='Items are assigned to lists' />
 						</ListItem>
 						<ListItem>
 							<ListItemIcon>

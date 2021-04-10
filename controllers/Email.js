@@ -427,11 +427,11 @@ module.exports = function (e, db) {
 					`,
 			});
 
-			console.log('invite sent: ' + info.messageId);
+			// console.log('invite sent: ' + info.messageId);
 
 			response.send({ result: info.messageId });
 		} catch (error) {
-			console.log(error);
+			// console.log(error);
 			response.status(500).send({ error: 'error' });
 		}
 	};
