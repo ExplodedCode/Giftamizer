@@ -14,11 +14,11 @@ module.exports = function (e, db) {
 			if (amazonID) {
 				const product = await amazonScraper.asin({ asin: amazonID });
 
-				console.log(
-					product.result[0].variants.filter((obj) => {
-						return obj.asin === amazonID;
-					})[0]
-				);
+				// console.log(
+				// 	product.result[0].variants.filter((obj) => {
+				// 		return obj.asin === amazonID;
+				// 	})[0]
+				// );
 
 				var image = product.result[0].variants.filter((obj) => {
 					return obj.asin === amazonID;
@@ -41,7 +41,7 @@ module.exports = function (e, db) {
 				);
 			}
 		} catch (error) {
-			console.log(error);
+			// console.log(error);
 			response.status(500).send({ error: 'error' });
 		}
 	};

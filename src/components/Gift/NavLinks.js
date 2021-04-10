@@ -20,6 +20,10 @@ import ShoppingCartIcon from '@material-ui/icons/ShoppingCart';
 import AccountCircleIcon from '@material-ui/icons/AccountCircle';
 import LockIcon from '@material-ui/icons/Lock';
 
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from '@material-ui/core/Switch';
+import BuildIcon from '@material-ui/icons/Build';
+
 import { logout } from '../../firebase/auth';
 import { firebaseAuth } from '../../firebase/constants';
 
@@ -29,6 +33,8 @@ class navMenu extends React.Component {
 		this.state = {
 			open: true,
 
+			maintenance: false,
+
 			user: null,
 			loading: true,
 		};
@@ -37,11 +43,17 @@ class navMenu extends React.Component {
 	componentDidMount() {
 		this.props.socket.emit('req:userData', firebaseAuth().currentUser.uid);
 		this.props.socket.on('res:userData', (result) => {
-			console.log(result);
 			if (result) {
-				this.setState({
-					user: result,
-					loading: false,
+				this.props.socket.emit('req:maintenanceAdmin', null);
+				this.props.socket.on('res:maintenanceAdmin', (doc) => {
+					this.props.socket.off('res:maintenanceAdmin');
+
+					this.setState({
+						user: result,
+						loading: false,
+
+						maintenance: doc.status,
+					});
 				});
 			} else {
 				this.setState({
@@ -50,6 +62,12 @@ class navMenu extends React.Component {
 				});
 			}
 		});
+	}
+
+	toggleMaintenance(e) {
+		this.props.socket.emit('set:maintenance', e.target.checked);
+
+		this.setState({ maintenance: e.target.checked });
 	}
 
 	componentWillUnmount() {
@@ -115,6 +133,36 @@ class navMenu extends React.Component {
 					</ListItemIcon>
 					<ListItemText primary='Logout' />
 				</ListItem>
+
+				{this.state.user ? (
+					this.state.user.uid !== 'jwpIwFNoPKh2YwRCbTkAJZypXyx2' ? (
+						''
+					) : (
+						<React.Fragment>
+							<Divider />
+							<ListSubheader inset>System</ListSubheader>
+							<ListItem>
+								<ListItemIcon>
+									<BuildIcon />
+								</ListItemIcon>
+								<FormControlLabel
+									control={
+										<Switch
+											checked={this.state.maintenance}
+											onClick={(e) => {
+												this.toggleMaintenance(e);
+											}}
+											color='primary'
+										/>
+									}
+									label='Maintenance'
+								/>
+							</ListItem>
+						</React.Fragment>
+					)
+				) : (
+					''
+				)}
 
 				{/* <ListItem component={Link} to='/tdf/support' button disabled>
 						<ListItemIcon>

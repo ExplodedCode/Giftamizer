@@ -10,7 +10,7 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import Snackbar from '@material-ui/core/Snackbar';
 import Alert from '../../Alert';
 
-import { db, firebaseAuth } from '../../../firebase/constants';
+import { firebaseAuth } from '../../../firebase/constants';
 
 import Button from '@material-ui/core/Button';
 import { logout } from '../../../firebase/auth';
@@ -72,10 +72,10 @@ class Printing extends Component {
 		// themeRef
 		// 	.get()
 		// 	.then((doc) => {
-		// 		console.log(doc.data());
+		// 		// console.log(doc.data());
 		// 	})
 		// 	.catch((error) => {
-		// 		console.log('Error getting document:', error);
+		// 		// console.log('Error getting document:', error);
 		// 		this.setState({ loading: false });
 		// 	});
 	};

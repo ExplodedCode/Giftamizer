@@ -9,11 +9,12 @@ import CssBaseline from '@material-ui/core/CssBaseline';
 
 import CircularProgress from '@material-ui/core/CircularProgress';
 
-import { firebaseAuth } from './firebase/constants';
+import { firebaseAuth, endpoint } from './firebase/constants';
 
 import Landing from './components/Landing';
 import Signin from './components/Signin/Signin';
 import Signup from './components/Signin/Signup';
+import Forgot from './components/Signin/Forgot';
 import Gift from './components/Gift/Gift';
 
 import PrivacyPolicy from './components/PrivacyPolicy';
@@ -36,17 +37,17 @@ export default class App extends Component {
 			authed: false,
 			loading: true,
 			user: null,
-			endpoint: 'https://api.giftamizer.com',
-			// endpoint: 'http://localhost:8080',
+
+			maintenance: false,
 		};
 
-		socket = socketIOClient(this.state.endpoint); // initialize socket
+		socket = socketIOClient(endpoint); // initialize socket
 
 		// this.prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
 
 		this.default = createMuiTheme({
 			palette: {
-				// type: this.prefersDarkMode ? 'dark' : 'light',
+				// type: 'dark',
 				primary: {
 					light: '#6fbf73',
 					main: '#4caf50',
@@ -62,17 +63,13 @@ export default class App extends Component {
 			},
 		});
 
-		this.removeListener = firebaseAuth().onAuthStateChanged((user) => {
+		firebaseAuth().onAuthStateChanged((user) => {
 			if (user) {
-				this.setState(
-					{
-						user: user,
-						authed: true,
-					},
-					() => {
-						this.setState({ loading: false });
-					}
-				);
+				this.setState({
+					user: user,
+					authed: true,
+					loading: false,
+				});
 			} else {
 				this.setState({
 					user: null,
@@ -83,12 +80,38 @@ export default class App extends Component {
 		});
 	}
 
+	componentDidMount() {
+		this.listenForMainance();
+	}
+
+	listenForMainance = () => {
+		socket.emit('join', 'maintenance');
+		socket.emit('req:maintenance', null);
+		socket.on('res:maintenance', (doc) => {
+			// console.log(doc);
+
+			this.setState({
+				maintenance: doc.status,
+			});
+		});
+	};
+
 	render() {
 		return this.state.loading === true ? (
 			<MuiThemeProvider theme={this.default}>
 				<CssBaseline />
 				<CircularProgress style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, margin: 'auto' }} />
 			</MuiThemeProvider>
+		) : this.state.maintenance === true && this.state.user.uid !== 'jwpIwFNoPKh2YwRCbTkAJZypXyx2' ? (
+			<div style={{ textAlign: 'center', padding: 20, font: '20px Helvetica, sans-serif', color: '#333' }}>
+				<article style={{ display: 'block', textAlign: 'left', width: '90%', margin: '0 auto' }}>
+					<h1 style={{ fontSize: '50px' }}>We&rsquo;ll be back soon!</h1>
+					<div>
+						<p>Sorry for the inconvenience but we&rsquo;re performing some maintenance at the moment. We&rsquo;ll be back online shortly!</p>
+						<p>&mdash; Evan</p>
+					</div>
+				</article>
+			</div>
 		) : (
 			<MuiThemeProvider theme={this.default}>
 				<CssBaseline />
@@ -99,6 +122,7 @@ export default class App extends Component {
 						<Route exact path='/terms' component={TermsConditions} />
 						<PublicRoute authed={this.state.authed} exact path='/signin' component={Signin} />
 						<PublicRoute authed={this.state.authed} exact path='/signup' component={Signup} />
+						<PublicRoute authed={this.state.authed} exact path='/forgot' component={Forgot} />
 						<PrivateRoute authed={this.state.authed} path='/gift' component={(props) => <Gift {...props} user={this.state.user} socket={socket} />} />
 					</Switch>
 				</BrowserRouter>

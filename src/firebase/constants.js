@@ -1,14 +1,17 @@
 import firebase from 'firebase';
 
 const firebaseConfig = {
-	apiKey: 'AIzaSyBsI0kZhT2_47LHhL0q5oPQUPG-TOc01hY',
-	authDomain: 'gift-group.firebaseapp.com',
-	databaseURL: 'https://gift-group.firebaseio.com',
-	projectId: 'gift-group',
-	storageBucket: 'gift-group.appspot.com',
-	messagingSenderId: '809768496750',
-	appId: '1:809768496750:web:d23126a795df7bfa79807f',
+    apiKey: 'AIzaSyBsI0kZhT2_47LHhL0q5oPQUPG-TOc01hY',
+    authDomain: 'gift-group.firebaseapp.com',
+    databaseURL: 'https://gift-group.firebaseio.com',
+    projectId: 'gift-group',
+    storageBucket: 'gift-group.appspot.com',
+    messagingSenderId: '809768496750',
+    appId: '1:809768496750:web:d23126a795df7bfa79807f',
 };
+
+export const endpoint = window.location.hostname.includes('localhost') ? '//localhost:8080' : '//' + window.location.hostname + ':' + window.location.port;
+// export const endpoint = '/';
 
 // ------------------------------- DEVELOPMENT
 // const firebaseConfig = {

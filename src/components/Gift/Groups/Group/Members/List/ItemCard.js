@@ -88,7 +88,7 @@ export default function MediaControlCard({ item, getListItems }) {
 								}}
 								disabled={item.takenBy !== firebaseAuth().currentUser.uid}
 							>
-								Unavailable
+								Purchased
 							</Button>
 						) : (
 							<Button color='secondary' disabled>

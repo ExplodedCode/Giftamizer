@@ -1,4 +1,4 @@
-FROM node:12
+FROM mhart/alpine-node:12
 
 # Create app directory
 WORKDIR /usr/src/app/
@@ -6,9 +6,13 @@ WORKDIR /usr/src/app/
 # Copy all files into image
 COPY . ./
 
-# install packages and build
-RUN npm install express cors body-parser http socket.io monk
-# RUN npm run build
+# install packages
+RUN npm install
+
+# create react build
+RUN npm run build
+
+ENV IS_DOCKER_CONTAINER yes
 
 EXPOSE 8080
 CMD [ "npm", "start" ]

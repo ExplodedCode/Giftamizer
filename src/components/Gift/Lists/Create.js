@@ -1,5 +1,4 @@
 import React from 'react';
-import { makeStyles } from '@material-ui/core/styles';
 
 import Fab from '@material-ui/core/Fab';
 import AddIcon from '@material-ui/icons/Add';
@@ -21,21 +20,7 @@ import Snackbar from '@material-ui/core/Snackbar';
 
 import { createList, getMyGroups } from '../../../firebase/gift/lists';
 
-const useStyles = makeStyles((theme) => ({
-	root: {
-		height: 380,
-		transform: 'translateZ(0px)',
-		flexGrow: 1,
-	},
-	speedDial: {
-		position: 'absolute',
-		bottom: theme.spacing(2),
-		right: theme.spacing(2),
-	},
-}));
-
 export default function SpeedDialTooltipOpen(props) {
-	const classes = useStyles();
 	const [open, setOpen] = React.useState(false);
 	const handleOpen = () => {
 		setOpen(true);
@@ -57,7 +42,7 @@ export default function SpeedDialTooltipOpen(props) {
 	const [groupsSelected, setGroupsSelected] = React.useState([]);
 	const getGroups = () => {
 		getMyGroups().then((result) => {
-			console.log(result);
+			// console.log(result);
 			setgroups(result);
 		});
 	};

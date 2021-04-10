@@ -12,7 +12,7 @@ import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 
-import { loginWithEmail } from '../../firebase/auth';
+import { resetPassword } from '../../firebase/auth';
 
 import Alert from '../Alert';
 import Snackbar from '@material-ui/core/Snackbar';
@@ -64,7 +64,6 @@ export default function SignInSide() {
 	const classes = useStyles();
 
 	const [email, setEmail] = useState('');
-	const [password, setPassword] = useState('');
 
 	const [alert, setAlert] = React.useState({ open: false, message: '', severity: 'info' });
 	const handleClose = (event, reason) => {
@@ -81,7 +80,7 @@ export default function SignInSide() {
 						<LockOutlinedIcon />
 					</Avatar>
 					<Typography component='h1' variant='h5'>
-						Sign in
+						Forgot Password
 					</Typography>
 					<TextField
 						variant='outlined'
@@ -95,29 +94,11 @@ export default function SignInSide() {
 						onChange={(event) => setEmail(event.target.value)}
 						onKeyDown={(e) => {
 							if (e.key === 'Enter') {
-								loginWithEmail(email, password).then((result) => {
-									if (result.code) {
-										setAlert({ open: true, message: 'Invalid email or password.', severity: 'warning' });
-									}
-								});
-							}
-						}}
-					/>
-					<TextField
-						variant='outlined'
-						margin='normal'
-						required
-						fullWidth
-						label='Password'
-						type='password'
-						autoComplete='current-password'
-						value={password}
-						onChange={(event) => setPassword(event.target.value)}
-						onKeyDown={(e) => {
-							if (e.key === 'Enter') {
-								loginWithEmail(email, password).then((result) => {
-									if (result.code) {
-										setAlert({ open: true, message: 'Invalid email or password.', severity: 'warning' });
+								resetPassword(email).then((result) => {
+									if (result === 'ok') {
+										setAlert({ open: true, message: 'Email Sent!', severity: 'success' });
+									} else {
+										setAlert({ open: true, message: 'Error Sending email!', severity: 'error' });
 									}
 								});
 							}
@@ -130,24 +111,21 @@ export default function SignInSide() {
 						color='primary'
 						className={classes.submit}
 						onClick={() => {
-							loginWithEmail(email, password).then((result) => {
-								if (result.code) {
-									setAlert({ open: true, message: 'Invalid email or password.', severity: 'warning' });
+							resetPassword(email).then((result) => {
+								if (result === 'ok') {
+									setAlert({ open: true, message: 'Email Sent!', severity: 'success' });
+								} else {
+									setAlert({ open: true, message: 'Error Sending email!', severity: 'error' });
 								}
 							});
 						}}
 					>
-						Sign In
+						Send Email
 					</Button>
 					<Grid container>
-						<Grid item xs>
-							<Link component={domLink} to='/forgot' variant='body2'>
-								Forgot password?
-							</Link>
-						</Grid>
 						<Grid item>
-							<Link component={domLink} to='/signup' variant='body2'>
-								{"Don't have an account? Sign Up"}
+							<Link component={domLink} to='/signin' variant='body2'>
+								{'Back to sign in'}
 							</Link>
 						</Grid>
 					</Grid>

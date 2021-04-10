@@ -33,7 +33,7 @@ export default function FormDialog({ socket, group, fromNoMembers }) {
 		setLoading(true);
 		socket.emit('req:userData', firebaseAuth().currentUser.uid);
 		socket.on('res:userData', (result) => {
-			console.log(result);
+			// console.log(result);
 			if (result) {
 				fetch('http://localhost:8080/api/sendInvite?email=' + inviteEmail + '&code=' + group.id + '&name=' + result.displayName, {
 					method: 'GET',
@@ -43,7 +43,7 @@ export default function FormDialog({ socket, group, fromNoMembers }) {
 				}).then((response) => {
 					if (!response.ok) {
 						response.json().then((error) => {
-							console.log(error);
+							// console.log(error);
 							setInviteEmail('');
 							setLoading(false);
 							setOpen(false);

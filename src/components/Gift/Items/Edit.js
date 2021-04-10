@@ -86,7 +86,7 @@ export default function SpeedDialTooltipOpen(props) {
 							}).then((response) => {
 								if (!response.ok) {
 									response.json().then((error) => {
-										console.log(error);
+										// console.log(error);
 										setImage('');
 										setUrl(urlQuery);
 										setLoadingMetadata(false);
@@ -133,7 +133,7 @@ export default function SpeedDialTooltipOpen(props) {
 							});
 
 							editItem(props.item._id, { name: name, description: description, url: url, image: image, lists: listsTemp }).then((result) => {
-								console.log(props.item, result);
+								// console.log(props.item, result);
 								if (result === 'ok') {
 									setAlert({ open: true, message: 'Item saved!', severity: 'success' });
 									handleClose();

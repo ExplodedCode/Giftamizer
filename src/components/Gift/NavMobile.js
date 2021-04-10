@@ -65,7 +65,7 @@ export default function SimpleBottomNavigation() {
 }
 
 function getLocation(path) {
-	console.log(path);
+	// console.log(path);
 	if (path.startsWith('/gift/item')) {
 		return 0;
 	} else if (path.startsWith('/gift/list')) {

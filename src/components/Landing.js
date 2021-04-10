@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { isMobile } from 'react-device-detect';
+
 import { Link } from 'react-router-dom';
 
 import { withTheme } from '@material-ui/styles';
@@ -42,7 +44,7 @@ class Landing extends React.Component {
 
 	render() {
 		const { width, theme } = this.props;
-		console.log(theme.palette.primary[theme.palette.type]);
+		// console.log(theme.palette.primary[theme.palette.type]);
 
 		this.style.color = theme.palette.primary[theme.palette.type === 'dark' ? theme.palette.type : 'main'];
 
@@ -59,7 +61,7 @@ class Landing extends React.Component {
 					</Toolbar>
 				</AppBar>
 
-				<Container style={{ paddingTop: 20, marginBottom: 96 }}>
+				<Container style={{ paddingTop: isMobile ? 20 : 80, marginBottom: 96 }}>
 					<Grid container spacing={3}>
 						<Grid container item sm={12} md={6} spacing={3}>
 							<Grid item xs={12}>
@@ -132,17 +134,6 @@ class Landing extends React.Component {
 							<Grid item xs={12} sm={4}>
 								<Paper style={this.style.landing.paper} elevation={9}>
 									<Avatar aria-label='recipe' style={{ backgroundColor: green[500] }}>
-										<i className='fas fa-check'></i>
-									</Avatar>
-									<Typography variant='subtitle1' style={this.style.landing.card.title}>
-										Planning
-									</Typography>
-									<Typography variant='subtitle2'>Your family and friends can mark gifts as reserved updated in real-time. No more duplicate gift buying.</Typography>
-								</Paper>
-							</Grid>
-							<Grid item xs={12} sm={4}>
-								<Paper style={this.style.landing.paper} elevation={9}>
-									<Avatar aria-label='recipe' style={{ backgroundColor: blue[500] }}>
 										<i className='fas fa-cogs'></i>
 									</Avatar>
 									<Typography variant='subtitle1' style={this.style.landing.card.title}>
@@ -155,6 +146,17 @@ class Landing extends React.Component {
 							</Grid>
 							<Grid item xs={12} sm={4}>
 								<Paper style={this.style.landing.paper} elevation={9}>
+									<Avatar aria-label='recipe' style={{ backgroundColor: blue[500] }}>
+										<i className='fas fa-check'></i>
+									</Avatar>
+									<Typography variant='subtitle1' style={this.style.landing.card.title}>
+										Planning
+									</Typography>
+									<Typography variant='subtitle2'>Your family and friends can mark gifts as reserved updated in real-time. No more duplicate gifts.</Typography>
+								</Paper>
+							</Grid>
+							<Grid item xs={12} sm={4}>
+								<Paper style={this.style.landing.paper} elevation={9}>
 									<Avatar aria-label='recipe' style={{ backgroundColor: orange[500] }}>
 										<i className='fas fa-baby-carriage'></i>
 									</Avatar>
@@ -162,20 +164,20 @@ class Landing extends React.Component {
 										Do you have kids?
 									</Typography>
 									<Typography variant='subtitle2'>
-										Giftamizer allows you to create multiple lists. No need to create another account for your child. Manage it dierectly from yours.
+										Giftamizer allows you to create multiple lists. No need to create multiple accounts for your children. Manage them all directly from your account.
 									</Typography>
 								</Paper>
 							</Grid>
 						</Grid>
 					</Grid>
-					<Grid container spacing={3} justify='center' style={{ marginTop: 96 }}>
+					{/* <Grid container spacing={3} justify='center' style={{ marginTop: 96 }}>
 						<Grid item sm={8} spacing={3}>
 							<Paper style={this.style.landing.paper} elevation={9}>
 								<Typography variant='subtitle1'>This application is under development.</Typography>
-								{/* <Typography variant='subtitle2'> — Come Back Soon!</Typography> */}
+								<Typography variant='subtitle2'> — Come Back Soon!</Typography>
 							</Paper>
 						</Grid>
-					</Grid>
+					</Grid> */}
 				</Container>
 			</div>
 		);
