@@ -94,7 +94,7 @@ export default function SpeedDialTooltipOpen(props) {
 
 							setLoadingMetadata(true);
 
-							fetch('https://api.giftamizer.com/api/metadata?url=' + urlQuery, {
+							fetch('https://giftamizer.com/api/metadata?url=' + urlQuery, {
 								method: 'GET',
 								headers: {
 									'Content-Type': 'application/json',
