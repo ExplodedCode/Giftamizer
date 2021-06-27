@@ -3,6 +3,7 @@ import React from 'react';
 import Container from '@material-ui/core/Container';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 import Alert from '@material-ui/lab/Alert';
 
@@ -59,9 +60,11 @@ class Landing extends React.Component {
 				<Container style={{ paddingTop: 20, marginBottom: 96 }}>
 					{this.state.showAssignError && (
 						<Alert severity='warning' style={{ marginBottom: 16 }}>
-							<b>An item is not assigned to a lists!</b> — In order for items to show up in groups they must be assigned to a list and lists must be assigned to a group.
+							<b>An item is not assigned to a list!</b> — In order for items to show up in groups they must be assigned to a list and lists must be assigned to a group.
 						</Alert>
 					)}
+
+					{this.state.loading && <CircularProgress />}
 
 					{this.state.items.length === 0 && !this.state.loading ? (
 						<Grid item xs={12} style={{ textAlign: 'center' }}>

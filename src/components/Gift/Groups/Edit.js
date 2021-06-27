@@ -26,6 +26,8 @@ import TextField from '@material-ui/core/TextField';
 
 import { editMyGroup } from '../../../firebase/gift/groups';
 
+import Delete from './Delete';
+
 import Alert from '../../Alert';
 import Snackbar from '@material-ui/core/Snackbar';
 
@@ -269,6 +271,7 @@ function ColorTool(props) {
 					{state.backgroundValue.length > 15 && <img alt='group' style={{ maxWidth: '100%', maxHeight: 200, marginTop: 8 }} src={state.backgroundValue} />}
 				</DialogContent>
 				<DialogActions>
+					<Delete group={props.group._id} setAlert={setAlert} closeModal={handleClose} getGroups={props.getGroups} />
 					<Button onClick={handleClose}>Cancel</Button>
 					<Button
 						onClick={() => {

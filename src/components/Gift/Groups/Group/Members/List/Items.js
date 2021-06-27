@@ -62,6 +62,7 @@ class Landing extends React.Component {
 								<ItemCard item={item} list={this.props.match.params.list} getListItems={this.getListItems} />
 							</Grid>
 						))}
+
 						{this.state.items.length === 0 && !this.state.loading && (
 							<Grid item xs={12} style={{ textAlign: 'center' }}>
 								<Typography variant='h5' gutterBottom style={{ marginTop: 100 }}>

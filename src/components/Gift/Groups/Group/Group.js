@@ -3,6 +3,7 @@ import React from 'react';
 import Container from '@material-ui/core/Container';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 import Alert from '@material-ui/lab/Alert';
 
@@ -26,13 +27,13 @@ class Landing extends React.Component {
 			showAssignError: false,
 		};
 		props.setTitle('My Groups');
+
+		console.log(props);
 	}
 
 	componentDidMount() {
 		if (!this.state.didLoad) {
 			this.getMembers();
-			this.getMembersNonUsersLists();
-			this.getlists();
 		}
 	}
 
@@ -52,40 +53,6 @@ class Landing extends React.Component {
 			this.props.socket.off('res:groupMembers');
 		});
 	};
-	getMembersNonUsersLists = () => {
-		this.props.socket.emit('req:nonUserLists', { groupId: this.props.match.params.group });
-		this.props.socket.on('res:nonUserLists', (result) => {
-			if (result) {
-				// console.log(result);
-				this.setState({
-					nonUsersLists: result,
-					loading: false,
-				});
-			} else {
-				this.setState({
-					loading: false,
-				});
-			}
-			this.props.socket.off('res:nonUserLists');
-		});
-	};
-
-	getlists = () => {
-		this.props.socket.emit('req:listsData', firebaseAuth().currentUser.uid);
-		this.props.socket.on('res:listsData', (result) => {
-			if (result) {
-				var showAssignError = true;
-				result.forEach((lists) => {
-					if (lists.groups.includes(this.props.match.params.group)) {
-						showAssignError = false;
-					}
-				});
-				this.setState({
-					showAssignError: showAssignError,
-				});
-			}
-		});
-	};
 
 	render() {
 		return (
@@ -97,43 +64,61 @@ class Landing extends React.Component {
 						</Alert>
 					)}
 
-					<Grid container spacing={3}>
-						{this.state.members.length === 0 && this.state.nonUsersLists.length === 0 && !this.state.loading ? (
-							<Grid item xs={12} style={{ textAlign: 'center' }}>
-								<Typography variant='h5' gutterBottom style={{ marginTop: 100 }}>
-									This group has no members, invite some friends and family!
-									<br />
-									<br />
-									<Invite socket={this.props.socket} group={this.props.match.params.group} fromNoMembers />
-								</Typography>
-							</Grid>
-						) : (
-							<React.Fragment>
-								{this.state.members.map((member, i) => (
-									<Grid item xl={3} lg={4} md={6} sm={12} xs={12}>
-										<MemberCard
-											key={this.props.match.params.group}
-											group={this.props.match.params.group}
-											member={member}
-											getMembers={this.getMembers}
-											owner={this.state.owner === firebaseAuth().currentUser.uid}
-										/>
-									</Grid>
-								))}
-								{this.state.nonUsersLists.map((nonUsersList, i) => (
-									<Grid item xl={3} lg={4} md={6} sm={12} xs={12}>
-										<NonUsersListCard
-											key={this.props.match.params.group}
-											group={this.props.match.params.group}
-											list={nonUsersList}
-											getMembers={this.getMembers}
-											owner={this.state.owner === firebaseAuth().currentUser.uid}
-										/>
-									</Grid>
-								))}
-							</React.Fragment>
-						)}
-					</Grid>
+					{this.state.loading ? (
+						<CircularProgress />
+					) : (
+						<Grid container spacing={3}>
+							{this.state.members.length === 0 && this.state.nonUsersLists.length === 0 && !this.state.loading ? (
+								<Grid item xs={12} style={{ textAlign: 'center' }}>
+									<Typography variant='h5' gutterBottom style={{ marginTop: 100 }}>
+										This group has no members, invite some friends and family!
+										<br />
+										<br />
+										<Invite socket={this.props.socket} group={this.props.match.params.group} fromNoMembers />
+									</Typography>
+								</Grid>
+							) : (
+								<React.Fragment>
+									{this.state.members
+										.sort(function (a, b) {
+											if (a?.isForChild) {
+												var textA = a.name.toUpperCase();
+											} else {
+												var textA = a.displayName.toUpperCase();
+											}
+											if (b?.isForChild) {
+												var textB = b.name.toUpperCase();
+											} else {
+												var textB = b.displayName.toUpperCase();
+											}
+
+											return textA < textB ? -1 : textA > textB ? 1 : 0;
+										})
+										.map((member, i) => (
+											<Grid item xl={3} lg={4} md={6} sm={12} xs={12}>
+												{member.isForChild ? (
+													<NonUsersListCard
+														key={this.props.match.params.group}
+														group={this.props.match.params.group}
+														list={member}
+														getMembers={this.getMembers}
+														owner={this.state.owner === firebaseAuth().currentUser.uid}
+													/>
+												) : (
+													<MemberCard
+														key={this.props.match.params.group}
+														group={this.props.match.params.group}
+														member={member}
+														getMembers={this.getMembers}
+														owner={this.props.group === firebaseAuth().currentUser.uid}
+													/>
+												)}
+											</Grid>
+										))}
+								</React.Fragment>
+							)}
+						</Grid>
+					)}
 				</Container>
 			</div>
 		);
