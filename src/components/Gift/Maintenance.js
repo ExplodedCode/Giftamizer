@@ -53,10 +53,6 @@ class navMenu extends React.Component {
 		});
 	}
 
-	componentWillUnmount() {
-		this.props.socket.off('res:userData');
-	}
-
 	render() {
 		return this.state.loading ? (
 			<React.Fragment>

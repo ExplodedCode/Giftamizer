@@ -17,6 +17,13 @@ import ListAltIcon from '@material-ui/icons/ListAlt';
 import GroupIcon from '@material-ui/icons/Group';
 import ShoppingCartIcon from '@material-ui/icons/ShoppingCart';
 
+import IconButton from '@material-ui/core/IconButton';
+import ExpandLess from '@material-ui/icons/ExpandLess';
+import ExpandMore from '@material-ui/icons/ExpandMore';
+import Star from '@material-ui/icons/Star';
+import Collapse from '@material-ui/core/Collapse';
+import List from '@material-ui/core/List';
+
 import AccountCircleIcon from '@material-ui/icons/AccountCircle';
 import LockIcon from '@material-ui/icons/Lock';
 
@@ -37,12 +44,22 @@ class navMenu extends React.Component {
 
 			user: null,
 			loading: true,
+
+			groupsOpen: true,
 		};
+
+		console.log(props);
 	}
 
 	componentDidMount() {
+		this.getData();
+	}
+
+	getData() {
 		this.props.socket.emit('req:userData', firebaseAuth().currentUser.uid);
 		this.props.socket.on('res:userData', (result) => {
+			this.props.socket.off('res:userData');
+
 			if (result) {
 				this.props.socket.emit('req:maintenanceAdmin', null);
 				this.props.socket.on('res:maintenanceAdmin', (doc) => {
@@ -70,10 +87,6 @@ class navMenu extends React.Component {
 		this.setState({ maintenance: e.target.checked });
 	}
 
-	componentWillUnmount() {
-		this.props.socket.off('res:userData');
-	}
-
 	render() {
 		return this.state.loading ? (
 			<React.Fragment>
@@ -88,42 +101,73 @@ class navMenu extends React.Component {
 					<ListItemText primary={this.state.user && this.state.user.displayName} secondary={this.state.user && this.state.user.email} />
 				</ListItem>
 				<Divider />
-				<ListItem component={Link} to='/gift' button>
+				<ListItem component={Link} to='/gift' button selected={this.props.location.pathname == '/gift'}>
 					<ListItemIcon>
-						<NewReleasesIcon />
+						<NewReleasesIcon color={this.props.location.pathname == '/gift' ? 'primary' : 'inherit'} />
 					</ListItemIcon>
 					<ListItemText primary="What's New" />
 				</ListItem>
-				<ListItem component={Link} to='/gift/items' button>
+				<ListItem component={Link} to='/gift/items' button selected={this.props.location.pathname.startsWith('/gift/items')}>
 					<ListItemIcon>
-						<i className='fas fa-gift' style={{ fontSize: '1.19rem', marginLeft: 2 }} />
+						<i className='fas fa-gift' style={{ fontSize: '1.19rem', marginLeft: 2, color: this.props.location.pathname.startsWith('/gift/items') ? '#4caf50' : 'inherit' }} />
 					</ListItemIcon>
 					<ListItemText primary='Items' />
 				</ListItem>
-				<ListItem component={Link} to='/gift/lists' button>
+				<ListItem component={Link} to='/gift/lists' button selected={this.props.location.pathname.startsWith('/gift/list')}>
 					<ListItemIcon>
-						<ListAltIcon />
+						<ListAltIcon color={this.props.location.pathname.startsWith('/gift/list') ? 'primary' : 'inherit'} />
 					</ListItemIcon>
 					<ListItemText primary='Lists' />
 				</ListItem>
-				<ListItem component={Link} to='/gift/groups' button>
+				<ListItem
+					component={Link}
+					to='/gift/groups'
+					button
+					selected={this.props.location.pathname.startsWith('/gift/group') && !this.state.user?.starred?.includes(this.props.location.pathname.split('/')[3])}
+				>
 					<ListItemIcon>
-						<GroupIcon />
+						<GroupIcon
+							color={this.props.location.pathname.startsWith('/gift/group') && !this.state.user?.starred?.includes(this.props.location.pathname.split('/')[3]) ? 'primary' : 'inherit'}
+						/>
 					</ListItemIcon>
 					<ListItemText primary='Groups' />
+					<IconButton
+						aria-label='delete'
+						onClick={(e) => {
+							e.preventDefault();
+							this.setState({ groupsOpen: !this.state.groupsOpen });
+						}}
+						style={{ padding: 6 }}
+					>
+						{this.state.user.starredGroups.length > 0 && <>{this.state.groupsOpen ? <ExpandLess fontSize='small' /> : <ExpandMore fontSize='small' />}</>}
+					</IconButton>
 				</ListItem>
-				<ListItem component={Link} to='/gift/shopping' button>
+
+				<Collapse in={this.state.groupsOpen} timeout='auto' unmountOnExit>
+					{this.state.user.starredGroups.map((g) => (
+						<List component='div' disablePadding>
+							<ListItem component={Link} to={'/gift/group/' + g.id} button style={{ paddingLeft: 32 }} selected={this.props.location.pathname == '/gift/group/' + g.id}>
+								<ListItemIcon>
+									<Star color={this.props.location.pathname == '/gift/group/' + g.id ? 'primary' : 'inherit'} />
+								</ListItemIcon>
+								<ListItemText primary={g.name} />
+							</ListItem>
+						</List>
+					))}
+				</Collapse>
+
+				<ListItem component={Link} to='/gift/shopping' button selected={this.props.location.pathname.startsWith('/gift/shopping')}>
 					<ListItemIcon>
-						<ShoppingCartIcon />
+						<ShoppingCartIcon color={this.props.location.pathname.startsWith('/gift/shopping') ? 'primary' : 'inherit'} />
 					</ListItemIcon>
 					<ListItemText primary='Shopping List' />
 				</ListItem>
 
 				<Divider />
 				<ListSubheader inset>Account</ListSubheader>
-				<ListItem component={Link} to='/gift/me' button>
+				<ListItem component={Link} to='/gift/me' button selected={this.props.location.pathname.startsWith('/gift/me')}>
 					<ListItemIcon>
-						<AccountCircleIcon />
+						<AccountCircleIcon color={this.props.location.pathname.startsWith('/gift/me') ? 'primary' : 'inherit'} />
 					</ListItemIcon>
 					<ListItemText primary='My Account' />
 				</ListItem>

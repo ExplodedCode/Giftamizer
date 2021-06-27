@@ -53,3 +53,29 @@ export function joinGroup(groupId) {
 		});
 	});
 }
+
+export function deleteGroup(id) {
+	return new Promise((resolve, reject) => {
+		socket.emit('req:deleteGroup', { groupId: id, userId: firebaseAuth().currentUser.uid });
+		socket.on('res:deleteGroup', (result) => {
+			socket.off('res:deleteGroup');
+			resolve(result);
+		});
+	});
+}
+
+export function starGroup(groupId) {
+	return new Promise((resolve, reject) => {
+		socket.emit('star:group', {
+			groupId: groupId,
+			userId: firebaseAuth().currentUser.uid,
+		});
+
+		socket.on('res:star:group', (result) => {
+			socket.emit('req:userData', firebaseAuth().currentUser.uid);
+			socket.off('res:star:group');
+
+			resolve(result);
+		});
+	});
+}

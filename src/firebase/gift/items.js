@@ -68,6 +68,8 @@ export function setStatus(id, status) {
 
 		socket.on('res:itemStatus', (result) => {
 			socket.off('res:itemStatus');
+
+			console.log(result);
 			resolve('ok');
 		});
 	});

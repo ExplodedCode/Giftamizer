@@ -46,7 +46,7 @@ export default function MediaControlCard({ item, getItems, inList }) {
 
 	return (
 		<div>
-			<Card className={classes.root}>
+			<Card className={classes.root} style={item.lists.length === 0 ? { background: '#f4433666' } : {}}>
 				<div className={classes.details}>
 					<CardContent className={classes.content}>
 						<Typography component='h5' variant='h5'>
@@ -59,6 +59,8 @@ export default function MediaControlCard({ item, getItems, inList }) {
 						{item.lists.map((list, i) => (
 							<ListChip listId={list} />
 						))}
+
+						{item.lists.length === 0 && <b>This item is not assigned to a list!</b>}
 					</CardContent>
 					<div className={classes.controls}>
 						<DeleteItem item={item._id} getItems={getItems} setAlert={setAlert} inList />
