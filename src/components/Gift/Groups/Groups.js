@@ -29,7 +29,9 @@ class Landing extends React.Component {
 		this.props.socket.on('res:groupsData', (result) => {
 			if (result) {
 				this.setState({
-					groups: result,
+					groups: result.groups,
+					user: result.user,
+
 					loading: false,
 				});
 			} else {
@@ -52,7 +54,7 @@ class Landing extends React.Component {
 					<Grid container spacing={3}>
 						{this.state.groups.map((group, i) => (
 							<Grid key={group.id} item xl={3} lg={4} md={6} sm={12} xs={12}>
-								<GroupCard socket={this.props.socket} getGroups={this.getGroups} group={group} />
+								<GroupCard socket={this.props.socket} getGroups={this.getGroups} group={group} starred={this.state.user?.starred?.includes(group.id) || false} />
 							</Grid>
 						))}
 						{this.state.groups.length === 0 && !this.state.loading && (

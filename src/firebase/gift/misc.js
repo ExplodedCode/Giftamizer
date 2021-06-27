@@ -13,11 +13,11 @@ export function GroupChip({ groupId }) {
 
 	useEffect(() => {
 		getGroup(groupId).then((result) => {
-			setGroup(result.name);
+			setGroup(result?.name);
 		});
 	});
 
-	return group !== '' ? <Chip size='small' label={group} style={{ marginRight: 4 }} /> : <span />;
+	return group !== undefined ? <Chip size='small' label={group} style={{ marginRight: 4 }} /> : <span />;
 }
 function getGroup(groupId) {
 	return new Promise((resolve, reject) => {

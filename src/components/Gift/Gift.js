@@ -83,6 +83,7 @@ const useStyles = makeStyles((theme) => ({
 			easing: theme.transitions.easing.sharp,
 			duration: theme.transitions.duration.enteringScreen,
 		}),
+		overflowX: 'hidden',
 	},
 	drawerPaperClose: {
 		overflowX: 'hidden',
@@ -157,7 +158,7 @@ export default function Gift(props) {
 							<ChevronLeftIcon />
 						</IconButton>
 					</div>
-					<NavLinks socket={socket} />
+					<NavLinks {...props} socket={socket} />
 				</Drawer>
 			)}
 

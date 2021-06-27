@@ -60,8 +60,6 @@ export default function FormDialog({ socket, group, fromNoMembers }) {
 			} else {
 				// error getting name
 			}
-
-			socket.off('res:userData');
 		});
 	};
 

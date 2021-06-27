@@ -1,6 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+
 import { makeStyles } from '@material-ui/core/styles';
+
+import Grid from '@material-ui/core/Grid';
+import PersonIcon from '@material-ui/icons/Person';
+
 import Card from '@material-ui/core/Card';
 import CardActionArea from '@material-ui/core/CardActionArea';
 import CardActions from '@material-ui/core/CardActions';
@@ -42,16 +47,23 @@ export default function GroupCard({ group, member, getMembers, owner }) {
 						<CardMedia className={classes.CardMedia} style={{ height: 200 }} image={member.backgroundValue} title={member.name} />
 					)}
 					<CardContent>
-						<Typography gutterBottom variant='h5' component='h2'>
-							{member.displayName}
-						</Typography>
+						<Grid container>
+							<Grid item xs>
+								<Typography variant='h5' component='h2'>
+									{member.displayName}
+								</Typography>
+							</Grid>
+							<Grid item>
+								<PersonIcon />
+							</Grid>
+						</Grid>
 					</CardContent>
 				</CardActionArea>
-				{owner && (
+				{/* {owner && (
 					<CardActions>
 						<Remove member={member.id} group={group} getMembers={getMembers} setAlert={setAlert} />
 					</CardActions>
-				)}
+				)} */}
 			</Card>
 
 			<Snackbar open={alert.open} autoHideDuration={3500} onClose={handleAlertClose}>

@@ -11,11 +11,13 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 
 import Badge from '@material-ui/core/Badge';
 
-import ListAltIcon from '@material-ui/icons/ListAlt';
+import MenuOpenIcon from '@material-ui/icons/MenuOpen';
 import GroupIcon from '@material-ui/icons/Group';
+import EmojiEmotionsIcon from '@material-ui/icons/EmojiEmotions';
+import StarIcon from '@material-ui/icons/Star';
+import MenuIcon from '@material-ui/icons/Menu';
 
 import StorageIcon from '@material-ui/icons/Storage';
-import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 
 // import WarningIcon from '@material-ui/icons/Warning';
 
@@ -44,47 +46,42 @@ class Landing extends React.Component {
 		return (
 			<div>
 				<Container style={{ paddingTop: 16 }}>
-					<Typography variant='h5'>Welcome to the new and improved Giftamizer!</Typography>
-					<br />
-					<Typography variant='subtitle1'>
-						If you had an account previously you items and groups have been transferred. If you find any issues please contact Evan via email <a href='mailto:evan@trowbridge.tech'>here</a>
-						.
-					</Typography>
-					<Typography variant='subtitle1'>Some items that had either quotation marks or apostrophes may need fixed.</Typography>
-					<br />
 					<Typography variant='h5'>What's NEW!</Typography>
+					<Typography variant='caption' color='textSecondary'>
+						June 26, 2021
+					</Typography>
 					<List>
 						<ListItem>
 							<ListItemIcon>
 								<StyledBadge badgeContent={'NEW'} color='secondary'>
-									<ListAltIcon />
+									<MenuOpenIcon />
 								</StyledBadge>
 							</ListItemIcon>
-							<ListItemText primary='Create lists that can move between groups.' secondary='Lists are assigned to groups' />
+							<ListItemText
+								primary='Updated Navigation'
+								secondary={
+									<>
+										Redesigned the side menu navigation to be more user friendly
+										<EmojiEmotionsIcon style={{ fontSize: '1rem', marginBottom: -3, paddingLeft: 2, color: '#4caf50' }} />
+									</>
+								}
+							/>
 						</ListItem>
 						<ListItem>
 							<ListItemIcon>
 								<StyledBadge badgeContent={'NEW'} color='secondary'>
-									<i className='fas fa-gift' style={{ fontSize: '1.19rem', marginLeft: 2 }} />
+									<StarIcon />
 								</StyledBadge>
 							</ListItemIcon>
-							<ListItemText primary='Assign items to the groups you want them to show up in. Paste links to autofill info.' secondary='Items are assigned to lists' />
-						</ListItem>
-						<ListItem>
-							<ListItemIcon>
-								<StyledBadge badgeContent={'NEW'} color='secondary'>
-									<GroupIcon />
-								</StyledBadge>
-							</ListItemIcon>
-							<ListItemText primary='Add a cover image to your groups' secondary='Or select a color from the NEW color picker.' />
-						</ListItem>
-						<ListItem>
-							<ListItemIcon>
-								<StyledBadge badgeContent={'NEW'} color='secondary'>
-									<i className='fas fa-baby-carriage' style={{ fontSize: '1.19rem', marginLeft: 2 }} />
-								</StyledBadge>
-							</ListItemIcon>
-							<ListItemText primary='Create a lists for your kids (or pet😉)' secondary='These lists will display separately from yours.' />
+							<ListItemText
+								primary='Pinning Groups'
+								secondary={
+									<>
+										Now pin your favorite and most frequently accessed groups the the side navigation menu
+										<MenuIcon style={{ fontSize: '1rem', marginBottom: -3, paddingLeft: 2, color: '#4caf50' }} />
+									</>
+								}
+							/>
 						</ListItem>
 						<ListItem>
 							<ListItemIcon>
@@ -93,30 +90,21 @@ class Landing extends React.Component {
 								</StyledBadge>
 							</ListItemIcon>
 							<ListItemText
-								primary='New server & database.'
+								primary='Improved Database Requests'
 								secondary={
-									<span>
-										Allows for more complex <i className='fas fa-gift' style={{ fontSize: '0.8rem', paddingLeft: 1, color: '#4caf50' }} />
-										<ArrowForwardIcon style={{ fontSize: '1rem', marginBottom: -3, paddingLeft: 2, color: '#000' }} />
-										<ListAltIcon style={{ fontSize: '1rem', marginBottom: -3, paddingLeft: 2, color: '#2196f3' }} />
-										<ArrowForwardIcon style={{ fontSize: '1rem', marginBottom: -3, paddingLeft: 2, color: '#000' }} />
-										<GroupIcon style={{ fontSize: '1rem', marginBottom: -3, paddingLeft: 2, color: '#f44336' }} /> linking.
-									</span>
+									<>
+										More efficient queries for groups <GroupIcon style={{ fontSize: '1rem', marginBottom: -3, paddingLeft: 2, color: '#4caf50' }} />
+									</>
 								}
 							/>
 						</ListItem>
 					</List>
-					{/* <br />
 					<br />
-					<Typography variant='h5'>Known Issues:</Typography>
-					<List>
-						<ListItem>
-							<ListItemIcon>
-								<WarningIcon />
-							</ListItemIcon>
-							<ListItemText primary="Uploading images from the mobile app doesn't work" secondary='Desktop is working' />
-						</ListItem>
-					</List> */}
+					<br />
+					<Typography variant='subtitle1'>
+						If you had an account previously you items and groups have been transferred. If you find any issues please contact Evan via email <a href='mailto:evan@trowbridge.tech'>here</a>
+						.
+					</Typography>
 				</Container>
 			</div>
 		);

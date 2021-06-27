@@ -76,7 +76,7 @@ export default function MediaControlCard({ item, getMemberItems }) {
 								}}
 								disabled={item.takenBy !== firebaseAuth().currentUser.uid}
 							>
-								Planned
+								Pending
 							</Button>
 						) : item.status === 'unavailable' ? (
 							<Button
