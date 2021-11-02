@@ -95,9 +95,12 @@ export default function MediaControlCard({ item, getMemberItems }) {
 								ERROR
 							</Button>
 						)}
-						<Button href={item.url} target='_blank' style={{ color: '#2196f3' }}>
-							{extractDomain(item.url)}
-						</Button>
+
+						{item.url && (
+							<Button href={item.url} target='_blank' style={{ color: '#2196f3' }}>
+								{extractDomain(item.url)}
+							</Button>
+						)}
 					</div>
 				</div>
 				<CardMedia className={classes.cover} image={item.image} title={item.name} />
