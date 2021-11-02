@@ -1,35 +1,35 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-import CircularProgress from '@material-ui/core/CircularProgress';
+import CircularProgress from '@mui/material/CircularProgress';
 
-import Avatar from '@material-ui/core/Avatar';
+import Avatar from '@mui/material/Avatar';
 
-import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
-import ListItemAvatar from '@material-ui/core/ListItemAvatar';
-import ListSubheader from '@material-ui/core/ListSubheader';
-import Divider from '@material-ui/core/Divider';
+import ListItem from '@mui/material/ListItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import ListItemAvatar from '@mui/material/ListItemAvatar';
+import ListSubheader from '@mui/material/ListSubheader';
+import Divider from '@mui/material/Divider';
 
-import NewReleasesIcon from '@material-ui/icons/NewReleases';
-import ListAltIcon from '@material-ui/icons/ListAlt';
-import GroupIcon from '@material-ui/icons/Group';
-import ShoppingCartIcon from '@material-ui/icons/ShoppingCart';
+import NewReleasesIcon from '@mui/icons-material/NewReleases';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+import GroupIcon from '@mui/icons-material/Group';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 
-import IconButton from '@material-ui/core/IconButton';
-import ExpandLess from '@material-ui/icons/ExpandLess';
-import ExpandMore from '@material-ui/icons/ExpandMore';
-import Star from '@material-ui/icons/Star';
-import Collapse from '@material-ui/core/Collapse';
-import List from '@material-ui/core/List';
+import IconButton from '@mui/material/IconButton';
+import ExpandLess from '@mui/icons-material/ExpandLess';
+import ExpandMore from '@mui/icons-material/ExpandMore';
+import Star from '@mui/icons-material/Star';
+import Collapse from '@mui/material/Collapse';
+import List from '@mui/material/List';
 
-import AccountCircleIcon from '@material-ui/icons/AccountCircle';
-import LockIcon from '@material-ui/icons/Lock';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import LockIcon from '@mui/icons-material/Lock';
 
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Switch from '@material-ui/core/Switch';
-import BuildIcon from '@material-ui/icons/Build';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
+import BuildIcon from '@mui/icons-material/Build';
 
 import { logout } from '../../firebase/auth';
 import { firebaseAuth } from '../../firebase/constants';
@@ -132,13 +132,13 @@ class navMenu extends React.Component {
 					</ListItemIcon>
 					<ListItemText primary='Groups' />
 					<IconButton
-						aria-label='delete'
-						onClick={(e) => {
+                        aria-label='delete'
+                        onClick={(e) => {
 							e.preventDefault();
 							this.setState({ groupsOpen: !this.state.groupsOpen });
 						}}
-						style={{ padding: 6 }}
-					>
+                        style={{ padding: 6 }}
+                        size="large">
 						{this.state.user.starredGroups.length > 0 && <>{this.state.groupsOpen ? <ExpandLess fontSize='small' /> : <ExpandMore fontSize='small' />}</>}
 					</IconButton>
 				</ListItem>

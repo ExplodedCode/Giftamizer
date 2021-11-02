@@ -1,4 +1,4 @@
-const { EditAttributes } = require('@material-ui/icons');
+const { EditAttributes } = require('@mui/icons-material');
 const stringify = require('json-stringify-pretty-compact');
 
 const connection_string = 'mongodb://root:qMhUXkqtFuvt4M6vdL6X@azure.trowbridge.tech:27017/Giftamizer?authSource=admin';

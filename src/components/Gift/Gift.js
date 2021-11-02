@@ -6,14 +6,14 @@ import { useCookies } from 'react-cookie';
 import { Route, Switch, Link } from 'react-router-dom';
 
 import clsx from 'clsx';
-import { makeStyles } from '@material-ui/core/styles';
-import Drawer from '@material-ui/core/Drawer';
-import AppBar from '@material-ui/core/AppBar';
-import Toolbar from '@material-ui/core/Toolbar';
-import Typography from '@material-ui/core/Typography';
-import IconButton from '@material-ui/core/IconButton';
-import MenuIcon from '@material-ui/icons/Menu';
-import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
+import makeStyles from '@mui/styles/makeStyles';
+import Drawer from '@mui/material/Drawer';
+import AppBar from '@mui/material/AppBar';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
+import MenuIcon from '@mui/icons-material/Menu';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 
 import NavLinks from './NavLinks';
 import NavMobile from './NavMobile';
@@ -135,7 +135,14 @@ export default function Gift(props) {
 			<AppBar position='absolute' className={clsx(classes.appBar, open && classes.appBarShift)}>
 				<Toolbar className={classes.toolbar}>
 					{!isMobile && (
-						<IconButton edge='start' color='inherit' aria-label='open drawer' onClick={handleDrawerOpen} className={clsx(classes.menuButton, open && classes.menuButtonHidden)}>
+						<IconButton
+							edge='start'
+							color='inherit'
+							aria-label='open drawer'
+							onClick={handleDrawerOpen}
+							className={clsx(classes.menuButton, open && classes.menuButtonHidden)}
+							size='large'
+						>
 							<MenuIcon />
 						</IconButton>
 					)}
@@ -154,7 +161,7 @@ export default function Gift(props) {
 					open={open}
 				>
 					<div className={classes.toolbarIcon}>
-						<IconButton onClick={handleDrawerClose}>
+						<IconButton onClick={handleDrawerClose} size='large'>
 							<ChevronLeftIcon />
 						</IconButton>
 					</div>

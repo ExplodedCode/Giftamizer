@@ -1,20 +1,20 @@
 import React, { Component } from 'react';
 
-import Paper from '@material-ui/core/Paper';
-import Grid from '@material-ui/core/Grid';
+import Paper from '@mui/material/Paper';
+import Grid from '@mui/material/Grid';
 
 import ColorTool from './ColorTool';
 
-import CircularProgress from '@material-ui/core/CircularProgress';
+import CircularProgress from '@mui/material/CircularProgress';
 
-import Snackbar from '@material-ui/core/Snackbar';
+import Snackbar from '@mui/material/Snackbar';
 import Alert from '../../Alert';
 
 import { firebaseAuth } from '../../../firebase/constants';
 
-import Button from '@material-ui/core/Button';
+import Button from '@mui/material/Button';
 import { logout } from '../../../firebase/auth';
-import LockIcon from '@material-ui/icons/Lock';
+import LockIcon from '@mui/icons-material/Lock';
 
 class Printing extends Component {
 	constructor(props) {
@@ -100,14 +100,14 @@ class Printing extends Component {
 			</div>
 		) : (
 			<div>
-				<Paper elevation={9} style={{ paddingLeft: 12, paddingRight: 12, margin: 8, marginTop: 20 }}>
+				<Paper elevation={9} style={{ padding: 12, margin: 8 }}>
 					<Grid container spacing={3}>
 						<Grid item xs={12}>
 							<ColorTool settings={this.state} openSnackber={this.handleSnackbarOpen} />
 						</Grid>
 						{this.props.isMobile && (
 							<Grid item xs={12}>
-								<Button variant='contained' color='default' startIcon={<LockIcon />} onClick={logout} fullWidth>
+								<Button variant='contained' startIcon={<LockIcon />} onClick={logout} fullWidth>
 									Logout
 								</Button>
 							</Grid>

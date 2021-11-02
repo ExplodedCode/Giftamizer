@@ -1,25 +1,27 @@
 import React from 'react';
-import { withStyles } from '@material-ui/core/styles';
+import withStyles from '@mui/styles/withStyles';
 
-import Container from '@material-ui/core/Container';
-import Typography from '@material-ui/core/Typography';
+import Container from '@mui/material/Container';
+import Typography from '@mui/material/Typography';
 
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import ListItemIcon from '@mui/material/ListItemIcon';
 
-import Badge from '@material-ui/core/Badge';
+import Badge from '@mui/material/Badge';
 
-import MenuOpenIcon from '@material-ui/icons/MenuOpen';
-import GroupIcon from '@material-ui/icons/Group';
-import EmojiEmotionsIcon from '@material-ui/icons/EmojiEmotions';
-import StarIcon from '@material-ui/icons/Star';
-import MenuIcon from '@material-ui/icons/Menu';
+import DesignServicesIcon from '@mui/icons-material/DesignServices';
+import CodeIcon from '@mui/icons-material/Code';
+import MenuOpenIcon from '@mui/icons-material/MenuOpen';
+import GroupIcon from '@mui/icons-material/Group';
+import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
+import StarIcon from '@mui/icons-material/Star';
+import MenuIcon from '@mui/icons-material/Menu';
 
-import StorageIcon from '@material-ui/icons/Storage';
+import StorageIcon from '@mui/icons-material/Storage';
 
-// import WarningIcon from '@material-ui/icons/Warning';
+// import WarningIcon from '@mui/icons-material/Warning';
 
 const StyledBadge = withStyles((theme) => ({
 	badge: {
@@ -48,14 +50,31 @@ class Landing extends React.Component {
 				<Container style={{ paddingTop: 16 }}>
 					<Typography variant='h5'>What's NEW!</Typography>
 					<Typography variant='caption' color='textSecondary'>
-						June 26, 2021
+						November 1, 2021
 					</Typography>
 					<List>
 						<ListItem>
 							<ListItemIcon>
 								<StyledBadge badgeContent={'NEW'} color='secondary'>
-									<MenuOpenIcon />
+									<DesignServicesIcon />
 								</StyledBadge>
+							</ListItemIcon>
+							<ListItemText
+								primary='Migrated MUI from v4 to v5'
+								secondary={
+									<>
+										<a href='https://mui.com/' target='_blank'>
+											Material UI
+										</a>{' '}
+										provides a robust and customizable library of foundational and advanced components for React application.
+										<CodeIcon style={{ fontSize: '1rem', marginBottom: -3, paddingLeft: 2, color: '#4caf50' }} />
+									</>
+								}
+							/>
+						</ListItem>
+						<ListItem>
+							<ListItemIcon>
+								<MenuOpenIcon />
 							</ListItemIcon>
 							<ListItemText
 								primary='Updated Navigation'
@@ -69,9 +88,7 @@ class Landing extends React.Component {
 						</ListItem>
 						<ListItem>
 							<ListItemIcon>
-								<StyledBadge badgeContent={'NEW'} color='secondary'>
-									<StarIcon />
-								</StyledBadge>
+								<StarIcon />
 							</ListItemIcon>
 							<ListItemText
 								primary='Pinning Groups'
@@ -79,21 +96,6 @@ class Landing extends React.Component {
 									<>
 										Now pin your favorite and most frequently accessed groups the the side navigation menu
 										<MenuIcon style={{ fontSize: '1rem', marginBottom: -3, paddingLeft: 2, color: '#4caf50' }} />
-									</>
-								}
-							/>
-						</ListItem>
-						<ListItem>
-							<ListItemIcon>
-								<StyledBadge badgeContent={'NEW'} color='secondary'>
-									<StorageIcon />
-								</StyledBadge>
-							</ListItemIcon>
-							<ListItemText
-								primary='Improved Database Requests'
-								secondary={
-									<>
-										More efficient queries for groups <GroupIcon style={{ fontSize: '1rem', marginBottom: -3, paddingLeft: 2, color: '#4caf50' }} />
 									</>
 								}
 							/>

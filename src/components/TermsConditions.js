@@ -2,15 +2,17 @@ import React from 'react';
 
 import { Link } from 'react-router-dom';
 
-import { withTheme } from '@material-ui/styles';
-import withWidth from '@material-ui/core/withWidth';
+import { withTheme } from '@mui/styles';
 
-import AppBar from '@material-ui/core/AppBar';
-import Toolbar from '@material-ui/core/Toolbar';
-import Typography from '@material-ui/core/Typography';
-import Button from '@material-ui/core/Button';
+import AppBar from '@mui/material/AppBar';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
 
-import Container from '@material-ui/core/Container';
+import Container from '@mui/material/Container';
+
+// FIXME checkout https://mui.com/components/use-media-query/#migrating-from-withwidth
+const withWidth = () => (WrappedComponent) => (props) => <WrappedComponent {...props} width="xs" />;
 
 class Landing extends React.Component {
 	constructor(props) {
@@ -34,9 +36,9 @@ class Landing extends React.Component {
 
 	render() {
 		const { theme } = this.props;
-		// console.log(theme.palette.primary[theme.palette.type]);
+		// console.log(theme.palette.primary[theme.palette.mode]);
 
-		this.style.color = theme.palette.primary[theme.palette.type === 'dark' ? theme.palette.type : 'main'];
+		this.style.color = theme.palette.primary[theme.palette.mode === 'dark' ? theme.palette.mode : 'main'];
 
 		return (
 			<div style={{ flexGrow: 1 }}>

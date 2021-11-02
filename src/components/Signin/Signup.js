@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
-import Avatar from '@material-ui/core/Avatar';
-import Button from '@material-ui/core/Button';
-import CssBaseline from '@material-ui/core/CssBaseline';
-import TextField from '@material-ui/core/TextField';
-import Link from '@material-ui/core/Link';
+import Avatar from '@mui/material/Avatar';
+import Button from '@mui/material/Button';
+import CssBaseline from '@mui/material/CssBaseline';
+import TextField from '@mui/material/TextField';
+import Link from '@mui/material/Link';
 import { Link as domLink } from 'react-router-dom';
-import Paper from '@material-ui/core/Paper';
-import Box from '@material-ui/core/Box';
-import Grid from '@material-ui/core/Grid';
-import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
-import Typography from '@material-ui/core/Typography';
-import { makeStyles } from '@material-ui/core/styles';
+import Paper from '@mui/material/Paper';
+import Box from '@mui/material/Box';
+import Grid from '@mui/material/Grid';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import Typography from '@mui/material/Typography';
+import makeStyles from '@mui/styles/makeStyles';
 
 import { signupWithEmailPassword } from '../../firebase/auth';
 
 import Alert from '../Alert';
-import Snackbar from '@material-ui/core/Snackbar';
+import Snackbar from '@mui/material/Snackbar';
 
 function Copyright() {
 	return (
@@ -37,7 +37,7 @@ const useStyles = makeStyles((theme) => ({
 	image: {
 		backgroundImage: 'url(/images/signin/' + (Math.floor(Math.random() * 10) + 1) + '.jpg)',
 		backgroundRepeat: 'no-repeat',
-		backgroundColor: theme.palette.type === 'light' ? theme.palette.grey[50] : theme.palette.grey[900],
+		backgroundColor: theme.palette.mode === 'light' ? theme.palette.grey[50] : theme.palette.grey[900],
 		backgroundSize: 'cover',
 		backgroundPosition: 'center',
 	},
@@ -73,7 +73,7 @@ export default function SignInSide() {
 	};
 
 	return (
-		<Grid container component='main' className={classes.root}>
+        <Grid container component='main' className={classes.root}>
 			<CssBaseline />
 			<Grid item xs={false} sm={4} md={7} className={classes.image} />
 			<Grid item xs={12} sm={8} md={5} component={Paper} elevation={6} square>
@@ -168,7 +168,7 @@ export default function SignInSide() {
 					>
 						Sign Up
 					</Button>
-					<Grid container justify='flex-end'>
+					<Grid container justifyContent='flex-end'>
 						<Grid item>
 							<Link component={domLink} to='/signin' variant='body2'>
 								Already have an account? Sign in
@@ -186,5 +186,5 @@ export default function SignInSide() {
 				</Alert>
 			</Snackbar>
 		</Grid>
-	);
+    );
 }
