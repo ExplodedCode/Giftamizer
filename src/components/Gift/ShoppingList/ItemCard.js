@@ -49,6 +49,9 @@ export default function MediaControlCard({ item, getShopingList }) {
 					<CardContent className={classes.content}>
 						<Typography component='h5' variant='h5'>
 							{item.name}
+							<Typography variant='h6' color='textSecondary'>
+								{item.user.displayName}
+							</Typography>
 						</Typography>
 						<Typography variant='subtitle1' color='textSecondary'>
 							{item.description}
@@ -95,9 +98,11 @@ export default function MediaControlCard({ item, getShopingList }) {
 								ERROR
 							</Button>
 						)}
-						<Button href={item.url} target='_blank' style={{ color: '#2196f3' }}>
-							{extractDomain(item.url)}
-						</Button>
+						{item.url && (
+							<Button href={item.url} target='_blank' style={{ color: '#2196f3' }}>
+								{extractDomain(item.url)}
+							</Button>
+						)}
 					</div>
 				</div>
 				<CardMedia className={classes.cover} image={item.image} title={item.name} />

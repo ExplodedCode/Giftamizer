@@ -16,21 +16,19 @@ async function start() {
 
 	const groupId = '95dda3ca1284';
 
+	var group = await db.collection('groups').findOne({ id: groupId }, { members: 1 });
 	db.collection('users')
-		.aggregate([
-			{ $match: { uid: 'jwpIwFNoPKh2YwRCbTkAJZypXyx2' } },
-			{
-				$lookup: {
-					from: 'groups',
-					localField: 'starred',
-					foreignField: 'id',
-					as: 'friendsData',
-				},
-			},
-		])
+		.aggregate([{ $match: { uid: { $in: group.members } } }, { $unionWith: { coll: 'lists', pipeline: [{ $match: { $and: [{ groups: groupId }, { isForChild: true }] } }] } }])
 		.toArray((err, members) => {
-			console.log(members[0]);
+			console.log(members);
 		});
 }
 
 start();
+
+while (true) {
+	Eat();
+	Sleep();
+	Coffee();
+	Code();
+}

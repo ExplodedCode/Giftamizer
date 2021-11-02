@@ -101,9 +101,9 @@ class navMenu extends React.Component {
 					<ListItemText primary={this.state.user && this.state.user.displayName} secondary={this.state.user && this.state.user.email} />
 				</ListItem>
 				<Divider />
-				<ListItem component={Link} to='/gift' button selected={this.props.location.pathname == '/gift'}>
+				<ListItem component={Link} to='/gift' button selected={this.props.location.pathname === '/gift'}>
 					<ListItemIcon>
-						<NewReleasesIcon color={this.props.location.pathname == '/gift' ? 'primary' : 'inherit'} />
+						<NewReleasesIcon color={this.props.location.pathname === '/gift' ? 'primary' : 'inherit'} />
 					</ListItemIcon>
 					<ListItemText primary="What's New" />
 				</ListItem>
@@ -146,9 +146,9 @@ class navMenu extends React.Component {
 				<Collapse in={this.state.groupsOpen} timeout='auto' unmountOnExit>
 					{this.state.user.starredGroups.map((g) => (
 						<List component='div' disablePadding>
-							<ListItem component={Link} to={'/gift/group/' + g.id} button style={{ paddingLeft: 32 }} selected={this.props.location.pathname == '/gift/group/' + g.id}>
+							<ListItem component={Link} to={'/gift/group/' + g.id} button style={{ paddingLeft: 32 }} selected={this.props.location.pathname === '/gift/group/' + g.id}>
 								<ListItemIcon>
-									<Star color={this.props.location.pathname == '/gift/group/' + g.id ? 'primary' : 'inherit'} />
+									<Star color={this.props.location.pathname === '/gift/group/' + g.id ? 'primary' : 'inherit'} />
 								</ListItemIcon>
 								<ListItemText primary={g.name} />
 							</ListItem>
