@@ -3,13 +3,13 @@
 # dependencies
 /node_modules
 package-lock.json
-/importer/firestore to mongodb/node_modules
 /.pnp
 .pnp.js
 
 # testing
 /coverage
 /build
+.env
 
 # misc
 .DS_Store
