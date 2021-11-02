@@ -12,3 +12,12 @@ export function saveAccountDisplay(display) {
 		resolve('ok');
 	});
 }
+export function setAccountEmail(email) {
+	return new Promise((resolve, reject) => {
+		socket.emit('set:userData', {
+			uid: firebaseAuth().currentUser.uid,
+			display: { email: email },
+		});
+		resolve('ok');
+	});
+}

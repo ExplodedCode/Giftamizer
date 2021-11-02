@@ -81,15 +81,16 @@ class Landing extends React.Component {
 								<React.Fragment>
 									{this.state.members
 										.sort(function (a, b) {
+											var textA, textB;
 											if (a?.isForChild) {
-												var textA = a.name.toUpperCase();
+												textA = a.name.toUpperCase();
 											} else {
-												var textA = a.displayName.toUpperCase();
+												textA = a.displayName.toUpperCase();
 											}
 											if (b?.isForChild) {
-												var textB = b.name.toUpperCase();
+												textB = b.name.toUpperCase();
 											} else {
-												var textB = b.displayName.toUpperCase();
+												textB = b.displayName.toUpperCase();
 											}
 
 											return textA < textB ? -1 : textA > textB ? 1 : 0;

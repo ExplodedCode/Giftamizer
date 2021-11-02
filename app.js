@@ -19,9 +19,9 @@ const { ObjectId } = require('mongodb'); // or ObjectID
 // add "ENV IS_DOCKER_CONTAINER yes" to docker file
 var isDockerContainer = process.env.IS_DOCKER_CONTAINER || 'no';
 if (isDockerContainer === 'yes') {
-	var connection_string = 'mongodb://root:qMhUXkqtFuvt4M6vdL6X@4b3b1bdc0795:27017/Giftamizer?authSource=admin';
+	var connection_string = 'mongodb://root:qMhUXkqtFuvt4M6vdL6X@172.20.68.50:27017/Giftamizer?authSource=admin';
 } else {
-	var connection_string = 'mongodb://root:qMhUXkqtFuvt4M6vdL6X@azure.trowbridge.tech:27017/Giftamizer?authSource=admin';
+	var connection_string = 'mongodb://root:qMhUXkqtFuvt4M6vdL6X@trowbridge.tech:27017/Giftamizer?authSource=admin';
 }
 
 var app = express();
@@ -619,16 +619,40 @@ async function start(db, server, io) {
 			// get my shopping list
 			socket.on('req:getShoppingList', ({ userId }) => {
 				try {
-					collection_items.find({ takenBy: userId, status: { $in: ['planned', 'unavailable'] } }).toArray((err, items) => {
-						if (err) {
-							console.log(err);
-							io.to(socket.id).emit('res:getShoppingList', 'error');
-						} else {
-							io.to(socket.id).emit('res:getShoppingList', items);
-						}
+					collection_items
+						.aggregate([
+							{ $match: { takenBy: userId, status: { $in: ['planned', 'unavailable'] } } },
+							{
+								$lookup: {
+									from: 'users',
+									localField: 'owner',
+									foreignField: 'uid',
+									as: 'user',
+								},
+							},
+							{ $unwind: '$user' },
+						])
+						.toArray((err, items) => {
+							if (err) {
+								console.log(err);
+								io.to(socket.id).emit('res:getShoppingList', 'error');
+							} else {
+								io.to(socket.id).emit('res:getShoppingList', items);
+							}
 
-						io.to(socket.id).emit('res:getShoppingList', items);
-					});
+							io.to(socket.id).emit('res:getShoppingList', items);
+						});
+
+					// collection_items.find({ takenBy: userId, status: { $in: ['planned', 'unavailable'] } }).toArray((err, items) => {
+					// 	if (err) {
+					// 		console.log(err);
+					// 		io.to(socket.id).emit('res:getShoppingList', 'error');
+					// 	} else {
+					// 		io.to(socket.id).emit('res:getShoppingList', items);
+					// 	}
+
+					// 	io.to(socket.id).emit('res:getShoppingList', items);
+					// });
 				} catch (error) {
 					console.log(error);
 				}

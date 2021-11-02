@@ -1,4 +1,4 @@
-import { firebaseAuth, endpoint } from './constants';
+import { firebaseAuth, EmailAuthProvider, endpoint } from './constants';
 
 import socketIOClient from 'socket.io-client';
 var socket = socketIOClient(endpoint);
@@ -40,6 +40,32 @@ export function resetPassword(email) {
 		});
 }
 
+export function changeEmail(newEmail) {
+	const user = firebaseAuth().currentUser;
+	return user
+		.updateEmail(newEmail)
+		.then(() => {
+			return 'ok';
+		})
+		.catch((error) => {
+			return error;
+		});
+}
+
+export function verifyPassword(password) {
+	const user = firebaseAuth().currentUser;
+	const credential = EmailAuthProvider.credential(user.email, password);
+
+	return user
+		.reauthenticateWithCredential(credential)
+		.then(() => {
+			return 'ok';
+		})
+		.catch((error) => {
+			return error;
+		});
+}
+
 export function logout() {
 	return firebaseAuth().signOut();
 }
@@ -58,4 +84,37 @@ export function saveUser(user, name) {
 		backgroundType: 'color',
 		textShade: 'light',
 	});
+}
+
+export function getError(error) {
+	var errorMessage;
+	switch (error) {
+		case 'auth/invalid-email':
+			errorMessage = 'Your email address appears to be malformed.';
+			break;
+		case 'auth/email-already-in-use':
+			errorMessage = 'Your email address is already in use.';
+			break;
+		case 'auth/wrong-password':
+			errorMessage = 'Your password is wrong.';
+			break;
+		case 'auth/weak-password':
+			errorMessage = 'Password is too weak.';
+			break;
+		case 'auth/user-not-found':
+			errorMessage = 'Your password is wrong.';
+			break;
+		case 'auth/user-disabled':
+			errorMessage = 'This account has been disabled.';
+			break;
+		case 'ERROR_TOO_MANY_REQUESTS':
+			errorMessage = 'Too many requests. Try again later.';
+			break;
+		case 'auth/operation-not-allowed':
+			errorMessage = 'Signing in with Email and Password is not enabled.';
+			break;
+		default:
+			errorMessage = 'An undefined Error happened.';
+	}
+	return errorMessage;
 }

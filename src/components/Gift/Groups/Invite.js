@@ -35,7 +35,7 @@ export default function FormDialog({ socket, group, fromNoMembers }) {
 		socket.on('res:userData', (result) => {
 			// console.log(result);
 			if (result) {
-				fetch('http://localhost:8080/api/sendInvite?email=' + inviteEmail + '&code=' + group.id + '&name=' + result.displayName, {
+				fetch('/api/sendInvite?email=' + inviteEmail + '&code=' + group.id + '&name=' + result.displayName, {
 					method: 'GET',
 					headers: {
 						'Content-Type': 'application/json',

@@ -3,7 +3,6 @@ import React, { Component } from 'react';
 import socketIOClient from 'socket.io-client';
 
 import { BrowserRouter, Route, Switch, Redirect } from 'react-router-dom';
-import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 
 import CssBaseline from '@material-ui/core/CssBaseline';
 

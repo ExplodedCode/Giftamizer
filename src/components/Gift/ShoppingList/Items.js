@@ -29,6 +29,8 @@ class Landing extends React.Component {
 		this.props.socket.emit('req:getShoppingList', { userId: firebaseAuth().currentUser.uid });
 		this.props.socket.on('res:getShoppingList', (result) => {
 			if (result) {
+				console.log(result);
+
 				this.setState({
 					items: result,
 					loading: false,
