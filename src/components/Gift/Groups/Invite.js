@@ -1,15 +1,15 @@
 import React from 'react';
 
-import Button from '@material-ui/core/Button';
-import TextField from '@material-ui/core/TextField';
-import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogTitle from '@material-ui/core/DialogTitle';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
 
 import Alert from '../../Alert';
-import Snackbar from '@material-ui/core/Snackbar';
+import Snackbar from '@mui/material/Snackbar';
 
 import { firebaseAuth } from '../../../firebase/constants';
 
@@ -75,7 +75,9 @@ export default function FormDialog({ socket, group, fromNoMembers }) {
 					<TextField autoFocus margin='dense' id='name' label='Email Address' type='email' fullWidth value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} />
 				</DialogContent>
 				<DialogActions>
-					<Button onClick={handleClose}>Cancel</Button>
+					<Button color='inherit' onClick={handleClose}>
+						Cancel
+					</Button>
 					<Button onClick={handleInvite} color='primary' disabled={!(validEmail(inviteEmail) && !loading)}>
 						{loading ? 'Inviting...' : 'Invite'}
 					</Button>

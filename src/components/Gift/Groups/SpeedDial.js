@@ -1,11 +1,11 @@
 import React from 'react';
-import { makeStyles } from '@material-ui/core/styles';
-import SpeedDial from '@material-ui/lab/SpeedDial';
+import makeStyles from '@mui/styles/makeStyles';
+import SpeedDial from '@mui/material/SpeedDial';
 
-import GroupIcon from '@material-ui/icons/Group';
+import GroupIcon from '@mui/icons-material/Group';
 
-import PersonAddIcon from '@material-ui/icons/PersonAdd';
-import GroupAddIcon from '@material-ui/icons/GroupAdd';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import GroupAddIcon from '@mui/icons-material/GroupAdd';
 
 import CreateGroup from './Create';
 import JoinGroup from './Join';

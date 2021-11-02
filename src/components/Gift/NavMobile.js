@@ -1,15 +1,15 @@
 import React from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 
-import { makeStyles } from '@material-ui/core/styles';
+import makeStyles from '@mui/styles/makeStyles';
 
-import BottomNavigation from '@material-ui/core/BottomNavigation';
-import BottomNavigationAction from '@material-ui/core/BottomNavigationAction';
+import BottomNavigation from '@mui/material/BottomNavigation';
+import BottomNavigationAction from '@mui/material/BottomNavigationAction';
 
-import ListAltIcon from '@material-ui/icons/ListAlt';
-import GroupIcon from '@material-ui/icons/Group';
-import ShoppingCartIcon from '@material-ui/icons/ShoppingCart';
-import AccountCircleIcon from '@material-ui/icons/AccountCircle';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+import GroupIcon from '@mui/icons-material/Group';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
 const useStyles = makeStyles({
 	root: {

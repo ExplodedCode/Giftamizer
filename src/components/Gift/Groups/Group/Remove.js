@@ -1,9 +1,9 @@
 import React from 'react';
-import Button from '@material-ui/core/Button';
-import Popper from '@material-ui/core/Popper';
+import Button from '@mui/material/Button';
+import Popper from '@mui/material/Popper';
 import PopupState, { bindToggle, bindPopper } from 'material-ui-popup-state';
-import Fade from '@material-ui/core/Fade';
-import Paper from '@material-ui/core/Paper';
+import Fade from '@mui/material/Fade';
+import Paper from '@mui/material/Paper';
 
 import { removeMember } from '../../../../firebase/gift/members';
 

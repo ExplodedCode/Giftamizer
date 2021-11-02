@@ -1,22 +1,22 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-import Container from '@material-ui/core/Container';
-import Typography from '@material-ui/core/Typography';
+import Container from '@mui/material/Container';
+import Typography from '@mui/material/Typography';
 
-import Alert from '@material-ui/lab/Alert';
+import Alert from '@mui/material/Alert';
 
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemAvatar from '@material-ui/core/ListItemAvatar';
-import ListItemText from '@material-ui/core/ListItemText';
-import Avatar from '@material-ui/core/Avatar';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemAvatar from '@mui/material/ListItemAvatar';
+import ListItemText from '@mui/material/ListItemText';
+import Avatar from '@mui/material/Avatar';
 
 import CreateList from './Create';
 
 import { GroupChip } from '../../../firebase/gift/misc';
 
-import ListAltIcon from '@material-ui/icons/ListAlt';
+import ListAltIcon from '@mui/icons-material/ListAlt';
 
 import { firebaseAuth } from '../../../firebase/constants';
 

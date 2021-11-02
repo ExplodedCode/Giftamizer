@@ -3,10 +3,7 @@ import React, { Component } from 'react';
 import socketIOClient from 'socket.io-client';
 
 import { BrowserRouter, Route, Switch, Redirect } from 'react-router-dom';
-
-import CssBaseline from '@material-ui/core/CssBaseline';
-
-import CircularProgress from '@material-ui/core/CircularProgress';
+import CircularProgress from '@mui/material/CircularProgress';
 
 import { firebaseAuth, endpoint } from './firebase/constants';
 
@@ -80,7 +77,6 @@ export default class App extends Component {
 	render() {
 		return this.state.loading === true ? (
 			<>
-				<CssBaseline />
 				<CircularProgress style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, margin: 'auto' }} />
 			</>
 		) : this.state.maintenance === true && this.state?.user?.uid !== 'jwpIwFNoPKh2YwRCbTkAJZypXyx2' ? (
@@ -95,7 +91,6 @@ export default class App extends Component {
 			</div>
 		) : (
 			<>
-				<CssBaseline />
 				<BrowserRouter>
 					<Switch>
 						<PublicRoute authed={this.state.authed} exact path='/' component={Landing} />

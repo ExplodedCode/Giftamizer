@@ -4,23 +4,22 @@ import { isMobile } from 'react-device-detect';
 
 import { Link } from 'react-router-dom';
 
-import { withTheme } from '@material-ui/styles';
-import withWidth from '@material-ui/core/withWidth';
+import { withTheme } from '@mui/styles';
 
-import AppBar from '@material-ui/core/AppBar';
-import Toolbar from '@material-ui/core/Toolbar';
-import Typography from '@material-ui/core/Typography';
-import Button from '@material-ui/core/Button';
+import AppBar from '@mui/material/AppBar';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
 
-import Container from '@material-ui/core/Container';
-import Grid from '@material-ui/core/Grid';
-import Paper from '@material-ui/core/Paper';
-import Avatar from '@material-ui/core/Avatar';
+import Container from '@mui/material/Container';
+import Grid from '@mui/material/Grid';
+import Paper from '@mui/material/Paper';
+import Avatar from '@mui/material/Avatar';
 
-import green from '@material-ui/core/colors/green';
-import red from '@material-ui/core/colors/red';
-import blue from '@material-ui/core/colors/blue';
-import orange from '@material-ui/core/colors/orange';
+import { green, red, blue, orange } from '@mui/material/colors';
+
+// FIXME checkout https://mui.com/components/use-media-query/#migrating-from-withwidth
+const withWidth = () => (WrappedComponent) => (props) => <WrappedComponent {...props} width="xs" />;
 
 class Landing extends React.Component {
 	constructor(props) {
@@ -44,12 +43,12 @@ class Landing extends React.Component {
 
 	render() {
 		const { width, theme } = this.props;
-		// console.log(theme.palette.primary[theme.palette.type]);
+		// console.log(theme.palette.primary[theme.palette.mode]);
 
-		this.style.color = theme.palette.primary[theme.palette.type === 'dark' ? theme.palette.type : 'main'];
+		this.style.color = theme.palette.primary[theme.palette.mode === 'dark' ? theme.palette.mode : 'main'];
 
 		return (
-			<div style={{ flexGrow: 1 }}>
+            <div style={{ flexGrow: 1 }}>
 				<AppBar position='static' style={{ backgroundColor: this.style.color }}>
 					<Toolbar>
 						<Typography variant='h6' style={{ flexGrow: 1 }}>
@@ -119,7 +118,7 @@ class Landing extends React.Component {
 							</Grid>
 						</Grid>
 					</Grid>
-					<Grid container item sm={12} spacing={3} justify='center' style={{ marginTop: 128 }}>
+					<Grid container item sm={12} spacing={3} justifyContent='center' style={{ marginTop: 128 }}>
 						<Grid item xs={12} sm={10} md={8}>
 							<Typography variant='h4' style={{ marginBottom: 24 }} align='center'>
 								Giving just got a whole lot better.
@@ -180,7 +179,7 @@ class Landing extends React.Component {
 					</Grid> */}
 				</Container>
 			</div>
-		);
+        );
 	}
 }
 
