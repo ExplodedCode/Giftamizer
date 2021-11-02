@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const path = require('path');
 var express = require('express');
 const http = require('http');
@@ -12,16 +14,12 @@ const socketIO = require('socket.io');
 
 const { ObjectId } = require('mongodb'); // or ObjectID
 
-//
-// var connection_string = 'mongodb://***REMOVED***/Giftamizer?authSource=admin';
-//var connection_string = 'mongodb://root:***REMOVED***@***REMOVED***:27017/Giftamizer?authSource=admin';
-
 // add "ENV IS_DOCKER_CONTAINER yes" to docker file
 var isDockerContainer = process.env.IS_DOCKER_CONTAINER || 'no';
 if (isDockerContainer === 'yes') {
-	var connection_string = 'mongodb://root:***REMOVED***@172.20.68.50:27017/Giftamizer?authSource=admin';
+	var connection_string = process.env.MONGODB_PROD;
 } else {
-	var connection_string = 'mongodb://root:***REMOVED***@trowbridge.tech:27017/Giftamizer?authSource=admin';
+	var connection_string = process.env.MONGODB_DEV;
 }
 
 var app = express();

@@ -303,6 +303,9 @@ function ColorTool(props) {
 				<Grid item xs={12} sm={12} md={6}>
 					<ColorDemo data={state} />
 				</Grid>
+				<Grid item xs={12} sm={12} md={6}>
+					<ColorDemo data={state} />
+				</Grid>
 				<Grid item xs={12}>
 					<Button
 						variant='contained'

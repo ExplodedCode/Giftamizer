@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const nodemailer = require('nodemailer');
 
 let transporter = nodemailer.createTransport({
@@ -5,8 +7,8 @@ let transporter = nodemailer.createTransport({
 	port: 587,
 	secure: false,
 	auth: {
-		user: 'noreply@giftamizer.com',
-		pass: '***REMOVED***',
+		user: process.env.EMAIL_USER,
+		pass: process.env.EMAIL_PASS,
 	},
 	tls: {
 		ciphers: 'SSLv3',

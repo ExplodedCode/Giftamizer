@@ -14,12 +14,6 @@ module.exports = function (e, db) {
 			if (amazonID) {
 				const product = await amazonScraper.asin({ asin: amazonID });
 
-				// console.log(
-				// 	product.result[0].variants.filter((obj) => {
-				// 		return obj.asin === amazonID;
-				// 	})[0]
-				// );
-
 				var image = product.result[0].variants.filter((obj) => {
 					return obj.asin === amazonID;
 				})[0].images[0].large;
