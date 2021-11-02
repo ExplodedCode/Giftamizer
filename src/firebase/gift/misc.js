@@ -4,7 +4,7 @@ import socketIOClient from 'socket.io-client';
 
 import { firebaseAuth, endpoint } from '../constants';
 
-import Chip from '@material-ui/core/Chip';
+import Chip from '@mui/material/Chip';
 
 var socket = socketIOClient(endpoint);
 

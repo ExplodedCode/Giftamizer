@@ -1,33 +1,33 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { withStyles } from '@material-ui/core/styles';
-import * as colors from '@material-ui/core/colors';
-import Grid from '@material-ui/core/Grid';
-import Radio from '@material-ui/core/Radio';
-import Tooltip from '@material-ui/core/Tooltip';
-import Typography from '@material-ui/core/Typography';
-import Button from '@material-ui/core/Button';
-import CheckIcon from '@material-ui/icons/Check';
-import Slider from '@material-ui/core/Slider';
+import withStyles from '@mui/styles/withStyles';
+import * as colors from '@mui/material/colors';
+import Grid from '@mui/material/Grid';
+import Radio from '@mui/material/Radio';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import CheckIcon from '@mui/icons-material/Check';
+import Slider from '@mui/material/Slider';
 import ColorDemo from './ColorDemo';
 
-import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogTitle from '@material-ui/core/DialogTitle';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
 
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Switch from '@material-ui/core/Switch';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
 import Resizer from 'react-image-file-resizer';
 
-import RadioGroup from '@material-ui/core/RadioGroup';
-import FormControl from '@material-ui/core/FormControl';
-import TextField from '@material-ui/core/TextField';
+import RadioGroup from '@mui/material/RadioGroup';
+import FormControl from '@mui/material/FormControl';
+import TextField from '@mui/material/TextField';
 
-import SaveIcon from '@material-ui/icons/Save';
-import EmailIcon from '@material-ui/icons/Email';
-import CircularProgress from '@material-ui/core/CircularProgress';
+import SaveIcon from '@mui/icons-material/Save';
+import EmailIcon from '@mui/icons-material/Email';
+import CircularProgress from '@mui/material/CircularProgress';
 
 import { saveAccountDisplay, setAccountEmail } from '../../../firebase/gift/user';
 import { verifyPassword, changeEmail, getError } from '../../../firebase/auth';
@@ -299,9 +299,6 @@ function ColorTool(props) {
 							)}
 						</Grid>
 					</Grid>
-				</Grid>
-				<Grid item xs={12} sm={12} md={6}>
-					<ColorDemo data={state} />
 				</Grid>
 				<Grid item xs={12} sm={12} md={6}>
 					<ColorDemo data={state} />

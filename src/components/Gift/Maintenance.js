@@ -1,16 +1,16 @@
 import React from 'react';
 
-import CircularProgress from '@material-ui/core/CircularProgress';
+import CircularProgress from '@mui/material/CircularProgress';
 
-import ListSubheader from '@material-ui/core/ListSubheader';
-import Divider from '@material-ui/core/Divider';
+import ListSubheader from '@mui/material/ListSubheader';
+import Divider from '@mui/material/Divider';
 
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Switch from '@material-ui/core/Switch';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
 
-import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import BuildIcon from '@material-ui/icons/Build';
+import ListItem from '@mui/material/ListItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import BuildIcon from '@mui/icons-material/Build';
 
 import { firebaseAuth } from '../../firebase/constants';
 

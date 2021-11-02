@@ -1,6 +1,7 @@
 import React from 'react';
-import useMediaQuery from '@material-ui/core/useMediaQuery';
-import { ThemeProvider, createMuiTheme } from '@material-ui/core/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { ThemeProvider, StyledEngineProvider, createTheme, adaptV4Theme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
 
 import Routes from './Routes';
 
@@ -9,9 +10,9 @@ export default function App() {
 
 	const theme = React.useMemo(
 		() =>
-			createMuiTheme({
+			createTheme(adaptV4Theme({
 				palette: {
-					type: prefersDarkMode ? 'dark' : 'light',
+					mode: prefersDarkMode ? 'dark' : 'light',
 					primary: {
 						light: '#6fbf73',
 						main: '#4caf50',
@@ -25,13 +26,16 @@ export default function App() {
 						contrastText: '#fff',
 					},
 				},
-			}),
+			})),
 		[prefersDarkMode]
 	);
 
 	return (
-		<ThemeProvider theme={theme}>
-			<Routes />
-		</ThemeProvider>
-	);
+        <StyledEngineProvider injectFirst>
+            <ThemeProvider theme={theme}>
+                <CssBaseline />
+                <Routes />
+            </ThemeProvider>
+        </StyledEngineProvider>
+    );
 }

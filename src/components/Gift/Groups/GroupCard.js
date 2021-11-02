@@ -3,18 +3,18 @@ import { Link } from 'react-router-dom';
 
 import { isMobile } from 'react-device-detect';
 
-import { makeStyles } from '@material-ui/core/styles';
-import Card from '@material-ui/core/Card';
-import CardActionArea from '@material-ui/core/CardActionArea';
-import CardActions from '@material-ui/core/CardActions';
-import CardContent from '@material-ui/core/CardContent';
-import CardMedia from '@material-ui/core/CardMedia';
-import Typography from '@material-ui/core/Typography';
+import makeStyles from '@mui/styles/makeStyles';
+import Card from '@mui/material/Card';
+import CardActionArea from '@mui/material/CardActionArea';
+import CardActions from '@mui/material/CardActions';
+import CardContent from '@mui/material/CardContent';
+import CardMedia from '@mui/material/CardMedia';
+import Typography from '@mui/material/Typography';
 
-import Checkbox from '@material-ui/core/Checkbox';
-import StarIcon from '@material-ui/icons/Star';
-import StarOutlineIcon from '@material-ui/icons/StarOutline';
-import Tooltip from '@material-ui/core/Tooltip';
+import Checkbox from '@mui/material/Checkbox';
+import StarIcon from '@mui/icons-material/Star';
+import StarOutlineIcon from '@mui/icons-material/StarOutline';
+import Tooltip from '@mui/material/Tooltip';
 
 import { firebaseAuth } from '../../../firebase/constants';
 

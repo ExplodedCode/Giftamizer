@@ -2,11 +2,11 @@ import React from 'react';
 
 import { useHistory } from 'react-router-dom';
 
-import Button from '@material-ui/core/Button';
-import Popper from '@material-ui/core/Popper';
+import Button from '@mui/material/Button';
+import Popper from '@mui/material/Popper';
 import PopupState, { bindToggle, bindPopper } from 'material-ui-popup-state';
-import Fade from '@material-ui/core/Fade';
-import Paper from '@material-ui/core/Paper';
+import Fade from '@mui/material/Fade';
+import Paper from '@mui/material/Paper';
 
 import { deleteList } from '../../../../firebase/gift/lists';
 
@@ -26,7 +26,7 @@ export default function PopperPopupState(props) {
 								<Paper style={{ padding: 8 }}>
 									<b style={{ color: 'red' }}>Are you sure?</b>
 									<br />
-									<Button variant='contained' style={{ margin: 4 }} {...bindToggle(popupState)}>
+									<Button color='inherit' variant='contained' style={{ margin: 4 }} {...bindToggle(popupState)}>
 										Cancel
 									</Button>
 									<Button

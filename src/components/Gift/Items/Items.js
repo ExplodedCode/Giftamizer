@@ -1,11 +1,11 @@
 import React from 'react';
 
-import Container from '@material-ui/core/Container';
-import Grid from '@material-ui/core/Grid';
-import Typography from '@material-ui/core/Typography';
-import CircularProgress from '@material-ui/core/CircularProgress';
+import Container from '@mui/material/Container';
+import Grid from '@mui/material/Grid';
+import Typography from '@mui/material/Typography';
+import CircularProgress from '@mui/material/CircularProgress';
 
-import Alert from '@material-ui/lab/Alert';
+import Alert from '@mui/material/Alert';
 
 import CreateItem from './Create';
 import ItemCard from './ItemCard';
