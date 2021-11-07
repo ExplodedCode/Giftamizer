@@ -88,6 +88,7 @@ export default function SignInSide() {
 						required
 						fullWidth
 						label='Email Address'
+						type='email'
 						autoComplete='email'
 						autoFocus
 						value={email}

@@ -73,7 +73,7 @@ export default function SignInSide() {
 	};
 
 	return (
-        <Grid container component='main' className={classes.root}>
+		<Grid container component='main' className={classes.root}>
 			<CssBaseline />
 			<Grid item xs={false} sm={4} md={7} className={classes.image} />
 			<Grid item xs={12} sm={8} md={5} component={Paper} elevation={6} square>
@@ -112,6 +112,7 @@ export default function SignInSide() {
 								required
 								fullWidth
 								label='Email Address'
+								type='email'
 								autoComplete='email'
 								value={email}
 								onChange={(event) => setEmail(event.target.value)}
@@ -186,5 +187,5 @@ export default function SignInSide() {
 				</Alert>
 			</Snackbar>
 		</Grid>
-    );
+	);
 }
