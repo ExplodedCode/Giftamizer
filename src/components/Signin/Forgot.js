@@ -135,7 +135,15 @@ export default function SignInSide() {
 					</Box>
 				</div>
 			</Grid>
-			<Snackbar open={alert.open} autoHideDuration={3500} onClose={handleClose}>
+			<Snackbar
+				anchorOrigin={{
+					vertical: 'bottom',
+					horizontal: 'center',
+				}}
+				open={alert.open}
+				autoHideDuration={3500}
+				onClose={handleClose}
+			>
 				<Alert onClose={handleClose} severity={alert.severity}>
 					{alert.message}
 				</Alert>

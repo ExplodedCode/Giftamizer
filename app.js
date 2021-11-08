@@ -17,9 +17,9 @@ const { ObjectId } = require('mongodb'); // or ObjectID
 // add "ENV IS_DOCKER_CONTAINER yes" to docker file
 var isDockerContainer = process.env.IS_DOCKER_CONTAINER || 'no';
 if (isDockerContainer === 'yes') {
-	var connection_string = process.env.MONGODB_PROD;
+	var connection_string = process.env.MONGO_URI_PROD;
 } else {
-	var connection_string = process.env.MONGODB_DEV;
+	var connection_string = process.env.MONGO_URI_DEV;
 }
 
 var app = express();
@@ -41,7 +41,8 @@ app.use(bodyParser.json());
 	const { MongoClient } = require('mongodb');
 	const client = new MongoClient(connection_string);
 	await client.connect();
-	const db = client.db('Giftamizer');
+
+	const db = isDockerContainer === 'yes' ? client.db(process.env.MONGODB_PROD) : client.db(process.env.MONGODB_DEV);
 
 	const server = http.createServer(app);
 	const io = socketIO(server, {
@@ -56,7 +57,7 @@ app.use(bodyParser.json());
 
 async function start(db, server, io) {
 	try {
-		// start server
+		// start servernp
 		server.listen(port, () => console.log(`Listening on port ${port}`));
 
 		// Item Metadata

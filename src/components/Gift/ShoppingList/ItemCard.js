@@ -108,7 +108,15 @@ export default function MediaControlCard({ item, getShopingList }) {
 				<CardMedia className={classes.cover} image={item.image} title={item.name} />
 			</Card>
 
-			<Snackbar open={alert.open} autoHideDuration={3500} onClose={handleAlertClose}>
+			<Snackbar
+				anchorOrigin={{
+					vertical: 'bottom',
+					horizontal: 'center',
+				}}
+				open={alert.open}
+				autoHideDuration={3500}
+				onClose={handleAlertClose}
+			>
 				<Alert onClose={handleAlertClose} severity={alert.severity}>
 					{alert.message}
 				</Alert>
