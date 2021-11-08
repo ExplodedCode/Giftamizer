@@ -84,7 +84,15 @@ export default function FormDialog({ socket, group, fromNoMembers }) {
 				</DialogActions>
 			</Dialog>
 
-			<Snackbar open={alert.open} autoHideDuration={3500} onClose={handleAlertClose}>
+			<Snackbar
+				anchorOrigin={{
+					vertical: 'bottom',
+					horizontal: 'center',
+				}}
+				open={alert.open}
+				autoHideDuration={3500}
+				onClose={handleAlertClose}
+			>
 				<Alert onClose={handleAlertClose} severity={alert.severity}>
 					{alert.message}
 				</Alert>

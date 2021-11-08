@@ -114,7 +114,15 @@ class Printing extends Component {
 						)}
 					</Grid>
 				</Paper>
-				<Snackbar open={this.state.snackbarOpen} autoHideDuration={5000} onClose={this.handleSnackbarClose}>
+				<Snackbar
+					anchorOrigin={{
+						vertical: 'bottom',
+						horizontal: 'center',
+					}}
+					open={this.state.snackbarOpen}
+					autoHideDuration={5000}
+					onClose={this.handleSnackbarClose}
+				>
 					<Alert onClose={this.handleSnackbarClose} severity={this.state.snackbarSeverity}>
 						{this.state.snackbarMessage}
 					</Alert>
