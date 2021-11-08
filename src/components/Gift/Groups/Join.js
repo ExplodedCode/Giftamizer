@@ -93,7 +93,15 @@ export default function FormDialog(props) {
 					</Button>
 				</DialogActions>
 			</Dialog>
-			<Snackbar open={alert.open} autoHideDuration={3500} onClose={handleCloseAlert}>
+			<Snackbar
+				anchorOrigin={{
+					vertical: 'bottom',
+					horizontal: 'center',
+				}}
+				open={alert.open}
+				autoHideDuration={3500}
+				onClose={handleCloseAlert}
+			>
 				<Alert onClose={handleCloseAlert} severity={alert.severity}>
 					{alert.message}
 				</Alert>
