@@ -84,7 +84,7 @@ export default function SpeedDialTooltipOpen(props) {
 			<Fab color='primary' aria-label='add' className={classes.speedDial} onClick={handleOpen}>
 				<SettingsIcon />
 			</Fab>
-			<Dialog open={open} onClose={handleClose} aria-labelledby='form-dialog-title'>
+			<Dialog open={open} scroll={'body'} onClose={handleClose} maxWidth='sm' fullWidth>
 				<DialogTitle id='form-dialog-title'>Edit List</DialogTitle>
 				<DialogContent>
 					<DialogContentText>Fill out the details below and publish to a group.</DialogContentText>

@@ -233,7 +233,7 @@ function ColorTool(props) {
 			<Button size='small' color='primary' onClick={handleClickOpen}>
 				Edit
 			</Button>
-			<Dialog open={open} onClose={handleClose} aria-labelledby='form-dialog-title'>
+			<Dialog open={open} scroll={'body'} onClose={handleClose} maxWidth='sm' fullWidth>
 				<DialogTitle id='form-dialog-title'>Edit</DialogTitle>
 				<DialogContent>
 					<DialogContentText>You can modify the name, color or image of the group.</DialogContentText>

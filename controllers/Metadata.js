@@ -11,12 +11,19 @@ module.exports = function (e, db) {
 		try {
 			var amazonID = amazonAsin.syncParseAsin(request.query.url).ASIN;
 
+			console.log(request.query.url, amazonID);
+
 			if (amazonID) {
 				const product = await amazonScraper.asin({ asin: amazonID });
 
-				var image = product.result[0].variants.filter((obj) => {
-					return obj.asin === amazonID;
-				})[0].images[0].large;
+				var image;
+				try {
+					image = product.result[0].variants.filter((obj) => {
+						return obj.asin === amazonID;
+					})[0].images[0].large;
+				} catch (error) {
+					image = product.result[0].main_image;
+				}
 
 				response.send({
 					title: product.result[0].title,
@@ -26,16 +33,18 @@ module.exports = function (e, db) {
 			} else {
 				urlMetadata(request.query.url).then(
 					function (metadata) {
+						console.log(metadata);
 						response.send(metadata);
 					},
 					function (error) {
 						// failure handler
+						console.log(error);
 						response.status(500).send({ error: 'error' });
 					}
 				);
 			}
 		} catch (error) {
-			// console.log(error);
+			console.log(error);
 			response.status(500).send({ error: 'error' });
 		}
 	};
