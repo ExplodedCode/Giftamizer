@@ -60,7 +60,7 @@ export default function SpeedDialTooltipOpen(props) {
 			<Button color='primary' onClick={handleOpen}>
 				Edit
 			</Button>
-			<Dialog open={open} onClose={handleClose} aria-labelledby='form-dialog-title'>
+			<Dialog open={open} scroll={'body'} onClose={handleClose} maxWidth='sm' fullWidth>
 				<DialogTitle id='form-dialog-title'>Edit Item</DialogTitle>
 				<DialogContent>
 					<DialogContentText>Fill out the details below, or copy & paste a URL and will we wil autofill the details.</DialogContentText>
@@ -78,7 +78,7 @@ export default function SpeedDialTooltipOpen(props) {
 							setLoadingMetadata(true);
 							var urlQuery = e.clipboardData.getData('Text');
 
-							fetch('https://giftamizer.com/api/metadata?url=' + urlQuery, {
+							fetch('/api/metadata?url=' + urlQuery, {
 								method: 'GET',
 								headers: {
 									'Content-Type': 'application/json',

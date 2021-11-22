@@ -47,8 +47,6 @@ class navMenu extends React.Component {
 
 			groupsOpen: true,
 		};
-
-		console.log(props);
 	}
 
 	componentDidMount() {
@@ -101,15 +99,22 @@ class navMenu extends React.Component {
 					<ListItemText primary={this.state.user && this.state.user.displayName} secondary={this.state.user && this.state.user.email} />
 				</ListItem>
 				<Divider />
-				<ListItem component={Link} to='/gift' button selected={this.props.location.pathname === '/gift'}>
+				{/* <ListItem component={Link} to='/gift' button selected={this.props.location.pathname === '/gift'}>
 					<ListItemIcon>
 						<NewReleasesIcon color={this.props.location.pathname === '/gift' ? 'primary' : 'inherit'} />
 					</ListItemIcon>
 					<ListItemText primary="What's New" />
-				</ListItem>
-				<ListItem component={Link} to='/gift/items' button selected={this.props.location.pathname.startsWith('/gift/items')}>
+				</ListItem> */}
+				<ListItem component={Link} to='/gift/items' button selected={this.props.location.pathname === '/gift' || this.props.location.pathname.startsWith('/gift/items')}>
 					<ListItemIcon>
-						<i className='fas fa-gift' style={{ fontSize: '1.19rem', marginLeft: 2, color: this.props.location.pathname.startsWith('/gift/items') ? '#4caf50' : 'inherit' }} />
+						<i
+							className='fas fa-gift'
+							style={{
+								fontSize: '1.19rem',
+								marginLeft: 2,
+								color: this.props.location.pathname === '/gift' || this.props.location.pathname.startsWith('/gift/items') ? '#4caf50' : 'inherit',
+							}}
+						/>
 					</ListItemIcon>
 					<ListItemText primary='Items' />
 				</ListItem>
@@ -132,13 +137,14 @@ class navMenu extends React.Component {
 					</ListItemIcon>
 					<ListItemText primary='Groups' />
 					<IconButton
-                        aria-label='delete'
-                        onClick={(e) => {
+						aria-label='delete'
+						onClick={(e) => {
 							e.preventDefault();
 							this.setState({ groupsOpen: !this.state.groupsOpen });
 						}}
-                        style={{ padding: 6 }}
-                        size="large">
+						style={{ padding: 6 }}
+						size='large'
+					>
 						{this.state.user.starredGroups.length > 0 && <>{this.state.groupsOpen ? <ExpandLess fontSize='small' /> : <ExpandMore fontSize='small' />}</>}
 					</IconButton>
 				</ListItem>

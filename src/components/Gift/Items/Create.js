@@ -74,7 +74,7 @@ export default function SpeedDialTooltipOpen(props) {
 			>
 				<AddIcon />
 			</Fab>
-			<Dialog open={open} onClose={handleClose} aria-labelledby='form-dialog-title'>
+			<Dialog open={open} scroll={'body'} onClose={handleClose} maxWidth='sm' fullWidth>
 				<DialogTitle id='form-dialog-title'>Add Item</DialogTitle>
 				<DialogContent>
 					<DialogContentText>Fill out the details below, or copy & paste a URL and will we wil autofill the details.</DialogContentText>
@@ -94,7 +94,7 @@ export default function SpeedDialTooltipOpen(props) {
 
 							setLoadingMetadata(true);
 
-							fetch('https://giftamizer.com/api/metadata?url=' + urlQuery, {
+							fetch('/api/metadata?url=' + urlQuery, {
 								method: 'GET',
 								headers: {
 									'Content-Type': 'application/json',
@@ -118,11 +118,16 @@ export default function SpeedDialTooltipOpen(props) {
 												setImage(data.image);
 											}
 										} catch (error) {
-											// console.log(error);
+											console.log(error);
 										}
 
-										setName(data.title.substring(0, 75));
-										setDescription(data.description.substring(0, 220));
+										try {
+											setName(String(data.title).substring(0, 75));
+											setDescription(String(data.description).substring(0, 220));
+										} catch (error) {
+											console.log(error);
+										}
+
 										setUrl(urlQuery);
 										setLoadingMetadata(false);
 									});

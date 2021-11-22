@@ -34,6 +34,7 @@ class Landing extends React.Component {
 	componentDidMount() {
 		if (!this.state.didLoad) {
 			this.getMembers();
+			this.getLists();
 		}
 	}
 
@@ -54,13 +55,27 @@ class Landing extends React.Component {
 		});
 	};
 
+	getLists = () => {
+		this.props.socket.emit('req:myListsInGroup', { groupId: this.props.match.params.group, userId: firebaseAuth().currentUser.uid });
+		this.props.socket.on('res:myListsInGroup', (result) => {
+			if (result < 1) {
+				console.log(result);
+				this.setState({
+					showAssignError: true,
+				});
+			}
+			this.props.socket.off('res:myListsInGroup');
+		});
+	};
+
 	render() {
 		return (
 			<div>
 				<Container style={{ paddingTop: 20, marginBottom: 96 }}>
 					{this.state.showAssignError && (
 						<Alert severity='warning' style={{ marginBottom: 16 }}>
-							<b>You are not sharing any lists with this group!</b> — In order for items to show up in groups they must be assigned to a list and lists must be assigned to the group.
+							<b>You are not sharing any lists with this group!</b> — In order for items to show up in this group they must be assigned to a list; the list must be assigned to this
+							group.
 						</Alert>
 					)}
 

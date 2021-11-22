@@ -33,7 +33,7 @@ export default function FormDialog(props) {
 	return (
 		<div>
 			<SpeedDialAction {...props} onClick={handleClickOpen} />
-			<Dialog open={open} onClose={handleClose} aria-labelledby='form-dialog-title'>
+			<Dialog open={open} scroll={'body'} onClose={handleClose} maxWidth='sm' fullWidth>
 				<DialogTitle id='form-dialog-title'>Join</DialogTitle>
 				<DialogContent>
 					<DialogContentText>To join a group, please enter the invite code here.</DialogContentText>

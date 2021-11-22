@@ -6,8 +6,6 @@ const http = require('http');
 var cors = require('cors');
 var bodyParser = require('body-parser');
 
-const { ObjectID } = require('mongodb');
-
 const port = process.env.PORT || 8080;
 
 const socketIO = require('socket.io');
@@ -397,6 +395,19 @@ async function start(db, server, io) {
 				}
 			});
 
+			// get members
+			socket.on('req:myListsInGroup', async ({ groupId, userId }) => {
+				console.log(`{ owner: ${userId}, groups: ${groupId} }`);
+				try {
+					collection_lists.find({ owner: userId, groups: groupId }).toArray(function (err, result) {
+						if (err) throw err;
+						io.to(socket.id).emit('res:myListsInGroup', result.length);
+					});
+				} catch (error) {
+					console.log(error);
+				}
+			});
+
 			// get user group name
 			socket.on('req:listGroupName', ({ groupId }) => {
 				try {
@@ -658,6 +669,53 @@ async function start(db, server, io) {
 			});
 
 			// ============================================ △ Item Data △
+			//
+
+			//
+			// ============================================ ▽ Notification Data ▽
+			const collection_notifications = db.collection('notifications'); // initialize collection
+
+			// get notifications
+			socket.on('req:getNotifications', (userId) => {
+				collection_notifications
+					.find({
+						$or: [{ to: userId }, { to: '*' }],
+					})
+					.sort({ _id: -1 })
+					.limit(25)
+					.toArray(function (err, notifictions) {
+						if (err) {
+							console.log(err);
+						} else {
+							io.to(socket.id).emit('res:getNotifications', notifictions);
+						}
+					});
+			});
+
+			// get notifications
+			socket.on('req:markNotificationsRead', (userId) => {
+				console.log('Read', userId);
+				collection_notifications.updateMany(
+					{
+						$and: [
+							{
+								$or: [{ to: userId }, { to: '*' }],
+							},
+							{
+								read: { $nin: [userId] },
+							},
+						],
+					},
+					{ $push: { read: userId } },
+					function (err, res) {
+						if (err) {
+							console.log('error', err);
+						}
+					}
+				);
+			});
+
+			// ============================================ △ Notifications Data △
 			//
 
 			// disconnect is fired when a client leaves the site
