@@ -65,7 +65,7 @@ export default function SpeedDialTooltipOpen(props) {
 			>
 				<AddIcon />
 			</Fab>
-			<Dialog open={open} onClose={handleClose} aria-labelledby='form-dialog-title'>
+			<Dialog open={open} scroll={'body'} onClose={handleClose} maxWidth='sm' fullWidth>
 				<DialogTitle id='form-dialog-title'>Add List</DialogTitle>
 				<DialogContent>
 					<DialogContentText>Fill out the details below and publish to a group.</DialogContentText>

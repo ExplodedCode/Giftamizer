@@ -231,7 +231,7 @@ function ColorTool(props) {
 	return (
 		<span>
 			<SpeedDialAction {...props} onClick={handleClickOpen} />
-			<Dialog open={open} onClose={handleClose} aria-labelledby='form-dialog-title'>
+			<Dialog open={open} scroll={'body'} onClose={handleClose} maxWidth='sm' fullWidth>
 				<DialogTitle id='form-dialog-title'>Create Group</DialogTitle>
 				<DialogContent>
 					<DialogContentText>You can modify the name, color or image of the group.</DialogContentText>

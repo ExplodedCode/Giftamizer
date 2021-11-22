@@ -17,6 +17,7 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 
 import NavLinks from './NavLinks';
 import NavMobile from './NavMobile';
+import Notifications from './Notifications';
 
 // gift
 import Dashboard from './Dashboard';
@@ -146,9 +147,11 @@ export default function Gift(props) {
 							<MenuIcon />
 						</IconButton>
 					)}
-					<Typography component={Link} to='/' variant='h6' color='inherit' noWrap className={classes.title}>
+					<Typography variant='h6' color='inherit' noWrap className={classes.title}>
 						{title}
 					</Typography>
+
+					<Notifications {...props} socket={socket} />
 				</Toolbar>
 			</AppBar>
 
@@ -173,7 +176,7 @@ export default function Gift(props) {
 				{/* <div className={classes.appBarSpacer} /> */}
 				<div style={{ paddingBottom: isMobile ? 64 : 0 }}>
 					<Switch>
-						<Route exact path='/gift' component={(props) => <Dashboard {...props} setTitle={setTitle} socket={socket} isMobile={isMobile} />} />
+						<Route exact path='/gift' component={(props) => <Items {...props} setTitle={setTitle} socket={socket} isMobile={isMobile} />} />
 
 						<Route exact path='/gift/groups' component={(props) => <Groups {...props} setTitle={setTitle} socket={socket} isMobile={isMobile} />} />
 						<Route exact path='/gift/group/:group' component={(props) => <Group {...props} setTitle={setTitle} socket={socket} isMobile={isMobile} />} />

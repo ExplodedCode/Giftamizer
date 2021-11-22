@@ -68,7 +68,7 @@ export default function FormDialog({ socket, group, fromNoMembers }) {
 			<Button size={fromNoMembers ? 'large' : 'small'} variant={fromNoMembers ? 'contained' : 'text'} color='primary' onClick={handleClickOpen}>
 				Invite
 			</Button>
-			<Dialog open={open} onClose={handleClose} aria-labelledby='form-dialog-title'>
+			<Dialog open={open} scroll={'body'} onClose={handleClose} maxWidth='sm' fullWidth>
 				<DialogTitle id='form-dialog-title'>Invite</DialogTitle>
 				<DialogContent>
 					<DialogContentText>To invite someone to this group, please enter their email address here. We will send them an invitation.</DialogContentText>

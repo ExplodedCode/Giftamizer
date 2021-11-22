@@ -37,7 +37,16 @@ export default function GroupCard({ group, member, getMembers, owner }) {
 			<Card>
 				<CardActionArea component={Link} to={'/gift/group/' + group + '/member/' + member.uid}>
 					{member.backgroundType === 'color' ? (
-						<CardMedia style={{ fontSize: '1000%', textAlign: 'center', backgroundColor: member.backgroundValue, color: member.textShade === 'dark' ? '#000000de' : '#fff' }}>
+						<CardMedia
+							style={{
+								height: '200px',
+								fontSize: '1000%',
+								lineHeight: 1.1,
+								textAlign: 'center',
+								backgroundColor: member.backgroundValue,
+								color: member.textShade === 'dark' ? '#000000de' : '#fff',
+							}}
+						>
 							{member.displayName.charAt(0).toUpperCase()}
 						</CardMedia>
 					) : (
