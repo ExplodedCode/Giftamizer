@@ -598,13 +598,9 @@ async function start(db, server, io) {
 			// set status items
 			socket.on('set:itemStatus', ({ itemId, status, takenBy }) => {
 				try {
-					try {
-						collection_items.update({ _id: ObjectID(itemId) }, { $set: { status: status, takenBy: takenBy } }).then((docs) => {
-							io.to(socket.id).emit('res:itemStatus', 'ok');
-						});
-					} catch (error) {
-						console.log(error);
-					}
+					collection_items.update({ _id: ObjectId(itemId) }, { $set: { status: status, takenBy: takenBy } }).then((docs) => {
+						io.to(socket.id).emit('res:itemStatus', 'ok');
+					});
 				} catch (error) {
 					console.log(error);
 				}

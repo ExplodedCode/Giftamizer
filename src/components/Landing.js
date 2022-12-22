@@ -16,10 +16,13 @@ import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import Avatar from '@mui/material/Avatar';
 
+import Copyright from './Copyright';
+import TermsAndPolicyLinks from './TermsAndPolicyLinks';
+
 import { green, red, blue, orange } from '@mui/material/colors';
 
 // FIXME checkout https://mui.com/components/use-media-query/#migrating-from-withwidth
-const withWidth = () => (WrappedComponent) => (props) => <WrappedComponent {...props} width="xs" />;
+const withWidth = () => (WrappedComponent) => (props) => <WrappedComponent {...props} width='xs' />;
 
 class Landing extends React.Component {
 	constructor(props) {
@@ -48,7 +51,7 @@ class Landing extends React.Component {
 		this.style.color = theme.palette.primary[theme.palette.mode === 'dark' ? theme.palette.mode : 'main'];
 
 		return (
-            <div style={{ flexGrow: 1 }}>
+			<div style={{ flexGrow: 1 }}>
 				<AppBar position='static' style={{ backgroundColor: this.style.color }}>
 					<Toolbar>
 						<Typography variant='h6' style={{ flexGrow: 1 }}>
@@ -169,17 +172,13 @@ class Landing extends React.Component {
 							</Grid>
 						</Grid>
 					</Grid>
-					{/* <Grid container spacing={3} justify='center' style={{ marginTop: 96 }}>
-						<Grid item sm={8} spacing={3}>
-							<Paper style={this.style.landing.paper} elevation={9}>
-								<Typography variant='subtitle1'>This application is under development.</Typography>
-								<Typography variant='subtitle2'> — Come Back Soon!</Typography>
-							</Paper>
-						</Grid>
-					</Grid> */}
 				</Container>
+				<Copyright />
+				<br />
+				<br />
+				<TermsAndPolicyLinks />
 			</div>
-        );
+		);
 	}
 }
 
