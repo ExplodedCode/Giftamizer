@@ -1,1 +1,22 @@
-docker build -t trowbridge/giftamizer .
+PROD: docker build -t trowbridge/giftamizer .
+
+BETA: docker build -t local/giftamizer .
+
+
+
+COMMANDS:
+
+
+docker stop giftamizer && docker rm giftamizer
+docker run -d -p 58080:8080 \
+-e IS_DOCKER_CONTAINER='yes' \
+-e EMAIL_FROM_USER='noreply@explodedcode.com' \
+-e EMAIL_FROM_EMAIL='noreply@giftamizer.com' \
+-e EMAIL_TENANT_ID='675dde45-3435-460c-a54f-5bcc8b4851bd' \
+-e EMAIL_CLIENT_ID='fe316f5c-d282-4062-b3c7-9fd04f0cab59' \
+-e EMAIL_CLIENT_SECRET='PV28Q~NCVFwG8Qs0Ck1V7WAq3BqJBezfyWyV5bT7' \
+-e MONGODB_DEV='GiftamizerDev' \
+-e MONGODB_PROD='Giftamizer' \
+-e MONGO_URI_DEV='mongodb://root:qMhUXkqtFuvt4M6vdL6X@192.168.1.10:27017/?authSource=admin' \
+-e MONGO_URI_PROD='mongodb://root:qMhUXkqtFuvt4M6vdL6X@192.168.1.10:27017/?authSource=admin' \
+--name giftamizer local/giftamizer

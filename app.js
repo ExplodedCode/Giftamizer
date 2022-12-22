@@ -732,10 +732,9 @@ async function start(db, server, io) {
 		app.get('*', async (req, res) => {
 			try {
 				res.sendFile(path.join(__dirname + '/build/index.html'));
-				console;
 			} catch (error) {
-				console.error(error.message);
-				response.status(500).send(error);
+				console.error(error);
+				res.status(500).send(error);
 			}
 		});
 	} catch (error) {

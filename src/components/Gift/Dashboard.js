@@ -14,12 +14,12 @@ import Badge from '@mui/material/Badge';
 import DesignServicesIcon from '@mui/icons-material/DesignServices';
 import CodeIcon from '@mui/icons-material/Code';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
-import GroupIcon from '@mui/icons-material/Group';
+// import GroupIcon from '@mui/icons-material/Group';
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import StarIcon from '@mui/icons-material/Star';
 import MenuIcon from '@mui/icons-material/Menu';
 
-import StorageIcon from '@mui/icons-material/Storage';
+// import StorageIcon from '@mui/icons-material/Storage';
 
 // import WarningIcon from '@mui/icons-material/Warning';
 
@@ -63,7 +63,7 @@ class Landing extends React.Component {
 								primary='Migrated MUI from v4 to v5'
 								secondary={
 									<>
-										<a href='https://mui.com/' target='_blank'>
+										<a href='https://mui.com/' target='_blank' rel='noopener noreferrer'>
 											Material UI
 										</a>{' '}
 										provides a robust and customizable library of foundational and advanced components for React application.

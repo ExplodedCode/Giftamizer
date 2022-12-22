@@ -3,7 +3,7 @@ import React from 'react';
 import { isMobile } from 'react-device-detect';
 
 import { useCookies } from 'react-cookie';
-import { Route, Switch, Link } from 'react-router-dom';
+import { Route, Switch } from 'react-router-dom';
 
 import clsx from 'clsx';
 import makeStyles from '@mui/styles/makeStyles';
@@ -20,7 +20,7 @@ import NavMobile from './NavMobile';
 import Notifications from './Notifications';
 
 // gift
-import Dashboard from './Dashboard';
+// import Dashboard from './Dashboard';
 import Items from './Items/Items';
 
 import Lists from './Lists/Lists';

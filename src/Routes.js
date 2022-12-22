@@ -26,6 +26,12 @@ function PublicRoute({ component: Component, authed, ...rest }) {
 	return <Route {...rest} render={(props) => (authed ? <Redirect to='/gift' /> : <Component {...props} />)} />;
 }
 
+export const admins = [
+	'jwpIwFNoPKh2YwRCbTkAJZypXyx2', // Trowbridge
+	'iBmdSh5eh0VnyqCv4btfl21MpNx2', // Templin
+	'9ke7mnGJtqVeWBGIhcF8tMcVGgY2', // Phyillaier
+];
+
 export default class App extends Component {
 	constructor(props) {
 		super(props);
@@ -79,7 +85,7 @@ export default class App extends Component {
 			<>
 				<CircularProgress style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, margin: 'auto' }} />
 			</>
-		) : this.state.maintenance === true && this.state?.user?.uid !== 'jwpIwFNoPKh2YwRCbTkAJZypXyx2' ? (
+		) : this.state.maintenance === true && !admins.includes(this.state?.user?.uid) ? (
 			<div style={{ textAlign: 'center', padding: 20, font: '20px Helvetica, sans-serif' }}>
 				<article style={{ display: 'block', textAlign: 'left', width: '90%', margin: '0 auto' }}>
 					<h1 style={{ fontSize: '50px' }}>We&rsquo;ll be back soon!</h1>

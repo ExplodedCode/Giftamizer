@@ -12,7 +12,7 @@ import ListItemAvatar from '@mui/material/ListItemAvatar';
 import ListSubheader from '@mui/material/ListSubheader';
 import Divider from '@mui/material/Divider';
 
-import NewReleasesIcon from '@mui/icons-material/NewReleases';
+// import NewReleasesIcon from '@mui/icons-material/NewReleases';
 import ListAltIcon from '@mui/icons-material/ListAlt';
 import GroupIcon from '@mui/icons-material/Group';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
@@ -33,6 +33,8 @@ import BuildIcon from '@mui/icons-material/Build';
 
 import { logout } from '../../firebase/auth';
 import { firebaseAuth } from '../../firebase/constants';
+
+import { admins } from '../../Routes';
 
 class navMenu extends React.Component {
 	constructor(props) {
@@ -185,7 +187,7 @@ class navMenu extends React.Component {
 				</ListItem>
 
 				{this.state.user ? (
-					this.state.user.uid !== 'jwpIwFNoPKh2YwRCbTkAJZypXyx2' ? (
+					!admins.includes(this.state.user.uid) ? (
 						''
 					) : (
 						<React.Fragment>
