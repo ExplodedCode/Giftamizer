@@ -688,6 +688,14 @@ async function start(db, server, io) {
 					});
 			});
 
+			socket.on('req:sendNotification', (notification) => {
+				console.log(notification);
+				collection_notifications.insertOne({ ...notification }).then(() => {
+					// console.log('New item! ' + reqData.id + ' - ' + reqData.name);
+					io.emit('req:getNewNotification', null);
+				});
+			});
+
 			// get notifications
 			socket.on('req:markNotificationsRead', (userId) => {
 				console.log('Read', userId);

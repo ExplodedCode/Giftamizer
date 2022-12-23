@@ -31,6 +31,8 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import BuildIcon from '@mui/icons-material/Build';
 
+import SendNotification from './SendNotification';
+
 import { logout } from '../../firebase/auth';
 import { firebaseAuth } from '../../firebase/constants';
 
@@ -210,35 +212,12 @@ class navMenu extends React.Component {
 									label='Maintenance'
 								/>
 							</ListItem>
+							<SendNotification socket={this.props.socket} />
 						</React.Fragment>
 					)
 				) : (
 					''
 				)}
-
-				{/* <ListItem component={Link} to='/tdf/support' button disabled>
-						<ListItemIcon>
-							<ListAltIcon />
-						</ListItemIcon>
-						<ListItemText primary='Events' />
-					</ListItem> */}
-
-				{/* <ListItem component={Link} to='/tribute/vendors' button>
-						<ListItemIcon>
-							<StoreIcon />
-						</ListItemIcon>
-						<ListItemText primary='Vendors' />
-					</ListItem>
-					<div>
-						<List component='div' disablePadding>
-							<ListItem component={Link} to='/tribute/vendorByDate' button style={{ paddingLeft: 30 }}>
-								<ListItemIcon>
-									<DateRangeIcon />
-								</ListItemIcon>
-								<ListItemText primary='By Date' />
-							</ListItem>
-						</List>
-					</div> */}
 			</React.Fragment>
 		);
 	}
