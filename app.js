@@ -598,13 +598,9 @@ async function start(db, server, io) {
 			// set status items
 			socket.on('set:itemStatus', ({ itemId, status, takenBy }) => {
 				try {
-					try {
-						collection_items.update({ _id: ObjectID(itemId) }, { $set: { status: status, takenBy: takenBy } }).then((docs) => {
-							io.to(socket.id).emit('res:itemStatus', 'ok');
-						});
-					} catch (error) {
-						console.log(error);
-					}
+					collection_items.update({ _id: ObjectId(itemId) }, { $set: { status: status, takenBy: takenBy } }).then((docs) => {
+						io.to(socket.id).emit('res:itemStatus', 'ok');
+					});
 				} catch (error) {
 					console.log(error);
 				}
@@ -692,6 +688,14 @@ async function start(db, server, io) {
 					});
 			});
 
+			socket.on('req:sendNotification', (notification) => {
+				console.log(notification);
+				collection_notifications.insertOne({ ...notification }).then(() => {
+					// console.log('New item! ' + reqData.id + ' - ' + reqData.name);
+					io.emit('req:getNewNotification', null);
+				});
+			});
+
 			// get notifications
 			socket.on('req:markNotificationsRead', (userId) => {
 				console.log('Read', userId);
@@ -736,10 +740,9 @@ async function start(db, server, io) {
 		app.get('*', async (req, res) => {
 			try {
 				res.sendFile(path.join(__dirname + '/build/index.html'));
-				console;
 			} catch (error) {
-				console.error(error.message);
-				response.status(500).send(error);
+				console.error(error);
+				res.status(500).send(error);
 			}
 		});
 	} catch (error) {

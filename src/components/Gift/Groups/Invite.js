@@ -43,7 +43,7 @@ export default function FormDialog({ socket, group, fromNoMembers }) {
 				}).then((response) => {
 					if (!response.ok) {
 						response.json().then((error) => {
-							// console.log(error);
+							console.log(error);
 							setInviteEmail('');
 							setLoading(false);
 							setOpen(false);

@@ -53,6 +53,10 @@ class MyNetwork extends Component {
 		if (!this.state.opened) {
 			this.getNotifications();
 		}
+
+		this.props.socket.on('req:getNewNotification', (notifications) => {
+			this.getNotifications();
+		});
 	}
 
 	getNotifications = () => {

@@ -12,7 +12,7 @@ import ListItemAvatar from '@mui/material/ListItemAvatar';
 import ListSubheader from '@mui/material/ListSubheader';
 import Divider from '@mui/material/Divider';
 
-import NewReleasesIcon from '@mui/icons-material/NewReleases';
+// import NewReleasesIcon from '@mui/icons-material/NewReleases';
 import ListAltIcon from '@mui/icons-material/ListAlt';
 import GroupIcon from '@mui/icons-material/Group';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
@@ -31,8 +31,12 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import BuildIcon from '@mui/icons-material/Build';
 
+import SendNotification from './SendNotification';
+
 import { logout } from '../../firebase/auth';
 import { firebaseAuth } from '../../firebase/constants';
+
+import { admins } from '../../Routes';
 
 class navMenu extends React.Component {
 	constructor(props) {
@@ -185,7 +189,7 @@ class navMenu extends React.Component {
 				</ListItem>
 
 				{this.state.user ? (
-					this.state.user.uid !== 'jwpIwFNoPKh2YwRCbTkAJZypXyx2' ? (
+					!admins.includes(this.state.user.uid) ? (
 						''
 					) : (
 						<React.Fragment>
@@ -208,35 +212,12 @@ class navMenu extends React.Component {
 									label='Maintenance'
 								/>
 							</ListItem>
+							<SendNotification socket={this.props.socket} />
 						</React.Fragment>
 					)
 				) : (
 					''
 				)}
-
-				{/* <ListItem component={Link} to='/tdf/support' button disabled>
-						<ListItemIcon>
-							<ListAltIcon />
-						</ListItemIcon>
-						<ListItemText primary='Events' />
-					</ListItem> */}
-
-				{/* <ListItem component={Link} to='/tribute/vendors' button>
-						<ListItemIcon>
-							<StoreIcon />
-						</ListItemIcon>
-						<ListItemText primary='Vendors' />
-					</ListItem>
-					<div>
-						<List component='div' disablePadding>
-							<ListItem component={Link} to='/tribute/vendorByDate' button style={{ paddingLeft: 30 }}>
-								<ListItemIcon>
-									<DateRangeIcon />
-								</ListItemIcon>
-								<ListItemText primary='By Date' />
-							</ListItem>
-						</List>
-					</div> */}
 			</React.Fragment>
 		);
 	}
