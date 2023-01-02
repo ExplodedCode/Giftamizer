@@ -2,8 +2,8 @@ import * as React from 'react';
 
 import { useNavigate } from 'react-router-dom';
 
-import { supabase } from '../lib/api';
-import { SnackbarAlert } from '../types';
+import { supabase } from '../lib/useSupabase';
+import { useSnackbar } from 'notistack';
 
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
@@ -18,6 +18,8 @@ import Box from '@mui/material/Box';
 var randomImage = Math.floor(Math.random() * 10) + 1;
 
 export default function UpdatePassword() {
+	const { enqueueSnackbar } = useSnackbar();
+
 	const [password, setPassword] = React.useState('');
 
 	let navigate = useNavigate();
@@ -29,19 +31,11 @@ export default function UpdatePassword() {
 		console.log('resetPassword', data, error);
 
 		if (error) {
-			window.ReactAPI.emit('alert', {
-				text: error.message,
-				options: {
+			enqueueSnackbar( error.message,
+				 {
 					variant: 'error',
-				},
-			} as SnackbarAlert);
+				});
 		} else {
-			// window.ReactAPI.emit('alert', {
-			// 	text: 'Password reset!',
-			// 	options: {
-			// 		variant: 'success',
-			// 	},
-			// } as SnackbarAlert);
 			navigate('/gift');
 		}
 	};

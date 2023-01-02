@@ -1,8 +1,7 @@
 import * as React from 'react';
 
-import { signInWithSocial, supabase } from '../lib/api';
-import { OAuthResponse } from '@supabase/supabase-js';
-import { SnackbarAlert } from '../types';
+import { signInWithFacebook, signInWithGoogle, useSupabase } from '../lib/useSupabase';
+import { useSnackbar } from 'notistack';
 
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
@@ -22,28 +21,20 @@ import { GoogleIcon, FacebookIcon } from '../components/SvgIcons';
 var randomImage = Math.floor(Math.random() * 10) + 1;
 
 export default function SignUp() {
+	const { client } = useSupabase();
+	const { enqueueSnackbar } = useSnackbar();
+	
 	const [name, setName] = React.useState('');
 	const [email, setEmail] = React.useState('');
 	const [password, setPassword] = React.useState('');
 
-	const signInWithGoogle = async () => {
-		const response: OAuthResponse = await signInWithSocial('google');
-
-		console.log(response);
-	};
-
-	const signInWithFacebook = async () => {
-		const response: OAuthResponse = await signInWithSocial('facebook');
-
-		console.log(response);
-	};
-
 	const handleSubmit = async () => {
-		const { data, error } = await supabase.auth.signUp({
+		const { data, error } = await client.auth.signUp({
 			email: email,
 			password: password,
 			options: {
 				data: {
+					email: email,
 					name: name,
 				},
 			},
@@ -51,12 +42,10 @@ export default function SignUp() {
 		console.log('signUp', data, error);
 
 		if (error) {
-			window.ReactAPI.emit('alert', {
-				text: error.message,
-				options: {
+			enqueueSnackbar( error.message,
+				 {
 					variant: 'error',
-				},
-			} as SnackbarAlert);
+				});
 		}
 	};
 
@@ -102,10 +91,10 @@ export default function SignUp() {
 							}}
 						>
 							<Stack spacing={2} direction='row'>
-								<IconButton onClick={() => signInWithGoogle()}>
+								<IconButton onClick={signInWithGoogle}>
 									<GoogleIcon />
 								</IconButton>
-								<IconButton onClick={() => signInWithFacebook()}>
+								<IconButton onClick={signInWithFacebook}>
 									<FacebookIcon />
 								</IconButton>
 							</Stack>
@@ -140,3 +129,4 @@ export default function SignUp() {
 		</Grid>
 	);
 }
+
