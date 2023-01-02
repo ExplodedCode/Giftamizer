@@ -36,24 +36,6 @@ export default function Theme() {
 		[prefersDarkMode]
 	);
 
-	const { enqueueSnackbar, closeSnackbar } = useSnackbar();
-
-	window.ReactAPI.on('alert', (alert: SnackbarAlert) => {
-		const defaultAction: SnackbarAction = (key) => (
-			<>
-				<IconButton aria-label='close' size='small' onClick={() => closeSnackbar(key)}>
-					<CloseIcon />
-				</IconButton>
-			</>
-		);
-
-		enqueueSnackbar(alert.text, {
-			action: defaultAction,
-			preventDuplicate: true,
-			...alert.options,
-		});
-	});
-
 	return (
 		<Router>
 			<ThemeProvider theme={theme}>

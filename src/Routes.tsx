@@ -1,47 +1,37 @@
-import { useState, useEffect, Component } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
+import { User, Session } from '@supabase/supabase-js';
 import { supabase } from './lib/api';
 
 import Landing from './pages/Landing';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
+import Gift from './pages/Gift';
+
 import UpdatePassword from './pages/UpdatePassword';
+import Button from '@mui/material/Button';
+import { SnackbarAlert } from './types';
+import { useSnackbar } from 'notistack';
+import Gifts from './components/Gifts';
+import Items from './components/Items';
+import { SupabaseContext, useSupabase } from './lib/useSupabase';
 
-function AppRoutes() {
-	const [user, setUser] = useState<User | undefined>();
+export default function AppRoutes() {
+	const { closeSnackbar } = useSnackbar();
 
-	useEffect(() => {
-		initAuth();
-	}, [user]);
-
-	const initAuth = async () => {
-		const { data, error } = await supabase.auth.getSession();
-
-		console.log('initAuth', data, error);
-
-		if (!user) setUser(data?.session?.user ?? undefined);
-
-		supabase.auth.onAuthStateChange((event, session) => {
-			console.log(event, session);
-
-			setUser(session?.user ?? undefined);
-		});
-	};
+	const { user } = useSupabase();
 
 	return (
-		<>
-			<Routes>
-				<Route path='/' element={user ? <Navigate to='/gift' /> : <Landing />} />
-				<Route path='/signin' element={user ? <Navigate to='/gift' /> : <SignIn />} />
-				<Route path='/signup' element={user ? <Navigate to='/gift' /> : <SignUp />} />
+		<Routes>
+			<Route path='/' element={user ? <Navigate to='/gift' /> : <Landing />} />
+			<Route path='/signin' element={user ? <Navigate to='/gift' /> : <SignIn />} />
+			<Route path='/signup' element={user ? <Navigate to='/gift' /> : <SignUp />} />
 
-				<Route path='/update-password' element={user && <UpdatePassword />} />
-				<Route path='/gift' element={user ? <SignIn /> : <Navigate to='/signin' />} />
-			</Routes>
-		</>
+			<Route path='/update-password' element={user && <UpdatePassword />} />
+			<Route path='/gift' element={user ? <Gifts /> : <Navigate to='/signin' />}>
+				<Route path='items' element={<Items />} />
+			</Route>
+		</Routes>
 	);
 }
-
-export default AppRoutes;

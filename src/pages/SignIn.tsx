@@ -1,8 +1,7 @@
 import * as React from 'react';
 
-import { signInWithSocial, supabase, validateEmail } from '../lib/api';
-import { OAuthResponse } from '@supabase/supabase-js';
-import { SnackbarAlert } from '../types';
+import { signInWithFacebook, signInWithGoogle, useSupabase, validateEmail } from '../lib/useSupabase';
+import { useSnackbar } from 'notistack';
 
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
@@ -27,38 +26,40 @@ import DialogActions from '@mui/material/DialogActions';
 var randomImage = Math.floor(Math.random() * 10) + 1;
 
 export default function SignIn() {
+	const { client } = useSupabase();
+	const { enqueueSnackbar } = useSnackbar();
+
 	const [email, setEmail] = React.useState('');
 	const [password, setPassword] = React.useState('');
 
 	const [forgotDialogOpen, setForgotDialogOpen] = React.useState(false);
 	const [resetEmail, setResetEmail] = React.useState('');
 
-	const signInWithGoogle = async () => {
-		const response: OAuthResponse = await signInWithSocial('google');
-
-		console.log(response);
-	};
-
-	const signInWithFacebook = async () => {
-		const response: OAuthResponse = await signInWithSocial('facebook');
-
-		console.log(response);
-	};
-
 	const handleSubmit = async () => {
-		const { data, error } = await supabase.auth.signInWithPassword({
+		const { error: firebaseAuthError } = await client.functions.invoke('firebase/validateAuth', {
+			body: {
+				email: email,
+				password: password,
+			},
+		});
+		if (firebaseAuthError) {
+			enqueueSnackbar(String(firebaseAuthError.message), {
+				variant: 'error',
+			});
+		}
+
+		console.log('done');
+		const { data, error } = await client.auth.signInWithPassword({
 			email: email,
 			password: password,
 		});
-		console.log('signUp', data, error);
+
+		console.log('signin', data, error);
 
 		if (error) {
-			window.ReactAPI.emit('alert', {
-				text: error.message,
-				options: {
-					variant: 'error',
-				},
-			} as SnackbarAlert);
+			enqueueSnackbar(error.message, {
+				variant: 'error',
+			});
 		}
 	};
 
@@ -69,19 +70,13 @@ export default function SignIn() {
 		console.log('handlePasswordReset', data, error);
 
 		if (error) {
-			window.ReactAPI.emit('alert', {
-				text: error.message,
-				options: {
-					variant: 'error',
-				},
-			} as SnackbarAlert);
+			enqueueSnackbar(error.message, {
+				variant: 'error',
+			});
 		} else {
-			window.ReactAPI.emit('alert', {
-				text: `Reset link sent to: ${resetEmail}`,
-				options: {
-					variant: 'success',
-				},
-			} as SnackbarAlert);
+			enqueueSnackbar(`Reset link sent to: ${resetEmail}`, {
+				variant: 'success',
+			});
 		}
 
 		setResetEmail('');
@@ -112,8 +107,7 @@ export default function SignIn() {
 							display: 'flex',
 							flexDirection: 'column',
 							alignItems: 'center',
-						}}
-					>
+						}}>
 						<Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
 							<LockOutlinedIcon />
 						</Avatar>
@@ -127,13 +121,12 @@ export default function SignIn() {
 									display: 'flex',
 									flexDirection: 'column',
 									alignItems: 'center',
-								}}
-							>
+								}}>
 								<Stack spacing={2} direction='row'>
-									<IconButton onClick={() => signInWithGoogle()}>
+									<IconButton onClick={signInWithGoogle}>
 										<GoogleIcon />
 									</IconButton>
-									<IconButton onClick={() => signInWithFacebook()}>
+									<IconButton onClick={signInWithFacebook}>
 										<FacebookIcon />
 									</IconButton>
 								</Stack>
@@ -161,8 +154,7 @@ export default function SignIn() {
 										variant='body2'
 										onClick={() => {
 											setForgotDialogOpen(true);
-										}}
-									>
+										}}>
 										Forgot password?
 									</Link>
 								</Grid>
@@ -182,8 +174,7 @@ export default function SignIn() {
 				onClose={() => {
 					setForgotDialogOpen(false);
 					setResetEmail('');
-				}}
-			>
+				}}>
 				<DialogTitle>Forgot Password</DialogTitle>
 				<DialogContent>
 					<DialogContentText>Tell us the email address associated with your Giftamizer account, and we'll send you an email with a link to reset your password.</DialogContentText>
@@ -195,8 +186,7 @@ export default function SignIn() {
 							setForgotDialogOpen(false);
 							setResetEmail('');
 						}}
-						color='inherit'
-					>
+						color='inherit'>
 						Cancel
 					</Button>
 					<Button
@@ -204,8 +194,7 @@ export default function SignIn() {
 							handlePasswordReset();
 							setForgotDialogOpen(false);
 						}}
-						disabled={!validateEmail(resetEmail)}
-					>
+						disabled={!validateEmail(resetEmail)}>
 						Send Reset
 					</Button>
 				</DialogActions>
