@@ -43,18 +43,16 @@ export default function SignIn() {
 			},
 		});
 		if (firebaseAuthError) {
+			console.log(firebaseAuthError);
 			enqueueSnackbar(String(firebaseAuthError.message), {
 				variant: 'error',
 			});
 		}
 
-		console.log('done');
-		const { data, error } = await client.auth.signInWithPassword({
+		const { error } = await client.auth.signInWithPassword({
 			email: email,
 			password: password,
 		});
-
-		console.log('signin', data, error);
 
 		if (error) {
 			enqueueSnackbar(error.message, {
@@ -64,7 +62,7 @@ export default function SignIn() {
 	};
 
 	const handlePasswordReset = async () => {
-		const { data, error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+		const { data, error } = await client.auth.resetPasswordForEmail(resetEmail, {
 			redirectTo: window.location.origin + '/update-password',
 		});
 		console.log('handlePasswordReset', data, error);
@@ -107,7 +105,8 @@ export default function SignIn() {
 							display: 'flex',
 							flexDirection: 'column',
 							alignItems: 'center',
-						}}>
+						}}
+					>
 						<Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
 							<LockOutlinedIcon />
 						</Avatar>
@@ -121,7 +120,8 @@ export default function SignIn() {
 									display: 'flex',
 									flexDirection: 'column',
 									alignItems: 'center',
-								}}>
+								}}
+							>
 								<Stack spacing={2} direction='row'>
 									<IconButton onClick={signInWithGoogle}>
 										<GoogleIcon />
@@ -154,7 +154,8 @@ export default function SignIn() {
 										variant='body2'
 										onClick={() => {
 											setForgotDialogOpen(true);
-										}}>
+										}}
+									>
 										Forgot password?
 									</Link>
 								</Grid>
@@ -174,7 +175,8 @@ export default function SignIn() {
 				onClose={() => {
 					setForgotDialogOpen(false);
 					setResetEmail('');
-				}}>
+				}}
+			>
 				<DialogTitle>Forgot Password</DialogTitle>
 				<DialogContent>
 					<DialogContentText>Tell us the email address associated with your Giftamizer account, and we'll send you an email with a link to reset your password.</DialogContentText>
@@ -186,7 +188,8 @@ export default function SignIn() {
 							setForgotDialogOpen(false);
 							setResetEmail('');
 						}}
-						color='inherit'>
+						color='inherit'
+					>
 						Cancel
 					</Button>
 					<Button
@@ -194,7 +197,8 @@ export default function SignIn() {
 							handlePasswordReset();
 							setForgotDialogOpen(false);
 						}}
-						disabled={!validateEmail(resetEmail)}>
+						disabled={!validateEmail(resetEmail)}
+					>
 						Send Reset
 					</Button>
 				</DialogActions>
