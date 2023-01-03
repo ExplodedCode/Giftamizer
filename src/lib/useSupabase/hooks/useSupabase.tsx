@@ -1,6 +1,7 @@
 import type { SupabaseClient, User } from '@supabase/supabase-js';
 import * as React from 'react';
 import { SupabaseContext } from '../context';
+import { ProfileType } from '../types';
 
 /**
  * useSupabase returns the Supabase client
@@ -8,7 +9,7 @@ import { SupabaseContext } from '../context';
  * // get full client instance
  * const supabase = useSupabase();
  * // or specific members of the SupabaseClient class
- * const { client, user } = useSupabase();
+ * const { client, user, profile } = useSupabase();
  * ```
  */
 export const useSupabase = () => {
@@ -21,5 +22,6 @@ export const useSupabase = () => {
 	return {
 		client: context.sb as SupabaseClient,
 		user: context.user as User,
+		profile: context.profile as ProfileType,
 	};
 };
