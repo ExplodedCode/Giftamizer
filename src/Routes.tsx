@@ -8,10 +8,7 @@ import Landing from './pages/Landing';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
 
-import Gifts from './components/Gifts';
-import Items from './components/Items';
-
-import { Backdrop, Button, CircularProgress } from '@mui/material';
+import { Backdrop, CircularProgress } from '@mui/material';
 import Navigation from './components/Navigation';
 
 export default function AppRoutes() {
@@ -30,7 +27,7 @@ export default function AppRoutes() {
 						element={
 							user ? (
 								<ProtectedRoute>
-									<>items</>
+									<>Items</>
 								</ProtectedRoute>
 							) : (
 								<Landing />
@@ -41,6 +38,8 @@ export default function AppRoutes() {
 					<Route path='/signin' element={user ? <Navigate to='/' /> : <SignIn />} />
 					<Route path='/signup' element={user ? <Navigate to='/' /> : <SignUp />} />
 					<Route path='/update-password' element={user && <UpdatePassword />} />
+
+					<Route path='/gift' element={<Navigate to='/' />} />
 
 					<Route
 						path='/lists'

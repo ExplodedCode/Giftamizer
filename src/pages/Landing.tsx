@@ -1,6 +1,5 @@
 import React from 'react';
 
-import { isMobile } from 'react-device-detect';
 import { Link } from 'react-router-dom';
 
 import AppBar from '@mui/material/AppBar';
@@ -31,7 +30,7 @@ function Landing() {
 				</Toolbar>
 			</AppBar>
 
-			<Container style={{ paddingTop: isMobile ? 20 : 80, marginBottom: 96 }}>
+			<Container sx={{ paddingTop: { xs: 2.5, md: 10 }, marginBottom: 96 }}>
 				<Grid container spacing={3}>
 					<Grid container item sm={12} md={6} spacing={3}>
 						<Grid item xs={12}>

@@ -1,15 +1,11 @@
 import * as React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
-import { SnackbarAction, useSnackbar } from 'notistack';
 
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import IconButton from '@mui/material/IconButton';
-import CloseIcon from '@mui/icons-material/Close';
 
 import Routes from './Routes';
-import { SnackbarAlert } from './types';
 
 export default function Theme() {
 	const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
