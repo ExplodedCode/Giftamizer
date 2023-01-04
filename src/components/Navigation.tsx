@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 import { useSupabase } from '../lib/useSupabase';
 
@@ -25,8 +25,9 @@ import Star from '@mui/icons-material/Star';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ArchiveIcon from '@mui/icons-material/Archive';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
+import LogoutIcon from '@mui/icons-material/Logout';
 
-import { Avatar, Collapse, CSSObject, IconButton, Menu, MenuItem, Tooltip } from '@mui/material';
+import { Avatar, BottomNavigation, BottomNavigationAction, Collapse, CSSObject, IconButton, Menu, MenuItem, Paper, Tooltip } from '@mui/material';
 import AccountDialog from './AccountDialog';
 
 const drawerWidth = 240;
@@ -68,6 +69,10 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 }));
 
 const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
+	const navigate = useNavigate();
+	const location = useLocation();
+	const [mobileNav, setMobileNav] = React.useState(getLocation(location.pathname));
+
 	const { profile, client } = useSupabase();
 
 	const [drawerOpen, setDrawerOpen] = React.useState(true);
@@ -94,9 +99,21 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 					<IconButton color='inherit' aria-label='open drawer' onClick={toggleDrawer} edge='start' sx={{ mr: 2 }}>
 						<MenuIcon />
 					</IconButton>
-					<Typography variant='h6' noWrap component='div' sx={{ flexGrow: 1 }}>
+
+					<Typography
+						variant='h6'
+						noWrap
+						component={Link}
+						to='/'
+						sx={{
+							flexGrow: 1,
+							color: 'inherit',
+							textDecoration: 'none',
+						}}
+					>
 						Giftamizer
 					</Typography>
+
 					<Box sx={{ flexGrow: 0 }}>
 						<Tooltip title='Open settings'>
 							<IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
@@ -120,19 +137,34 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 							onClose={handleCloseUserMenu}
 						>
 							<AccountDialog handleCloseMenu={handleCloseUserMenu} />
+							<MenuItem onClick={handleCloseUserMenu} sx={{ display: { xs: 'flex', md: 'none' } }}>
+								<ListItemIcon>
+									<ArchiveIcon fontSize='small' />
+								</ListItemIcon>
+								<Typography textAlign='center'>Archive</Typography>
+							</MenuItem>
+							<MenuItem onClick={handleCloseUserMenu} sx={{ display: { xs: 'flex', md: 'none' } }}>
+								<ListItemIcon>
+									<DeleteIcon fontSize='small' />
+								</ListItemIcon>
+								<Typography textAlign='center'>Trash</Typography>
+							</MenuItem>
 							<MenuItem
 								onClick={() => {
 									handleCloseUserMenu();
 									client.auth.signOut();
 								}}
 							>
+								<ListItemIcon>
+									<LogoutIcon fontSize='small' />
+								</ListItemIcon>
 								<Typography textAlign='center'>Logout</Typography>
 							</MenuItem>
 						</Menu>
 					</Box>
 				</Toolbar>
 			</AppBar>
-			<Drawer variant='permanent' open={drawerOpen}>
+			<Drawer variant='permanent' open={drawerOpen} sx={{ display: { xs: 'none', md: 'flex' } }}>
 				<Toolbar />
 				<Box>
 					<List>
@@ -222,12 +254,51 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 					</List>
 				</Box>
 			</Drawer>
-			<Box component='main' sx={{ flexGrow: 1, p: 3 }}>
+			<Box component='main' sx={{ flexGrow: 1, p: { xs: 1.5, md: 3 } }}>
 				<Toolbar />
 				<Box>{children}</Box>
 			</Box>
+			<Paper sx={{ position: 'fixed', bottom: 0, left: 0, right: 0, display: { xs: 'block', md: 'none' } }} elevation={3}>
+				<BottomNavigation
+					showLabels
+					value={mobileNav}
+					onChange={(event, newValue) => {
+						setMobileNav(newValue);
+						switch (newValue) {
+							case 0:
+								navigate('/');
+								break;
+							case 1:
+								navigate('/lists');
+								break;
+							case 2:
+								navigate('/groups');
+								break;
+							case 3:
+								navigate('/shopping');
+								break;
+						}
+					}}
+				>
+					<BottomNavigationAction label='Items' icon={<i className='fas fa-gift' style={{ fontSize: '1.19rem' }} />} />
+					<BottomNavigationAction label='Lists' icon={<ListAltIcon />} />
+					<BottomNavigationAction label='Groups' icon={<GroupIcon />} />
+					<BottomNavigationAction label='Shopping' icon={<ShoppingCartIcon />} />
+				</BottomNavigation>
+			</Paper>
 		</Box>
 	);
 };
 
 export default Navigation;
+
+function getLocation(path: string) {
+	if (path.startsWith('/list')) {
+		return 1;
+	} else if (path.startsWith('/group')) {
+		return 2;
+	} else if (path.startsWith('/shopping')) {
+		return 3;
+	}
+	return 0;
+}

@@ -2,10 +2,11 @@ import * as React from 'react';
 
 import { TransitionProps } from '@mui/material/transitions';
 
+import PersonIcon from '@mui/icons-material/Person';
 import CloseIcon from '@mui/icons-material/Close';
 import SaveIcon from '@mui/icons-material/Save';
 
-import { AppBar, Container, Dialog, Grid, IconButton, MenuItem, Slide, TextField, Toolbar, Typography } from '@mui/material';
+import { AppBar, Container, Dialog, Grid, IconButton, ListItemIcon, MenuItem, Slide, TextField, Toolbar, Typography } from '@mui/material';
 import { useSupabase } from '../lib/useSupabase';
 import AvatarEditor from './AvatarEditor';
 
@@ -48,6 +49,9 @@ export default function AccountDialog(props: AccountDialogProps) {
 	return (
 		<>
 			<MenuItem onClick={handleClickOpen}>
+				<ListItemIcon>
+					<PersonIcon fontSize='small' />
+				</ListItemIcon>
 				<Typography textAlign='center'>My Account</Typography>
 			</MenuItem>
 
