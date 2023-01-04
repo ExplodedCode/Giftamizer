@@ -27,6 +27,7 @@ import ArchiveIcon from '@mui/icons-material/Archive';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
 
 import { Avatar, Collapse, CSSObject, IconButton, Menu, MenuItem, Tooltip } from '@mui/material';
+import AccountDialog from './AccountDialog';
 
 const drawerWidth = 240;
 
@@ -99,7 +100,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 					<Box sx={{ flexGrow: 0 }}>
 						<Tooltip title='Open settings'>
 							<IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-								<Avatar alt={profile.name} src='/static/images/avatar/2.jpg' />
+								<Avatar alt={profile.name} src={profile.avatar} />
 							</IconButton>
 						</Tooltip>
 						<Menu
@@ -118,13 +119,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 							open={Boolean(anchorElUser)}
 							onClose={handleCloseUserMenu}
 						>
-							<MenuItem
-								onClick={() => {
-									handleCloseUserMenu();
-								}}
-							>
-								<Typography textAlign='center'>Settings</Typography>
-							</MenuItem>
+							<AccountDialog handleCloseMenu={handleCloseUserMenu} />
 							<MenuItem
 								onClick={() => {
 									handleCloseUserMenu();

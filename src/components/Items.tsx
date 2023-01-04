@@ -1,4 +1,3 @@
-import { isMobile } from 'react-device-detect';
 import { Link } from 'react-router-dom';
 
 import Button from '@mui/material/Button';
@@ -15,42 +14,40 @@ function Gift() {
 
 	return (
 		<div style={{ flexGrow: 1 }}>
-			<Container style={{ paddingTop: isMobile ? 20 : 80, marginBottom: 96 }}>
-				<>
-					<Button
-						variant='contained'
-						onClick={() => {
-							supabase.auth.signOut();
-						}}
-					>
-						Logout
-					</Button>
-					<br />
-					<Button component={Link} to='/' variant='contained'>
-						Gifts
-					</Button>
-					<br />
-					<Button
-						variant='contained'
-						onClick={() => {
-							enqueueSnackbar('Test toast', {
-								variant: 'error',
-								action: (key) => (
-									<>
-										<Button onClick={() => closeSnackbar(key)}>test</Button>
-									</>
-								),
-							});
-						}}
-					>
-						toast
-					</Button>
-				</>
+			<>
+				<Button
+					variant='contained'
+					onClick={() => {
+						supabase.auth.signOut();
+					}}
+				>
+					Logout
+				</Button>
 				<br />
+				<Button component={Link} to='/' variant='contained'>
+					Gifts
+				</Button>
 				<br />
-				<br />
-				<Copyright />
-			</Container>
+				<Button
+					variant='contained'
+					onClick={() => {
+						enqueueSnackbar('Test toast', {
+							variant: 'error',
+							action: (key) => (
+								<>
+									<Button onClick={() => closeSnackbar(key)}>test</Button>
+								</>
+							),
+						});
+					}}
+				>
+					toast
+				</Button>
+			</>
+			<br />
+			<br />
+			<br />
+			<Copyright />
 		</div>
 	);
 }

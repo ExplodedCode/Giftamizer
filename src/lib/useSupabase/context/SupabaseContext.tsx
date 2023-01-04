@@ -28,6 +28,13 @@ export const SupabaseContextProvider: React.FC<{ client: SupabaseClient; childre
 			if (user) {
 				const { data } = await client.from('profiles').select().filter('user_id', 'eq', user.id).single();
 				setProfile(data);
+
+				client
+					.channel(`public:profiles:user_id=eq.${user.id}`)
+					.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, (payload) => {
+						setProfile(JSON.parse(JSON.stringify(payload)).record as ProfileType);
+					})
+					.subscribe();
 			}
 		};
 
