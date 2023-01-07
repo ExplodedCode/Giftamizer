@@ -23,25 +23,35 @@ export const SupabaseContextProvider: React.FC<{ client: SupabaseClient; childre
 	const [user, setUser] = React.useState<User | null | undefined>();
 	const [profile, setProfile] = React.useState<ProfileType | null>(null);
 
+	const [error, setError] = React.useState<string | null>(null);
+
 	React.useEffect(() => {
 		const getProfile = async (user: User | undefined) => {
 			if (user) {
-				const { data } = await client.from('profiles').select().filter('user_id', 'eq', user.id).single();
-				setProfile(data);
+				const { data, error } = await client.from('profiles').select().filter('user_id', 'eq', user.id).single();
 
-				client
-					.channel(`public:profiles:user_id=eq.${user.id}`)
-					.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, (payload) => {
-						setProfile(JSON.parse(JSON.stringify(payload)).record as ProfileType);
-					})
-					.subscribe();
+				if (error) {
+					setError(`SupabaseContextProvider.getProfile() - ${error.message}`);
+				} else {
+					setProfile(data);
+
+					client
+						.channel(`public:profiles:user_id=eq.${user.id}`)
+						.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, (payload) => {
+							setProfile(JSON.parse(JSON.stringify(payload)).record as ProfileType);
+						})
+						.subscribe();
+				}
 			}
 		};
 
 		const getUser = async () => {
-			await client.auth.getSession().then(async (res) => {
-				await getProfile(res.data.session?.user);
-				setUser(res.data.session?.user || null);
+			await client.auth.getSession().then(async ({ data, error }) => {
+				if (!error) {
+					await getProfile(data.session?.user);
+					setUser(data.session?.user || null);
+				}
+				console.log(data, error);
 			});
 
 			client.auth.onAuthStateChange(async (event, session) => {
@@ -58,5 +68,5 @@ export const SupabaseContextProvider: React.FC<{ client: SupabaseClient; childre
 		getUser();
 	}, [client]);
 
-	return <SupabaseContext.Provider value={{ user, sb: client, profile: profile }}>{children}</SupabaseContext.Provider>;
+	return <SupabaseContext.Provider value={{ user, sb: client, profile: profile, error: error }}>{children}</SupabaseContext.Provider>;
 };

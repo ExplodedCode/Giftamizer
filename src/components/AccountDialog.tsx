@@ -2,13 +2,14 @@ import * as React from 'react';
 
 import { TransitionProps } from '@mui/material/transitions';
 
-import PersonIcon from '@mui/icons-material/Person';
 import CloseIcon from '@mui/icons-material/Close';
+import PersonIcon from '@mui/icons-material/Person';
 import SaveIcon from '@mui/icons-material/Save';
 
 import { AppBar, Container, Dialog, Grid, IconButton, ListItemIcon, MenuItem, Slide, TextField, Toolbar, Typography } from '@mui/material';
 import { useSupabase } from '../lib/useSupabase';
 import AvatarEditor from './AvatarEditor';
+import EmailEditor from './EmailEditor';
 
 const Transition = React.forwardRef(function Transition(
 	props: TransitionProps & {
@@ -24,7 +25,7 @@ export type AccountDialogProps = {
 };
 
 export default function AccountDialog(props: AccountDialogProps) {
-	const { profile, updateProfile } = useSupabase();
+	const { user, profile, updateProfile } = useSupabase();
 
 	const [open, setOpen] = React.useState(false);
 
@@ -55,7 +56,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 				<Typography textAlign='center'>My Account</Typography>
 			</MenuItem>
 
-			<Dialog fullScreen open={open} onClose={handleClose} TransitionComponent={Transition}>
+			<Dialog onKeyDown={(e) => e.stopPropagation()} fullScreen open={open} onClose={handleClose} TransitionComponent={Transition}>
 				<AppBar sx={{ position: 'relative' }} enableColorOnDark>
 					<Toolbar>
 						<IconButton edge='start' color='inherit' onClick={handleClose} aria-label='close'>
@@ -77,6 +78,13 @@ export default function AccountDialog(props: AccountDialogProps) {
 						<Grid item xs={12}>
 							<TextField fullWidth label='Display Name' variant='outlined' value={name} onChange={(e) => setName(e.target.value)} />
 						</Grid>
+						{user.app_metadata.provider === 'email' && (
+							<Grid item xs={12}>
+								{/* ************ CNC CODE ************ */}
+								<EmailEditor />
+								{/* ************ CNC CODE ************ */}
+							</Grid>
+						)}
 					</Grid>
 				</Container>
 			</Dialog>

@@ -137,13 +137,13 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 							onClose={handleCloseUserMenu}
 						>
 							<AccountDialog handleCloseMenu={handleCloseUserMenu} />
-							<MenuItem onClick={handleCloseUserMenu} sx={{ display: { xs: 'flex', md: 'none' } }}>
+							<MenuItem onClick={handleCloseUserMenu} component={Link} to='/archive' sx={{ display: { xs: 'flex', md: 'none' } }}>
 								<ListItemIcon>
 									<ArchiveIcon fontSize='small' />
 								</ListItemIcon>
 								<Typography textAlign='center'>Archive</Typography>
 							</MenuItem>
-							<MenuItem onClick={handleCloseUserMenu} sx={{ display: { xs: 'flex', md: 'none' } }}>
+							<MenuItem onClick={handleCloseUserMenu} component={Link} to='/trash' sx={{ display: { xs: 'flex', md: 'none' } }}>
 								<ListItemIcon>
 									<DeleteIcon fontSize='small' />
 								</ListItemIcon>

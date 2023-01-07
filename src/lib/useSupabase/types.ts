@@ -4,6 +4,7 @@ export type SupabaseContextType = {
 	sb: SupabaseClient | null;
 	user: User | null | undefined;
 	profile: ProfileType | null;
+	error?: string | null;
 };
 
 export type SelectArg =

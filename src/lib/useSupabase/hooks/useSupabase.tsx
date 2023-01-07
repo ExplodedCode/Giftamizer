@@ -46,6 +46,7 @@ export const useSupabase = () => {
 
 	return {
 		client: context.sb as SupabaseClient,
+		error: context.error,
 		user: context.user as User,
 		profile: context.profile as ProfileType,
 		updateProfile: updateProfile,
