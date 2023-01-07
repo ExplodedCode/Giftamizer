@@ -1,10 +1,10 @@
-require('dotenv').config();
-
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 
 import * as Firebase from './lib/Firebase';
+
+require('dotenv').config();
 
 const api = express();
 api.use(

@@ -10,13 +10,11 @@ import { supabase, SupabaseContextProvider } from './lib/useSupabase';
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
-	<React.StrictMode>
-		<SupabaseContextProvider client={supabase}>
-			<SnackbarProvider maxSnack={3}>
-				<Theme />
-			</SnackbarProvider>
-		</SupabaseContextProvider>
-	</React.StrictMode>
+	<SupabaseContextProvider client={supabase}>
+		<SnackbarProvider maxSnack={3}>
+			<Theme />
+		</SnackbarProvider>
+	</SupabaseContextProvider>
 );
 
 reportWebVitals();

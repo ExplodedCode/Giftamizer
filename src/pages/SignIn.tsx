@@ -62,10 +62,9 @@ export default function SignIn() {
 	};
 
 	const handlePasswordReset = async () => {
-		const { data, error } = await client.auth.resetPasswordForEmail(resetEmail, {
-			redirectTo: window.location.origin + '/update-password',
+		const { error } = await client.auth.resetPasswordForEmail(resetEmail, {
+			redirectTo: window.location.origin + '/recover',
 		});
-		console.log('handlePasswordReset', data, error);
 
 		if (error) {
 			enqueueSnackbar(error.message, {
@@ -75,6 +74,8 @@ export default function SignIn() {
 			enqueueSnackbar(`Reset link sent to: ${resetEmail}`, {
 				variant: 'success',
 			});
+
+			setForgotDialogOpen(false);
 		}
 
 		setResetEmail('');
@@ -195,7 +196,6 @@ export default function SignIn() {
 					<Button
 						onClick={() => {
 							handlePasswordReset();
-							setForgotDialogOpen(false);
 						}}
 						disabled={!validateEmail(resetEmail)}
 					>
