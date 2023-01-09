@@ -80,9 +80,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 						</Grid>
 						{user.app_metadata.provider === 'email' && (
 							<Grid item xs={12}>
-								{/* ************ CNC CODE ************ */}
 								<EmailEditor />
-								{/* ************ CNC CODE ************ */}
 							</Grid>
 						)}
 					</Grid>

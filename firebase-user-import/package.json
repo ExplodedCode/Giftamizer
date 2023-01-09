@@ -4,7 +4,8 @@
 	"description": "",
 	"main": "index.tsx",
 	"scripts": {
-		"import": "ts-node import.ts"
+		"import": "ts-node import.ts",
+		"delete": "ts-node delete.ts"
 	},
 	"dependencies": {
 		"@supabase/supabase-js": "^2.2.3",

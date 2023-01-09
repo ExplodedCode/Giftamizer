@@ -4,19 +4,8 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSupabase } from '../lib/useSupabase';
 
 import { styled, Theme } from '@mui/material/styles';
-import MenuIcon from '@mui/icons-material/Menu';
-import Box from '@mui/material/Box';
-import MuiDrawer from '@mui/material/Drawer';
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import List from '@mui/material/List';
-import Typography from '@mui/material/Typography';
-import Divider from '@mui/material/Divider';
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
 
+import Box from '@mui/material/Box';
 import ListAltIcon from '@mui/icons-material/ListAlt';
 import GroupIcon from '@mui/icons-material/Group';
 import ExpandLess from '@mui/icons-material/ExpandLess';
@@ -26,9 +15,34 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ArchiveIcon from '@mui/icons-material/Archive';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import LogoutIcon from '@mui/icons-material/Logout';
+import MenuIcon from '@mui/icons-material/Menu';
 
-import { Avatar, BottomNavigation, BottomNavigationAction, Collapse, CSSObject, IconButton, Menu, MenuItem, Paper, Tooltip } from '@mui/material';
+import {
+	AppBar,
+	Avatar,
+	BottomNavigation,
+	BottomNavigationAction,
+	Collapse,
+	CSSObject,
+	Divider,
+	Drawer as MuiDrawer,
+	IconButton,
+	List,
+	ListItem,
+	ListItemButton,
+	ListItemIcon,
+	ListItemText,
+	Menu,
+	MenuItem,
+	Paper,
+	Stack,
+	Toolbar,
+	Tooltip,
+	Typography,
+} from '@mui/material';
+
 import AccountDialog from './AccountDialog';
+import Notifications from './Notifications';
 
 const drawerWidth = 240;
 
@@ -73,7 +87,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 	const location = useLocation();
 	const [mobileNav, setMobileNav] = React.useState(getLocation(location.pathname));
 
-	const { profile, client } = useSupabase();
+	const { user, profile, client } = useSupabase();
 
 	const [drawerOpen, setDrawerOpen] = React.useState(true);
 	const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
@@ -115,11 +129,18 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 					</Typography>
 
 					<Box sx={{ flexGrow: 0 }}>
-						<Tooltip title='Open settings'>
-							<IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-								<Avatar alt={profile.name} src={profile.avatar} />
-							</IconButton>
-						</Tooltip>
+						<Stack direction='row' spacing={2}>
+							<Notifications />
+							<Tooltip title='Open settings'>
+								<IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+									<Avatar
+										alt={profile.name}
+										// @ts-ignore
+										src={profile.avatar_token ? `${client.supabaseUrl}/storage/v1/object/public/avatars/${user.id}?${profile.avatar_token}` : '/defaultAvatar.png'}
+									/>
+								</IconButton>
+							</Tooltip>
+						</Stack>
 						<Menu
 							sx={{ mt: '45px' }}
 							id='menu-appbar'

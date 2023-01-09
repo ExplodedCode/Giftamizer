@@ -13,12 +13,10 @@ import { Alert, AlertTitle, Backdrop, Button, CircularProgress, Container } from
 import Navigation from './components/Navigation';
 
 export default function AppRoutes() {
-	const { user, error, client } = useSupabase();
+	const { user, profile, error, client } = useSupabase();
 	const { enqueueSnackbar } = useSnackbar();
 
 	const location = useLocation();
-
-	console.log(location.hash);
 
 	React.useEffect(() => {
 		if (location.hash.startsWith('#message=')) {
@@ -56,7 +54,7 @@ export default function AppRoutes() {
 								element={
 									user ? (
 										<ProtectedRoute>
-											<>Items</>
+											<>Items - {profile.name}</>
 										</ProtectedRoute>
 									) : (
 										<Landing />

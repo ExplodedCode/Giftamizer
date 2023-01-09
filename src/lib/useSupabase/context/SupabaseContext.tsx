@@ -22,7 +22,6 @@ export const SupabaseContext = React.createContext<SupabaseContextType>({
 export const SupabaseContextProvider: React.FC<{ client: SupabaseClient; children: JSX.Element }> = ({ client, children }) => {
 	const [user, setUser] = React.useState<User | null | undefined>();
 	const [profile, setProfile] = React.useState<ProfileType | null>(null);
-
 	const [error, setError] = React.useState<string | null>(null);
 
 	React.useEffect(() => {
@@ -31,14 +30,14 @@ export const SupabaseContextProvider: React.FC<{ client: SupabaseClient; childre
 				const { data, error } = await client.from('profiles').select().filter('user_id', 'eq', user.id).single();
 
 				if (error) {
-					setError(`SupabaseContextProvider.getProfile() - ${error.message}`);
+					setError(error.message);
 				} else {
 					setProfile(data);
 
 					client
 						.channel(`public:profiles:user_id=eq.${user.id}`)
-						.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, (payload) => {
-							setProfile(JSON.parse(JSON.stringify(payload)).record as ProfileType);
+						.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `user_id=eq.${user.id}` }, (payload) => {
+							setProfile(payload.new as ProfileType);
 						})
 						.subscribe();
 				}
@@ -47,11 +46,13 @@ export const SupabaseContextProvider: React.FC<{ client: SupabaseClient; childre
 
 		const getUser = async () => {
 			await client.auth.getSession().then(async ({ data, error }) => {
-				if (!error) {
+				if (error) {
+					client.removeAllChannels();
+					setUser(null);
+				} else {
 					await getProfile(data.session?.user);
 					setUser(data.session?.user || null);
 				}
-				console.log(data, error);
 			});
 
 			client.auth.onAuthStateChange(async (event, session) => {
@@ -60,6 +61,7 @@ export const SupabaseContextProvider: React.FC<{ client: SupabaseClient; childre
 					setUser(session?.user);
 				}
 				if (event === 'SIGNED_OUT') {
+					client.removeAllChannels();
 					setUser(null);
 				}
 			});

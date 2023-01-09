@@ -23,6 +23,16 @@ let rows: any[] = [];
 		password: process.env.POSTGRES_PASSWORD,
 		database: 'postgres',
 	});
+
+	pool.query(sql, (err, res) => {
+		if (err) {
+			console.log(err);
+			return;
+		} else {
+			console.log(`Imported ${rows.length} users`);
+		}
+	});
+	pool.end();
 })();
 
 function createUserHeader() {
@@ -87,7 +97,7 @@ function createUser(user: any) {
         null, /* phone_change_sent_at timestamp with time zone, */
         '', /* email_change_token_current character varying(255) DEFAULT ''::character varying, */
         0 /*email_change_confirm_status smallint DEFAULT 0 */
-    )`;
+        )`;
 
 	return sql;
 }
