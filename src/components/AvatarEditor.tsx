@@ -7,6 +7,7 @@ import { Avatar, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle,
 import LoadingButton from '@mui/lab/LoadingButton';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import ClearIcon from '@mui/icons-material/Clear';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import { useDropzone } from 'react-dropzone';
 import 'cropperjs/dist/cropper.css';
@@ -34,7 +35,7 @@ export default function AvatarEditor() {
 	});
 	const [selectedimage, setSelectedImage] = React.useState('');
 
-	const { client, profile, updateProfile } = useSupabase();
+	const { client, user, profile, updateProfile } = useSupabase();
 	const { enqueueSnackbar } = useSnackbar();
 
 	const [open, setOpen] = React.useState(false);
@@ -45,18 +46,37 @@ export default function AvatarEditor() {
 		const cropper: any = imageElement?.cropper;
 
 		setLoading(true);
-		const { error } = await client.storage.from('avatar').upload(`${profile.user_id}`, await dataUrlToFile(cropper.getCroppedCanvas().toDataURL(), 'avatar'), {
+		const { error } = await client.storage.from('avatars').upload(`${profile.user_id}`, await dataUrlToFile(cropper.getCroppedCanvas().toDataURL(), 'avatar'), {
 			cacheControl: '3600',
 			upsert: true,
 		});
 		if (error) {
 			enqueueSnackbar(error.message, { variant: 'error' });
+		} else {
+			await updateProfile({
+				avatar_token: `${Date.now()}`,
+			});
 		}
 
-		await updateProfile({
-			avatar: `https://api.dev.giftamizer.com/storage/v1/object/public/avatar/${profile.user_id}?${Date.now()}`,
-		});
+		handleClose();
+	};
 
+	const handleRemove = async () => {
+		setLoading(true);
+
+		const { error } = await client.storage.from('avatars').remove([`${profile.user_id}`]);
+		if (error) {
+			enqueueSnackbar(error.message, { variant: 'error' });
+		} else {
+			await updateProfile({
+				avatar_token: null,
+			});
+		}
+
+		handleClose();
+	};
+
+	const handleClose = async () => {
 		setSelectedImage('');
 		setOpen(false);
 		setLoading(false);
@@ -65,7 +85,12 @@ export default function AvatarEditor() {
 	return (
 		<>
 			<IconButton onClick={() => setOpen(true)}>
-				<Avatar alt={profile.name} src={profile.avatar} sx={{ height: 196, width: 196 }} />
+				<Avatar
+					alt={profile.name}
+					// @ts-ignore
+					src={profile.avatar_token ? `${client.supabaseUrl}/storage/v1/object/public/avatars/${user.id}?${profile.avatar_token}` : '/defaultAvatar.png'}
+					sx={{ height: 196, width: 196 }}
+				/>
 			</IconButton>
 
 			<Dialog open={open} onClose={() => setOpen(false)} maxWidth='sm' fullWidth>
@@ -100,13 +125,26 @@ export default function AvatarEditor() {
 					</Box>
 				</DialogContent>
 				<DialogActions>
-					<Button
-						color='inherit'
-						onClick={() => {
-							setSelectedImage('');
-							setOpen(false);
-						}}
-					>
+					{profile.avatar_token && (
+						// <Button color='error' variant='contained' sx={{ position: 'absolute', left: 8 }} onClick={handleRemove}>
+						// 	Remove
+						// </Button>
+
+						<LoadingButton
+							color='error'
+							variant='contained'
+							sx={{ position: 'absolute', left: 8 }}
+							onClick={handleRemove}
+							endIcon={<DeleteIcon />}
+							disabled={profile.avatar_token === null}
+							loading={loading}
+							loadingPosition='end'
+						>
+							Remove
+						</LoadingButton>
+					)}
+
+					<Button color='inherit' onClick={handleClose}>
 						Cancel
 					</Button>
 

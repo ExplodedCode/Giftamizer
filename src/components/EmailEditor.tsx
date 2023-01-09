@@ -11,10 +11,7 @@ import SyncAltIcon from '@mui/icons-material/SyncAlt';
 import CloseIcon from '@mui/icons-material/Close';
 
 export default function AvatarEditor() {
-	/* ************ CNC CODE ************ */
-	/* ************ CNC CODE ************ */
-	/* ************ CNC CODE ************ */
-	const { client, profile, updateProfile } = useSupabase();
+	const { client, profile } = useSupabase();
 	const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
 	const [open, setOpen] = React.useState(false);
@@ -30,20 +27,9 @@ export default function AvatarEditor() {
 		setEmailConfirm('');
 	};
 	const handleUpdateEmail = async () => {
-		//grab email value
-		// const email = emails[0];
-		// //Set spinning action
 		setLoading(true);
 
-		// //TODO : Build in updater for login email..?
-
-		// //Update profile email
-		// await updateProfile({
-		// 	email: email,
-		// });
-		//Clear email values and dismiss popup/loading animation
-
-		const { data, error } = await client.auth.updateUser({ email: email });
+		const { error } = await client.auth.updateUser({ email: email });
 
 		if (error) {
 			console.log(error);
@@ -79,10 +65,13 @@ export default function AvatarEditor() {
 					disabled
 					endAdornment={
 						<InputAdornment position='end'>
-							<Divider sx={{ height: 28, m: 0.5 }} orientation='vertical' />
-							<IconButton color='primary' edge='end' onClick={() => setOpen(true)}>
+							<Divider sx={{ height: 28, m: 0.5, display: { xs: 'inherit', sm: 'none' } }} orientation='vertical' />
+							<IconButton sx={{ display: { xs: 'block', sm: 'none' } }} color='primary' edge='end' onClick={() => setOpen(true)}>
 								<EditIcon />
 							</IconButton>
+							<Button variant='contained' sx={{ display: { xs: 'none', sm: 'inherit' } }} endIcon={<EditIcon />} onClick={() => setOpen(true)}>
+								Change email
+							</Button>
 						</InputAdornment>
 					}
 				/>
