@@ -1,0 +1,17 @@
+// groups
+[
+	{
+		"group_id": "7e276701-68b1-4f72-8b28-c2cf8932c78d", // uuid
+		"group_name": "Trowbridge Family", // text
+		"group_image_token": 1673290691162, // number - change to refresh image for realtime
+	}
+]
+
+// group_membership
+[
+	{
+		"group_id": "7e276701-68b1-4f72-8b28-c2cf8932c78d", // uuid
+		"user_id": "958300be-4fa4-4758-ba4d-e340db2156c5", // uuid
+		"owner": true // bool
+	}
+]

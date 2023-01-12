@@ -87,7 +87,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 	const location = useLocation();
 	const [mobileNav, setMobileNav] = React.useState(getLocation(location.pathname));
 
-	const { user, profile, client } = useSupabase();
+	const { client, user, profile, groups } = useSupabase();
 
 	const [drawerOpen, setDrawerOpen] = React.useState(true);
 	const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
@@ -135,8 +135,12 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 								<IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
 									<Avatar
 										alt={profile.name}
-										// @ts-ignore
-										src={profile.avatar_token ? `${client.supabaseUrl}/storage/v1/object/public/avatars/${user.id}?${profile.avatar_token}` : '/defaultAvatar.png'}
+										src={
+											profile.avatar_token && profile.avatar_token !== -1
+												? // @ts-ignore
+												  `${client.supabaseUrl}/storage/v1/object/public/avatars/${user.id}?${profile.avatar_token}`
+												: '/defaultAvatar.png'
+										}
 									/>
 								</IconButton>
 							</Tooltip>
@@ -190,13 +194,14 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 				<Box>
 					<List>
 						<ListItem disablePadding>
-							<ListItemButton component={Link} to='/'>
+							<ListItemButton component={Link} to='/' selected={location.pathname === '/'}>
 								<ListItemIcon>
-									<i
+									<Box
 										className='fas fa-gift'
-										style={{
+										sx={{
 											fontSize: '1.19rem',
-											marginLeft: 2,
+											marginLeft: 0.35,
+											color: location.pathname === '/' ? 'primary.main' : undefined,
 										}}
 									/>
 								</ListItemIcon>
@@ -204,17 +209,17 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 							</ListItemButton>
 						</ListItem>
 						<ListItem disablePadding>
-							<ListItemButton component={Link} to='/lists'>
+							<ListItemButton component={Link} to='/lists' selected={location.pathname.startsWith('/lists')}>
 								<ListItemIcon>
-									<ListAltIcon />
+									<ListAltIcon color={location.pathname.startsWith('/lists') ? 'primary' : undefined} />
 								</ListItemIcon>
 								<ListItemText primary='Lists' />
 							</ListItemButton>
 						</ListItem>
 						<ListItem disablePadding>
-							<ListItemButton component={Link} to='/groups'>
+							<ListItemButton component={Link} to='/groups' selected={location.pathname === '/groups'}>
 								<ListItemIcon>
-									<GroupIcon />
+									<GroupIcon color={location.pathname === '/groups' ? 'primary' : undefined} />
 								</ListItemIcon>
 								<ListItemText primary='Groups' />
 							</ListItemButton>
@@ -225,8 +230,12 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 										e.preventDefault();
 										setGroupsOpen(!groupsOpen);
 									}}
-									sx={{ borderRadius: 0 }}
-									size='large'
+									sx={{
+										borderRadius: 0,
+										height: 48,
+										width: 48,
+										backgroundColor: location.pathname === '/groups' || location.pathname === '/groups/' ? 'rgba(76, 175, 80, 0.16)' : undefined,
+									}}
 								>
 									{groupsOpen ? <ExpandLess fontSize='small' /> : <ExpandMore fontSize='small' />}
 								</IconButton>
@@ -234,21 +243,23 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 						</ListItem>
 						<Collapse in={groupsOpen && drawerOpen} timeout='auto' unmountOnExit>
 							<List component='div' disablePadding>
-								<ListItemButton component={Link} to='/groups/groupid' sx={{ pl: 4 }}>
-									<ListItemIcon>
-										<Star />
-									</ListItemIcon>
-									<ListItemText primary='Pinned Group' />
-								</ListItemButton>
+								{groups.map((group) => (
+									<ListItemButton key={group.id} sx={{ pl: 4 }} component={Link} to={`/groups/${group.id}`} selected={location.pathname.startsWith(`/groups/${group.id}`)}>
+										<ListItemIcon>
+											<Star />
+										</ListItemIcon>
+										<ListItemText primary={group.name} />
+									</ListItemButton>
+								))}
 							</List>
 						</Collapse>
 					</List>
 					<Divider />
 					<List>
 						<ListItem disablePadding>
-							<ListItemButton component={Link} to='/shopping'>
+							<ListItemButton component={Link} to='/shopping' selected={location.pathname === '/shopping'}>
 								<ListItemIcon>
-									<ShoppingCartIcon />
+									<ShoppingCartIcon color={location.pathname === '/shopping' ? 'primary' : undefined} />
 								</ListItemIcon>
 								<ListItemText primary='Shopping List' />
 							</ListItemButton>
@@ -257,17 +268,17 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 					<Divider />
 					<List>
 						<ListItem disablePadding>
-							<ListItemButton component={Link} to='/archive'>
+							<ListItemButton component={Link} to='/archive' selected={location.pathname === '/archive'}>
 								<ListItemIcon>
-									<ArchiveIcon />
+									<ArchiveIcon color={location.pathname === '/archive' ? 'primary' : undefined} />
 								</ListItemIcon>
 								<ListItemText primary='Archive' />
 							</ListItemButton>
 						</ListItem>
 						<ListItem disablePadding>
-							<ListItemButton component={Link} to='/trash'>
+							<ListItemButton component={Link} to='/trash' selected={location.pathname === '/trash'}>
 								<ListItemIcon>
-									<DeleteIcon />
+									<DeleteIcon color={location.pathname === '/trash' ? 'primary' : undefined} />
 								</ListItemIcon>
 								<ListItemText primary='Trash' />
 							</ListItemButton>
@@ -275,7 +286,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 					</List>
 				</Box>
 			</Drawer>
-			<Box component='main' sx={{ flexGrow: 1, p: { xs: 1.5, md: 3 } }}>
+			<Box component='main' sx={{ flexGrow: 1 }}>
 				<Toolbar />
 				<Box>{children}</Box>
 			</Box>

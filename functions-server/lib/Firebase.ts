@@ -50,7 +50,7 @@ export async function ValidateAuth(request: Request, response: Response) {
 							});
 
 							if (isValid) {
-								const { data, error } = await supabase.auth.admin.updateUserById(user.id, { password: password });
+								const { error } = await supabase.auth.admin.updateUserById(user.id, { password: password });
 								if (error) {
 									console.error(error.message);
 									response.status(500).send(error);

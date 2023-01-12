@@ -3,18 +3,28 @@ export type Json = string | number | boolean | null | { [key: string]: Json } | 
 export interface Database {
 	public: {
 		Tables: {
-			test: {
+			profiles: {
 				Row: {
-					id: number;
+					created_at: string | null;
+					email: string;
 					name: string;
-					created_at: Date;
-				}; // The data expected to be returned from a "select" statement.
+					avatar_token: number;
+					user_id: string;
+				};
 				Insert: {
+					created_at?: string | null;
+					email: string;
 					name: string;
-				}; // The data expected passed to an "insert" statement.
+					avatar_token: number;
+					user_id: string;
+				};
 				Update: {
-					name: string;
-				}; // The data expected passed to an "update" statement.
+					created_at?: string | null;
+					email?: string;
+					name?: string;
+					avatar_token?: number;
+					user_id?: string;
+				};
 			};
 		};
 		Views: {

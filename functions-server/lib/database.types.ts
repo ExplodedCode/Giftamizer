@@ -8,21 +8,21 @@ export interface Database {
 					created_at: string | null;
 					email: string;
 					name: string;
-					avatar: string;
+					avatar_token: number;
 					user_id: string;
 				};
 				Insert: {
 					created_at?: string | null;
 					email: string;
 					name: string;
-					avatar: string;
+					avatar_token: number;
 					user_id: string;
 				};
 				Update: {
 					created_at?: string | null;
 					email?: string;
 					name?: string;
-					avatar?: string;
+					avatar_token?: number;
 					user_id?: string;
 				};
 			};

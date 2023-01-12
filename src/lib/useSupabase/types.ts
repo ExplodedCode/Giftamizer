@@ -4,6 +4,7 @@ export type SupabaseContextType = {
 	sb: SupabaseClient | null;
 	user: User | null | undefined;
 	profile: ProfileType | null;
+	groups: GroupType[];
 	error?: string | null;
 };
 
@@ -19,6 +20,12 @@ export type ProfileType = {
 	user_id: string;
 	email: string;
 	name: string;
-	avatar_token: string;
+	avatar_token: number;
 	created_at: string;
+};
+
+export type GroupType = {
+	id: string;
+	name: string;
+	avatar_token: number;
 };

@@ -4,6 +4,8 @@ import bodyParser from 'body-parser';
 
 import * as Firebase from './lib/Firebase';
 
+import * as SocialAvatar from './lib/SocialAvatar';
+
 require('dotenv').config();
 
 const api = express();
@@ -25,6 +27,8 @@ api.use(bodyParser.json());
 	});
 
 	api.post('/firebase/validateAuth', Firebase.ValidateAuth);
+
+	api.post('/socialavatar/download', SocialAvatar.Download);
 
 	// api.post('/hello', (req, res) => {
 	// 	console.log(req.body);
