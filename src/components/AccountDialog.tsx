@@ -6,7 +6,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import PersonIcon from '@mui/icons-material/Person';
 import SaveIcon from '@mui/icons-material/Save';
 
-import { AppBar, Container, Dialog, Grid, IconButton, ListItemIcon, MenuItem, Slide, TextField, Toolbar, Typography } from '@mui/material';
+import { Alert, AlertTitle, AppBar, Box, Button, Container, Dialog, Divider, Grid, IconButton, Link, ListItemIcon, MenuItem, Slide, TextField, Toolbar, Typography } from '@mui/material';
 import { useSupabase } from '../lib/useSupabase';
 import AvatarEditor from './AvatarEditor';
 import EmailEditor from './EmailEditor';
@@ -83,6 +83,35 @@ export default function AccountDialog(props: AccountDialogProps) {
 								<EmailEditor />
 							</Grid>
 						)}
+
+						<Grid item xs={12}>
+							<Divider />
+						</Grid>
+
+						<Grid item xs={12}>
+							<Typography variant='h6' gutterBottom>
+								Danger Zone
+							</Typography>
+							<Alert severity='error'>
+								<AlertTitle>Delete Account</AlertTitle>
+
+								<Grid container spacing={2}>
+									<Grid item xs={12}>
+										<Typography variant='body1'>
+											Your account is currently an owner in these groups: <Link>Family Group</Link>
+										</Typography>
+									</Grid>
+									<Grid item xs={12}>
+										<Typography variant='body1'>You must remove yourself, transfer ownership, or delete these group before you can delete your account.</Typography>
+									</Grid>
+									<Grid item xs={12}>
+										<Button variant='outlined' color='error' disabled>
+											Delete Your Account
+										</Button>
+									</Grid>
+								</Grid>
+							</Alert>
+						</Grid>
 					</Grid>
 				</Container>
 			</Dialog>

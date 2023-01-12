@@ -5,12 +5,14 @@ import UpdatePassword from './pages/UpdatePassword';
 import { useSupabase } from './lib/useSupabase';
 import { useSnackbar } from 'notistack';
 
+import { Alert, AlertTitle, Backdrop, Button, CircularProgress, Container } from '@mui/material';
+
+import Navigation from './components/Navigation';
 import Landing from './pages/Landing';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
-
-import { Alert, AlertTitle, Backdrop, Button, CircularProgress, Container } from '@mui/material';
-import Navigation from './components/Navigation';
+import Groups from './pages/Groups';
+import Group from './pages/Group';
 
 export default function AppRoutes() {
 	const { user, profile, error, client } = useSupabase();
@@ -80,15 +82,15 @@ export default function AppRoutes() {
 								path='/groups'
 								element={
 									<ProtectedRoute>
-										<>Groups</>
+										<Groups />
 									</ProtectedRoute>
 								}
 							/>
 							<Route
-								path='/groups/:id'
+								path='/groups/:group/:user?'
 								element={
 									<ProtectedRoute>
-										<>Group view</>
+										<Group />
 									</ProtectedRoute>
 								}
 							/>

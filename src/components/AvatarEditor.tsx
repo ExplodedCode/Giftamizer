@@ -69,7 +69,7 @@ export default function AvatarEditor() {
 			enqueueSnackbar(error.message, { variant: 'error' });
 		} else {
 			await updateProfile({
-				avatar_token: null,
+				avatar_token: -1,
 			});
 		}
 
@@ -87,8 +87,12 @@ export default function AvatarEditor() {
 			<IconButton onClick={() => setOpen(true)}>
 				<Avatar
 					alt={profile.name}
-					// @ts-ignore
-					src={profile.avatar_token ? `${client.supabaseUrl}/storage/v1/object/public/avatars/${user.id}?${profile.avatar_token}` : '/defaultAvatar.png'}
+					src={
+						profile.avatar_token && profile.avatar_token !== -1
+							? // @ts-ignore
+							  `${client.supabaseUrl}/storage/v1/object/public/avatars/${user.id}?${profile.avatar_token}`
+							: '/defaultAvatar.png'
+					}
 					sx={{ height: 196, width: 196 }}
 				/>
 			</IconButton>
