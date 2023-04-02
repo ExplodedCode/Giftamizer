@@ -2,18 +2,9 @@ import React from 'react';
 
 import { Link } from 'react-router-dom';
 
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-
-import Container from '@mui/material/Container';
-import Grid from '@mui/material/Grid';
-import Avatar from '@mui/material/Avatar';
-
+import { AppBar, Toolbar, Typography, Button, Container, Grid, Card, CardHeader, Avatar } from '@mui/material';
 import { green, red, blue, orange } from '@mui/material/colors';
-import Card from '@mui/material/Card';
-import CardHeader from '@mui/material/CardHeader';
+
 import Copyright from './Copyright';
 
 function Landing() {

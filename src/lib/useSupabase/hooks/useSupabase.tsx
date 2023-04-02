@@ -2,7 +2,7 @@ import type { SupabaseClient, User } from '@supabase/supabase-js';
 import { useSnackbar } from 'notistack';
 import * as React from 'react';
 import { SupabaseContext } from '../context';
-import { GroupType, ProfileType } from '../types';
+import { ProfileType } from '../types';
 
 /**
  * useSupabase returns the Supabase client
@@ -49,7 +49,7 @@ export const useSupabase = () => {
 		error: context.error,
 		user: context.user as User,
 		profile: context.profile as ProfileType,
-		groups: context.groups as GroupType[],
+		// groups: context.groups as GroupType[],
 		updateProfile: updateProfile,
 	};
 };
