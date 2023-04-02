@@ -5,12 +5,12 @@ import { useSnackbar } from 'notistack';
 
 import { useTheme } from '@mui/material/styles';
 import { Avatar, Button, Dialog, DialogContent, DialogContentText, DialogTitle, Fab, Grid, IconButton, Stack, TextField, useMediaQuery } from '@mui/material';
-
 import LoadingButton from '@mui/lab/LoadingButton';
-import AddIcon from '@mui/icons-material/Add';
-import GroupIcon from '@mui/icons-material/Group';
+import { Add, Group } from '@mui/icons-material';
 
-export default function CreateGroup() {
+type CreateGroupProps = {};
+
+export default function CreateGroup(props: CreateGroupProps) {
 	const theme = useTheme();
 
 	const { client } = useSupabase();
@@ -25,8 +25,7 @@ export default function CreateGroup() {
 		setLoading(true);
 
 		var { error } = await client.from('groups').insert({
-			name: name, // text
-			image_token: 1673290691162, // number - change to refresh image for realtime
+			name: name,
 		});
 		if (error) enqueueSnackbar(error.message, { variant: 'error' });
 
@@ -42,7 +41,7 @@ export default function CreateGroup() {
 	return (
 		<>
 			<Fab color='primary' aria-label='add' onClick={() => setOpen(true)} sx={{ position: 'fixed', bottom: { xs: 64, md: 16 }, right: { xs: 8, md: 16 } }}>
-				<AddIcon />
+				<Add />
 			</Fab>
 
 			<Dialog open={open} onClose={() => setOpen(false)} maxWidth='sm' fullScreen={useMediaQuery(theme.breakpoints.down('md'))}>
@@ -54,8 +53,6 @@ export default function CreateGroup() {
 						</Grid>
 						<Grid item xs={12}>
 							<IconButton sx={{ p: 0, borderRadius: 0 }}>
-								{/* <Avatar alt={profile.name} src={'/defaultAvatar.png'} sx={{ borderRadius: 0, height: 196, width: 196 }} /> */}
-
 								<Avatar
 									sx={{
 										borderRadius: 0,
@@ -81,7 +78,7 @@ export default function CreateGroup() {
 									Cancel
 								</Button>
 
-								<LoadingButton onClick={handleCreate} endIcon={<GroupIcon />} loading={loading} loadingPosition='end' variant='contained'>
+								<LoadingButton onClick={handleCreate} endIcon={<Group />} loading={loading} loadingPosition='end' variant='contained'>
 									Create
 								</LoadingButton>
 							</Stack>

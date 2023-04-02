@@ -1,16 +1,18 @@
 import React from 'react';
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
-import UpdatePassword from './pages/UpdatePassword';
 import { useSupabase } from './lib/useSupabase';
+import { GroupType } from './lib/useSupabase/types';
+
 import { useSnackbar } from 'notistack';
 
-import { Alert, AlertTitle, Backdrop, Button, CircularProgress, Container } from '@mui/material';
+import { Alert, AlertTitle, Backdrop, Button, CircularProgress, Container, Link as MUILink, Typography } from '@mui/material';
 
-import Navigation from './components/Navigation';
 import Landing from './pages/Landing';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
+import UpdatePassword from './pages/UpdatePassword';
+import Navigation from './components/Navigation';
 import Groups from './pages/Groups';
 import Group from './pages/Group';
 
@@ -27,7 +29,38 @@ export default function AppRoutes() {
 				variant: 'info',
 			});
 		}
-	}, []);
+	}, [enqueueSnackbar, location.hash]);
+
+	const [groups, setGroups] = React.useState<GroupType[] | undefined>(undefined);
+
+	React.useEffect(() => {
+		if (user) {
+			const getGroups = async () => {
+				const { data, error } = await client
+					.from('groups')
+					.select(
+						`id,
+					name,
+					image_token,
+					my_membership:group_members!inner(*)`
+					)
+					.eq('my_membership.user_id', user.id);
+
+				console.log(data, error);
+
+				setGroups(data! as GroupType[]);
+			};
+
+			client
+				.channel(`public:group_members:user_id=eq.${user.id}`)
+				.on('postgres_changes', { event: '*', schema: 'public', table: 'group_members', filter: `user_id=eq.${user.id}` }, (payload) => {
+					getGroups();
+				})
+				.subscribe();
+
+			getGroups();
+		}
+	}, [client, user]);
 
 	return (
 		<>
@@ -38,14 +71,21 @@ export default function AppRoutes() {
 							<AlertTitle>Error</AlertTitle>
 							{error}
 						</Alert>
-						<Button variant='contained' onClick={() => client.auth.signOut()} sx={{ marginTop: 8 }}>
+						<Button
+							variant='contained'
+							onClick={() => {
+								client.auth.signOut();
+								window.location.reload();
+							}}
+							sx={{ marginTop: 8 }}
+						>
 							Sign out
 						</Button>
 					</Container>
 				</>
 			) : (
 				<>
-					{user === undefined ? (
+					{user === undefined || groups === undefined ? (
 						<Backdrop sx={{ color: '#fff', zIndex: 1000 }} open={true}>
 							<CircularProgress color='inherit' />
 						</Backdrop>
@@ -55,7 +95,7 @@ export default function AppRoutes() {
 								path='/'
 								element={
 									user ? (
-										<ProtectedRoute>
+										<ProtectedRoute groups={groups!}>
 											<>Items - {profile.name}</>
 										</ProtectedRoute>
 									) : (
@@ -73,7 +113,7 @@ export default function AppRoutes() {
 							<Route
 								path='/lists'
 								element={
-									<ProtectedRoute>
+									<ProtectedRoute groups={groups!}>
 										<>Lists</>
 									</ProtectedRoute>
 								}
@@ -81,23 +121,48 @@ export default function AppRoutes() {
 							<Route
 								path='/groups'
 								element={
-									<ProtectedRoute>
-										<Groups />
+									<ProtectedRoute groups={groups!}>
+										<Groups groups={groups!} />
 									</ProtectedRoute>
 								}
 							/>
-							<Route
-								path='/groups/:group/:user?'
+
+							{groups.map((group) => (
+								<>
+									<Route
+										key={`group-${group.id}`}
+										path={`/groups/${group.id}`}
+										element={
+											<ProtectedRoute groups={groups}>
+												<Group group={group} />
+											</ProtectedRoute>
+										}
+									/>
+									<Route
+										key={`user-${group.id}`}
+										path={`/groups/${group.id}/:user`}
+										element={
+											<ProtectedRoute groups={groups}>
+												<Group group={group} />
+											</ProtectedRoute>
+										}
+									/>
+								</>
+							))}
+
+							{/* <Route
+								path='/groups/:group?/:user?'
 								element={
-									<ProtectedRoute>
-										<Group />
+									<ProtectedRoute groups={groups!}>
+										<Groups groups={groups!} />
 									</ProtectedRoute>
 								}
-							/>
+							/> */}
+
 							<Route
 								path='/shopping'
 								element={
-									<ProtectedRoute>
+									<ProtectedRoute groups={groups!}>
 										<>Shopping List</>
 									</ProtectedRoute>
 								}
@@ -105,7 +170,7 @@ export default function AppRoutes() {
 							<Route
 								path='/archive'
 								element={
-									<ProtectedRoute>
+									<ProtectedRoute groups={groups!}>
 										<>Archive</>
 									</ProtectedRoute>
 								}
@@ -113,7 +178,7 @@ export default function AppRoutes() {
 							<Route
 								path='/trash'
 								element={
-									<ProtectedRoute>
+									<ProtectedRoute groups={groups!}>
 										<>Trash</>
 									</ProtectedRoute>
 								}
@@ -122,11 +187,25 @@ export default function AppRoutes() {
 							<Route
 								path='*'
 								element={
-									<img
-										style={{ width: '80%', position: 'fixed', bottom: 0, right: 0, left: 0, maxHeight: 350, maxWidth: 790, display: 'block', margin: '0 auto' }}
-										src={'/img-404.png'}
-										alt={'404'}
-									/>
+									user ? (
+										<ProtectedRoute groups={groups!}>
+											<Typography variant='h5' gutterBottom style={{ marginTop: 100, textAlign: 'center' }}>
+												Page not found!
+											</Typography>
+										</ProtectedRoute>
+									) : (
+										<>
+											<Typography variant='h5' gutterBottom style={{ marginTop: 100, textAlign: 'center' }}>
+												Page not found!
+											</Typography>
+
+											<Typography variant='body1' style={{ textAlign: 'center' }}>
+												<MUILink component={Link} to='/groups'>
+													Go Back
+												</MUILink>
+											</Typography>
+										</>
+									)
 								}
 							/>
 						</Routes>
@@ -137,12 +216,11 @@ export default function AppRoutes() {
 	);
 }
 
-// const ProtectedRoute = ({ children: JSX.Element }) => {
-const ProtectedRoute: React.FC<{ children: JSX.Element }> = ({ children }) => {
+const ProtectedRoute: React.FC<{ groups: GroupType[]; children: JSX.Element }> = ({ groups, children }) => {
 	const { user } = useSupabase();
 	if (!user) {
 		// user is not authenticated
 		return <Navigate to='/signin' />;
 	}
-	return <Navigation children={children} />;
+	return <Navigation groups={groups} children={children} />;
 };

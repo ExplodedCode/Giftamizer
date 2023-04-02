@@ -6,6 +6,8 @@ import * as Firebase from './lib/Firebase';
 
 import * as SocialAvatar from './lib/SocialAvatar';
 
+import * as Groups from './lib/Groups';
+
 require('dotenv').config();
 
 const api = express();
@@ -29,6 +31,8 @@ api.use(bodyParser.json());
 	api.post('/firebase/validateAuth', Firebase.ValidateAuth);
 
 	api.post('/socialavatar/download', SocialAvatar.Download);
+
+	api.post('/groups/invite', Groups.Invite);
 
 	// api.post('/hello', (req, res) => {
 	// 	console.log(req.body);

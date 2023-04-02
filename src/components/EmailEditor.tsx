@@ -5,10 +5,7 @@ import { useSnackbar } from 'notistack';
 
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControl, Grid, IconButton, InputAdornment, InputLabel, OutlinedInput, TextField } from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
-
-import EditIcon from '@mui/icons-material/Edit';
-import SyncAltIcon from '@mui/icons-material/SyncAlt';
-import CloseIcon from '@mui/icons-material/Close';
+import { Close, Edit, SyncAlt } from '@mui/icons-material';
 
 export default function AvatarEditor() {
 	const { client, profile } = useSupabase();
@@ -43,7 +40,7 @@ export default function AvatarEditor() {
 				action: (key) => (
 					<>
 						<IconButton aria-label='close' size='small' onClick={() => closeSnackbar(key)}>
-							<CloseIcon />
+							<Close />
 						</IconButton>
 					</>
 				),
@@ -67,9 +64,9 @@ export default function AvatarEditor() {
 						<InputAdornment position='end'>
 							<Divider sx={{ height: 28, m: 0.5, display: { xs: 'inherit', sm: 'none' } }} orientation='vertical' />
 							<IconButton sx={{ display: { xs: 'block', sm: 'none' } }} color='primary' edge='end' onClick={() => setOpen(true)}>
-								<EditIcon />
+								<Edit />
 							</IconButton>
-							<Button variant='contained' sx={{ display: { xs: 'none', sm: 'inherit' } }} endIcon={<EditIcon />} onClick={() => setOpen(true)}>
+							<Button variant='contained' sx={{ display: { xs: 'none', sm: 'inherit' } }} endIcon={<Edit />} onClick={() => setOpen(true)}>
 								Change email
 							</Button>
 						</InputAdornment>
@@ -107,7 +104,7 @@ export default function AvatarEditor() {
 
 					<LoadingButton
 						onClick={handleUpdateEmail}
-						endIcon={<SyncAltIcon />}
+						endIcon={<SyncAlt />}
 						disabled={!(validateEmail(email) && validateEmail(emailConfirm) && email === emailConfirm)}
 						loading={loading}
 						loadingPosition='end'

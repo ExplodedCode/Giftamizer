@@ -1,27 +1,17 @@
 import * as React from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation, Location } from 'react-router-dom';
 
-import { useSupabase } from '../lib/useSupabase';
+import { useSupabase, SUPABASE_URL } from '../lib/useSupabase';
+import { GroupType } from '../lib/useSupabase/types';
 
+import { TransitionGroup } from 'react-transition-group';
 import { styled, Theme } from '@mui/material/styles';
-
-import Box from '@mui/material/Box';
-import ListAltIcon from '@mui/icons-material/ListAlt';
-import GroupIcon from '@mui/icons-material/Group';
-import ExpandLess from '@mui/icons-material/ExpandLess';
-import ExpandMore from '@mui/icons-material/ExpandMore';
-import Star from '@mui/icons-material/Star';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import ArchiveIcon from '@mui/icons-material/Archive';
-import DeleteIcon from '@mui/icons-material/DeleteOutline';
-import LogoutIcon from '@mui/icons-material/Logout';
-import MenuIcon from '@mui/icons-material/Menu';
-
 import {
 	AppBar,
 	Avatar,
 	BottomNavigation,
 	BottomNavigationAction,
+	Box,
 	Collapse,
 	CSSObject,
 	Divider,
@@ -40,6 +30,7 @@ import {
 	Tooltip,
 	Typography,
 } from '@mui/material';
+import { Star, ExpandLess, ExpandMore, Archive, Delete, Group, ListAlt, Logout, ShoppingCart, Menu as MenuIcon } from '@mui/icons-material';
 
 import AccountDialog from './AccountDialog';
 import Notifications from './Notifications';
@@ -82,12 +73,27 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 	}),
 }));
 
-const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
+interface RenderItemOptions {
+	group: GroupType;
+	location: Location;
+}
+function renderItem({ group, location }: RenderItemOptions) {
+	return (
+		<ListItemButton key={group.id} sx={{ pl: 4 }} component={Link} to={`/groups/${group.id}`} selected={location.pathname.startsWith(`/groups/${group.id}`)}>
+			<ListItemIcon>
+				<Star />
+			</ListItemIcon>
+			<ListItemText primary={group.name} />
+		</ListItemButton>
+	);
+}
+
+const Navigation: React.FC<{ groups: GroupType[]; children: JSX.Element }> = ({ groups, children }) => {
 	const navigate = useNavigate();
 	const location = useLocation();
 	const [mobileNav, setMobileNav] = React.useState(getLocation(location.pathname));
 
-	const { client, user, profile, groups } = useSupabase();
+	const { client, user, profile } = useSupabase();
 
 	const [drawerOpen, setDrawerOpen] = React.useState(true);
 	const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
@@ -110,7 +116,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 		<Box sx={{ display: 'flex' }}>
 			<AppBar position='fixed' color='primary' enableColorOnDark sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
 				<Toolbar>
-					<IconButton color='inherit' aria-label='open drawer' onClick={toggleDrawer} edge='start' sx={{ mr: 2 }}>
+					<IconButton color='inherit' aria-label='open drawer' onClick={toggleDrawer} edge='start' sx={{ mr: 2, display: { xs: 'none', sm: 'none', md: 'flex' } }}>
 						<MenuIcon />
 					</IconButton>
 
@@ -130,15 +136,14 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 
 					<Box sx={{ flexGrow: 0 }}>
 						<Stack direction='row' spacing={2}>
-							<Notifications />
+							<Notifications groups={groups} />
 							<Tooltip title='Open settings'>
 								<IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
 									<Avatar
 										alt={profile.name}
 										src={
 											profile.avatar_token && profile.avatar_token !== -1
-												? // @ts-ignore
-												  `${client.supabaseUrl}/storage/v1/object/public/avatars/${user.id}?${profile.avatar_token}`
+												? `${SUPABASE_URL}/storage/v1/object/public/avatars/${user.id}?${profile.avatar_token}`
 												: '/defaultAvatar.png'
 										}
 									/>
@@ -162,15 +167,16 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 							onClose={handleCloseUserMenu}
 						>
 							<AccountDialog handleCloseMenu={handleCloseUserMenu} />
+
 							<MenuItem onClick={handleCloseUserMenu} component={Link} to='/archive' sx={{ display: { xs: 'flex', md: 'none' } }}>
 								<ListItemIcon>
-									<ArchiveIcon fontSize='small' />
+									<Archive fontSize='small' />
 								</ListItemIcon>
 								<Typography textAlign='center'>Archive</Typography>
 							</MenuItem>
 							<MenuItem onClick={handleCloseUserMenu} component={Link} to='/trash' sx={{ display: { xs: 'flex', md: 'none' } }}>
 								<ListItemIcon>
-									<DeleteIcon fontSize='small' />
+									<Delete fontSize='small' />
 								</ListItemIcon>
 								<Typography textAlign='center'>Trash</Typography>
 							</MenuItem>
@@ -181,7 +187,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 								}}
 							>
 								<ListItemIcon>
-									<LogoutIcon fontSize='small' />
+									<Logout fontSize='small' />
 								</ListItemIcon>
 								<Typography textAlign='center'>Logout</Typography>
 							</MenuItem>
@@ -211,21 +217,30 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 						<ListItem disablePadding>
 							<ListItemButton component={Link} to='/lists' selected={location.pathname.startsWith('/lists')}>
 								<ListItemIcon>
-									<ListAltIcon color={location.pathname.startsWith('/lists') ? 'primary' : undefined} />
+									<ListAlt color={location.pathname.startsWith('/lists') ? 'primary' : undefined} />
 								</ListItemIcon>
 								<ListItemText primary='Lists' />
 							</ListItemButton>
 						</ListItem>
 						<ListItem disablePadding>
-							<ListItemButton component={Link} to='/groups' selected={location.pathname === '/groups'}>
+							<ListItemButton
+								component={Link}
+								to='/groups'
+								selected={
+									location.pathname.startsWith('/groups') &&
+									!groups
+										.filter((g) => g.my_membership[0].pinned === true)
+										.map((g) => g.id)
+										.includes(location.pathname?.split('/groups/')?.[1]?.split('/')?.[0])
+								}
+							>
 								<ListItemIcon>
-									<GroupIcon color={location.pathname === '/groups' ? 'primary' : undefined} />
+									<Group color={location.pathname === '/groups' ? 'primary' : undefined} />
 								</ListItemIcon>
 								<ListItemText primary='Groups' />
 							</ListItemButton>
-							{drawerOpen && (
+							{drawerOpen && groups.filter((g) => g.my_membership[0].pinned === true).length > 0 && (
 								<IconButton
-									aria-label='delete'
 									onClick={(e) => {
 										e.preventDefault();
 										setGroupsOpen(!groupsOpen);
@@ -243,14 +258,13 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 						</ListItem>
 						<Collapse in={groupsOpen && drawerOpen} timeout='auto' unmountOnExit>
 							<List component='div' disablePadding>
-								{groups.map((group) => (
-									<ListItemButton key={group.id} sx={{ pl: 4 }} component={Link} to={`/groups/${group.id}`} selected={location.pathname.startsWith(`/groups/${group.id}`)}>
-										<ListItemIcon>
-											<Star />
-										</ListItemIcon>
-										<ListItemText primary={group.name} />
-									</ListItemButton>
-								))}
+								<TransitionGroup>
+									{groups
+										.filter((g) => g.my_membership[0].pinned === true)
+										.map((group, index) => (
+											<Collapse key={group.id}>{renderItem({ group, location })}</Collapse>
+										))}
+								</TransitionGroup>
 							</List>
 						</Collapse>
 					</List>
@@ -259,7 +273,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 						<ListItem disablePadding>
 							<ListItemButton component={Link} to='/shopping' selected={location.pathname === '/shopping'}>
 								<ListItemIcon>
-									<ShoppingCartIcon color={location.pathname === '/shopping' ? 'primary' : undefined} />
+									<ShoppingCart color={location.pathname === '/shopping' ? 'primary' : undefined} />
 								</ListItemIcon>
 								<ListItemText primary='Shopping List' />
 							</ListItemButton>
@@ -270,7 +284,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 						<ListItem disablePadding>
 							<ListItemButton component={Link} to='/archive' selected={location.pathname === '/archive'}>
 								<ListItemIcon>
-									<ArchiveIcon color={location.pathname === '/archive' ? 'primary' : undefined} />
+									<Archive color={location.pathname === '/archive' ? 'primary' : undefined} />
 								</ListItemIcon>
 								<ListItemText primary='Archive' />
 							</ListItemButton>
@@ -278,7 +292,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 						<ListItem disablePadding>
 							<ListItemButton component={Link} to='/trash' selected={location.pathname === '/trash'}>
 								<ListItemIcon>
-									<DeleteIcon color={location.pathname === '/trash' ? 'primary' : undefined} />
+									<Delete color={location.pathname === '/trash' ? 'primary' : undefined} />
 								</ListItemIcon>
 								<ListItemText primary='Trash' />
 							</ListItemButton>
@@ -288,7 +302,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 			</Drawer>
 			<Box component='main' sx={{ flexGrow: 1 }}>
 				<Toolbar />
-				<Box>{children}</Box>
+				<Box sx={{ mb: 4 }}>{children}</Box>
 			</Box>
 			<Paper sx={{ position: 'fixed', bottom: 0, left: 0, right: 0, display: { xs: 'block', md: 'none' } }} elevation={3}>
 				<BottomNavigation
@@ -313,9 +327,9 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 					}}
 				>
 					<BottomNavigationAction label='Items' icon={<i className='fas fa-gift' style={{ fontSize: '1.19rem' }} />} />
-					<BottomNavigationAction label='Lists' icon={<ListAltIcon />} />
-					<BottomNavigationAction label='Groups' icon={<GroupIcon />} />
-					<BottomNavigationAction label='Shopping' icon={<ShoppingCartIcon />} />
+					<BottomNavigationAction label='Lists' icon={<ListAlt />} />
+					<BottomNavigationAction label='Groups' icon={<Group />} />
+					<BottomNavigationAction label='Shopping' icon={<ShoppingCart />} />
 				</BottomNavigation>
 			</Paper>
 		</Box>
