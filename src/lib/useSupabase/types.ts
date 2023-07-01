@@ -61,7 +61,7 @@ export interface Profile {
 	email: string;
 	name: string;
 	bio: string;
-	avatar_token: number;
+	avatar_token: number | null;
 }
 
 export interface NotificationType {

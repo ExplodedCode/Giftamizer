@@ -145,7 +145,6 @@ export default function UserSearch(props: UserSearchProps) {
 					/>
 				)}
 			/>
-			{/* {JSON.stringify(value)} */}
 		</>
 	);
 }

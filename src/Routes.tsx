@@ -59,6 +59,8 @@ export default function AppRoutes() {
 				.subscribe();
 
 			getGroups();
+		} else {
+			setGroups([]);
 		}
 	}, [client, user]);
 
