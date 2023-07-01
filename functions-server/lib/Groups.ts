@@ -5,11 +5,9 @@ import { Request, Response } from 'express-serve-static-core';
 export async function Invite(request: Request, response: Response) {
 	try {
 		const group = request.body.group;
-		const users = request.body.users;
+		const user = request.body.user;
 
-		users.forEach(async (user: any) => {
-			console.log(`inviting`, user);
-		});
+		console.log(`inviting:`, { user: user }, { group: group });
 
 		response.send('ok');
 	} catch (error: any) {

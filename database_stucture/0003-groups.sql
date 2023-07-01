@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS public.groups
   name text NOT NULL,
   image_token numeric,
   created_at timestamp with time zone DEFAULT now(),
-  updated_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now()
 );
 create trigger handle_updated_at before update on groups
   for each row execute procedure moddatetime (updated_at);
@@ -18,11 +18,11 @@ CREATE TABLE IF NOT EXISTS public.group_members
   group_id uuid NOT NULL,
   user_id uuid NOT NULL,
   owner boolean NOT NULL DEFAULT false,
-  invite boolean NOT NULL DEFAULT false,
+  invite boolean NOT NULL DEFAULT true,
   pinned boolean NOT NULL DEFAULT false,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
-  update_token numeric
+  update_token numeric,
 	
   PRIMARY KEY (group_id, user_id),
 
@@ -229,7 +229,7 @@ end;
 $$;
 create trigger on_group_update
   after update on public.groups
-  for each row execute procedure public.handle_group_member_upsert();
+  for each row execute procedure public.handle_group_update();
 
 -- send notification when user is added to group_members
 create function public.handle_new_group_member()
@@ -238,8 +238,10 @@ language plpgsql
 security definer set search_path = public
 as $$
 begin
-  insert into public.notifications (user_id, title, body, action, icon)
-  values (new.user_id, 'New Group Invite!', 'You''ve been invited to join ' || (SELECT name FROM public.groups WHERE id = new.group_id) || '!', 'openInvite', 'GroupAdd');
+  IF (SELECT count(*) FROM group_members where group_id = new.group_id) > 1 THEN
+    insert into public.notifications (user_id, title, body, action, icon)
+    values (new.user_id, 'New Group Invite!', 'You''ve been invited to join ' || (SELECT name FROM public.groups WHERE id = new.group_id) || '!', 'openInvite', 'GroupAdd');
+  END IF;
   return new;
 end;
 $$;
@@ -249,15 +251,15 @@ create trigger on_group_members_insert
 
 -- get groups that users is owner of without co-owners
 CREATE FUNCTION public.get_groups_without_coowner(owner_id varchar)
-RETURNS table(group_id uuid, name text, owner_count int)
+RETURNS table(id uuid, name text, owner_count int)
 LANGUAGE plpgsql
 AS $$
 	begin
 		return query
-      select cast(groups.id as uuid) as group_id, cast(groups.name as text),
-        cast((select count(*) from group_members g where group_id= groups.id and owner = true AND user_id <> owner_id) as int) as owner_count
+      select cast(groups.id as uuid) as id, cast(groups.name as text),
+        cast((select count(*) from group_members g where g.group_id = groups.id and g.owner = true AND g.user_id <> cast(owner_id as uuid)) as int) as owner_count
       from group_members inner join groups on groups.id = group_members.group_id
-      where user_id = owner_id AND owner = true AND 
-        (select count(*) from group_members g where group_id= groups.id and owner = true AND user_id <> owner_id) = 0;
+      where user_id = cast(owner_id as uuid) AND owner = true AND 
+        (select count(*) from group_members g where g.group_id= groups.id and g.owner = true AND g.user_id <> cast(owner_id as uuid)) = 0;
 	end;
 $$;

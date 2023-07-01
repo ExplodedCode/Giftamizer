@@ -1,5 +1,6 @@
-import React from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { useEffect, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useSnackbar } from 'notistack';
 
 import { useSupabase, SUPABASE_URL } from '../lib/useSupabase';
 import { GroupType, Member } from '../lib/useSupabase/types';
@@ -11,6 +12,7 @@ import {
 	Avatar,
 	Button,
 	Dialog,
+	DialogActions,
 	DialogContent,
 	DialogContentText,
 	DialogTitle,
@@ -35,10 +37,11 @@ import LoadingButton from '@mui/lab/LoadingButton';
 
 import AvatarEditor from './AvatarEditor';
 import UserSearch, { InviteUserType } from './UserSearch';
-import { Save, Send, Settings } from '@mui/icons-material';
+import { Delete, Save, Send, Settings } from '@mui/icons-material';
 
 export interface MemberEdit extends Member {
 	deleted: boolean;
+	external: boolean;
 }
 
 type GroupAdminSettingsDialogProps = {
@@ -104,10 +107,12 @@ function renderItem({ member, handleMemberEdit }: RenderItemOptions) {
 }
 
 export default function GroupSettingsDialog(props: GroupAdminSettingsDialogProps) {
+	const navigate = useNavigate();
 	const location = useLocation();
 	const groupID = location.pathname.split('/groups/')[1];
 
 	const theme = useTheme();
+	const { enqueueSnackbar } = useSnackbar();
 
 	const { client, user, profile } = useSupabase();
 
@@ -120,24 +125,72 @@ export default function GroupSettingsDialog(props: GroupAdminSettingsDialogProps
 	const [selectedInviteUsers, setSelectedInviteUsers] = React.useState<InviteUserType[]>([]);
 	const [inviteUsersOwner, setInviteUsersOwner] = React.useState(false);
 
+	const [confirmOpen, setConfirmOpen] = React.useState(false);
+
+	const getExternalInvites = async () => {
+		const { data: invites, error } = await client.from('external_invites').select().eq('group_id', groupID);
+		if (error) console.log(error);
+
+		let mem = members;
+		console.log(mem);
+
+		if (invites) {
+			invites.forEach((invite) => {
+				mem.push({
+					user_id: invite.invite_id,
+					owner: invite.owner,
+					invite: true,
+					profile: {
+						email: '',
+						name: invite.email,
+						bio: '',
+						avatar_token: null,
+					},
+					deleted: false,
+					external: true,
+				});
+			});
+		}
+
+		console.log(mem);
+
+		setMembers([...mem]);
+	};
+
+	useEffect(() => {
+		if (open) getExternalInvites();
+	}, [open]);
+
 	const handleInvite = async () => {
 		setLoading(true);
 
-		for (const inviteUsers of selectedInviteUsers) {
-			if (inviteUsers.user_id) {
-				const { error } = await client.from('group_members').insert({ group_id: props.group.id, user_id: inviteUsers.user_id, owner: inviteUsersOwner });
-				if (error) console.log(error);
-			} else {
-				const { error } = await client.functions.invoke('groups/invite', {
-					body: {
-						group: {
-							name: props.group.name,
-							id: props.group.id,
-						},
-						users: selectedInviteUsers,
-					},
+		for (const inviteUser of selectedInviteUsers) {
+			try {
+				if (inviteUser.user_id) {
+					const { error } = await client.from('group_members').insert({ group_id: props.group.id, user_id: inviteUser.user_id, owner: inviteUsersOwner });
+					if (error) throw new Error(error?.message);
+				} else {
+					const { error: inviteError } = await client.from('external_invites').insert({ group_id: props.group.id, email: inviteUser.email, owner: inviteUsersOwner });
+					if (inviteError) {
+						throw new Error(inviteError?.message);
+					} else {
+						const { error } = await client.functions.invoke('groups/invite', {
+							body: {
+								group: {
+									name: props.group.name,
+									id: props.group.id,
+								},
+								user: inviteUser,
+							},
+						});
+						if (error) throw new Error(error?.message);
+					}
+				}
+			} catch (error) {
+				console.log(error);
+				enqueueSnackbar(`Unable to invite user. ${JSON.stringify(inviteUser)}`, {
+					variant: 'error',
 				});
-				if (error) console.log(error);
 			}
 		}
 
@@ -147,15 +200,14 @@ export default function GroupSettingsDialog(props: GroupAdminSettingsDialogProps
 	const handleSave = async () => {
 		setLoading(true);
 
-		const { data: groupData, error: groupError } = await client.from('groups').update({ name: name }).eq('id', groupID).select();
+		const { error: groupError } = await client.from('groups').update({ name: name }).eq('id', groupID).select();
+		if (groupError) console.log(groupError);
 
-		console.log(groupData, groupError);
-
-		const { data: memberData, error: memberError } = await client
+		const { error: memberError } = await client
 			.from('group_members')
 			.upsert(
 				members
-					.filter((m) => !m.deleted)
+					.filter((m) => !m.deleted && !m.external)
 					.map((m) => {
 						return {
 							group_id: groupID,
@@ -165,14 +217,35 @@ export default function GroupSettingsDialog(props: GroupAdminSettingsDialogProps
 					})
 			)
 			.select();
-		console.log(memberData, memberError);
+		if (memberError) console.log(memberError);
+
+		const { error: inviteError } = await client
+			.from('external_invites')
+			.upsert(
+				members
+					.filter((m) => !m.deleted && m.external)
+					.map((m) => {
+						return {
+							group_id: groupID,
+							invite_id: m.user_id,
+							email: m.profile.name,
+							owner: m.owner,
+						};
+					})
+			)
+			.select();
+		if (inviteError) console.log(inviteError);
 
 		members
 			.filter((m) => m.deleted)
 			.forEach(async (deletedUser) => {
-				const { data, error } = await client.from('group_members').delete().eq('group_id', groupID).eq('user_id', deletedUser.user_id);
-
-				console.log(data, error);
+				if (!deletedUser.external) {
+					const { error } = await client.from('group_members').delete().eq('group_id', groupID).eq('user_id', deletedUser.user_id);
+					if (error) console.log(error);
+				} else {
+					const { error } = await client.from('external_invites').delete().eq('group_id', groupID).eq('invite_id', deletedUser.user_id);
+					if (error) console.log(error);
+				}
 			});
 
 		handleClose();
@@ -185,6 +258,9 @@ export default function GroupSettingsDialog(props: GroupAdminSettingsDialogProps
 
 		mem[index] = item;
 
+		console.log(index, item);
+		console.log(mem);
+
 		setMembers([...mem]);
 	};
 
@@ -192,7 +268,7 @@ export default function GroupSettingsDialog(props: GroupAdminSettingsDialogProps
 		setName(props.group.name);
 
 		let mem = props.members.map((m) => {
-			return { ...m, deleted: false };
+			return { ...m, deleted: false, external: false };
 		});
 		setMembers(mem);
 
@@ -203,12 +279,29 @@ export default function GroupSettingsDialog(props: GroupAdminSettingsDialogProps
 		setOpen(false);
 
 		setSelectedInviteUsers([]);
+		setMembers([]);
 		setLoading(false);
 	};
 
 	const handleImageTokenUpdate = async (token: number | null) => {
 		const { error } = await client.from('groups').update({ image_token: token }).eq('id', groupID).select();
 		if (error) console.log(error);
+	};
+
+	const handleDeleteOpen = () => {
+		setConfirmOpen(true);
+	};
+	const handleDeleteClose = () => {
+		setConfirmOpen(false);
+	};
+	const handleDelete = async () => {
+		const { error } = await client.from('groups').delete().eq('id', groupID);
+		if (error) {
+			console.log(error);
+		} else {
+			navigate('/groups');
+			handleClose();
+		}
 	};
 
 	const changed = name !== props.group.name || members !== props.members;
@@ -283,24 +376,49 @@ export default function GroupSettingsDialog(props: GroupAdminSettingsDialogProps
 								)}
 							</Grid>
 						</Grid>
+
 						<Grid item xs={12}>
-							<Stack direction='row' justifyContent='flex-end' spacing={2}>
-								<Button color='inherit' onClick={handleClose}>
-									Cancel
-								</Button>
-								{selectedInviteUsers.length === 0 ? (
-									<LoadingButton onClick={handleSave} endIcon={<Save />} loading={loading} loadingPosition='end' variant='contained' disabled={!changed}>
-										Save
+							<Grid container spacing={2}>
+								<Grid item xs>
+									<LoadingButton onClick={handleDeleteOpen} endIcon={<Delete />} loading={loading} loadingPosition='end' variant='contained' color='error'>
+										Delete
 									</LoadingButton>
-								) : (
-									<LoadingButton onClick={handleInvite} endIcon={<Send />} loading={loading} loadingPosition='end' variant='contained'>
-										Invite
-									</LoadingButton>
-								)}
-							</Stack>
+								</Grid>
+								<Grid item>
+									<Stack direction='row' justifyContent='flex-end' spacing={2}>
+										<Button color='inherit' onClick={handleClose}>
+											Cancel
+										</Button>
+										{selectedInviteUsers.length === 0 ? (
+											<LoadingButton onClick={handleSave} endIcon={<Save />} loading={loading} loadingPosition='end' variant='contained' disabled={!changed}>
+												Save
+											</LoadingButton>
+										) : (
+											<LoadingButton onClick={handleInvite} endIcon={<Send />} loading={loading} loadingPosition='end' variant='contained'>
+												Invite
+											</LoadingButton>
+										)}
+									</Stack>
+								</Grid>
+							</Grid>
 						</Grid>
 					</Grid>
 				</DialogContent>
+			</Dialog>
+
+			<Dialog open={confirmOpen} onClose={handleDeleteClose}>
+				<DialogTitle>Delete {props.group.name} Group?</DialogTitle>
+				<DialogContent>
+					<DialogContentText>Are you sure you want to delete this group? All members will be removed</DialogContentText>
+				</DialogContent>
+				<DialogActions>
+					<Button color='inherit' onClick={handleDeleteClose}>
+						Cancel
+					</Button>
+					<Button onClick={handleDelete} variant='contained' color='error'>
+						Yes, Delete it
+					</Button>
+				</DialogActions>
 			</Dialog>
 		</>
 	);

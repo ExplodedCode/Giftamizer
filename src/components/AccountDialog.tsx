@@ -4,7 +4,28 @@ import { useSnackbar } from 'notistack';
 import { TransitionProps } from '@mui/material/transitions';
 import { Close, Person, Save } from '@mui/icons-material';
 
-import { Alert, AlertTitle, AppBar, Button, Container, Dialog, Divider, Grid, IconButton, Link as MUILink, ListItemIcon, MenuItem, Slide, TextField, Toolbar, Typography } from '@mui/material';
+import {
+	Alert,
+	AlertTitle,
+	AppBar,
+	Button,
+	Container,
+	Dialog,
+	Divider,
+	Grid,
+	IconButton,
+	Link as MUILink,
+	ListItemIcon,
+	MenuItem,
+	Slide,
+	TextField,
+	Toolbar,
+	Typography,
+	DialogActions,
+	DialogContent,
+	DialogContentText,
+	DialogTitle,
+} from '@mui/material';
 import { useSupabase } from '../lib/useSupabase';
 import AvatarEditor from './AvatarEditor';
 import EmailEditor from './EmailEditor';
@@ -39,6 +60,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 	const [bio, setBio] = React.useState(profile.bio);
 
 	const [groupsWithoutCoOwner, setGroupsWithoutCoOwner] = React.useState<GroupsWithoutCoOwner[] | undefined>();
+	const [deleteOpen, setDeleteOpen] = React.useState(false);
 
 	const handleClickOpen = async () => {
 		if (props.handleCloseMenu) props.handleCloseMenu();
@@ -74,6 +96,29 @@ export default function AccountDialog(props: AccountDialogProps) {
 		await updateProfile({
 			avatar_token: token,
 		});
+	};
+
+	const handleDelete = async () => {
+		const { data, error } = await client.functions.invoke('user/delete', {
+			body: {
+				user_id: user.id,
+			},
+		});
+
+		if (error) {
+			console.log(error);
+			enqueueSnackbar(`Unable to delete your account. ${error}`, {
+				variant: 'error',
+			});
+		}
+
+		if (data == 'ok') {
+			client.auth.signOut();
+
+			enqueueSnackbar(`Your Giftamizer account and users data has been deleted.`, {
+				variant: 'success',
+			});
+		}
 	};
 
 	return (
@@ -168,8 +213,8 @@ export default function AccountDialog(props: AccountDialogProps) {
 										</Grid>
 									)}
 									<Grid item xs={12}>
-										<Button variant='outlined' color='error' disabled={!groupsWithoutCoOwner || groupsWithoutCoOwner.length > 0}>
-											Delete Your Account
+										<Button variant='outlined' color='error' disabled={!groupsWithoutCoOwner || groupsWithoutCoOwner.length > 0} onClick={() => setDeleteOpen(true)}>
+											Delete My Account
 										</Button>
 									</Grid>
 								</Grid>
@@ -177,6 +222,23 @@ export default function AccountDialog(props: AccountDialogProps) {
 						</Grid>
 					</Grid>
 				</Container>
+			</Dialog>
+
+			<Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)}>
+				<DialogTitle>Delete Account</DialogTitle>
+				<DialogContent>
+					<Typography variant='body1'>
+						<b>This action is permanent! All user data will be deleted.</b>
+					</Typography>
+				</DialogContent>
+				<DialogActions>
+					<Button color='inherit' onClick={() => setDeleteOpen(false)}>
+						Cancel
+					</Button>
+					<Button color='error' variant='contained' onClick={handleDelete}>
+						Yes Delete my Account
+					</Button>
+				</DialogActions>
 			</Dialog>
 		</>
 	);

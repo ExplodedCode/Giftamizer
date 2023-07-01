@@ -8,6 +8,8 @@ import * as SocialAvatar from './lib/SocialAvatar';
 
 import * as Groups from './lib/Groups';
 
+import { DeleteAccount } from './lib/DeleteAccount';
+
 require('dotenv').config();
 
 const api = express();
@@ -28,11 +30,13 @@ api.use(bodyParser.json());
 		console.log('App now running on port', port);
 	});
 
-	api.post('/firebase/validateAuth', Firebase.ValidateAuth);
+	api.post('/firebase/validateAuth', Firebase.validateAuth);
 
 	api.post('/socialavatar/download', SocialAvatar.Download);
 
 	api.post('/groups/invite', Groups.Invite);
+
+	api.post('/user/delete', DeleteAccount);
 
 	// api.post('/hello', (req, res) => {
 	// 	console.log(req.body);
