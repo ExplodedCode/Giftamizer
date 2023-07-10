@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { useSupabase, validateEmail } from '../lib/useSupabase';
+import { useGetProfile, useSupabase, validateEmail } from '../lib/useSupabase';
 import { useSnackbar } from 'notistack';
 
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControl, Grid, IconButton, InputAdornment, InputLabel, OutlinedInput, TextField } from '@mui/material';
@@ -8,7 +8,9 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import { Close, Edit, SyncAlt } from '@mui/icons-material';
 
 export default function AvatarEditor() {
-	const { client, profile } = useSupabase();
+	const { client } = useSupabase();
+	const { data: profile } = useGetProfile();
+
 	const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
 	const [open, setOpen] = React.useState(false);
@@ -34,7 +36,7 @@ export default function AvatarEditor() {
 				variant: 'error',
 			});
 		} else {
-			enqueueSnackbar(`Confirmation sent to ${profile.email} & ${email}`, {
+			enqueueSnackbar(`Confirmation sent to ${profile?.email} & ${email}`, {
 				variant: 'info',
 				autoHideDuration: null,
 				action: (key) => (
@@ -57,7 +59,7 @@ export default function AvatarEditor() {
 				<InputLabel htmlFor='component-outlined'>Email</InputLabel>
 				<OutlinedInput
 					id='component-outlined'
-					value={profile.email}
+					value={profile?.email}
 					label='Email'
 					disabled
 					endAdornment={
@@ -81,13 +83,13 @@ export default function AvatarEditor() {
 					<Box sx={{ paddingTop: 1 }}>
 						<Grid container spacing={2}>
 							<Grid item xs={12}>
-								<TextField required label='New Email' placeholder={profile.email} value={email} onChange={(e) => setEmail(e.target.value)} error={!validateEmail(email)} fullWidth />
+								<TextField required label='New Email' placeholder={profile?.email} value={email} onChange={(e) => setEmail(e.target.value)} error={!validateEmail(email)} fullWidth />
 							</Grid>
 							<Grid item xs={12}>
 								<TextField
 									required
 									label='Confirm New Email'
-									placeholder={profile.email}
+									placeholder={profile?.email}
 									value={emailConfirm}
 									onChange={(e) => setEmailConfirm(e.target.value)}
 									error={!validateEmail(emailConfirm) || email !== emailConfirm}

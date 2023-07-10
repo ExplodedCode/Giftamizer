@@ -23,10 +23,10 @@ import {
 	Typography,
 	DialogActions,
 	DialogContent,
-	DialogContentText,
 	DialogTitle,
+	CircularProgress,
 } from '@mui/material';
-import { useSupabase } from '../lib/useSupabase';
+import { useGetProfile, useSupabase, useUpdateProfile } from '../lib/useSupabase';
 import AvatarEditor from './AvatarEditor';
 import EmailEditor from './EmailEditor';
 import { Link } from 'react-router-dom';
@@ -51,22 +51,29 @@ export type AccountDialogProps = {
 };
 
 export default function AccountDialog(props: AccountDialogProps) {
-	const { client, user, profile, updateProfile } = useSupabase();
 	const { enqueueSnackbar } = useSnackbar();
+
+	const { client, user } = useSupabase();
+	const { data: profile } = useGetProfile();
 
 	const [open, setOpen] = React.useState(false);
 
-	const [name, setName] = React.useState(profile.name);
-	const [bio, setBio] = React.useState(profile.bio);
+	const [firstName, setFirstName] = React.useState('');
+	const [lastName, setLastName] = React.useState('');
+	const [bio, setBio] = React.useState('');
 
 	const [groupsWithoutCoOwner, setGroupsWithoutCoOwner] = React.useState<GroupsWithoutCoOwner[] | undefined>();
 	const [deleteOpen, setDeleteOpen] = React.useState(false);
 
 	const handleClickOpen = async () => {
 		if (props.handleCloseMenu) props.handleCloseMenu();
-		setName(profile.name);
-		setBio(profile.bio);
-		setOpen(true);
+
+		if (profile) {
+			setFirstName(profile?.first_name);
+			setLastName(profile?.last_name);
+			setBio(profile?.bio);
+			setOpen(true);
+		}
 
 		const { data, error } = await client.rpc('get_groups_without_coowner', { owner_id: user.id });
 
@@ -84,18 +91,39 @@ export default function AccountDialog(props: AccountDialogProps) {
 	const handleClose = () => {
 		setOpen(false);
 	};
+
+	const updateProfile = useUpdateProfile();
 	const handleSave = async () => {
-		await updateProfile({
-			name: name,
-			bio: bio,
-		});
-		setOpen(false);
+		updateProfile
+			.mutateAsync({
+				first_name: firstName,
+				last_name: lastName,
+				bio: bio,
+				avatar_token: profile?.avatar_token!,
+			})
+			.then(() => {
+				setOpen(false);
+			})
+			.catch((error) => {
+				enqueueSnackbar(`Unable to update your profile. ${error}`, {
+					variant: 'error',
+				});
+			});
 	};
 
 	const handleImageTokenUpdate = async (token: number | null) => {
-		await updateProfile({
-			avatar_token: token,
-		});
+		updateProfile
+			.mutateAsync({
+				first_name: firstName,
+				last_name: lastName,
+				bio: bio,
+				avatar_token: token,
+			})
+			.catch((error) => {
+				enqueueSnackbar(`Unable to update your profile image token. ${error}`, {
+					variant: 'error',
+				});
+			});
 	};
 
 	const handleDelete = async () => {
@@ -112,9 +140,8 @@ export default function AccountDialog(props: AccountDialogProps) {
 			});
 		}
 
-		if (data == 'ok') {
+		if (data === 'ok') {
 			client.auth.signOut();
-
 			enqueueSnackbar(`Your Giftamizer account and users data has been deleted.`, {
 				variant: 'success',
 			});
@@ -139,18 +166,21 @@ export default function AccountDialog(props: AccountDialogProps) {
 						<Typography sx={{ ml: 2, flex: 1 }} variant='h6' component='div'>
 							My Account
 						</Typography>
-						<IconButton edge='start' color='inherit' onClick={handleSave} aria-label='close'>
-							<Save />
+						<IconButton edge='start' color='inherit' onClick={handleSave} aria-label='close' disabled={updateProfile.isLoading}>
+							{updateProfile.isLoading ? <CircularProgress size={20} color='inherit' /> : <Save />}
 						</IconButton>
 					</Toolbar>
 				</AppBar>
 				<Container maxWidth='md' sx={{ marginTop: 6 }}>
 					<Grid container spacing={2}>
 						<Grid item xs={12}>
-							<AvatarEditor bucket='avatars' filepath={user.id} imageToken={profile.avatar_token} handleTokenUpdate={handleImageTokenUpdate} />
+							<AvatarEditor bucket='avatars' filepath={user.id} imageToken={profile?.avatar_token!} handleTokenUpdate={handleImageTokenUpdate} />
 						</Grid>
-						<Grid item xs={12}>
-							<TextField fullWidth label='Display Name' variant='outlined' value={name} onChange={(e) => setName(e.target.value)} />
+						<Grid item xs={6}>
+							<TextField fullWidth label='First Name' variant='outlined' value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+						</Grid>
+						<Grid item xs={6}>
+							<TextField fullWidth label='Last Name' variant='outlined' value={lastName} onChange={(e) => setLastName(e.target.value)} />
 						</Grid>
 						<Grid item xs={12}>
 							<TextField
@@ -166,6 +196,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 								helperText={`${bio.length} / 250`}
 							/>
 						</Grid>
+
 						{user.app_metadata.provider === 'email' && (
 							<Grid item xs={12}>
 								<EmailEditor />

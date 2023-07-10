@@ -17,12 +17,12 @@ export default function UpdatePassword() {
 	let navigate = useNavigate();
 
 	const handleSubmit = async () => {
-		const { data, error } = await supabase.auth.updateUser({
+		const { error } = await supabase.auth.updateUser({
 			password: password,
 		});
-		console.log('resetPassword', data, error);
 
 		if (error) {
+			console.log(error);
 			enqueueSnackbar(error.message, {
 				variant: 'error',
 			});

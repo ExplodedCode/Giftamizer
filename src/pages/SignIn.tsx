@@ -1,10 +1,28 @@
 import * as React from 'react';
+import { Link } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 
 import { signInWithFacebook, signInWithGoogle, useSupabase, validateEmail } from '../lib/useSupabase';
 
 import { GoogleIcon, FacebookIcon } from '../components/SvgIcons';
-import { Grid, CssBaseline, Paper, Box, Avatar, Typography, Stack, IconButton, TextField, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Link } from '@mui/material';
+import {
+	Grid,
+	CssBaseline,
+	Paper,
+	Box,
+	Avatar,
+	Typography,
+	Stack,
+	IconButton,
+	TextField,
+	Button,
+	Dialog,
+	DialogTitle,
+	DialogContent,
+	DialogContentText,
+	DialogActions,
+	Link as MUILink,
+} from '@mui/material';
 import { LockOutlined } from '@mui/icons-material';
 
 var randomImage = Math.floor(Math.random() * 10) + 1;
@@ -134,7 +152,7 @@ export default function SignIn() {
 							</Button>
 							<Grid container>
 								<Grid item xs>
-									<Link
+									<MUILink
 										component='button'
 										variant='body2'
 										onClick={() => {
@@ -142,12 +160,12 @@ export default function SignIn() {
 										}}
 									>
 										Forgot password?
-									</Link>
+									</MUILink>
 								</Grid>
 								<Grid item>
-									<Link href='/signup' variant='body2'>
+									<MUILink component={Link} to='/signup' variant='body2'>
 										{"Don't have an account? Create Account"}
-									</Link>
+									</MUILink>
 								</Grid>
 							</Grid>
 						</Box>

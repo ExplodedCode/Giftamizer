@@ -6,24 +6,34 @@ import { useSnackbar } from 'notistack';
 import { useTheme } from '@mui/material/styles';
 import { Button, Dialog, DialogContent, DialogContentText, DialogTitle, Fab, Grid, Stack, TextField, useMediaQuery } from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
-import { Add, Group } from '@mui/icons-material';
+import { Add } from '@mui/icons-material';
 
-export default function CreateGroup() {
+type CreateItemProps = {};
+
+export default function CreateItem(props: CreateItemProps) {
 	const theme = useTheme();
 
-	const { client } = useSupabase();
+	const { client, user } = useSupabase();
 	const { enqueueSnackbar } = useSnackbar();
 
 	const [open, setOpen] = React.useState(false);
 	const [loading, setLoading] = React.useState(false);
 
 	const [name, setName] = React.useState('');
+	const [description, setDescription] = React.useState('');
+
+	// var { error } = await client.from('items').insert({
+	// 	name: name,
+	// 	description: description
+	// });
 
 	const handleCreate = async () => {
 		setLoading(true);
 
-		var { error } = await client.from('groups').insert({
+		var { error } = await client.from('items').insert({
+			user_id: user.id,
 			name: name,
+			description: description,
 		});
 		if (error) enqueueSnackbar(error.message, { variant: 'error' });
 
@@ -32,6 +42,8 @@ export default function CreateGroup() {
 
 	const handleClose = async () => {
 		setName('');
+		setDescription('');
+
 		setOpen(false);
 		setLoading(false);
 	};
@@ -43,14 +55,17 @@ export default function CreateGroup() {
 			</Fab>
 
 			<Dialog open={open} onClose={() => setOpen(false)} maxWidth='sm' fullScreen={useMediaQuery(theme.breakpoints.down('md'))}>
-				<DialogTitle>Create Group</DialogTitle>
+				<DialogTitle>Create Item</DialogTitle>
 				<DialogContent>
 					<Grid container spacing={2}>
 						<Grid item xs={12}>
-							<DialogContentText>TODO: describe what groups do...</DialogContentText>
+							<DialogContentText>TODO: describe what items do...</DialogContentText>
 						</Grid>
 						<Grid item xs={12}>
-							<TextField autoFocus fullWidth label='Group Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} />
+							<TextField fullWidth label='Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} autoFocus />
+						</Grid>
+						<Grid item xs={12}>
+							<TextField fullWidth label='Description' variant='outlined' value={description} onChange={(e) => setDescription(e.target.value)} />
 						</Grid>
 						<Grid item xs={12}>
 							<Stack direction='row' justifyContent='flex-end' spacing={2}>
@@ -58,7 +73,7 @@ export default function CreateGroup() {
 									Cancel
 								</Button>
 
-								<LoadingButton onClick={handleCreate} endIcon={<Group />} loading={loading} loadingPosition='end' variant='contained'>
+								<LoadingButton onClick={handleCreate} disabled={name.length === 0} endIcon={<Add />} loading={loading} loadingPosition='end' variant='contained'>
 									Create
 								</LoadingButton>
 							</Stack>
