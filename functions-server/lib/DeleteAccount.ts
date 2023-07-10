@@ -26,6 +26,11 @@ export async function DeleteAccount(request: Request, response: Response) {
 				response.status(500).send(`Server error: ${error.message}`);
 				return;
 			}
+			// delete avatar
+			const { error: avatarError } = await supabase.storage.from('avatars').remove([`${user_id}`]);
+			if (avatarError) {
+				console.log(`Unable to delete avatar: ${user_id}`, avatarError);
+			}
 
 			response.send('ok');
 			return;

@@ -15,6 +15,7 @@ type UserSearchProps = {
 	selectedInviteUsers: InviteUserType[];
 	setSelectedInviteUsers(inviteUsers: InviteUserType[]): void;
 	members: Member[];
+	disabled: boolean;
 };
 
 export default function UserSearch(props: UserSearchProps) {
@@ -68,6 +69,7 @@ export default function UserSearch(props: UserSearchProps) {
 	return (
 		<>
 			<Autocomplete
+				disabled={props.disabled}
 				fullWidth
 				multiple
 				freeSolo

@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { Link, useNavigate, useLocation, Location } from 'react-router-dom';
 
-import { useSupabase, SUPABASE_URL } from '../lib/useSupabase';
-import { GroupType } from '../lib/useSupabase/types';
+import { useSupabase, SUPABASE_URL, useGetProfile } from '../lib/useSupabase';
+import { GroupType, Profile } from '../lib/useSupabase/types';
 
 import { TransitionGroup } from 'react-transition-group';
 import { styled, Theme } from '@mui/material/styles';
@@ -29,11 +29,14 @@ import {
 	Toolbar,
 	Tooltip,
 	Typography,
+	CircularProgress,
+	ListItemAvatar,
 } from '@mui/material';
-import { Star, ExpandLess, ExpandMore, Archive, Delete, Group, ListAlt, Logout, ShoppingCart, Menu as MenuIcon } from '@mui/icons-material';
+import { ExpandLess, ExpandMore, Archive, Delete, Group, ListAlt, Logout, ShoppingCart, Menu as MenuIcon } from '@mui/icons-material';
 
 import AccountDialog from './AccountDialog';
 import Notifications from './Notifications';
+import { useGetGroups } from '../lib/useSupabase/hooks/useGroup';
 
 const drawerWidth = 240;
 
@@ -58,7 +61,7 @@ const closedMixin = (theme: Theme): CSSObject => ({
 	},
 });
 
-const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' })(({ theme, open }) => ({
+const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop: string) => prop !== 'open' })(({ theme, open }) => ({
 	width: drawerWidth,
 	flexShrink: 0,
 	whiteSpace: 'nowrap',
@@ -80,20 +83,44 @@ interface RenderItemOptions {
 function renderItem({ group, location }: RenderItemOptions) {
 	return (
 		<ListItemButton key={group.id} sx={{ pl: 4 }} component={Link} to={`/groups/${group.id}`} selected={location.pathname.startsWith(`/groups/${group.id}`)}>
-			<ListItemIcon>
+			{/* <ListItemIcon>
 				<Star />
-			</ListItemIcon>
+			</ListItemIcon> */}
+
+			<ListItemAvatar>
+				<Avatar
+					alt={group.name}
+					sx={{ width: 32, height: 32, bgcolor: location.pathname.startsWith(`/groups/${group.id}`) ? 'primary.main' : undefined }}
+					src={`${SUPABASE_URL}/storage/v1/object/public/groups/${group.id}?${group.image_token}`}
+				/>
+			</ListItemAvatar>
+
 			<ListItemText primary={group.name} />
 		</ListItemButton>
 	);
 }
 
-const Navigation: React.FC<{ groups: GroupType[]; children: JSX.Element }> = ({ groups, children }) => {
+const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 	const navigate = useNavigate();
 	const location = useLocation();
 	const [mobileNav, setMobileNav] = React.useState(getLocation(location.pathname));
 
-	const { client, user, profile } = useSupabase();
+	const { client, user } = useSupabase();
+	const { data: profile, isLoading, refetch: refetchProfile } = useGetProfile();
+
+	React.useEffect(() => {
+		client
+			.channel(`public:profiles:user_id=eq.${user.id}`)
+			.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `user_id=eq.${user.id}` }, (payload) => {
+				const newProfile = payload.new as Profile;
+				if (newProfile.avatar_token !== profile?.avatar_token) {
+					refetchProfile();
+				}
+			})
+			.subscribe();
+	}, [user, client, profile?.avatar_token, refetchProfile]);
+
+	const { data: groups } = useGetGroups();
 
 	const [drawerOpen, setDrawerOpen] = React.useState(true);
 	const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
@@ -136,17 +163,21 @@ const Navigation: React.FC<{ groups: GroupType[]; children: JSX.Element }> = ({ 
 
 					<Box sx={{ flexGrow: 0 }}>
 						<Stack direction='row' spacing={2}>
-							<Notifications groups={groups} />
+							<Notifications />
 							<Tooltip title='Open settings'>
-								<IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-									<Avatar
-										alt={profile.name}
-										src={
-											profile.avatar_token && profile.avatar_token !== -1
-												? `${SUPABASE_URL}/storage/v1/object/public/avatars/${user.id}?${profile.avatar_token}`
-												: '/defaultAvatar.png'
-										}
-									/>
+								<IconButton onClick={isLoading ? undefined : handleOpenUserMenu} sx={{ p: 0 }}>
+									{isLoading ? (
+										<CircularProgress color='inherit' />
+									) : (
+										<Avatar
+											alt={profile?.first_name}
+											src={
+												profile?.avatar_token && profile?.avatar_token !== -1
+													? `${SUPABASE_URL}/storage/v1/object/public/avatars/${user.id}?${profile.avatar_token}`
+													: '/defaultAvatar.png'
+											}
+										/>
+									)}
 								</IconButton>
 							</Tooltip>
 						</Stack>
@@ -229,7 +260,7 @@ const Navigation: React.FC<{ groups: GroupType[]; children: JSX.Element }> = ({ 
 								selected={
 									location.pathname.startsWith('/groups') &&
 									!groups
-										.filter((g) => g.my_membership[0].pinned === true)
+										?.filter((g) => g.my_membership[0].pinned === true)
 										.map((g) => g.id)
 										.includes(location.pathname?.split('/groups/')?.[1]?.split('/')?.[0])
 								}
@@ -239,7 +270,7 @@ const Navigation: React.FC<{ groups: GroupType[]; children: JSX.Element }> = ({ 
 								</ListItemIcon>
 								<ListItemText primary='Groups' />
 							</ListItemButton>
-							{drawerOpen && groups.filter((g) => g.my_membership[0].pinned === true).length > 0 && (
+							{drawerOpen && groups && groups?.filter((g) => g.my_membership[0].pinned === true)?.length > 0 && (
 								<IconButton
 									onClick={(e) => {
 										e.preventDefault();
@@ -260,7 +291,7 @@ const Navigation: React.FC<{ groups: GroupType[]; children: JSX.Element }> = ({ 
 							<List component='div' disablePadding>
 								<TransitionGroup>
 									{groups
-										.filter((g) => g.my_membership[0].pinned === true)
+										?.filter((g) => g.my_membership[0].pinned === true)
 										.map((group, index) => (
 											<Collapse key={group.id}>{renderItem({ group, location })}</Collapse>
 										))}

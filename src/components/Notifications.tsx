@@ -2,8 +2,8 @@ import * as React from 'react';
 import { SnackbarKey, useSnackbar } from 'notistack';
 import moment from 'moment';
 
-import { useSupabase } from '../lib/useSupabase';
-import { GroupType, NotificationType } from '../lib/useSupabase/types';
+import { useGetGroups, useSupabase } from '../lib/useSupabase';
+import { NotificationType } from '../lib/useSupabase/types';
 
 import { TransitionGroup } from 'react-transition-group';
 import {
@@ -114,13 +114,11 @@ const StyledBadge = styled(Badge)<BadgeProps>(({ theme }) => ({
 	},
 }));
 
-export type NotificationsProps = {
-	groups: GroupType[];
-};
-
-export default function Notifications(props: NotificationsProps) {
+export default function Notifications() {
 	const { client, user } = useSupabase();
 	const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+
+	const { data: groups } = useGetGroups();
 
 	const notificationBtnRef = React.useRef<HTMLButtonElement>(null); // invite dialog ref
 	const invitesDialogRef = React.useRef<React.ElementRef<typeof InvitesDialog>>(null); // invite dialog ref
@@ -206,7 +204,7 @@ export default function Notifications(props: NotificationsProps) {
 	return (
 		<>
 			<IconButton size='large' ref={notificationBtnRef} color='inherit' onClick={handleOpen}>
-				<Badge badgeContent={(notifications?.filter((n) => !n.seen).length || 0) + props.groups.filter((g) => g.my_membership[0].invite).length} color='error'>
+				<Badge badgeContent={(notifications?.filter((n) => !n.seen).length || 0) + (groups?.filter((g) => g.my_membership[0].invite)?.length || 0)} color='error'>
 					<NotificationsIcon />
 				</Badge>
 			</IconButton>
@@ -229,14 +227,22 @@ export default function Notifications(props: NotificationsProps) {
 						<Toolbar variant='dense'>
 							<Stack direction='row' justifyContent='flex-end' spacing={2}>
 								<StyledBadge
-									badgeContent={props.groups.filter((g) => g.my_membership[0].invite).length}
+									badgeContent={groups?.filter((g) => g.my_membership[0].invite).length}
 									anchorOrigin={{
 										vertical: 'top',
 										horizontal: 'left',
 									}}
 									color='primary'
 								>
-									<Button variant='outlined' size='small' color='primary' onClick={invitesDialogRef.current?.handleClickOpen}>
+									<Button
+										variant='outlined'
+										size='small'
+										color='primary'
+										onClick={() => {
+											handleClose();
+											invitesDialogRef.current?.handleClickOpen();
+										}}
+									>
 										Group Invites
 									</Button>
 								</StyledBadge>
@@ -262,7 +268,7 @@ export default function Notifications(props: NotificationsProps) {
 				</List>
 			</Popover>
 
-			<InvitesDialog ref={invitesDialogRef} groups={props.groups} />
+			<InvitesDialog ref={invitesDialogRef} />
 		</>
 	);
 }

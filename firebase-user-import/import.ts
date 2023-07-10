@@ -68,6 +68,12 @@ function createUserHeader() {
 }
 
 function createUser(user: any) {
+	var user_metadata = user.metadata;
+
+	var splits = user_metadata.name.split(' ');
+	user_metadata.first_name = splits[0];
+	user_metadata.last_name = splits[splits.length - 1];
+
 	var sql = `(
         '00000000-0000-0000-0000-000000000000', /* instance_id */
         uuid_generate_v4(), /* id */
@@ -86,7 +92,7 @@ function createUser(user: any) {
         null, /* email_change_sent_at timestamp with time zone, */
         '${moment(user.dates.lastSignInTime, 'YYYY/MM/DD HH:mm:ss').format('YYYY-MM-DD HH:mm:ss')}.000001+00', /* last_sign_in_at timestamp with time zone, */
         '{"provider":"email","providers":["email"]}', /* raw_app_meta_data jsonb,*/
-        '${JSON.stringify(user.metadata)}', /* raw_user_meta_data jsonb,*/
+        '${JSON.stringify(user_metadata)}', /* raw_user_meta_data jsonb,*/
         false, /* is_super_admin boolean, */
         '${moment(user.dates.creationTime, 'YYYY/MM/DD HH:mm:ss').format('YYYY-MM-DD HH:mm:ss')}.000001+00', /* created_at timestamp with time zone, */
         NOW(), /* updated_at timestamp with time zone, */

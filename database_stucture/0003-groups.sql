@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS public.group_members
   pinned boolean NOT NULL DEFAULT false,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
-  update_token numeric,
+  update_token timestamp with time zone,
 	
   PRIMARY KEY (group_id, user_id),
 

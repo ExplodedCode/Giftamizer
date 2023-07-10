@@ -4,13 +4,11 @@ import { useSupabase } from '../lib/useSupabase';
 import { useSnackbar } from 'notistack';
 
 import { useTheme } from '@mui/material/styles';
-import { Avatar, Button, Dialog, DialogContent, DialogContentText, DialogTitle, Fab, Grid, IconButton, Stack, TextField, useMediaQuery } from '@mui/material';
+import { Button, Dialog, DialogContent, DialogContentText, DialogTitle, Fab, Grid, Stack, TextField, useMediaQuery } from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
 import { Add, Group } from '@mui/icons-material';
 
-type CreateGroupProps = {};
-
-export default function CreateGroup(props: CreateGroupProps) {
+export default function CreateGroup() {
 	const theme = useTheme();
 
 	const { client } = useSupabase();
@@ -50,24 +48,6 @@ export default function CreateGroup(props: CreateGroupProps) {
 					<Grid container spacing={2}>
 						<Grid item xs={12}>
 							<DialogContentText>TODO: describe what groups do...</DialogContentText>
-						</Grid>
-						<Grid item xs={12}>
-							<IconButton sx={{ p: 0, borderRadius: 0 }}>
-								<Avatar
-									sx={{
-										borderRadius: 0,
-										height: 196,
-										width: 196,
-										fontSize: 150,
-										lineHeight: 1.5,
-										textAlign: 'center',
-										backgroundColor: '#5cb660',
-										color: '#fff',
-									}}
-								>
-									{name.trim() === '' ? 'G' : Array.from(String(name).toUpperCase())[0]}
-								</Avatar>
-							</IconButton>
 						</Grid>
 						<Grid item xs={12}>
 							<TextField autoFocus fullWidth label='Group Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} />

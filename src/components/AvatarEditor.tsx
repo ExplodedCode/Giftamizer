@@ -22,6 +22,7 @@ export type AvatarEditorProps = {
 	filepath: string;
 	imageToken: number | null;
 	handleTokenUpdate?(token: number | null): void;
+	disabled?: boolean;
 };
 
 export default function AvatarEditor(props: AvatarEditorProps) {
@@ -71,7 +72,7 @@ export default function AvatarEditor(props: AvatarEditorProps) {
 		if (error) {
 			enqueueSnackbar(error.message, { variant: 'error' });
 		} else {
-			if (props.handleTokenUpdate) props.handleTokenUpdate(null);
+			if (props.handleTokenUpdate) props.handleTokenUpdate(-1);
 		}
 
 		handleClose();
@@ -85,7 +86,7 @@ export default function AvatarEditor(props: AvatarEditorProps) {
 
 	return (
 		<>
-			<IconButton onClick={() => setOpen(true)}>
+			<IconButton onClick={() => setOpen(true)} disabled={props.disabled}>
 				<Avatar
 					children={<AddPhotoAlternateOutlined sx={{ fontSize: 128 }} />}
 					src={`${SUPABASE_URL}/storage/v1/object/public/${props.bucket}/${props.filepath}?${props.imageToken}`}

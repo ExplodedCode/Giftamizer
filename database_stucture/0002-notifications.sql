@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS public.notifications
 	user_id uuid NOT NULL,
 	title text NOT NULL,
 	body text NOT NULL,
-  seen boolean NOT NULL DEFAULT false,
+	seen boolean NOT NULL DEFAULT false,
 	icon text,
 	action text,
 	created_at timestamp with time zone DEFAULT now(),
