@@ -6,6 +6,8 @@ import 'package:giftamizer/main.dart';
 class AccountPage extends StatefulWidget {
   const AccountPage({super.key});
 
+  static const String route = '/profile/edit';
+
   @override
   _AccountPageState createState() => _AccountPageState();
 }
@@ -119,10 +121,10 @@ class _AccountPageState extends State<AccountPage> {
   /// Called when image has been uploaded to Supabase storage from within Avatar widget
   Future<void> _onUpload(int avatarToken) async {
     try {
-      final userId = supabase.auth.currentUser!.id;
+      final userID = supabase.auth.currentUser!.id;
       await supabase.from('profiles').update({
         'avatar_token': avatarToken,
-      }).eq('user_id', userId);
+      }).eq('user_id', userID);
       if (mounted) {
         const SnackBar(
           content: Text('Updated your profile image!'),

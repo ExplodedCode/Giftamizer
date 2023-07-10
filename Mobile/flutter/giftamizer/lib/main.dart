@@ -4,7 +4,9 @@ import 'package:giftamizer/pages/account_page.dart';
 import 'package:giftamizer/pages/signin_page.dart';
 import 'package:giftamizer/pages/splash_page.dart';
 
-import 'app.dart';
+import 'components/navBarHandler.dart';
+
+// import 'appold.dart';
 
 Future<void> main() async {
   await Supabase.initialize(
@@ -27,43 +29,111 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Giftamizer',
-      theme: ThemeData.dark().copyWith(
-        primaryColor: Colors.green,
-        textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(
-            foregroundColor: Colors.green,
+      theme: ThemeData().copyWith(
+          primaryColor: Colors.green,
+          appBarTheme: AppBarTheme(
+            color: Colors.green.shade700,
           ),
-        ),
-        inputDecorationTheme: const InputDecorationTheme(
-            floatingLabelStyle: TextStyle(
-              color: Colors.green,
+          textButtonTheme: TextButtonThemeData(
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.green,
             ),
-            focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(
-                style: BorderStyle.solid,
+          ),
+          inputDecorationTheme: const InputDecorationTheme(
+              floatingLabelStyle: TextStyle(
                 color: Colors.green,
               ),
-              borderRadius: BorderRadius.all(Radius.circular(4)),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(
+                  style: BorderStyle.solid,
+                  color: Colors.green,
+                ),
+                borderRadius: BorderRadius.all(Radius.circular(4)),
+              ),
+              border: OutlineInputBorder(
+                borderSide: BorderSide(
+                  style: BorderStyle.solid,
+                  color: Colors.green,
+                ),
+                borderRadius: BorderRadius.all(Radius.circular(4)),
+              )),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: Colors.green,
             ),
-            border: OutlineInputBorder(
-              borderSide: BorderSide(
-                style: BorderStyle.solid,
+          )),
+      darkTheme: ThemeData.dark().copyWith(
+          primaryColor: Colors.green,
+          textButtonTheme: TextButtonThemeData(
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.green,
+            ),
+          ),
+          inputDecorationTheme: const InputDecorationTheme(
+              floatingLabelStyle: TextStyle(
                 color: Colors.green,
               ),
-              borderRadius: BorderRadius.all(Radius.circular(4)),
-            )),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            foregroundColor: Colors.white,
-            backgroundColor: Colors.green,
-          ),
-        ),
-      ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(
+                  style: BorderStyle.solid,
+                  color: Colors.green,
+                ),
+                borderRadius: BorderRadius.all(Radius.circular(4)),
+              ),
+              border: OutlineInputBorder(
+                borderSide: BorderSide(
+                  style: BorderStyle.solid,
+                  color: Colors.green,
+                ),
+                borderRadius: BorderRadius.all(Radius.circular(4)),
+              )),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: Colors.green,
+            ),
+          )), // standard dark theme
+      themeMode: ThemeMode.system, // device controls theme
+
+      // theme: ThemeData.dark().copyWith(
+      //   primaryColor: Colors.green,
+      //   textButtonTheme: TextButtonThemeData(
+      //     style: TextButton.styleFrom(
+      //       foregroundColor: Colors.green,
+      //     ),
+      //   ),
+      //   inputDecorationTheme: const InputDecorationTheme(
+      //       floatingLabelStyle: TextStyle(
+      //         color: Colors.green,
+      //       ),
+      //       focusedBorder: OutlineInputBorder(
+      //         borderSide: BorderSide(
+      //           style: BorderStyle.solid,
+      //           color: Colors.green,
+      //         ),
+      //         borderRadius: BorderRadius.all(Radius.circular(4)),
+      //       ),
+      //       border: OutlineInputBorder(
+      //         borderSide: BorderSide(
+      //           style: BorderStyle.solid,
+      //           color: Colors.green,
+      //         ),
+      //         borderRadius: BorderRadius.all(Radius.circular(4)),
+      //       )),
+      //   elevatedButtonTheme: ElevatedButtonThemeData(
+      //     style: ElevatedButton.styleFrom(
+      //       foregroundColor: Colors.white,
+      //       backgroundColor: Colors.green,
+      //     ),
+      //   ),
+      // ),
       initialRoute: '/',
       routes: <String, WidgetBuilder>{
         '/': (_) => const SplashPage(),
         '/signin': (_) => const SignInPage(),
-        '/app': (_) => const App(),
+        '/app': (_) => const NavBarHandler(),
+        AccountPage.route: (context) => const AccountPage(),
       },
     );
   }
