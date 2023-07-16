@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { useSupabase } from '../lib/useSupabase';
+import { useCreateGroup } from '../lib/useSupabase';
 import { useSnackbar } from 'notistack';
 
 import { useTheme } from '@mui/material/styles';
@@ -10,30 +10,26 @@ import { Add, Group } from '@mui/icons-material';
 
 export default function CreateGroup() {
 	const theme = useTheme();
-
-	const { client } = useSupabase();
 	const { enqueueSnackbar } = useSnackbar();
 
 	const [open, setOpen] = React.useState(false);
-	const [loading, setLoading] = React.useState(false);
-
 	const [name, setName] = React.useState('');
 
+	const createGroup = useCreateGroup();
 	const handleCreate = async () => {
-		setLoading(true);
-
-		var { error } = await client.from('groups').insert({
-			name: name,
-		});
-		if (error) enqueueSnackbar(error.message, { variant: 'error' });
-
-		handleClose();
+		createGroup
+			.mutateAsync({ name: name })
+			.then(() => {
+				handleClose();
+			})
+			.catch((err) => {
+				enqueueSnackbar(`Unable to create group! ${err.message}`, { variant: 'error' });
+			});
 	};
 
 	const handleClose = async () => {
 		setName('');
 		setOpen(false);
-		setLoading(false);
 	};
 
 	return (
@@ -58,7 +54,7 @@ export default function CreateGroup() {
 									Cancel
 								</Button>
 
-								<LoadingButton onClick={handleCreate} endIcon={<Group />} loading={loading} loadingPosition='end' variant='contained'>
+								<LoadingButton onClick={handleCreate} endIcon={<Group />} loading={createGroup.isLoading} loadingPosition='end' variant='contained'>
 									Create
 								</LoadingButton>
 							</Stack>

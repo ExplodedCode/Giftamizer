@@ -19,6 +19,7 @@ import Groups from './pages/Groups';
 import Group from './pages/Group';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsConditions from './pages/TermsConditions';
+import Member from './pages/Member';
 
 export default function AppRoutes() {
 	const location = useLocation();
@@ -75,6 +76,15 @@ export default function AppRoutes() {
 						/>
 
 						<Route
+							path={`/lists/:list`}
+							element={
+								<ProtectedRoute>
+									<Group />
+								</ProtectedRoute>
+							}
+						/>
+
+						<Route
 							path='/groups'
 							element={
 								<ProtectedRoute>
@@ -82,12 +92,19 @@ export default function AppRoutes() {
 								</ProtectedRoute>
 							}
 						/>
-
 						<Route
-							path={`/groups/:group/:user?`}
+							path={`/groups/:group`}
 							element={
 								<ProtectedRoute>
 									<Group />
+								</ProtectedRoute>
+							}
+						/>
+						<Route
+							path={`/groups/:group/:user`}
+							element={
+								<ProtectedRoute>
+									<Member />
 								</ProtectedRoute>
 							}
 						/>

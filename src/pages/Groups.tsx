@@ -3,9 +3,10 @@ import React from 'react';
 import { Link, NavigateFunction, useNavigate, useParams } from 'react-router-dom';
 import { TransitionGroup } from 'react-transition-group';
 
-import { useSupabase } from '../lib/useSupabase';
+import { useQueryClient } from '@tanstack/react-query';
+import { RealtimeChannel } from '@supabase/realtime-js';
+import { useSupabase, GROUPS_QUERY_KEY, useGetGroups, useRefreshGroup } from '../lib/useSupabase';
 import { GroupType } from '../lib/useSupabase/types';
-import { useGetGroups } from '../lib/useSupabase/hooks/useGroup';
 
 import { Container, Card, CardActionArea, CardContent, CardMedia, Grid, Typography, AppBar, Breadcrumbs, Link as MUILink, Toolbar, Grow, Box, CircularProgress } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
@@ -65,19 +66,42 @@ export default function Groups() {
 	const { group: groupID, user: userID } = useParams();
 	const navigate = useNavigate();
 
-	const { user, client } = useSupabase();
-	const { data: groups, isLoading, refetch } = useGetGroups();
+	const queryClient = useQueryClient();
 
-	React.useEffect(() => {
-		if (user) {
-			client
-				.channel(`public:group_members:user_id=eq.${user.id}`)
-				.on('postgres_changes', { event: '*', schema: 'public', table: 'group_members', filter: `user_id=eq.${user.id}` }, (payload) => {
-					refetch();
-				})
-				.subscribe();
-		}
-	}, [client, user, refetch]);
+	const { user, client } = useSupabase();
+	const { data: groups, isLoading } = useGetGroups();
+
+	// const refreshGroup = useRefreshGroup();
+	// React.useEffect(() => {
+	// 	var sub: RealtimeChannel;
+	// 	if (user) {
+	// 		console.log('Subscribe realtime groups:', groupID);
+	// 		sub = client
+	// 			.channel(`public:group_members:user_id=eq.${user.id}`)
+	// 			.on('postgres_changes', { event: '*', schema: 'public', table: 'group_members', filter: `user_id=eq.${user.id}` }, async (payload) => {
+	// 				console.log(payload);
+
+	// 				switch (payload.eventType) {
+	// 					case 'INSERT':
+	// 						refreshGroup.mutateAsync(payload.new.group_id);
+	// 						break;
+	// 					case 'UPDATE':
+	// 						refreshGroup.mutateAsync(payload.new.group_id);
+	// 						break;
+	// 					case 'DELETE':
+	// 						queryClient.setQueryData(GROUPS_QUERY_KEY, (prevGroups: GroupType[] | undefined) =>
+	// 							prevGroups ? prevGroups.filter((group) => group.id !== payload.old.group_id) : prevGroups
+	// 						);
+	// 						break;
+	// 				}
+	// 			})
+	// 			.subscribe();
+	// 	}
+
+	// 	return () => {
+	// 		client.removeChannel(sub);
+	// 	};
+	// }, [client, user]);
 
 	return (
 		<>

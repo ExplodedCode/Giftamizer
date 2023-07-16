@@ -3,15 +3,17 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSupabase } from './useSupabase';
 import { ListType } from '../types';
 
+export const DEFAULT_LIST_ID = 'default';
+
 const QUERY_KEY = ['lists'];
 
 export const useGetLists = () => {
-	const { client } = useSupabase();
+	const { client, user } = useSupabase();
 
 	return useQuery({
 		queryKey: QUERY_KEY,
 		queryFn: async (): Promise<ListType[]> => {
-			const { data, error } = await client.from('lists').select('*, groups( id, name )');
+			const { data, error } = await client.from('lists').select('*, groups( id, name )').eq('user_id', user.id);
 			if (error) throw error;
 
 			return data as ListType[];
@@ -45,6 +47,7 @@ export const useCreateList = () => {
 					.insert({
 						list_id: data.id,
 						group_id: group.id,
+						user_id: user.id,
 					})
 					.select('*, group:groups( id, name )')
 					.single();
@@ -57,7 +60,7 @@ export const useCreateList = () => {
 		},
 		{
 			onSuccess: (list: ListType) => {
-				queryClient.setQueryData(QUERY_KEY, (prevLists: ListType[] | undefined) => (prevLists ? [list, ...prevLists] : [list]));
+				queryClient.setQueryData(QUERY_KEY, (prevLists: ListType[] | undefined) => (prevLists ? [...prevLists, list] : [list]));
 			},
 		}
 	);
@@ -65,7 +68,7 @@ export const useCreateList = () => {
 
 export const useUpdateLists = () => {
 	const queryClient = useQueryClient();
-	const { client } = useSupabase();
+	const { client, user } = useSupabase();
 
 	return useMutation(
 		async (list: Omit<ListType, 'user_id' | 'created_at' | 'updated_at'>): Promise<ListType> => {
@@ -86,6 +89,7 @@ export const useUpdateLists = () => {
 					const { error } = await client.from('lists_groups').upsert({
 						list_id: list.id,
 						group_id: group.id,
+						user_id: user.id,
 					});
 					if (error) throw error;
 				}

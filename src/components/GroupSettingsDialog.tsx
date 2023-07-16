@@ -4,7 +4,7 @@ import { useSnackbar } from 'notistack';
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useSupabase, SUPABASE_URL, useDeleteGroup, useGetGroupMembers, GROUPS_QUERY_KEY, useUpdateGroup, useInviteToGroup, useGetProfile, useLeaveGroup } from '../lib/useSupabase';
-import { GroupType, Member } from '../lib/useSupabase/types';
+import { GroupType, Member, Profile } from '../lib/useSupabase/types';
 import { TransitionGroup } from 'react-transition-group';
 
 import Collapse from '@mui/material/Collapse';
@@ -37,7 +37,7 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import { Delete, DeleteForever, Logout, Save, Send, Settings } from '@mui/icons-material';
 
 import AvatarEditor from './AvatarEditor';
-import UserSearch, { InviteUserType } from './UserSearch';
+import UserSearch from './UserSearch';
 
 interface RenderItemOptionsProps {
 	member: Member;
@@ -46,6 +46,8 @@ interface RenderItemOptionsProps {
 }
 
 function renderItem({ member, handleMemberEdit, owner }: RenderItemOptionsProps) {
+	// console.log(member);
+
 	return (
 		<ListItem>
 			<ListItemAvatar>
@@ -120,7 +122,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 	const [open, setOpen] = React.useState(false);
 	const [name, setName] = React.useState('');
 
-	const [selectedInviteUsers, setSelectedInviteUsers] = React.useState<InviteUserType[]>([]);
+	const [selectedInviteUsers, setSelectedInviteUsers] = React.useState<Profile[]>([]);
 	const [inviteUsersOwner, setInviteUsersOwner] = React.useState(false);
 
 	const [confirmLeaveOpen, setConfirmLeaveOpen] = React.useState(false);
@@ -287,7 +289,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 											)}
 
 											<Divider />
-
+											{/* {JSON.stringify(members)} */}
 											<TransitionGroup>
 												{members
 													?.filter((m) => !m.deleted)

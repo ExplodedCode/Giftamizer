@@ -8,29 +8,26 @@ import { PushPinOutlined, PushPin, Person } from '@mui/icons-material';
 
 import GroupSettingsDialog from '../components/GroupSettingsDialog';
 import NotFound from '../components/NotFound';
+import { RealtimeChannel } from '@supabase/realtime-js';
 
 export default function Group() {
 	const { group: groupID, user: userID } = useParams();
 
 	const navigate = useNavigate();
 	const { client, user } = useSupabase();
-	const { data: groups, isLoading: groupsLoading, refetch: refetchGroups } = useGetGroups();
-	const { data: members, isLoading: membersLoading, refetch: refetchMembers } = useGetGroupMembers(groupID!);
+	const { data: groups, isLoading: groupsLoading } = useGetGroups();
+	const { data: members, isLoading: membersLoading } = useGetGroupMembers(groupID!);
 	const setGroupPin = useSetGroupPin();
 
 	React.useEffect(() => {
-		if (groupID) {
-			console.log('Subscribe realtime group:', groupID);
-
-			client
-				.channel(`public:group_members:group_id=eq.${groupID}`)
-				.on('postgres_changes', { event: '*', schema: 'public', table: 'group_members', filter: `group_id=eq.${groupID}` }, (payload) => {
-					refetchMembers();
-					refetchGroups();
-				})
-				.subscribe();
-		}
-	}, [client, groupID, user.id, refetchMembers, refetchGroups]);
+		// unsub from members realtime
+		return () => {
+			var groupMembersChannel = client.getChannels().find((c) => c.topic === `realtime:public:group_members:group_id=eq.${groupID}`);
+			if (groupMembersChannel) client.removeChannel(groupMembersChannel);
+			var externalInvitesChannel = client.getChannels().find((c) => c.topic === `realtime:public:external_invites:group_id=eq.${groupID}`);
+			if (externalInvitesChannel) client.removeChannel(externalInvitesChannel);
+		};
+	}, [client, groupID]);
 
 	return (
 		<>
@@ -77,7 +74,7 @@ export default function Group() {
 														<CardMedia
 															sx={{
 																height: 250,
-																width: { xs: 'calc(100vw - 48px)', sm: 250 },
+																width: { xs: 'calc(100vw - 16px)', sm: 250 },
 																fontSize: 150,
 																lineHeight: 1.7,
 																textAlign: 'center',
@@ -116,38 +113,6 @@ export default function Group() {
 										This group has no members, invite some friends and family!
 									</Typography>
 								)}
-							</Grid>
-						</>
-					) : userID && groups?.find((g) => g.id === groupID && !g.my_membership[0].invite) && members?.find((m) => m.user_id === userID) ? (
-						<>
-							<AppBar position='static' sx={{ marginBottom: 2, bgcolor: 'background.paper' }}>
-								<Toolbar variant='dense'>
-									<Breadcrumbs aria-label='breadcrumb' sx={{ flexGrow: 1 }}>
-										<MUILink underline='hover' color='inherit' component={Link} to={`/groups/${groups?.find((g) => g.id === groupID)?.id}`}>
-											{groups?.find((g) => g.id === groupID)?.name}
-										</MUILink>
-										<Typography color='text.primary'>
-											{members?.find((m) => m.user_id === userID)?.profile.first_name} {members?.find((m) => m.user_id === userID)?.profile.last_name}
-										</Typography>
-									</Breadcrumbs>
-								</Toolbar>
-							</AppBar>
-
-							<Grid container justifyContent='center'>
-								<Grid item xs={9}>
-									<Typography variant='h4' gutterBottom sx={{ mt: 4, textAlign: 'center' }}>
-										{members?.find((m) => m.user_id === userID)?.profile.first_name} {members?.find((m) => m.user_id === userID)?.profile.last_name}
-									</Typography>
-									<Typography variant='body1' gutterBottom sx={{ textAlign: 'center' }}>
-										{members?.find((m) => m.user_id === userID)?.profile.bio}
-									</Typography>
-								</Grid>
-							</Grid>
-
-							<Grid container spacing={2}>
-								<Grid item xs={12}>
-									items
-								</Grid>
 							</Grid>
 						</>
 					) : (

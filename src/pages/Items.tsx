@@ -1,37 +1,34 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
-import { useSupabase } from '../lib/useSupabase';
+import { useDeleteItem, useGetItems, useGetProfile, useSupabase } from '../lib/useSupabase';
 import { ItemType } from '../lib/useSupabase/types';
 
 import { Container, Card, CardContent, CardMedia, Grid, Typography, Grow, Box, CircularProgress, Button, Stack, IconButton } from '@mui/material';
 
-import CreateItem from '../components/CreateItem';
+import ItemCreate from '../components/ItemCreate';
 import { Delete, Edit } from '@mui/icons-material';
+import { useSnackbar } from 'notistack';
 
 // type ItemsProps = {};
 export default function Items() {
-	const { client } = useSupabase();
+	const { user } = useSupabase();
+	const { enqueueSnackbar } = useSnackbar();
 
-	const [loading, setLoading] = React.useState<boolean>(true);
-	const [items, setItems] = React.useState<any[]>([]);
+	const { data: profile } = useGetProfile();
+	const { data: items, isLoading, isError, error } = useGetItems();
+	const deleteItem = useDeleteItem();
 
-	React.useEffect(() => {
-		const getItems = async () => {
-			const { data, error } = await client.from('items').select(`*`);
-			if (error) console.log(error);
-
-			setItems(data as ItemType[]);
-			setLoading(false);
-		};
-
-		getItems();
-	}, [client]);
+	useEffect(() => {
+		if (isError) {
+			enqueueSnackbar(`Unable to get lists! ${(error as any).message}`, { variant: 'error' });
+		}
+	}, [isError, error, enqueueSnackbar]);
 
 	return (
 		<>
 			<Container sx={{ paddingTop: 2, paddingBottom: 12 }}>
 				<Grid container spacing={2}>
-					{items.map((i, index) => (
+					{items?.map((i, index) => (
 						<Grow key={i.id} in={items.length > 0} style={{ transitionDelay: `${index * 25}ms` }}>
 							<Grid item xs={12}>
 								<Card sx={{ display: { sm: 'flex', xs: 'none' } }}>
@@ -44,6 +41,9 @@ export default function Items() {
 											<Typography variant='subtitle1' color='text.secondary' component='div'>
 												{i.description}
 											</Typography>
+											<Typography variant='body2' color='text.secondary'>
+												{i.lists?.map((l) => l.list.name).join(', ')}
+											</Typography>
 										</CardContent>
 
 										<Box sx={{ display: 'flex', alignItems: 'center', padding: 1 }}>
@@ -55,7 +55,9 @@ export default function Items() {
 													</Stack>
 												</Grid>
 												<Grid item>
-													<Button color='error'>Delete</Button>
+													<Button color='error' onClick={() => deleteItem.mutateAsync(i.id)}>
+														Delete
+													</Button>
 												</Grid>
 											</Grid>
 										</Box>
@@ -72,6 +74,16 @@ export default function Items() {
 										<Typography variant='body2' color='text.secondary'>
 											{i.description}
 										</Typography>
+
+										{/* {profile?.enable_lists && (
+											<Typography variant='body2' color='text.secondary'>
+												{i.lists?.map((l) => l.list.name).join(', ')}
+											</Typography>
+										)} */}
+
+										<Typography variant='body2' color='text.secondary'>
+											{i.lists?.map((l) => l.list.name).join(', ')}
+										</Typography>
 									</CardContent>
 									<Box sx={{ display: 'flex', alignItems: 'center', padding: 1 }}>
 										<Grid container justifyContent='flex-start' spacing={2}>
@@ -84,7 +96,7 @@ export default function Items() {
 												</Stack>
 											</Grid>
 											<Grid item>
-												<IconButton color='error'>
+												<IconButton color='error' onClick={() => deleteItem.mutateAsync(i.id)}>
 													<Delete />
 												</IconButton>
 											</Grid>
@@ -95,7 +107,7 @@ export default function Items() {
 						</Grow>
 					))}
 
-					{items.length === 0 && (
+					{items?.length === 0 && (
 						<Box style={{ marginTop: 100, textAlign: 'center', width: '100%' }}>
 							<Typography variant='h5' gutterBottom>
 								You don't have any items!
@@ -106,14 +118,15 @@ export default function Items() {
 						</Box>
 					)}
 				</Grid>
-				{loading && (
+
+				{isLoading && (
 					<Box sx={{ display: 'flex', justifyContent: 'center', mt: 16 }}>
 						<CircularProgress />
 					</Box>
 				)}
 			</Container>
 
-			<CreateItem />
+			<ItemCreate />
 		</>
 	);
 }

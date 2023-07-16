@@ -1,19 +1,22 @@
 import * as React from 'react';
 
 import { useSupabase, SUPABASE_URL, validateEmail } from '../lib/useSupabase';
-import { Member } from '../lib/useSupabase/types';
+import { Member, Profile } from '../lib/useSupabase/types';
 
 import { Autocomplete, Avatar, Chip, CircularProgress, debounce, Grid, TextField, Typography } from '@mui/material';
 
-export interface InviteUserType {
-	email: string;
-	name: string;
-	user_id?: string;
-}
+// export interface InviteUserType {
+// 	email: string;
+// 	// name: string;
+
+// 	first_name: string;
+// 	last_name: string;
+// 	user_id?: string;
+// }
 
 type UserSearchProps = {
-	selectedInviteUsers: InviteUserType[];
-	setSelectedInviteUsers(inviteUsers: InviteUserType[]): void;
+	selectedInviteUsers: Profile[];
+	setSelectedInviteUsers(inviteUsers: Profile[]): void;
 	members: Member[];
 	disabled: boolean;
 };
@@ -24,20 +27,23 @@ export default function UserSearch(props: UserSearchProps) {
 	const [loading, setLoading] = React.useState<boolean>(false);
 
 	const [inputValue, setInputValue] = React.useState('');
-	const [options, setOptions] = React.useState<readonly InviteUserType[]>([]);
+	const [options, setOptions] = React.useState<readonly Profile[]>([]);
 
 	const fetch = React.useMemo(
 		() =>
-			debounce(async (request: { input: string }, callback: (results?: readonly InviteUserType[]) => void) => {
+			debounce(async (request: { input: string }, callback: (results?: readonly Profile[]) => void) => {
 				setLoading(true);
 
 				const search = request.input.replaceAll(' ', '+') + ':*';
-				const excludeUsers = props.members.map((m) => m.user_id).concat(props.selectedInviteUsers?.filter((u) => u?.user_id).map((m) => m.user_id) as any);
+				const excludeUsers = props.members
+					.filter((m) => !m.external)
+					.map((m) => m.user_id)
+					.concat(props.selectedInviteUsers?.filter((u) => u?.user_id).map((m) => m.user_id) as any);
 
 				const { data, error } = await client.rpc('search_profiles', { user_search: search }).limit(8).neq('user_id', user.id).not('user_id', 'in', `(${excludeUsers.join()})`);
 				if (error) console.log(error);
 
-				callback(data as InviteUserType[]);
+				callback(data as Profile[]);
 
 				setLoading(false);
 			}, 400),
@@ -48,9 +54,9 @@ export default function UserSearch(props: UserSearchProps) {
 		let active = true;
 
 		if (inputValue.trim().length > 0) {
-			fetch({ input: inputValue }, (results?: readonly InviteUserType[]) => {
+			fetch({ input: inputValue }, (results?: readonly Profile[]) => {
 				if (active) {
-					let newOptions: InviteUserType[] = [];
+					let newOptions: Profile[] = [];
 
 					if (results) {
 						newOptions = [...results];
@@ -77,7 +83,7 @@ export default function UserSearch(props: UserSearchProps) {
 					const filtered = options;
 
 					var { inputValue } = params;
-					const isExisting = options.some((option) => inputValue === option.name) && options.some((option) => inputValue === option.email);
+					const isExisting = options.some((option) => inputValue === option.email) && options.some((option) => inputValue === option.email);
 
 					if (
 						inputValue !== '' &&
@@ -88,20 +94,23 @@ export default function UserSearch(props: UserSearchProps) {
 						!props.selectedInviteUsers?.find((u) => u.email === inputValue)
 					) {
 						filtered.push({
-							name: inputValue,
+							first_name: inputValue,
+							last_name: '',
 							email: inputValue,
+							bio: '',
+							avatar_token: null,
 						});
 					}
 					return filtered;
 				}}
-				getOptionLabel={(option) => (typeof option === 'string' ? option : option.name)}
+				getOptionLabel={(option) => (typeof option === 'string' ? option : `${option.first_name} ${option.last_name}`)}
 				options={options}
 				autoComplete
 				includeInputInList
 				filterSelectedOptions
 				value={props.selectedInviteUsers}
 				noOptionsText='Not found'
-				renderOption={(props, option: InviteUserType) => {
+				renderOption={(props, option: Profile) => {
 					return (
 						<li {...props}>
 							<Grid container alignItems='center'>
@@ -109,24 +118,26 @@ export default function UserSearch(props: UserSearchProps) {
 									<Avatar sizes='small' src={`${SUPABASE_URL}/storage/v1/object/public/avatars/${option?.user_id}`} sx={{ mr: 1 }} />
 								</Grid>
 								<Grid item xs>
-									<Typography variant='body2'>{option.name}</Typography>
+									<Typography variant='body2'>
+										{option.first_name} {option.last_name}
+									</Typography>
 								</Grid>
 							</Grid>
 						</li>
 					);
 				}}
-				renderTags={(value: readonly InviteUserType[], getTagProps) =>
-					value.map((option: InviteUserType, index: number) => (
+				renderTags={(value: readonly Profile[], getTagProps) =>
+					value.map((option: Profile, index: number) => (
 						<Chip
-							avatar={<Avatar alt={option.name} src={`${SUPABASE_URL}/storage/v1/object/public/avatars/${option.user_id}`} />}
+							avatar={<Avatar alt={option.first_name} src={`${SUPABASE_URL}/storage/v1/object/public/avatars/${option.user_id}`} />}
 							variant='outlined'
-							label={option.name}
+							label={`${option.first_name} ${option.last_name}`}
 							{...getTagProps({ index })}
 						/>
 					))
 				}
 				onChange={(_event, newValue) => {
-					props.setSelectedInviteUsers(newValue as InviteUserType[]);
+					props.setSelectedInviteUsers(newValue as Profile[]);
 				}}
 				onInputChange={(_event, newInputValue) => {
 					setInputValue(newInputValue);
