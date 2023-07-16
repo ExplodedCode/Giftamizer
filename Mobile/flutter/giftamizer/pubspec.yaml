@@ -38,6 +38,9 @@ dependencies:
     supabase_flutter: ^1.10.7
     image_picker: ^0.8.4
     navbar_router: ^0.5.7
+    flutter_hooks: ^0.18.0
+    hooks_riverpod: ^2.3.6
+    uuid: ^3.0.7
 
 dev_dependencies:
     flutter_test:

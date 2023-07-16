@@ -25,6 +25,7 @@ import { Check, Clear } from '@mui/icons-material';
 import moment from 'moment';
 import { useSnackbar } from 'notistack';
 import { useNavigate } from 'react-router-dom';
+import { GroupType } from '../lib/useSupabase/types';
 
 export type InvitesDialogRefs = {
 	handleClickOpen: () => void;
@@ -52,12 +53,12 @@ const AlertDialog: React.ForwardRefRenderFunction<InvitesDialogRefs> = (props, f
 	};
 
 	const acceptGroupInvite = useAcceptGroupInvite();
-	const handleAccept = async (group_id: string) => {
+	const handleAccept = async (group: GroupType) => {
 		acceptGroupInvite
-			.mutateAsync(group_id)
+			.mutateAsync(group)
 			.then(() => {
 				handleClose();
-				navigate(`/groups/${group_id}`);
+				navigate(`/groups/${group.id}`);
 			})
 			.catch((err) => {
 				enqueueSnackbar(`Unable to accept group invite! ${err.message}`, { variant: 'error' });
@@ -88,7 +89,7 @@ const AlertDialog: React.ForwardRefRenderFunction<InvitesDialogRefs> = (props, f
 												<IconButton color='error' onClick={() => handleDecline(group.id)} disabled={acceptGroupInvite.isLoading || declineGroupInvite.isLoading}>
 													{declineGroupInvite.isLoading ? <CircularProgress size={20} color='error' /> : <Clear />}
 												</IconButton>
-												<IconButton color='primary' onClick={() => handleAccept(group.id)} disabled={acceptGroupInvite.isLoading || declineGroupInvite.isLoading}>
+												<IconButton color='primary' onClick={() => handleAccept(group)} disabled={acceptGroupInvite.isLoading || declineGroupInvite.isLoading}>
 													{acceptGroupInvite.isLoading ? <CircularProgress size={20} color='primary' /> : <Check />}
 												</IconButton>
 											</Stack>

@@ -2,6 +2,7 @@ import React from 'react';
 
 import type { SupabaseClient, User } from '@supabase/supabase-js';
 import { SupabaseContextType } from '../types';
+import { useQueryClient } from '@tanstack/react-query';
 
 export const SupabaseContext = React.createContext<SupabaseContextType>({
 	sb: null,
@@ -20,6 +21,7 @@ export const SupabaseContext = React.createContext<SupabaseContextType>({
 
 export const SupabaseContextProvider: React.FC<{ client: SupabaseClient; children: JSX.Element }> = ({ client, children }) => {
 	const [user, setUser] = React.useState<User | null | undefined>();
+	const queryClient = useQueryClient();
 
 	React.useEffect(() => {
 		const getUser = async () => {
@@ -38,13 +40,14 @@ export const SupabaseContextProvider: React.FC<{ client: SupabaseClient; childre
 				}
 				if (event === 'SIGNED_OUT') {
 					client.removeAllChannels();
+					queryClient.removeQueries(); // invalidate cache
 					setUser(null);
 				}
 			});
 		};
 
 		getUser();
-	}, [client]);
+	}, [client, queryClient]);
 
 	return (
 		<SupabaseContext.Provider

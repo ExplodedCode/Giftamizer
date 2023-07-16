@@ -2,19 +2,22 @@
 -- External Invites table
 CREATE TABLE IF NOT EXISTS public.external_invites
 (
-  invite_id uuid NOT NULL DEFAULT uuid_generate_v4(),
   group_id uuid NOT NULL,
   email character varying NOT NULL,
+  invite_id uuid NOT NULL DEFAULT uuid_generate_v4(),
   owner boolean NOT NULL DEFAULT false,
   created_at timestamp with time zone DEFAULT now(),
 	
-  PRIMARY KEY (invite_id, group_id, email),
+  PRIMARY KEY (group_id, email),
 
 	CONSTRAINT external_invites_group_id_fkey FOREIGN KEY (group_id)
     REFERENCES public.groups (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE CASCADE
 );
+
+-- Set up Realtime
+alter publication supabase_realtime add table external_invites;
 
 alter table external_invites enable row level security;
 

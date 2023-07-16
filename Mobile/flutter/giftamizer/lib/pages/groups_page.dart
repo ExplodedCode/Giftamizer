@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:giftamizer/app.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../components/navBarHandler.dart';
 import '../main.dart';
 
 class GroupsMenu extends StatelessWidget {
@@ -55,7 +55,11 @@ class _GroupsListState extends State<GroupsList> {
   var _loading = true;
   var groups = [];
 
+  var refreshKey = GlobalKey<RefreshIndicatorState>();
+
   Future<void> _getGroups() async {
+    refreshKey.currentState?.show(atTop: false);
+
     setState(() {
       _loading = true;
     });
@@ -89,40 +93,18 @@ class _GroupsListState extends State<GroupsList> {
   void initState() {
     super.initState();
     _getGroups();
-    _addScrollListener();
-  }
-
-  void _addScrollListener() {
-    _scrollController.addListener(() {
-      if (_scrollController.position.userScrollDirection ==
-          ScrollDirection.forward) {
-        if (NavbarNotifier().hideBottomNavBar) {
-          NavbarNotifier().hideBottomNavBar = false;
-        }
-      } else {
-        if (!NavbarNotifier().hideBottomNavBar) {
-          NavbarNotifier().hideBottomNavBar = true;
-        }
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Groups'),
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              controller: _scrollController,
+        appBar: AppBar(
+          title: const Text('Groups'),
+        ),
+        body: RefreshIndicator(
+          key: refreshKey,
+          onRefresh: _getGroups,
+          child: ListView.builder(
               itemCount: groups.length,
               itemBuilder: (context, index) {
                 return Padding(
@@ -136,7 +118,7 @@ class _GroupsListState extends State<GroupsList> {
                       child: GroupCard(group: groups[index])),
                 );
               }),
-    );
+        ));
   }
 }
 

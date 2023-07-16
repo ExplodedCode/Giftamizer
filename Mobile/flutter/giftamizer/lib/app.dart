@@ -1,47 +1,51 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
+import 'package:giftamizer/pages/groups_page.dart';
+import 'package:giftamizer/pages/home_page.dart';
+import 'package:giftamizer/pages/profile_page.dart';
+import 'package:giftamizer/pages/todo_page.dart';
+import 'package:giftamizer/tab_item.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'package:giftamizer/main.dart';
+import 'package:giftamizer/bottom_navigation.dart';
 import 'package:giftamizer/pages/account_page.dart';
 
-import '../pages/home_page.dart';
-import '../pages/groups_page.dart';
-import '../pages/profile_page.dart';
-
-class MenuItem {
-  const MenuItem(this.iconData, this.text);
-  final IconData iconData;
-  final String text;
-}
-
-class NavBarHandler extends StatefulWidget {
-  const NavBarHandler({Key? key}) : super(key: key);
-  static const String route = '/';
+class App extends StatefulWidget {
+  const App({super.key});
 
   @override
-  State<NavBarHandler> createState() => _NavBarHandlerState();
+  State<StatefulWidget> createState() => AppState();
 }
 
-class _NavBarHandlerState extends State<NavBarHandler>
-    with SingleTickerProviderStateMixin {
-  final _buildBody = const <Widget>[HomeMenu(), GroupsMenu(), ProfileMenu()];
+var _currentTab = TabItem.groups;
 
-  final menuItemlist = const <MenuItem>[
-    MenuItem(Icons.home, 'Home'),
-    MenuItem(Icons.group, 'Groups'),
-    MenuItem(Icons.person, 'Me'),
-  ];
+class AppState extends State<App> {
+  final _navigatorKeys = {
+    TabItem.home: GlobalKey<NavigatorState>(),
+    TabItem.groups: GlobalKey<NavigatorState>(),
+    TabItem.profile: GlobalKey<NavigatorState>(),
+  };
 
-  late AnimationController _controller;
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 700),
-    );
-
-    _controller.forward();
+  Future<void> _signOut() async {
+    try {
+      await supabase.auth.signOut();
+    } on AuthException catch (error) {
+      SnackBar(
+        content: Text(error.message),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      );
+    } catch (error) {
+      SnackBar(
+        content: const Text('Unexpected error occurred'),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      );
+    } finally {
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed('/signin');
+      }
+    }
   }
 
   void showSnackBar() {
@@ -60,10 +64,13 @@ class _NavBarHandlerState extends State<NavBarHandler>
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  void _selectTab(TabItem tabItem) {
+    if (tabItem == _currentTab) {
+      // pop to first route
+      _navigatorKeys[tabItem]!.currentState!.popUntil((route) => route.isFirst);
+    } else {
+      setState(() => _currentTab = tabItem);
+    }
   }
 
   DateTime oldTime = DateTime.now();
@@ -93,7 +100,7 @@ class _NavBarHandlerState extends State<NavBarHandler>
           title: const Text('Giftamizer'),
           backgroundColor: Colors.green,
           actions: [
-            SizedBox(
+            Container(
               width: 58,
               child: PopupMenuButton(
                 icon: const CircleAvatar(
@@ -101,16 +108,15 @@ class _NavBarHandlerState extends State<NavBarHandler>
                       "https://4.bp.blogspot.com/-Jx21kNqFSTU/UXemtqPhZCI/AAAAAAAAh74/BMGSzpU6F48/s1600/funny-cat-pictures-047-001.jpg"),
                   backgroundColor: Colors.red,
                 ),
-                offset: const Offset(0, 60),
+                offset: Offset(0, 60),
                 onSelected: (result) => {
                   if (result == '0')
                     {
-                      navigate(context, AccountPage.route)
-                      // Navigator.of(context).push(MaterialPageRoute(
-                      //     builder: (context) => const AccountPage()))
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (context) => const AccountPage()))
                     }
-                  // else if (result == '1')
-                  //   {_signOut()}
+                  else if (result == '1')
+                    {_signOut()}
                 },
                 itemBuilder: (BuildContext context) {
                   return [
@@ -144,39 +150,24 @@ class _NavBarHandlerState extends State<NavBarHandler>
             )
           ],
         ),
-        body: AnimatedBuilder(
-            animation: _navbarNotifier,
-            builder: (context, snapshot) {
-              return Stack(
-                children: [
-                  IndexedStack(
-                    index: _navbarNotifier.index,
-                    children: [
-                      for (int i = 0; i < _buildBody.length; i++)
-                        Container(child: _buildBody[i])
-                    ],
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: AnimatedNavBar(
-                        model: _navbarNotifier,
-                        onItemTapped: (x) {
-                          // User pressed  on the same tab twice
-                          if (_navbarNotifier.index == x) {
-                            _navbarNotifier.popAllRoutes(x);
-                          } else {
-                            _navbarNotifier.index = x;
-                            _controller.reset();
-                            _controller.forward();
-                          }
-                        },
-                        menuItems: menuItemlist),
-                  ),
-                ],
-              );
-            }),
+        body: Stack(children: [
+          Offstage(
+            offstage: _currentTab != TabItem.home,
+            child: const HomeMenu(),
+          ),
+          Offstage(
+            offstage: _currentTab != TabItem.groups,
+            child: const GroupsMenu(),
+          ),
+          Offstage(
+            offstage: _currentTab != TabItem.profile,
+            child: const TodoPage(),
+          ),
+        ]),
+        bottomNavigationBar: BottomNavigation(
+          currentTab: _currentTab,
+          onSelectTab: _selectTab,
+        ),
       ),
     );
   }
@@ -194,8 +185,7 @@ final productsKey = GlobalKey<NavigatorState>();
 final profileKey = GlobalKey<NavigatorState>();
 
 NavbarNotifier _navbarNotifier = NavbarNotifier();
-// List<Color> colors = [mediumPurple, Colors.orange, Colors.teal];
-// const Color mediumPurple = Color.fromRGBO(79, 0, 241, 1.0);
+
 const String placeHolderText =
     'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.';
 
@@ -220,7 +210,7 @@ class NavbarNotifier extends ChangeNotifier {
   // if the backButton is pressed on the initial route the app will be terminated
   FutureOr<bool> onBackButtonPressed() async {
     bool exitingApp = true;
-    switch (_navbarNotifier.index) {
+    switch (_currentTab.index) {
       case 0:
         if (homeKey.currentState != null && homeKey.currentState!.canPop()) {
           homeKey.currentState!.pop();
@@ -272,79 +262,5 @@ class NavbarNotifier extends ChangeNotifier {
       default:
         break;
     }
-  }
-}
-
-class AnimatedNavBar extends StatefulWidget {
-  const AnimatedNavBar(
-      {Key? key,
-      required this.model,
-      required this.menuItems,
-      required this.onItemTapped})
-      : super(key: key);
-  final List<MenuItem> menuItems;
-  final NavbarNotifier model;
-  final Function(int) onItemTapped;
-
-  @override
-  _AnimatedNavBarState createState() => _AnimatedNavBarState();
-}
-
-class _AnimatedNavBarState extends State<AnimatedNavBar>
-    with SingleTickerProviderStateMixin {
-  @override
-  void didUpdateWidget(covariant AnimatedNavBar oldWidget) {
-    if (widget.model.hideBottomNavBar != isHidden) {
-      if (!isHidden) {
-        _showBottomNavBar();
-      } else {
-        _hideBottomNavBar();
-      }
-      isHidden = !isHidden;
-    }
-    super.didUpdateWidget(oldWidget);
-  }
-
-  void _hideBottomNavBar() {
-    _controller.reverse();
-    return;
-  }
-
-  void _showBottomNavBar() {
-    _controller.forward();
-    return;
-  }
-
-  late AnimationController _controller;
-  late Animation<double> animation;
-  bool isHidden = false;
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      currentIndex: widget.model.index,
-      onTap: (x) {
-        widget.onItemTapped(x);
-      },
-      elevation: 16.0,
-      showUnselectedLabels: true,
-      // unselectedItemColor: Colors.white54,
-      // selectedItemColor: Colors.white,
-      selectedItemColor: Colors.green,
-      items: widget.menuItems
-          .map((MenuItem menuItem) => BottomNavigationBarItem(
-                backgroundColor: Colors.green,
-                icon: Icon(menuItem.iconData),
-                label: menuItem.text,
-              ))
-          .toList(),
-    );
   }
 }

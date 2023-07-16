@@ -9,25 +9,44 @@ CREATE TABLE items (
 );
 
 CREATE TABLE lists (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id TEXT DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   child_list boolean NOT NULL DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()  
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  
+  PRIMARY KEY (id, user_id)
 );
 
 CREATE TABLE items_lists (
   item_id UUID REFERENCES items(id) ON DELETE CASCADE,
-  list_id UUID REFERENCES lists(id) ON DELETE CASCADE,
-  PRIMARY KEY (item_id, list_id)
+  list_id TEXT,
+  user_id UUID,
+  
+  PRIMARY KEY (item_id, list_id, user_id),
+  
+  FOREIGN KEY (list_id, user_id) 
+    REFERENCES lists(id, user_id)
+    ON DELETE CASCADE
 );
 
 CREATE TABLE lists_groups (
-  list_id UUID REFERENCES lists(id) ON DELETE CASCADE,
-  group_id UUID REFERENCES groups(id) ON DELETE CASCADE,
-  PRIMARY KEY (list_id, group_id)
+  list_id TEXT,
+  group_id UUID,
+  user_id UUID,
+  
+  PRIMARY KEY (list_id, group_id, user_id),
+
+  FOREIGN KEY (list_id, user_id) 
+    REFERENCES lists(id, user_id)
+    ON DELETE CASCADE,
+
+  FOREIGN KEY (group_id)
+    REFERENCES groups(id) 
+    ON DELETE CASCADE
 );
+
 
 --
 -- items
@@ -35,37 +54,36 @@ alter table items enable row level security;
 alter publication supabase_realtime add table items;
 
 create policy "Users can view own items"
-  on items for select
+  ON items for select
   TO authenticated 
   using (user_id = auth.uid());
 create policy "Users can add own items"
-  on items for insert
+  ON items for insert
   TO authenticated 
   with check (user_id = auth.uid());
 create policy "Users can update own items"
-  on items for update
+  ON items for update
   TO authenticated 
   using (user_id = auth.uid());
 create policy "Users can delete own items"
-  on items for delete
+  ON items for delete
   TO authenticated 
   using (user_id = auth.uid());
-
 -- Allow group members to select items
 CREATE POLICY "Group members can select items"
-  ON items 
-  FOR SELECT
-  TO authenticated
+  ON items for select
   USING (
     EXISTS (
       SELECT 1 
-      FROM items_lists 
-      INNER JOIN lists_groups ON items_lists.list_id = lists_groups.list_id
-      INNER JOIN group_members ON group_members.group_id = lists_groups.group_id
-      WHERE items_lists.item_id = items.id
-        AND group_members.user_id = auth.uid()
+      FROM group_members
+      JOIN lists_groups ON lists_groups.group_id = group_members.group_id
+      JOIN items_lists ON items_lists.list_id = lists_groups.list_id
+      WHERE 
+        group_members.user_id = auth.uid() 
+        AND items_lists.item_id = items.id
     )
   );
+
 
 --
 -- lists
@@ -73,21 +91,35 @@ alter table lists enable row level security;
 alter publication supabase_realtime add table lists;
 
 create policy "Users can view own lists"
-  on lists for select
+  ON lists for select
   TO authenticated 
   using (user_id = auth.uid());
 create policy "Users can add own lists"
-  on lists for insert
+  ON lists for insert
   TO authenticated 
   with check (user_id = auth.uid());
 create policy "Users can update own lists"
-  on lists for update
+  ON lists for update
   TO authenticated 
   using (user_id = auth.uid());
 create policy "Users can delete own lists"
-  on lists for delete
+  ON lists for delete
   TO authenticated 
   using (user_id = auth.uid());
+-- Allow group members to select lists
+CREATE POLICY "Group members can select lists"
+  ON lists for select
+  USING (
+    EXISTS (
+      SELECT 1
+      FROM group_members
+      JOIN lists_groups ON lists_groups.group_id = group_members.group_id 
+      WHERE 
+        group_members.user_id = auth.uid()
+        AND lists_groups.list_id = lists.id
+    )
+  );
+
 
 --
 -- items_lists
@@ -97,19 +129,33 @@ alter publication supabase_realtime add table items_lists;
 create policy "Users can view own items_lists"
   on items_lists for select
   TO authenticated 
-  using (list_id IN (SELECT id FROM lists WHERE user_id = auth.uid()));
+  using (user_id = auth.uid());
 create policy "Users can add own items_lists"
   on items_lists for insert
   TO authenticated 
-  with check (list_id IN (SELECT id FROM lists WHERE user_id = auth.uid()));
+  with check (user_id = auth.uid());
 create policy "Users can update own items_lists"
   on items_lists for update
   TO authenticated 
-  using (list_id IN (SELECT id FROM lists WHERE user_id = auth.uid()));  
+  using (user_id = auth.uid());
 create policy "Users can delete own items_lists"
   on items_lists for delete
   TO authenticated 
-  using (list_id IN (SELECT id FROM lists WHERE user_id = auth.uid())); 
+  using (user_id = auth.uid());
+-- Allow group members to select items_lists
+CREATE POLICY "Group members can select items_lists"
+  ON items_lists for select
+  USING (
+    EXISTS (
+      SELECT 1 
+      FROM group_members
+      JOIN lists_groups ON lists_groups.group_id = group_members.group_id
+      WHERE 
+        group_members.user_id = auth.uid() 
+        AND lists_groups.list_id = items_lists.list_id
+    )
+  );
+
 
 --
 -- lists_groups
@@ -119,16 +165,28 @@ alter publication supabase_realtime add table lists_groups;
 create policy "Users can view own lists_groups"
   on lists_groups for select
   TO authenticated 
-  using (list_id IN (SELECT id FROM lists WHERE user_id = auth.uid()));
+  using (user_id = auth.uid());
 create policy "Users can add own lists_groups"
   on lists_groups for insert
   TO authenticated 
-  with check (list_id IN (SELECT id FROM lists WHERE user_id = auth.uid()));
+  with check (user_id = auth.uid()); 
 create policy "Users can update own lists_groups"
   on lists_groups for update
   TO authenticated 
-  using (list_id IN (SELECT id FROM lists WHERE user_id = auth.uid()));  
+  using (user_id = auth.uid());
 create policy "Users can delete own lists_groups"
   on lists_groups for delete
   TO authenticated 
-  using (list_id IN (SELECT id FROM lists WHERE user_id = auth.uid())); 
+  using (user_id = auth.uid());
+-- Allow group members to select lists_groups
+CREATE POLICY "Group members can select lists_groups"
+  ON lists_groups for select
+  USING (
+    EXISTS (
+      SELECT 1 
+      FROM group_members
+      WHERE 
+        group_members.user_id = auth.uid() 
+        AND group_members.group_id = lists_groups.group_id
+    )
+  );

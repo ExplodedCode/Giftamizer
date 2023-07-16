@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS public.profiles
   first_name character varying(255) NOT NULL,
   last_name character varying(255) NOT NULL,
   bio text NOT NULL DEFAULT ''::text,
+  enable_lists boolean NOT NULL DEFAULT false,
   avatar_token numeric,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
@@ -61,6 +62,7 @@ begin
 		  (select get_name_from_json(cast(new.raw_user_meta_data as json), cast('first_name' as text), cast('name' as text), 1)), 
 		  (select get_name_from_json(cast(new.raw_user_meta_data as json), cast('last_name' as text), cast('name' as text), 2)), 
 		  new.created_at);
+  insert into public.lists (id, user_id, name) values ('default', new.id, 'Default');
   return new;
 end;
 $$;
@@ -70,14 +72,14 @@ create trigger on_auth_user_created
 
 -- user search autocomplete
 CREATE FUNCTION public.search_profiles(user_search varchar)
-RETURNS table(user_id uuid, email text, name text)
+RETURNS table(user_id uuid, email text, first_name text, last_name text)
 LANGUAGE plpgsql
 AS $$
 	begin
 		return query
-			SELECT cast(p.user_id as uuid), cast(p.email as text), cast(concat(p.first_name, p.last_name) as text)
+			SELECT cast(p.user_id as uuid), cast(p.email as text), cast(p.first_name as text), cast(p.last_name as text)
 			FROM profiles p 
-			WHERE to_tsvector(concat(p.first_name, p.last_name)) @@ to_tsquery(user_search) OR p.email = user_search;
+			WHERE to_tsvector(concat(p.first_name, ' ', p.last_name)) @@ to_tsquery(user_search) OR p.email = user_search;
 	end;
 $$;
 

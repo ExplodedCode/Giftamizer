@@ -1,51 +1,50 @@
 import React from 'react';
 
-import { useSupabase } from '../lib/useSupabase';
+import { useSupabase, useCreateItem, useGetProfile, DEFAULT_LIST_ID } from '../lib/useSupabase';
 import { useSnackbar } from 'notistack';
 
 import { useTheme } from '@mui/material/styles';
 import { Button, Dialog, DialogContent, DialogContentText, DialogTitle, Fab, Grid, Stack, TextField, useMediaQuery } from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
 import { Add } from '@mui/icons-material';
+import ListSelector from './ListSelector';
+import { ListType } from '../lib/useSupabase/types';
 
-type CreateItemProps = {};
-
-export default function CreateItem(props: CreateItemProps) {
+export default function ItemCreate() {
 	const theme = useTheme();
-
-	const { client, user } = useSupabase();
 	const { enqueueSnackbar } = useSnackbar();
 
 	const [open, setOpen] = React.useState(false);
-	const [loading, setLoading] = React.useState(false);
 
 	const [name, setName] = React.useState('');
 	const [description, setDescription] = React.useState('');
+	const [lists, setLists] = React.useState<ListType[]>([]);
 
-	// var { error } = await client.from('items').insert({
-	// 	name: name,
-	// 	description: description
-	// });
+	const { user } = useSupabase();
+	const { data: profile } = useGetProfile();
+	const createItem = useCreateItem();
 
 	const handleCreate = async () => {
-		setLoading(true);
-
-		var { error } = await client.from('items').insert({
-			user_id: user.id,
-			name: name,
-			description: description,
-		});
-		if (error) enqueueSnackbar(error.message, { variant: 'error' });
-
-		handleClose();
+		createItem
+			.mutateAsync({
+				name: name,
+				description: description,
+				newLists: profile?.enable_lists ? lists : [{ id: DEFAULT_LIST_ID, user_id: user.id, name: 'Default List', child_list: false, groups: [] }],
+			})
+			.then(() => {
+				handleClose();
+			})
+			.catch((err) => {
+				enqueueSnackbar(`Unable to create item! ${err.message}`, { variant: 'error' });
+			});
 	};
 
 	const handleClose = async () => {
 		setName('');
 		setDescription('');
+		setLists([]);
 
 		setOpen(false);
-		setLoading(false);
 	};
 
 	return (
@@ -67,13 +66,18 @@ export default function CreateItem(props: CreateItemProps) {
 						<Grid item xs={12}>
 							<TextField fullWidth label='Description' variant='outlined' value={description} onChange={(e) => setDescription(e.target.value)} />
 						</Grid>
+						{profile?.enable_lists && (
+							<Grid item xs={12}>
+								<ListSelector value={lists} onChange={(v) => setLists(v)} />
+							</Grid>
+						)}
 						<Grid item xs={12}>
 							<Stack direction='row' justifyContent='flex-end' spacing={2}>
 								<Button color='inherit' onClick={handleClose}>
 									Cancel
 								</Button>
 
-								<LoadingButton onClick={handleCreate} disabled={name.length === 0} endIcon={<Add />} loading={loading} loadingPosition='end' variant='contained'>
+								<LoadingButton onClick={handleCreate} disabled={name.length === 0} endIcon={<Add />} loading={createItem.isLoading} loadingPosition='end' variant='contained'>
 									Create
 								</LoadingButton>
 							</Stack>

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Link, useNavigate, useLocation, Location } from 'react-router-dom';
+import { SnackbarKey, useSnackbar } from 'notistack';
 
 import { useSupabase, SUPABASE_URL, useGetProfile } from '../lib/useSupabase';
 import { GroupType, Profile } from '../lib/useSupabase/types';
@@ -31,8 +32,9 @@ import {
 	Typography,
 	CircularProgress,
 	ListItemAvatar,
+	Button,
 } from '@mui/material';
-import { ExpandLess, ExpandMore, Archive, Delete, Group, ListAlt, Logout, ShoppingCart, Menu as MenuIcon } from '@mui/icons-material';
+import { ExpandLess, ExpandMore, Archive, Delete, Group, ListAlt, Logout, ShoppingCart, Menu as MenuIcon, Podcasts, Close } from '@mui/icons-material';
 
 import AccountDialog from './AccountDialog';
 import Notifications from './Notifications';
@@ -101,6 +103,7 @@ function renderItem({ group, location }: RenderItemOptions) {
 }
 
 const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
+	const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 	const navigate = useNavigate();
 	const location = useLocation();
 	const [mobileNav, setMobileNav] = React.useState(getLocation(location.pathname));
@@ -163,6 +166,36 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 
 					<Box sx={{ flexGrow: 0 }}>
 						<Stack direction='row' spacing={2}>
+							{window.location.hostname !== 'giftamizer.com' && (
+								<Tooltip title='Get Realtime Channels'>
+									<IconButton
+										size='large'
+										onClick={() => {
+											var channels = client.getChannels();
+											enqueueSnackbar(`${channels.length} Channels:`, {
+												variant: 'info',
+												action: (snackbarId: SnackbarKey | undefined) => (
+													<React.Fragment>
+														{channels.map((c) => (
+															<>
+																{c.topic}
+																<br />
+															</>
+														))}
+														<IconButton size='small' aria-label='close' color='inherit' onClick={() => closeSnackbar(snackbarId)}>
+															<Close fontSize='small' />
+														</IconButton>
+													</React.Fragment>
+												),
+											});
+											console.log(channels);
+										}}
+									>
+										<Podcasts />
+									</IconButton>
+								</Tooltip>
+							)}
+
 							<Notifications />
 							<Tooltip title='Open settings'>
 								<IconButton onClick={isLoading ? undefined : handleOpenUserMenu} sx={{ p: 0 }}>
@@ -211,6 +244,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 								</ListItemIcon>
 								<Typography textAlign='center'>Trash</Typography>
 							</MenuItem>
+
 							<MenuItem
 								onClick={() => {
 									handleCloseUserMenu();
@@ -245,14 +279,16 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 								<ListItemText primary='Items' />
 							</ListItemButton>
 						</ListItem>
-						<ListItem disablePadding>
-							<ListItemButton component={Link} to='/lists' selected={location.pathname.startsWith('/lists')}>
-								<ListItemIcon>
-									<ListAlt color={location.pathname.startsWith('/lists') ? 'primary' : undefined} />
-								</ListItemIcon>
-								<ListItemText primary='Lists' />
-							</ListItemButton>
-						</ListItem>
+						{profile?.enable_lists && (
+							<ListItem disablePadding>
+								<ListItemButton component={Link} to='/lists' selected={location.pathname.startsWith('/lists')}>
+									<ListItemIcon>
+										<ListAlt color={location.pathname.startsWith('/lists') ? 'primary' : undefined} />
+									</ListItemIcon>
+									<ListItemText primary='Lists' />
+								</ListItemButton>
+							</ListItem>
+						)}
 						<ListItem disablePadding>
 							<ListItemButton
 								component={Link}
@@ -358,7 +394,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 					}}
 				>
 					<BottomNavigationAction label='Items' icon={<i className='fas fa-gift' style={{ fontSize: '1.19rem' }} />} />
-					<BottomNavigationAction label='Lists' icon={<ListAlt />} />
+					{profile?.enable_lists && <BottomNavigationAction label='Lists' icon={<ListAlt />} />}
 					<BottomNavigationAction label='Groups' icon={<Group />} />
 					<BottomNavigationAction label='Shopping' icon={<ShoppingCart />} />
 				</BottomNavigation>

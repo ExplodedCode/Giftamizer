@@ -3,8 +3,8 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useSupabase } from '../lib/useSupabase';
-import { useDeleteList, useGetLists } from '../lib/useSupabase/hooks';
-import { GroupType, ListType } from '../lib/useSupabase/types';
+import { useDeleteList, useGetLists, DEFAULT_LIST_ID } from '../lib/useSupabase/hooks';
+import { ListType } from '../lib/useSupabase/types';
 
 import { useSnackbar } from 'notistack';
 import {
@@ -35,7 +35,7 @@ import ListUpdate from '../components/ListUpdate';
 
 interface RenderListItemProps {
 	list: ListType;
-	handleListEdit: (list: ListType) => void;
+	handleListEdit?: (list: ListType) => void;
 }
 function RenderListItem({ list, handleListEdit }: RenderListItemProps) {
 	const navigate = useNavigate();
@@ -81,7 +81,7 @@ function RenderListItem({ list, handleListEdit }: RenderListItemProps) {
 					>
 						<MenuItem
 							onClick={() => {
-								handleListEdit(list);
+								if (handleListEdit !== undefined) handleListEdit(list);
 								handleClose();
 							}}
 						>
@@ -90,17 +90,19 @@ function RenderListItem({ list, handleListEdit }: RenderListItemProps) {
 							</ListItemIcon>
 							<ListItemText>Edit</ListItemText>
 						</MenuItem>
-						<MenuItem
-							onClick={() => {
-								handleDelete(list.id);
-								handleClose();
-							}}
-						>
-							<ListItemIcon>
-								<Delete fontSize='small' />
-							</ListItemIcon>
-							<ListItemText>Delete</ListItemText>
-						</MenuItem>
+						{list.id !== DEFAULT_LIST_ID && (
+							<MenuItem
+								onClick={() => {
+									handleDelete(list.id);
+									handleClose();
+								}}
+							>
+								<ListItemIcon>
+									<Delete fontSize='small' />
+								</ListItemIcon>
+								<ListItemText>Delete</ListItemText>
+							</MenuItem>
+						)}
 					</Menu>
 				</>
 			}
@@ -108,7 +110,7 @@ function RenderListItem({ list, handleListEdit }: RenderListItemProps) {
 		>
 			<ListItemButton onClick={() => navigate(`/lists/${list.id}`)}>
 				<ListItemAvatar>
-					<Avatar>{list.child_list ? <EscalatorWarning /> : <ListAlt />}</Avatar>
+					<Avatar sx={{ bgcolor: list.id === DEFAULT_LIST_ID ? 'primary.main' : undefined }}>{list.child_list ? <EscalatorWarning /> : <ListAlt />}</Avatar>
 				</ListItemAvatar>
 
 				<ListItemText
@@ -130,11 +132,8 @@ function RenderListItem({ list, handleListEdit }: RenderListItemProps) {
 	);
 }
 
-type Lists = {
-	// groups: GroupType[];
-};
-export default function Lists(props: Lists) {
-	const { client } = useSupabase();
+export default function Lists() {
+	const { user } = useSupabase();
 	const { enqueueSnackbar } = useSnackbar();
 
 	const { data: lists, isLoading, isError, error } = useGetLists();
@@ -144,19 +143,21 @@ export default function Lists(props: Lists) {
 		if (isError) {
 			enqueueSnackbar(`Unable to get lists! ${(error as any).message}`, { variant: 'error' });
 		}
-	}, [isError]);
+	}, [isError, error, enqueueSnackbar]);
 
 	return (
 		<>
 			<Container maxWidth='sm' sx={{ paddingTop: 5, paddingBottom: 12 }}>
 				<Grid container spacing={2}>
-					<TransitionGroup component={List} sx={{ width: '100%' }} dense>
-						{lists?.map((list) => (
-							<Collapse key={list.id}>
-								<RenderListItem list={list} handleListEdit={setListEdit} />
-							</Collapse>
-						))}
-					</TransitionGroup>
+					{lists && (
+						<TransitionGroup component={List} sx={{ width: '100%' }} dense>
+							{[...lists.filter((l) => l.id === DEFAULT_LIST_ID)!, ...lists.filter((l) => l.id !== DEFAULT_LIST_ID)!]?.map((list) => (
+								<Collapse key={list.id}>
+									<RenderListItem list={list} handleListEdit={setListEdit} />
+								</Collapse>
+							))}
+						</TransitionGroup>
+					)}
 
 					{lists?.length === 0 && !isLoading && (
 						<Box style={{ marginTop: 100, textAlign: 'center', width: '100%' }}>

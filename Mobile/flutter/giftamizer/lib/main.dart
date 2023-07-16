@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:giftamizer/app.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:giftamizer/pages/account_page.dart';
 import 'package:giftamizer/pages/signin_page.dart';
 import 'package:giftamizer/pages/splash_page.dart';
-
-import 'components/navBarHandler.dart';
-
-// import 'appold.dart';
 
 Future<void> main() async {
   await Supabase.initialize(
@@ -15,7 +13,11 @@ Future<void> main() async {
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICAgInJvbGUiOiAiYW5vbiIsCiAgICAiaXNzIjogInN1cGFiYXNlIiwKICAgICJpYXQiOiAxNjczMTU0MDAwLAogICAgImV4cCI6IDE4MzA5MjA0MDAKfQ.I4w9kivih-1NEOTXy4f4CJI2VebzCFp384yeZrFQSts',
   );
 
-  runApp(const MyApp());
+  runApp(
+    const ProviderScope(
+      child: MyApp(),
+    ),
+  );
 }
 
 // Get a reference your Supabase client
@@ -132,7 +134,7 @@ class MyApp extends StatelessWidget {
       routes: <String, WidgetBuilder>{
         '/': (_) => const SplashPage(),
         '/signin': (_) => const SignInPage(),
-        '/app': (_) => const NavBarHandler(),
+        '/app': (_) => const App(),
         AccountPage.route: (context) => const AccountPage(),
       },
     );

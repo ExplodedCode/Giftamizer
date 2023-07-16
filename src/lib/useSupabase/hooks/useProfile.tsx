@@ -44,6 +44,9 @@ export const useGetProfile = () => {
 
 			return data as ProfileType;
 		},
+		onError: () => {
+			client.auth.signOut();
+		},
 	});
 };
 

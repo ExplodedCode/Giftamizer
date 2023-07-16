@@ -25,6 +25,11 @@ import {
 	DialogContent,
 	DialogTitle,
 	CircularProgress,
+	FormControl,
+	FormControlLabel,
+	FormGroup,
+	FormHelperText,
+	Switch,
 } from '@mui/material';
 import { useGetProfile, useSupabase, useUpdateProfile } from '../lib/useSupabase';
 import AvatarEditor from './AvatarEditor';
@@ -62,6 +67,8 @@ export default function AccountDialog(props: AccountDialogProps) {
 	const [lastName, setLastName] = React.useState('');
 	const [bio, setBio] = React.useState('');
 
+	const [enableLists, setEnableLists] = React.useState(false);
+
 	const [groupsWithoutCoOwner, setGroupsWithoutCoOwner] = React.useState<GroupsWithoutCoOwner[] | undefined>();
 	const [deleteOpen, setDeleteOpen] = React.useState(false);
 
@@ -69,9 +76,11 @@ export default function AccountDialog(props: AccountDialogProps) {
 		if (props.handleCloseMenu) props.handleCloseMenu();
 
 		if (profile) {
-			setFirstName(profile?.first_name);
-			setLastName(profile?.last_name);
-			setBio(profile?.bio);
+			setFirstName(profile.first_name);
+			setLastName(profile.last_name);
+			setBio(profile.bio);
+			setEnableLists(profile.enable_lists);
+
 			setOpen(true);
 		}
 
@@ -99,6 +108,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 				first_name: firstName,
 				last_name: lastName,
 				bio: bio,
+				enable_lists: enableLists,
 				avatar_token: profile?.avatar_token!,
 			})
 			.then(() => {
@@ -117,6 +127,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 				first_name: firstName,
 				last_name: lastName,
 				bio: bio,
+				enable_lists: enableLists,
 				avatar_token: token,
 			})
 			.catch((error) => {
@@ -202,6 +213,24 @@ export default function AccountDialog(props: AccountDialogProps) {
 								<EmailEditor />
 							</Grid>
 						)}
+
+						<Grid item xs={12}>
+							<Divider />
+						</Grid>
+
+						<Grid item xs={12}>
+							<Typography variant='h6' gutterBottom>
+								Account Settings
+							</Typography>
+							<FormControl component='fieldset' variant='standard'>
+								<FormGroup>
+									<FormControlLabel control={<Switch checked={enableLists} onChange={(e) => setEnableLists(e.target.checked)} />} label='Enable Lists' />
+									<FormHelperText>
+										Allows you to create item lists and assign them to groups. <i>Even create seperate managed lists for your kids or pets</i>.
+									</FormHelperText>
+								</FormGroup>
+							</FormControl>
+						</Grid>
 
 						<Grid item xs={12}>
 							<Divider />

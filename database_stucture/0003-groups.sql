@@ -22,7 +22,6 @@ CREATE TABLE IF NOT EXISTS public.group_members
   pinned boolean NOT NULL DEFAULT false,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
-  update_token timestamp with time zone,
 	
   PRIMARY KEY (group_id, user_id),
 
@@ -97,6 +96,10 @@ create policy "Members can view"
       select 1 from group_members
       where group_members.user_id = auth.uid() AND group_members.group_id = groups.id
     )
+	or not exists (
+	  select 1 from group_members 
+	  where group_members.group_id = groups.id
+  	)
   );
 create policy "Owners can update groups."
   on groups for update
@@ -216,14 +219,14 @@ create trigger on_publish_group_created
   after insert on public.groups
   for each row execute procedure public.handle_new_group();
 
--- updates update_token when a row into public.group_members when public.groups is created
+-- updates updated_at in group_members when groups is update
 create function public.handle_group_update()
 returns trigger
 language plpgsql
 security definer set search_path = public
 as $$
 begin
-  update public.group_members set update_token = NOW() where group_id = new.id;
+  update public.group_members set updated_at = NOW() where group_id = new.id;
   return new;
 end;
 $$;

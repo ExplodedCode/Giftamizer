@@ -20,6 +20,7 @@ export type ProfileType = {
 	first_name: string;
 	last_name: string;
 	bio: string;
+	enable_lists: boolean;
 	avatar_token: number | null;
 	created_at?: string;
 };
@@ -39,9 +40,22 @@ export interface ItemType {
 	user_id: string;
 	name: string;
 	description: string;
-	url: string;
+	url?: string;
+
+	lists?: ItemListType[];
+	newLists?: ListType[];
+
 	created_at?: Date;
 	updated_at?: Date;
+}
+
+export interface ItemListType {
+	list_id: string;
+	list: ItemListDetType;
+}
+
+export interface ItemListDetType {
+	name: string;
 }
 
 export interface ListType {
@@ -61,6 +75,9 @@ export interface GroupType {
 	name: string;
 	image_token: number | null;
 	my_membership: MyMembership[];
+
+	created_at?: Date;
+	updated_at?: Date;
 }
 
 export interface Member {
@@ -71,10 +88,12 @@ export interface Member {
 
 	deleted?: boolean;
 	external?: boolean;
+
+	created_at?: Date;
+	updated_at?: Date;
 }
 
 export interface ExternalInvite {
-	invite_id: string;
 	group_id: string;
 	email: string;
 	owner: boolean;
@@ -92,6 +111,7 @@ export interface MyMembership {
 }
 
 export interface Profile {
+	user_id?: string;
 	email: string;
 	first_name: string;
 	last_name: string;

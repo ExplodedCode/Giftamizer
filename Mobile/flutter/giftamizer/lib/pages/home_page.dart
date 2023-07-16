@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
-import '../components/navBarHandler.dart';
+import '../app.dart';
 
 class HomeMenu extends StatelessWidget {
   const HomeMenu({Key? key}) : super(key: key);
@@ -132,6 +132,7 @@ class FeedDetail extends StatelessWidget {
   final String feedId;
   const FeedDetail({Key? key, this.feedId = '1'}) : super(key: key);
   static const String route = '/feeds/detail';
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
