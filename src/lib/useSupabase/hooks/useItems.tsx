@@ -3,13 +3,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSupabase } from './useSupabase';
 import { ItemType } from '../types';
 
-const QUERY_KEY = ['items'];
+export const ITEMS_QUERY_KEY = ['items'];
 
 export const useGetItems = () => {
 	const { client, user } = useSupabase();
 
 	return useQuery({
-		queryKey: QUERY_KEY,
+		queryKey: ITEMS_QUERY_KEY,
 		queryFn: async (): Promise<ItemType[]> => {
 			const { data, error } = await client
 				.from('items')
@@ -24,8 +24,6 @@ export const useGetItems = () => {
 				)
 				.eq('user_id', user.id);
 			if (error) throw error;
-
-			console.log(data);
 
 			return data as ItemType[];
 		},
@@ -44,6 +42,8 @@ export const useCreateItem = () => {
 					user_id: user.id,
 					name: item.name,
 					description: item.description,
+					links: item.links,
+					custom_fields: item.custom_fields,
 				})
 				.select('*')
 				.single();
@@ -82,13 +82,77 @@ export const useCreateItem = () => {
 				});
 			}
 
-			console.log(newItem);
-
 			return newItem as ItemType;
 		},
 		{
 			onSuccess: (item: ItemType) => {
-				queryClient.setQueryData(QUERY_KEY, (prevItems: ItemType[] | undefined) => (prevItems ? [...prevItems, item] : [item]));
+				queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => (prevItems ? [...prevItems, item] : [item]));
+			},
+		}
+	);
+};
+
+export const useUpdateItems = () => {
+	const queryClient = useQueryClient();
+	const { client, user } = useSupabase();
+
+	return useMutation(
+		async (item: Omit<ItemType, 'user_id' | 'created_at' | 'updated_at'>): Promise<ItemType> => {
+			const { error } = await client
+				.from('items')
+				.update({
+					name: item.name,
+					description: item.description,
+					links: item.links,
+					custom_fields: item.custom_fields,
+				})
+				.eq('id', item.id);
+			if (error) throw error;
+
+			// update list-group relationships
+			const { data: listsData, error: ListsError } = await client.from('items_lists').select('*').eq('item_id', item.id);
+			if (ListsError) throw ListsError;
+			for (let list of item.newLists!) {
+				if (!listsData?.find((l) => l.item_id === list.id)) {
+					const { error } = await client.from('items_lists').upsert({
+						item_id: item.id,
+						list_id: list.id,
+						user_id: user.id,
+					});
+					if (error) throw error;
+				}
+			}
+
+			for (let list of listsData as any) {
+				if (!item.newLists?.find((l) => l.id === list.list_id)) {
+					const { error } = await client.from('items_lists').delete().eq('item_id', item.id).eq('list_id', list.list_id);
+					if (error) throw error;
+				}
+			}
+
+			// update list state
+			item.lists = item.newLists?.map((l) => {
+				return {
+					list_id: l.id,
+					list: {
+						name: l.name,
+					},
+				};
+			});
+
+			return item as ItemType;
+		},
+		{
+			onSuccess: (item_updated: ItemType) => {
+				queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => {
+					if (prevItems) {
+						const updatedLists = prevItems.map((item) => {
+							return item.id == item_updated.id ? item_updated : item;
+						});
+						return updatedLists;
+					}
+					return prevItems;
+				});
 			},
 		}
 	);
@@ -106,7 +170,7 @@ export const useDeleteItem = () => {
 		},
 		{
 			onSuccess: (id) => {
-				queryClient.setQueryData(QUERY_KEY, (prevItems: ItemType[] | undefined) => (prevItems ? prevItems.filter((item) => item.id !== id) : prevItems));
+				queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => (prevItems ? prevItems.filter((item) => item.id !== id) : prevItems));
 			},
 		}
 	);

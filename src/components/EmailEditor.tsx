@@ -7,7 +7,7 @@ import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider
 import LoadingButton from '@mui/lab/LoadingButton';
 import { Close, Edit, SyncAlt } from '@mui/icons-material';
 
-export default function AvatarEditor() {
+export default function EmailEditor() {
 	const { client } = useSupabase();
 	const { data: profile } = useGetProfile();
 

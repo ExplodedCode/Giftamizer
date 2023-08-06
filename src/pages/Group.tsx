@@ -4,7 +4,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useGetGroupMembers, useGetGroups, useSetGroupPin, useSupabase } from '../lib/useSupabase';
 
 import { Card, CardActionArea, CardContent, CardMedia, CircularProgress, Grid, Link as MUILink, Typography, Box, Breadcrumbs, AppBar, Toolbar, Checkbox, Grow } from '@mui/material';
-import { PushPinOutlined, PushPin, Person } from '@mui/icons-material';
+import { PushPinOutlined, PushPin, Person, EscalatorWarning } from '@mui/icons-material';
 
 import GroupSettingsDialog from '../components/GroupSettingsDialog';
 import NotFound from '../components/NotFound';
@@ -22,10 +22,12 @@ export default function Group() {
 	React.useEffect(() => {
 		// unsub from members realtime
 		return () => {
-			var groupMembersChannel = client.getChannels().find((c) => c.topic === `realtime:public:group_members:group_id=eq.${groupID}`);
-			if (groupMembersChannel) client.removeChannel(groupMembersChannel);
-			var externalInvitesChannel = client.getChannels().find((c) => c.topic === `realtime:public:external_invites:group_id=eq.${groupID}`);
-			if (externalInvitesChannel) client.removeChannel(externalInvitesChannel);
+			// var groupMembersChannel = client.getChannels().find((c) => c.topic === `realtime:public:group_members:group_id=eq.${groupID}`);
+			// if (groupMembersChannel) client.removeChannel(groupMembersChannel);
+			// var childListsChannel = client.getChannels().find((c) => c.topic === `realtime:public:lists_groups:group_id=eq.${groupID}`);
+			// if (childListsChannel) client.removeChannel(childListsChannel);
+			// var externalInvitesChannel = client.getChannels().find((c) => c.topic === `realtime:public:external_invites:group_id=eq.${groupID}`);
+			// if (externalInvitesChannel) client.removeChannel(externalInvitesChannel);
 		};
 	}, [client, groupID]);
 
@@ -81,14 +83,9 @@ export default function Group() {
 																backgroundColor: '#5cb660',
 																color: '#fff',
 															}}
-															image={
-																member.profile.avatar_token && member.profile.avatar_token !== -1
-																	? // @ts-ignore
-																	  `${client.supabaseUrl}/storage/v1/object/public/avatars/${member.user_id}?${member.profile.avatar_token}`
-																	: undefined
-															}
+															image={member.profile.image}
 														>
-															{member.profile.avatar_token && member.profile.avatar_token !== -1 ? '' : Array.from(String(member.profile.first_name).toUpperCase())[0]}
+															{member.profile.image ? '' : Array.from(String(member.profile.first_name).toUpperCase())[0]}
 														</CardMedia>
 
 														<CardContent>
@@ -98,9 +95,7 @@ export default function Group() {
 																		{member.profile.first_name} {member.profile.last_name}
 																	</Typography>
 																</Grid>
-																<Grid item>
-																	<Person />
-																</Grid>
+																<Grid item>{member.child_list ? <EscalatorWarning /> : <Person />}</Grid>
 															</Grid>
 														</CardContent>
 													</CardActionArea>

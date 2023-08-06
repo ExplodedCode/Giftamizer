@@ -34,10 +34,10 @@ import {
 	useMediaQuery,
 } from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
-import { Delete, DeleteForever, Logout, Save, Send, Settings } from '@mui/icons-material';
+import { Delete, DeleteForever, Email, EscalatorWarning, Logout, Save, Send, Settings } from '@mui/icons-material';
 
-import AvatarEditor from './AvatarEditor';
 import UserSearch from './UserSearch';
+import AvatarSelector from './AvatarSelector';
 
 interface RenderItemOptionsProps {
 	member: Member;
@@ -46,26 +46,22 @@ interface RenderItemOptionsProps {
 }
 
 function renderItem({ member, handleMemberEdit, owner }: RenderItemOptionsProps) {
-	// console.log(member);
-
 	return (
 		<ListItem>
 			<ListItemAvatar>
-				<Avatar
-					alt={`${member.profile.first_name} ${member.profile.last_name} `}
-					src={
-						member.profile.avatar_token && member.profile.avatar_token !== -1
-							? `${SUPABASE_URL}/storage/v1/object/public/avatars/${member.user_id}?${member.profile.avatar_token}`
-							: member.external
-							? '/email.png'
-							: '/defaultAvatar.png'
-					}
-				/>
+				{!member.child_list && !member.external ? (
+					<Avatar alt={`${member.profile.first_name} ${member.profile.last_name}`} src={member.profile.image ?? '/defaultAvatar.png'} />
+				) : (
+					<Avatar sx={{ bgcolor: 'primary.main' }}>
+						{member.child_list && <EscalatorWarning />}
+						{member.external && <Email />}
+					</Avatar>
+				)}
 			</ListItemAvatar>
 			<ListItemText
 				primary={
 					<>
-						{member.external ? member.profile.email : `${member.profile.first_name} ${member.profile.last_name} `}
+						{member.external ? member.profile.email : `${member.profile.first_name} ${member.profile.last_name}`}
 
 						{member.invite && (
 							<Typography sx={{ display: 'inline-block', ml: 1 }} color='GrayText'>
@@ -78,25 +74,33 @@ function renderItem({ member, handleMemberEdit, owner }: RenderItemOptionsProps)
 				secondary={!member.external && member.profile.email}
 			/>
 			<ListItemSecondaryAction>
-				<FormControl fullWidth>
-					<Select
-						value={member.owner ? 1 : 0}
-						onChange={(e) => {
-							if (e.target.value === -1) {
-								handleMemberEdit({ ...member, deleted: true });
-							} else {
-								handleMemberEdit({ ...member, owner: e.target.value === 1 ? true : false });
-							}
-						}}
-						size='small'
-						disabled={!owner}
-					>
-						<MenuItem value={0}>Member</MenuItem>
-						<MenuItem value={1}>Owner</MenuItem>
-						<Divider />
-						<MenuItem value={-1}>Remove Access</MenuItem>
-					</Select>
-				</FormControl>
+				{member.child_list ? (
+					owner && (
+						<Button variant='outlined' color='error'>
+							Remove
+						</Button>
+					)
+				) : (
+					<FormControl fullWidth>
+						<Select
+							value={member.owner ? 1 : 0}
+							onChange={(e) => {
+								if (e.target.value === -1) {
+									handleMemberEdit({ ...member, deleted: true });
+								} else {
+									handleMemberEdit({ ...member, owner: e.target.value === 1 ? true : false });
+								}
+							}}
+							size='small'
+							disabled={!owner}
+						>
+							<MenuItem value={0}>Member</MenuItem>
+							<MenuItem value={1}>Owner</MenuItem>
+							<Divider />
+							<MenuItem value={-1}>Remove Access</MenuItem>
+						</Select>
+					</FormControl>
+				)}
 			</ListItemSecondaryAction>
 		</ListItem>
 	);
@@ -121,6 +125,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 
 	const [open, setOpen] = React.useState(false);
 	const [name, setName] = React.useState('');
+	const [image, setImage] = React.useState<string | undefined>();
 
 	const [selectedInviteUsers, setSelectedInviteUsers] = React.useState<Profile[]>([]);
 	const [inviteUsersOwner, setInviteUsersOwner] = React.useState(false);
@@ -134,7 +139,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 	const handleInvite = async () => {
 		const mem = queryClient.getQueryData<Member[]>([...GROUPS_QUERY_KEY, groupID, 'members']);
 		inviteToGroup
-			.mutateAsync({ group: { ...group, name: name }, members: mem!, invites: selectedInviteUsers, inviteUsersOwner: inviteUsersOwner })
+			.mutateAsync({ group: { ...group, name: name, image: image }, members: mem!.filter((m) => !m.user_id.includes('_')), invites: selectedInviteUsers, inviteUsersOwner: inviteUsersOwner })
 			.then(() => {
 				handleClose();
 			})
@@ -147,7 +152,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 	const handleSave = async () => {
 		const mem = queryClient.getQueryData<Member[]>([...GROUPS_QUERY_KEY, groupID, 'members']);
 		updateGroup
-			.mutateAsync({ group: { ...group, name: name }, members: mem! })
+			.mutateAsync({ group: { ...group, name: name, image: image }, members: mem!.filter((m) => !m.user_id.includes('_')) })
 			.then(() => {
 				handleClose();
 			})
@@ -168,6 +173,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 
 	const handleOpen = async () => {
 		setName(group.name);
+		setImage(group.image);
 		setOpen(true);
 	};
 
@@ -176,11 +182,6 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 
 		setSelectedInviteUsers([]);
 		if (changed) refetchMembers();
-	};
-
-	const handleImageTokenUpdate = async (token: number | null) => {
-		const { error } = await client.from('groups').update({ image_token: token }).eq('id', groupID).select();
-		if (error) console.log(error);
 	};
 
 	const handleLeaveOpen = () => {
@@ -219,7 +220,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 			});
 	};
 
-	const changed = name !== group.name || stateUpdater !== '';
+	const changed = name !== group.name || image !== group.image || stateUpdater !== '';
 
 	return (
 		<>
@@ -239,7 +240,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 
 							<Grid container spacing={2}>
 								<Grid item xs={12}>
-									<AvatarEditor bucket='groups' filepath={group.id} imageToken={group.image_token} handleTokenUpdate={handleImageTokenUpdate} disabled={!owner} />
+									<AvatarSelector value={image} onChange={setImage} />
 								</Grid>
 								<Grid item xs={12}>
 									<TextField label='Group Name' variant='outlined' fullWidth value={name} onChange={(e) => setName(e.target.value)} disabled={!owner} />

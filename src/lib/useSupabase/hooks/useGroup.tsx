@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import moment from 'moment';
 
 import { useSupabase } from './useSupabase';
-import { ExternalInvite, GroupType, Member, Profile } from '../types';
+import { ExternalInvite, GroupType, ListType, Member, Profile } from '../types';
+import { dataUrlToFile } from '../../../components/AvatarSelector';
 
 export const GROUPS_QUERY_KEY = ['groups'];
 
@@ -46,7 +47,10 @@ export const useGetGroups = () => {
 				.eq('my_membership.user_id', user.id);
 			if (error) throw error;
 
-			return data as GroupType[];
+			return data.map((g) => {
+				// @ts-ignore
+				return { ...g, image: g.image_token && `${client.supabaseUrl}/storage/v1/object/public/groups/${g.id}?${g.image_token}` };
+			}) as GroupType[];
 		},
 	});
 };
@@ -69,7 +73,8 @@ export const useRefreshGroup = () => {
 				.eq('my_membership.user_id', user.id)
 				.single();
 
-			return data as GroupType;
+			// @ts-ignore
+			return { ...data, image: g.image_token && `${client.supabaseUrl}/storage/v1/object/public/groups/${g.id}?${g.image_token}` } as GroupType;
 		},
 		{
 			onSuccess: (update: GroupType) => {
@@ -102,14 +107,27 @@ export const useCreateGroup = () => {
 				.from('groups')
 				.insert({
 					name: group.name,
+					image_token: group.image ? Date.now() : null,
 				})
 				.select(`*`)
 				.single();
 
 			if (error) throw error;
+			var newGroup = data;
+
+			// upload image if exists
+			if (group.image?.startsWith('data:image/png;base64')) {
+				const { error: imageError } = await client.storage.from('groups').upload(`${data.id}`, await dataUrlToFile(group.image, 'avatar'), {
+					cacheControl: '3600',
+					upsert: true,
+				});
+				if (imageError) throw imageError;
+
+				// @ts-ignore
+				newGroup.image = `${client.supabaseUrl}/storage/v1/object/public/groups/${data.id}?${data.image_token}`;
+			}
 
 			// Add fake member relationships
-			var newGroup = data as any;
 			newGroup.my_membership = [
 				{
 					user_id: user.id,
@@ -133,7 +151,6 @@ export const useCreateGroup = () => {
 export const useGetGroupMembers = (group_id: string) => {
 	const { client, user } = useSupabase();
 
-	const refreshGroup = useRefreshGroup();
 	const refreshGroupMembers = useRefreshGroupMembers(group_id);
 	const queryClient = useQueryClient();
 
@@ -145,11 +162,9 @@ export const useGetGroupMembers = (group_id: string) => {
 			switch (payload.eventType) {
 				case 'INSERT':
 					await refreshGroupMembers.mutateAsync(payload.new as Member);
-					// if (payload.new.user_id == user.id) await refreshGroup.mutateAsync(payload.new.group_id);
 					break;
 				case 'UPDATE':
 					await refreshGroupMembers.mutateAsync(payload.new as Member);
-					// if (payload.new.user_id == user.id) await refreshGroup.mutateAsync(payload.new.group_id);
 					break;
 				case 'DELETE':
 					queryClient.setQueryData([...GROUPS_QUERY_KEY, group_id, 'members'], (prevGroupMember: Member[] | undefined) =>
@@ -159,6 +174,53 @@ export const useGetGroupMembers = (group_id: string) => {
 						queryClient.setQueryData(GROUPS_QUERY_KEY, (prevGroups: GroupType[] | undefined) =>
 							prevGroups ? prevGroups.filter((group) => group.id !== payload.old.group_id) : prevGroups
 						);
+					break;
+			}
+		})
+		.subscribe();
+
+	// child lists
+	client
+		.channel(`public:lists_groups:group_id=eq.${group_id}`)
+		.on('postgres_changes', { event: '*', schema: 'public', table: 'lists_groups', filter: `group_id=eq.${group_id}` }, async (payload) => {
+			console.log(payload);
+			switch (payload.eventType) {
+				case 'INSERT':
+					await refreshGroupMembers.mutateAsync({
+						user_id: `${payload.new.user_id}_${payload.new.list_id}`,
+						owner: false,
+						invite: false,
+						profile: {
+							first_name: '',
+							last_name: '',
+							email: '',
+							bio: '',
+							avatar_token: null,
+							enable_lists: false,
+						},
+						child_list: true,
+					});
+					break;
+				case 'UPDATE':
+					await refreshGroupMembers.mutateAsync({
+						user_id: `${payload.new.user_id}_${payload.new.list_id}`,
+						owner: false,
+						invite: false,
+						profile: {
+							first_name: '',
+							last_name: '',
+							email: '',
+							bio: '',
+							avatar_token: null,
+							enable_lists: false,
+						},
+						child_list: true,
+					});
+					break;
+				case 'DELETE':
+					queryClient.setQueryData([...GROUPS_QUERY_KEY, group_id, 'members'], (prevGroupMember: Member[] | undefined) =>
+						prevGroupMember ? prevGroupMember.filter((member) => member.user_id !== `${payload.old.user_id}_${payload.old.list_id}`) : prevGroupMember
+					);
 					break;
 			}
 		})
@@ -217,6 +279,7 @@ export const useGetGroupMembers = (group_id: string) => {
 							first_name,
 							last_name,
 							bio,
+							enable_lists,
 							avatar_token
 						)
 					)
@@ -225,6 +288,50 @@ export const useGetGroupMembers = (group_id: string) => {
 				.neq('user_id', user.id)
 				.eq('group_id', group_id);
 			if (error) throw error;
+			var memberList: Member[] = (data as unknown as Member[]).map((m) => {
+				return {
+					...m,
+					profile: {
+						...m.profile,
+						// @ts-ignore
+						image: m.profile.avatar_token && m.profile.avatar_token !== -1 && `${client.supabaseUrl}/storage/v1/object/public/avatars/${m.user_id}?${m.profile.avatar_token}`,
+					},
+				};
+			}) as Member[];
+
+			// get and merge child lists
+			const { data: lists, error: ListsError } = await client
+				.from('lists')
+				.select(
+					`*,
+					lists_groups!inner(
+						group_id
+					),
+					profile:profiles(
+						first_name,
+						last_name
+					)`
+				)
+				.eq('lists_groups.group_id', group_id)
+				.eq('child_list', true);
+			if (ListsError) throw ListsError;
+			var childLists: Member[] = (lists as any[]).map((l) => {
+				return {
+					user_id: `${l.user_id}_${l.id}`,
+					owner: false,
+					invite: false,
+					profile: {
+						first_name: l.name,
+						last_name: '',
+						email: `${l.profile.first_name} ${l.profile.last_name}`,
+						// @ts-ignore
+						image: l.avatar_token ? `${client.supabaseUrl}/storage/v1/object/public/lists/${l.id}?${l.avatar_token}` : undefined,
+						bio: l.bio,
+						avatar_token: null,
+					},
+					child_list: true,
+				};
+			}) as Member[];
 
 			// get and merge external invites
 			const { data: invites, error: externalInvitesError } = await client.from('external_invites').select('*').eq('group_id', group_id);
@@ -245,7 +352,7 @@ export const useGetGroupMembers = (group_id: string) => {
 				};
 			}) as Member[];
 
-			return [...data, ...externalInvites] as any as Member[];
+			return sortMembers([...memberList, ...childLists, ...externalInvites] as any as Member[]);
 		},
 	});
 };
@@ -259,26 +366,72 @@ export const useRefreshGroupMembers = (group_id: string) => {
 			if ((moment(update.updated_at).diff(moment()) > 10000 || update.created_at === update.updated_at) && !update.external) {
 				console.log('Refresh from DB');
 
-				const { data, error } = await client
-					.from('group_members')
-					.select(
-						`user_id,
-					owner,
-					invite,
-					profile:profiles(
-							email,
-							first_name,
-							last_name,
-							bio,
-							avatar_token
+				if (update.user_id.includes('_')) {
+					// child list
+					const { data, error } = await client
+						.from('lists')
+						.select(
+							`*,
+							lists_groups!inner(
+								group_id
+							),
+							profile:profiles(
+								first_name,
+								last_name
+							)`
 						)
-					)`
-					)
-					.eq('user_id', update.user_id)
-					.eq('group_id', group_id)
-					.single();
-				if (error) throw error;
-				update = data as unknown as Member;
+						.eq('lists_groups.group_id', group_id)
+						.eq('id', update.user_id!.split('_')[1])
+						.eq('user_id', update.user_id!.split('_')[0])
+						.single();
+					if (error) throw error;
+					update = {
+						user_id: `${data.user_id}_${data.id}`,
+						owner: false,
+						invite: false,
+						profile: {
+							first_name: data.name,
+							last_name: '',
+							email: `${data.profile.first_name} ${data.profile.last_name}`,
+							// @ts-ignore
+							image: data.avatar_token && `${client.supabaseUrl}/storage/v1/object/public/lists/${data.id}?${data.avatar_token}`,
+							bio: data.bio,
+							avatar_token: null,
+							enable_lists: false,
+						},
+						child_list: true,
+					};
+				} else {
+					// user member
+					const { data, error } = await client
+						.from('group_members')
+						.select(
+							`user_id,
+							owner,
+							invite,
+							profile:profiles(
+									email,
+									first_name,
+									last_name,
+									bio,
+									avatar_token
+								)
+							)`
+						)
+						.eq('user_id', update.user_id)
+						.eq('group_id', group_id)
+						.single();
+					if (error) throw error;
+					update = data as unknown as Member;
+					update = {
+						...update,
+						profile: {
+							...update.profile,
+							// @ts-ignore
+							image: update.profile.avatar_token ? `${client.supabaseUrl}/storage/v1/object/public/avatars/${update.user_id}?${update.profile.avatar_token}` : '',
+						},
+					};
+				}
 			}
 
 			return update;
@@ -296,7 +449,7 @@ export const useRefreshGroupMembers = (group_id: string) => {
 							} else {
 								updatedGroupMembers = [...prevGroupMembers, update];
 							}
-							return updatedGroupMembers.filter((m) => m.user_id !== user.id);
+							return sortMembers(updatedGroupMembers.filter((m) => m.user_id !== user.id));
 						} else {
 							if (prevGroupMembers.find((m) => m.profile.email === update.profile.email)) {
 								updatedGroupMembers = prevGroupMembers.map((member) => {
@@ -305,10 +458,10 @@ export const useRefreshGroupMembers = (group_id: string) => {
 							} else {
 								updatedGroupMembers = [...prevGroupMembers, update];
 							}
-							return updatedGroupMembers.filter((m) => m.user_id !== user.id);
+							return sortMembers(updatedGroupMembers.filter((m) => m.user_id !== user.id));
 						}
 					}
-					return prevGroupMembers;
+					return sortMembers(prevGroupMembers ?? []);
 				});
 			},
 		}
@@ -368,8 +521,33 @@ export const useUpdateGroup = () => {
 
 	return useMutation(
 		async (update: GroupUpdate): Promise<GroupUpdate> => {
-			const { error: groupError } = await client.from('groups').update({ name: update.group.name }).eq('id', update.group.id);
+			const { data, error: groupError } = await client
+				.from('groups')
+				.update({
+					name: update.group.name,
+					image_token: update.group.image ? Date.now() : null,
+				})
+				.eq('id', update.group.id)
+				.select()
+				.single();
 			if (groupError) throw groupError;
+
+			// upload image if exists
+			if (update.group.image?.startsWith('data:image/png;base64') && data) {
+				const { error: imageError } = await client.storage.from('groups').upload(`${update.group.id}`, await dataUrlToFile(update.group.image, 'avatar'), {
+					cacheControl: '3600',
+					upsert: true,
+				});
+				if (imageError) throw imageError;
+
+				// @ts-ignore
+				update.group.image = `${client.supabaseUrl}/storage/v1/object/public/groups/${data.id}?${data.image_token}`;
+			} else if (data.image_token === null) {
+				const { error: imageDelError } = await client.storage.from('groups').remove([`${update.group.id}`]);
+				if (imageDelError) throw imageDelError;
+
+				update.group.image = undefined;
+			}
 
 			// Update Members
 			const { error: memberError } = await client.from('group_members').upsert(
@@ -423,6 +601,7 @@ export const useUpdateGroup = () => {
 								? {
 										...group,
 										name: update.group.name,
+										image: update.group.image,
 								  }
 								: group;
 						});
@@ -448,6 +627,34 @@ export const useInviteToGroup = () => {
 
 	return useMutation(
 		async (update: GroupInvite): Promise<GroupInvite> => {
+			const { data, error: groupError } = await client
+				.from('groups')
+				.update({
+					name: update.group.name,
+					image_token: update.group.image ? Date.now() : null,
+				})
+				.eq('id', update.group.id)
+				.select()
+				.single();
+			if (groupError) throw groupError;
+
+			// upload image if exists
+			if (update.group.image?.startsWith('data:image/png;base64') && data) {
+				const { error: imageError } = await client.storage.from('groups').upload(`${update.group.id}`, await dataUrlToFile(update.group.image, 'avatar'), {
+					cacheControl: '3600',
+					upsert: true,
+				});
+				if (imageError) throw imageError;
+
+				// @ts-ignore
+				update.group.image = `${client.supabaseUrl}/storage/v1/object/public/groups/${data.id}?${data.image_token}`;
+			} else if (data.image_token === null) {
+				const { error: imageDelError } = await client.storage.from('groups').remove([`${update.group.id}`]);
+				if (imageDelError) throw imageDelError;
+
+				update.group.image = undefined;
+			}
+
 			for (const inviteUser of update.invites) {
 				if (inviteUser.user_id) {
 					const { error } = await client.from('group_members').insert({ group_id: update.group.id, user_id: inviteUser.user_id, owner: update.inviteUsersOwner });
@@ -475,6 +682,22 @@ export const useInviteToGroup = () => {
 		},
 		{
 			onSuccess: (update: GroupInvite) => {
+				queryClient.setQueryData(GROUPS_QUERY_KEY, (prevGroups: GroupType[] | undefined) => {
+					if (prevGroups) {
+						const updatedGroups = prevGroups.map((group) => {
+							return group.id === update.group.id
+								? {
+										...group,
+										name: update.group.name,
+										image: update.group.image,
+								  }
+								: group;
+						});
+						return updatedGroups;
+					}
+					return prevGroups;
+				});
+
 				queryClient.setQueryData<Member[]>(
 					[...GROUPS_QUERY_KEY, update.group.id, 'members'],
 
@@ -491,6 +714,7 @@ export const useInviteToGroup = () => {
 									email: i.email,
 									bio: '',
 									avatar_token: null,
+									enable_lists: i.enable_lists,
 								},
 								external: i.user_id ? false : true,
 							};
@@ -595,4 +819,8 @@ export const useDeleteGroup = () => {
 			},
 		}
 	);
+};
+
+const sortMembers = (members: Member[]) => {
+	return members.sort((a, b) => (`${a.profile.first_name} ${a.profile.last_name}` > `${b.profile.first_name} ${b.profile.last_name}` ? 1 : -1));
 };

@@ -7,18 +7,18 @@ CREATE TABLE items (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-
 CREATE TABLE lists (
   id TEXT DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   child_list boolean NOT NULL DEFAULT false,
+  bio text,
+  avatar_token numeric,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   
   PRIMARY KEY (id, user_id)
 );
-
 CREATE TABLE items_lists (
   item_id UUID REFERENCES items(id) ON DELETE CASCADE,
   list_id TEXT,
@@ -30,7 +30,6 @@ CREATE TABLE items_lists (
     REFERENCES lists(id, user_id)
     ON DELETE CASCADE
 );
-
 CREATE TABLE lists_groups (
   list_id TEXT,
   group_id UUID,
@@ -74,13 +73,21 @@ CREATE POLICY "Group members can select items"
   ON items for select
   USING (
     EXISTS (
-      SELECT 1 
-      FROM group_members
-      JOIN lists_groups ON lists_groups.group_id = group_members.group_id
-      JOIN items_lists ON items_lists.list_id = lists_groups.list_id
-      WHERE 
-        group_members.user_id = auth.uid() 
-        AND items_lists.item_id = items.id
+      SELECT 1
+      FROM profiles
+      WHERE
+        profiles.user_id = items.user_id
+        AND profiles.enable_lists = false
+    ) OR (
+      EXISTS (
+        SELECT 1 
+        FROM group_members
+        JOIN lists_groups ON lists_groups.group_id = group_members.group_id
+        JOIN items_lists ON items_lists.list_id = lists_groups.list_id
+        WHERE 
+          group_members.user_id = auth.uid() 
+          AND items_lists.item_id = items.id
+      )
     )
   );
 

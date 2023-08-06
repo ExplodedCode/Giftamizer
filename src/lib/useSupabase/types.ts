@@ -19,6 +19,7 @@ export type ProfileType = {
 	email: string;
 	first_name: string;
 	last_name: string;
+	image?: string;
 	bio: string;
 	enable_lists: boolean;
 	avatar_token: number | null;
@@ -40,13 +41,20 @@ export interface ItemType {
 	user_id: string;
 	name: string;
 	description: string;
-	url?: string;
+	links?: string[];
+	custom_fields?: CustomField[];
 
 	lists?: ItemListType[];
 	newLists?: ListType[];
 
 	created_at?: Date;
 	updated_at?: Date;
+}
+
+export interface CustomField {
+	id: number;
+	name: string;
+	value: string;
 }
 
 export interface ItemListType {
@@ -63,6 +71,8 @@ export interface ListType {
 	user_id: string;
 	name: string;
 	child_list: boolean;
+	image?: string;
+	bio?: string;
 
 	groups: Omit<GroupType, 'image_token' | 'my_membership'>[];
 
@@ -73,6 +83,7 @@ export interface ListType {
 export interface GroupType {
 	id: string;
 	name: string;
+	image?: string;
 	image_token: number | null;
 	my_membership: MyMembership[];
 
@@ -87,6 +98,7 @@ export interface Member {
 	profile: Profile;
 
 	deleted?: boolean;
+	child_list?: boolean;
 	external?: boolean;
 
 	created_at?: Date;
@@ -116,7 +128,9 @@ export interface Profile {
 	first_name: string;
 	last_name: string;
 	bio: string;
+	enable_lists: boolean;
 	avatar_token: number | null;
+	image?: string;
 }
 
 export interface NotificationType {

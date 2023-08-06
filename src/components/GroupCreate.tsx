@@ -7,18 +7,20 @@ import { useTheme } from '@mui/material/styles';
 import { Button, Dialog, DialogContent, DialogContentText, DialogTitle, Fab, Grid, Stack, TextField, useMediaQuery } from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
 import { Add, Group } from '@mui/icons-material';
+import AvatarSelector from './AvatarSelector';
 
-export default function CreateGroup() {
+export default function GroupCreate() {
 	const theme = useTheme();
 	const { enqueueSnackbar } = useSnackbar();
 
 	const [open, setOpen] = React.useState(false);
 	const [name, setName] = React.useState('');
+	const [image, setImage] = React.useState<string | undefined>();
 
 	const createGroup = useCreateGroup();
 	const handleCreate = async () => {
 		createGroup
-			.mutateAsync({ name: name })
+			.mutateAsync({ name: name, image: image })
 			.then(() => {
 				handleClose();
 			})
@@ -38,12 +40,15 @@ export default function CreateGroup() {
 				<Add />
 			</Fab>
 
-			<Dialog open={open} onClose={() => setOpen(false)} maxWidth='sm' fullScreen={useMediaQuery(theme.breakpoints.down('md'))}>
+			<Dialog open={open} onClose={handleClose} maxWidth='sm' fullScreen={useMediaQuery(theme.breakpoints.down('md'))}>
 				<DialogTitle>Create Group</DialogTitle>
 				<DialogContent>
 					<Grid container spacing={2}>
 						<Grid item xs={12}>
 							<DialogContentText>TODO: describe what groups do...</DialogContentText>
+						</Grid>
+						<Grid item xs={12}>
+							<AvatarSelector value={image} onChange={setImage} />
 						</Grid>
 						<Grid item xs={12}>
 							<TextField autoFocus fullWidth label='Group Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} />

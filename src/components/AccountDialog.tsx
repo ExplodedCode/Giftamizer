@@ -32,9 +32,9 @@ import {
 	Switch,
 } from '@mui/material';
 import { useGetProfile, useSupabase, useUpdateProfile } from '../lib/useSupabase';
-import AvatarEditor from './AvatarEditor';
 import EmailEditor from './EmailEditor';
 import { Link } from 'react-router-dom';
+import AvatarSelector from './AvatarSelector';
 
 const Transition = React.forwardRef(function Transition(
 	props: TransitionProps & {
@@ -65,6 +65,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 
 	const [firstName, setFirstName] = React.useState('');
 	const [lastName, setLastName] = React.useState('');
+	const [image, setImage] = React.useState<string | undefined>();
 	const [bio, setBio] = React.useState('');
 
 	const [enableLists, setEnableLists] = React.useState(false);
@@ -78,6 +79,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 		if (profile) {
 			setFirstName(profile.first_name);
 			setLastName(profile.last_name);
+			setImage(profile.image);
 			setBio(profile.bio);
 			setEnableLists(profile.enable_lists);
 
@@ -107,6 +109,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 			.mutateAsync({
 				first_name: firstName,
 				last_name: lastName,
+				image: image,
 				bio: bio,
 				enable_lists: enableLists,
 				avatar_token: profile?.avatar_token!,
@@ -116,22 +119,6 @@ export default function AccountDialog(props: AccountDialogProps) {
 			})
 			.catch((error) => {
 				enqueueSnackbar(`Unable to update your profile. ${error}`, {
-					variant: 'error',
-				});
-			});
-	};
-
-	const handleImageTokenUpdate = async (token: number | null) => {
-		updateProfile
-			.mutateAsync({
-				first_name: firstName,
-				last_name: lastName,
-				bio: bio,
-				enable_lists: enableLists,
-				avatar_token: token,
-			})
-			.catch((error) => {
-				enqueueSnackbar(`Unable to update your profile image token. ${error}`, {
 					variant: 'error',
 				});
 			});
@@ -185,7 +172,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 				<Container maxWidth='md' sx={{ marginTop: 6 }}>
 					<Grid container spacing={2}>
 						<Grid item xs={12}>
-							<AvatarEditor bucket='avatars' filepath={user.id} imageToken={profile?.avatar_token!} handleTokenUpdate={handleImageTokenUpdate} />
+							<AvatarSelector value={image} onChange={setImage} />
 						</Grid>
 						<Grid item xs={6}>
 							<TextField fullWidth label='First Name' variant='outlined' value={firstName} onChange={(e) => setFirstName(e.target.value)} />

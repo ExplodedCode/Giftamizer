@@ -11,7 +11,7 @@ import { GroupType } from '../lib/useSupabase/types';
 import { Container, Card, CardActionArea, CardContent, CardMedia, Grid, Typography, AppBar, Breadcrumbs, Link as MUILink, Toolbar, Grow, Box, CircularProgress } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 
-import CreateGroup from '../components/CreateGroup';
+import GroupCreate from '../components/GroupCreate';
 
 interface RenderListItemProps {
 	group: GroupType;
@@ -34,14 +34,9 @@ function RenderGroups({ group, navigate }: RenderListItemProps) {
 							backgroundColor: '#5cb660',
 							color: '#fff',
 						}}
-						image={
-							group.image_token && group.image_token !== -1
-								? // @ts-ignore
-								  `${client.supabaseUrl}/storage/v1/object/public/groups/${group.id}?${group.image_token}`
-								: undefined
-						}
+						image={group.image}
 					>
-						{group.image_token && group.image_token !== -1 ? '' : Array.from(String(group.name).toUpperCase())[0]}
+						{group.image ? '' : Array.from(String(group.name).toUpperCase())[0]}
 					</CardMedia>
 
 					<CardContent>
@@ -121,7 +116,7 @@ export default function Groups() {
 				</Toolbar>
 			</AppBar>
 
-			<Container>
+			<Container sx={{ paddingBottom: 12 }}>
 				<TransitionGroup component={Grid} container justifyContent='center'>
 					{groups
 						?.filter((g) => !g.my_membership[0].invite)
@@ -144,7 +139,7 @@ export default function Groups() {
 				)}
 			</Container>
 
-			<CreateGroup />
+			<GroupCreate />
 		</>
 	);
 }
