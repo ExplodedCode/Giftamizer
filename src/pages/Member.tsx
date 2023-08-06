@@ -17,28 +17,30 @@ export default function Member() {
 	const { client, user } = useSupabase();
 	const { data: groups, isLoading: groupsLoading } = useGetGroups();
 	const { data: members, isLoading: membersLoading } = useGetGroupMembers(groupID!);
-	const { data: items, isLoading: memberLoading } = useGetMemberItems(groupID!, userID!);
-	const setGroupPin = useSetGroupPin();
+
+	const { data: items, isLoading: memberLoading } = useGetMemberItems(groupID!, userID!.split('_')[0] ?? userID!, userID!.split('_')[1] ?? undefined);
 
 	React.useEffect(() => {
 		// unsub from members realtime
 		return () => {
-			var groupMembersChannel = client.getChannels().find((c) => c.topic === `realtime:public:group_members:group_id=eq.${groupID}`);
-			if (groupMembersChannel) client.removeChannel(groupMembersChannel);
-			var externalInvitesChannel = client.getChannels().find((c) => c.topic === `realtime:public:external_invites:group_id=eq.${groupID}`);
-			if (externalInvitesChannel) client.removeChannel(externalInvitesChannel);
+			// var groupMembersChannel = client.getChannels().find((c) => c.topic === `realtime:public:group_members:group_id=eq.${groupID}`);
+			// if (groupMembersChannel) client.removeChannel(groupMembersChannel);
+			// var childListsChannel = client.getChannels().find((c) => c.topic === `realtime:public:lists_groups:group_id=eq.${groupID}`);
+			// if (childListsChannel) client.removeChannel(childListsChannel);
+			// var externalInvitesChannel = client.getChannels().find((c) => c.topic === `realtime:public:external_invites:group_id=eq.${groupID}`);
+			// if (externalInvitesChannel) client.removeChannel(externalInvitesChannel);
 		};
 	}, [client, groupID]);
 
 	return (
 		<>
-			{groupsLoading || membersLoading ? (
+			{groupsLoading || membersLoading || memberLoading ? (
 				<Box sx={{ display: 'flex', justifyContent: 'center', mt: 16 }}>
 					<CircularProgress />
 				</Box>
 			) : (
 				<>
-					{userID && groups?.find((g) => g.id === groupID && !g.my_membership[0].invite) ? (
+					{userID && groups?.find((g) => g.id === groupID && !g.my_membership[0].invite) && members?.find((m) => m.user_id === userID && !m.invite) ? (
 						<>
 							<AppBar position='static' sx={{ marginBottom: 2, bgcolor: 'background.paper' }}>
 								<Toolbar variant='dense'>

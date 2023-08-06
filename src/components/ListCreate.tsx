@@ -7,10 +7,11 @@ import { useCreateList, useGetGroups } from '../lib/useSupabase/hooks';
 import { useSnackbar } from 'notistack';
 
 import { useTheme } from '@mui/material/styles';
-import { Button, Dialog, DialogContent, DialogContentText, DialogTitle, Fab, FormControl, FormControlLabel, Grid, Stack, Switch, TextField, useMediaQuery } from '@mui/material';
+import { Button, Collapse, Dialog, DialogContent, DialogContentText, DialogTitle, Fab, FormControl, FormControlLabel, Grid, Stack, Switch, TextField, useMediaQuery } from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
 import { Add } from '@mui/icons-material';
 import GroupSelector from './GroupSelector';
+import AvatarSelector from './AvatarSelector';
 
 export default function CreateList() {
 	const theme = useTheme();
@@ -26,12 +27,14 @@ export default function CreateList() {
 	const [name, setName] = React.useState('');
 	const [selectedGroups, setSelectedGroups] = React.useState<Omit<GroupType, 'image_token' | 'my_membership'>[]>([]);
 	const [childList, setChildList] = React.useState<boolean>(false);
+	const [image, setImage] = React.useState<string | undefined>();
+	const [bio, setBio] = React.useState('');
 
 	const handleCreate = async () => {
 		console.log(selectedGroups);
 
 		await createList
-			.mutateAsync({ user_id: user.id, name: name, child_list: childList, groups: selectedGroups })
+			.mutateAsync({ user_id: user.id, name: name, child_list: childList, image: image, bio: bio, groups: selectedGroups })
 			.then(() => {
 				handleClose();
 			})
@@ -42,6 +45,10 @@ export default function CreateList() {
 
 	const handleClose = async () => {
 		setName('');
+		setSelectedGroups([]);
+		setChildList(false);
+		setImage(undefined);
+		setBio('');
 
 		setOpen(false);
 	};
@@ -52,13 +59,18 @@ export default function CreateList() {
 				<Add />
 			</Fab>
 
-			<Dialog open={open} onClose={() => (createList.isLoading ? undefined : setOpen(false))} maxWidth='sm' fullScreen={useMediaQuery(theme.breakpoints.down('md'))}>
-				<DialogTitle>Create Item</DialogTitle>
+			<Dialog open={open} onClose={() => (createList.isLoading ? undefined : handleClose())} maxWidth='sm' fullScreen={useMediaQuery(theme.breakpoints.down('md'))}>
+				<DialogTitle>Create List</DialogTitle>
 				<DialogContent>
 					<Grid container spacing={2}>
 						<Grid item xs={12}>
 							<DialogContentText>TODO: describe what lists do...</DialogContentText>
 						</Grid>
+						{childList && (
+							<Grid item xs={12}>
+								<AvatarSelector value={image} onChange={setImage} />
+							</Grid>
+						)}
 						<Grid item xs={12}>
 							<TextField fullWidth label='Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} autoFocus disabled={createList.isLoading} />
 						</Grid>
@@ -73,6 +85,23 @@ export default function CreateList() {
 								/>
 							</FormControl>
 						</Grid>
+						{childList && (
+							<Grid item xs={12}>
+								<TextField
+									fullWidth
+									multiline
+									minRows={3}
+									maxRows={7}
+									label='Bio'
+									variant='outlined'
+									inputProps={{ maxLength: 250 }}
+									value={bio}
+									onChange={(e) => setBio(e.target.value)}
+									helperText={`${bio.length} / 250`}
+								/>
+							</Grid>
+						)}
+
 						<Grid item xs={12}>
 							<Stack direction='row' justifyContent='flex-end' spacing={2}>
 								<Button color='inherit' onClick={handleClose} disabled={createList.isLoading}>

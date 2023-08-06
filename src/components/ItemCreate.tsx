@@ -4,11 +4,28 @@ import { useSupabase, useCreateItem, useGetProfile, DEFAULT_LIST_ID } from '../l
 import { useSnackbar } from 'notistack';
 
 import { useTheme } from '@mui/material/styles';
-import { Button, Dialog, DialogContent, DialogContentText, DialogTitle, Fab, Grid, Stack, TextField, useMediaQuery } from '@mui/material';
+import {
+	Button,
+	Dialog,
+	DialogContent,
+	DialogContentText,
+	DialogTitle,
+	Fab,
+	FormControl,
+	Grid,
+	IconButton,
+	InputAdornment,
+	InputLabel,
+	OutlinedInput,
+	Stack,
+	TextField,
+	Tooltip,
+	useMediaQuery,
+} from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
-import { Add } from '@mui/icons-material';
+import { Add, AddLink, Delete, Visibility, VisibilityOff } from '@mui/icons-material';
 import ListSelector from './ListSelector';
-import { ListType } from '../lib/useSupabase/types';
+import { CustomField, ListType } from '../lib/useSupabase/types';
 
 export default function ItemCreate() {
 	const theme = useTheme();
@@ -18,6 +35,8 @@ export default function ItemCreate() {
 
 	const [name, setName] = React.useState('');
 	const [description, setDescription] = React.useState('');
+	const [links, setLinks] = React.useState<string[]>(['']);
+	const [customFields, setCustomFields] = React.useState<CustomField[]>([]);
 	const [lists, setLists] = React.useState<ListType[]>([]);
 
 	const { user } = useSupabase();
@@ -29,7 +48,9 @@ export default function ItemCreate() {
 			.mutateAsync({
 				name: name,
 				description: description,
-				newLists: profile?.enable_lists ? lists : [{ id: DEFAULT_LIST_ID, user_id: user.id, name: 'Default List', child_list: false, groups: [] }],
+				links: links.map((l) => l.trim()).filter((l) => l.trim().length !== 0),
+				custom_fields: customFields,
+				newLists: profile?.enable_lists ? lists : [],
 			})
 			.then(() => {
 				handleClose();
@@ -42,6 +63,8 @@ export default function ItemCreate() {
 	const handleClose = async () => {
 		setName('');
 		setDescription('');
+		setLinks(['']);
+		setCustomFields([]);
 		setLists([]);
 
 		setOpen(false);
@@ -53,7 +76,7 @@ export default function ItemCreate() {
 				<Add />
 			</Fab>
 
-			<Dialog open={open} onClose={() => setOpen(false)} maxWidth='sm' fullScreen={useMediaQuery(theme.breakpoints.down('md'))}>
+			<Dialog open={open} onClose={handleClose} maxWidth='sm' fullScreen={useMediaQuery(theme.breakpoints.down('md'))}>
 				<DialogTitle>Create Item</DialogTitle>
 				<DialogContent>
 					<Grid container spacing={2}>
@@ -66,21 +89,115 @@ export default function ItemCreate() {
 						<Grid item xs={12}>
 							<TextField fullWidth label='Description' variant='outlined' value={description} onChange={(e) => setDescription(e.target.value)} />
 						</Grid>
+						{links.map((link, index) => (
+							<Grid key={index} item xs={12}>
+								<FormControl fullWidth variant='outlined'>
+									<InputLabel htmlFor='outlined-adornment-password'>URL</InputLabel>
+									<OutlinedInput
+										value={link}
+										onChange={(e) => {
+											setLinks(links.map((l, i) => (i === index ? e.target.value : l)));
+										}}
+										endAdornment={
+											<InputAdornment position='end'>
+												<Tooltip title={index === 0 ? 'Add another URL' : 'Remove URL'} placement='left'>
+													<IconButton
+														onClick={() => {
+															if (index === 0) {
+																setLinks([...links, '']);
+															} else {
+																setLinks(links.filter((l, i) => i !== index));
+															}
+														}}
+														edge='end'
+													>
+														{index === 0 ? <AddLink /> : <Delete />}
+													</IconButton>
+												</Tooltip>
+											</InputAdornment>
+										}
+										label='URL'
+									/>
+								</FormControl>
+							</Grid>
+						))}
+						{customFields.map((field, index) => (
+							<Grid key={index} item xs={12}>
+								<Grid container justifyContent='flex-start' spacing={2}>
+									<Grid item xs={5}>
+										<TextField
+											fullWidth
+											label={`Custom Field ${index + 1}`}
+											variant='outlined'
+											value={customFields.find((f) => f.id === field.id)?.name}
+											onChange={(e) => {
+												setCustomFields(customFields.map((f, i) => (f.id === field.id ? { ...f, name: e.target.value } : f)));
+											}}
+										/>
+									</Grid>
+
+									<Grid item xs={7}>
+										<FormControl fullWidth variant='outlined'>
+											<InputLabel>Value</InputLabel>
+											<OutlinedInput
+												value={customFields.find((f) => f.id === field.id)?.value}
+												onChange={(e) => {
+													setCustomFields(customFields.map((f, i) => (f.id === field.id ? { ...f, value: e.target.value } : f)));
+												}}
+												endAdornment={
+													<InputAdornment position='end'>
+														<Tooltip title='Remove Field' placement='left'>
+															<IconButton
+																onClick={() => {
+																	setCustomFields(customFields.filter((f) => f.id !== field.id));
+																}}
+																edge='end'
+															>
+																<Delete />
+															</IconButton>
+														</Tooltip>
+													</InputAdornment>
+												}
+												label='Value'
+											/>
+										</FormControl>
+									</Grid>
+								</Grid>
+							</Grid>
+						))}
+
 						{profile?.enable_lists && (
 							<Grid item xs={12}>
 								<ListSelector value={lists} onChange={(v) => setLists(v)} />
 							</Grid>
 						)}
 						<Grid item xs={12}>
-							<Stack direction='row' justifyContent='flex-end' spacing={2}>
-								<Button color='inherit' onClick={handleClose}>
-									Cancel
-								</Button>
+							<Grid container justifyContent='flex-start' spacing={2}>
+								<Grid item xs>
+									<Stack direction='row' justifyContent='flex-start' spacing={2}>
+										<Button
+											variant='outlined'
+											size='small'
+											color='inherit'
+											startIcon={<Add />}
+											onClick={() => setCustomFields([...customFields, { id: customFields.length, name: '', value: '' }])}
+										>
+											Field
+										</Button>
+									</Stack>
+								</Grid>
+								<Grid item>
+									<Stack direction='row' justifyContent='flex-end' spacing={2}>
+										<Button color='inherit' onClick={handleClose}>
+											Cancel
+										</Button>
 
-								<LoadingButton onClick={handleCreate} disabled={name.length === 0} endIcon={<Add />} loading={createItem.isLoading} loadingPosition='end' variant='contained'>
-									Create
-								</LoadingButton>
-							</Stack>
+										<LoadingButton onClick={handleCreate} disabled={name.length === 0} endIcon={<Add />} loading={createItem.isLoading} loadingPosition='end' variant='contained'>
+											Create
+										</LoadingButton>
+									</Stack>
+								</Grid>
+							</Grid>
 						</Grid>
 					</Grid>
 				</DialogContent>

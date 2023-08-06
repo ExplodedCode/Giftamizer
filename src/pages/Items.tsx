@@ -1,13 +1,14 @@
 import React, { useEffect } from 'react';
+import { useSnackbar } from 'notistack';
 
-import { useDeleteItem, useGetItems, useGetProfile, useSupabase } from '../lib/useSupabase';
+import { ExtractDomain, useDeleteItem, useGetItems, useGetProfile, useSupabase } from '../lib/useSupabase';
 import { ItemType } from '../lib/useSupabase/types';
 
-import { Container, Card, CardContent, CardMedia, Grid, Typography, Grow, Box, CircularProgress, Button, Stack, IconButton } from '@mui/material';
-
-import ItemCreate from '../components/ItemCreate';
+import { Container, Card, CardContent, CardMedia, Grid, Typography, Grow, Box, CircularProgress, Button, Stack, IconButton, Chip } from '@mui/material';
 import { Delete, Edit } from '@mui/icons-material';
-import { useSnackbar } from 'notistack';
+
+import ItemUpdate from '../components/ItemUpdate';
+import ItemCreate from '../components/ItemCreate';
 
 // type ItemsProps = {};
 export default function Items() {
@@ -17,6 +18,8 @@ export default function Items() {
 	const { data: profile } = useGetProfile();
 	const { data: items, isLoading, isError, error } = useGetItems();
 	const deleteItem = useDeleteItem();
+
+	const [itemEdit, setItemEdit] = React.useState<ItemType | null>(null);
 
 	useEffect(() => {
 		if (isError) {
@@ -41,17 +44,31 @@ export default function Items() {
 											<Typography variant='subtitle1' color='text.secondary' component='div'>
 												{i.description}
 											</Typography>
-											<Typography variant='body2' color='text.secondary'>
-												{i.lists?.map((l) => l.list.name).join(', ')}
-											</Typography>
+
+											{profile?.enable_lists && (
+												<>
+													<Stack direction='row' justifyContent='flex-start' spacing={1}>
+														{i.lists?.map((l) => (
+															<Chip label={l.list.name} size='small' />
+														))}
+													</Stack>
+												</>
+											)}
 										</CardContent>
 
 										<Box sx={{ display: 'flex', alignItems: 'center', padding: 1 }}>
 											<Grid container justifyContent='flex-start' spacing={2}>
 												<Grid item xs>
 													<Stack direction='row' justifyContent='flex-start' spacing={2}>
-														<Button color='primary'>Edit</Button>
-														<Button color='info'>amazon.com</Button>
+														<Button color='primary' onClick={() => setItemEdit(i)}>
+															Edit
+														</Button>
+
+														{i.links?.map((link, i) => (
+															<Button key={i} href={link} target='_blank' color='info'>
+																{ExtractDomain(link)}
+															</Button>
+														))}
 													</Stack>
 												</Grid>
 												<Grid item>
@@ -64,36 +81,43 @@ export default function Items() {
 									</Box>
 								</Card>
 
-								{/* <Card sx={{ maxWidth: 345, display: { sm: 'none', xs: 'flex' } }}> */}
+								{/* Mobile card */}
 								<Card sx={{ display: { sm: 'none', xs: 'block' } }}>
 									<CardMedia component='img' alt='green iguana' height='240' image={`https://picsum.photos/300/200?id=${index}`} />
 									<CardContent>
-										<Typography gutterBottom variant='h5' component='div'>
+										<Typography variant='h5' component='div'>
 											{i.name}
 										</Typography>
-										<Typography variant='body2' color='text.secondary'>
+										<Typography gutterBottom variant='body2' color='text.secondary'>
 											{i.description}
 										</Typography>
 
-										{/* {profile?.enable_lists && (
-											<Typography variant='body2' color='text.secondary'>
-												{i.lists?.map((l) => l.list.name).join(', ')}
-											</Typography>
-										)} */}
+										{profile?.enable_lists && (
+											<>
+												<Stack direction='row' justifyContent='flex-start' spacing={1}>
+													{i.lists?.map((l) => (
+														<Chip label={l.list.name} size='small' />
+													))}
+												</Stack>
+											</>
+										)}
 
-										<Typography variant='body2' color='text.secondary'>
-											{i.lists?.map((l) => l.list.name).join(', ')}
-										</Typography>
+										<Stack direction='row' justifyContent='flex-start' spacing={1}>
+											{i.links?.map((link, i) => (
+												<Button key={i} href={link} target='_blank' color='info' size='small'>
+													{ExtractDomain(link)}
+												</Button>
+											))}
+										</Stack>
 									</CardContent>
-									<Box sx={{ display: 'flex', alignItems: 'center', padding: 1 }}>
+									{/* <Box sx={{ display: 'flex', alignItems: 'center', padding: 1 }}>
 										<Grid container justifyContent='flex-start' spacing={2}>
 											<Grid item xs>
-												<Stack direction='row' justifyContent='flex-start' spacing={2}>
-													<IconButton color='primary'>
-														<Edit />
-													</IconButton>
-													<Button color='info'>amazon.com</Button>
-												</Stack>
+											<Stack direction='row' justifyContent='flex-start' spacing={2}>
+												<IconButton color='primary' onClick={() => setItemEdit(i)}>
+													<Edit />
+												</IconButton>
+											</Stack>
 											</Grid>
 											<Grid item>
 												<IconButton color='error' onClick={() => deleteItem.mutateAsync(i.id)}>
@@ -101,7 +125,7 @@ export default function Items() {
 												</IconButton>
 											</Grid>
 										</Grid>
-									</Box>
+									</Box> */}
 								</Card>
 							</Grid>
 						</Grow>
@@ -127,6 +151,7 @@ export default function Items() {
 			</Container>
 
 			<ItemCreate />
+			<ItemUpdate item={itemEdit} onClose={() => setItemEdit(null)} />
 		</>
 	);
 }

@@ -199,18 +199,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 							<Notifications />
 							<Tooltip title='Open settings'>
 								<IconButton onClick={isLoading ? undefined : handleOpenUserMenu} sx={{ p: 0 }}>
-									{isLoading ? (
-										<CircularProgress color='inherit' />
-									) : (
-										<Avatar
-											alt={profile?.first_name}
-											src={
-												profile?.avatar_token && profile?.avatar_token !== -1
-													? `${SUPABASE_URL}/storage/v1/object/public/avatars/${user.id}?${profile.avatar_token}`
-													: '/defaultAvatar.png'
-											}
-										/>
-									)}
+									{isLoading ? <CircularProgress color='inherit' /> : <Avatar alt={profile?.first_name} src={profile?.image || '/defaultAvatar.png'} />}
 								</IconButton>
 							</Tooltip>
 						</Stack>

@@ -36,7 +36,7 @@ export default function UserSearch(props: UserSearchProps) {
 
 				const search = request.input.replaceAll(' ', '+') + ':*';
 				const excludeUsers = props.members
-					.filter((m) => !m.external)
+					.filter((m) => !m.external && !m.user_id.includes('_'))
 					.map((m) => m.user_id)
 					.concat(props.selectedInviteUsers?.filter((u) => u?.user_id).map((m) => m.user_id) as any);
 
@@ -99,6 +99,7 @@ export default function UserSearch(props: UserSearchProps) {
 							email: inputValue,
 							bio: '',
 							avatar_token: null,
+							enable_lists: true,
 						});
 					}
 					return filtered;

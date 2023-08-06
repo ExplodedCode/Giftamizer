@@ -2,21 +2,25 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useSupabase } from './useSupabase';
 import { ListType } from '../types';
+import { dataUrlToFile } from '../../../components/AvatarSelector';
 
 export const DEFAULT_LIST_ID = 'default';
 
-const QUERY_KEY = ['lists'];
+export const LISTS_QUERY_KEY = ['lists'];
 
 export const useGetLists = () => {
 	const { client, user } = useSupabase();
 
 	return useQuery({
-		queryKey: QUERY_KEY,
+		queryKey: LISTS_QUERY_KEY,
 		queryFn: async (): Promise<ListType[]> => {
 			const { data, error } = await client.from('lists').select('*, groups( id, name )').eq('user_id', user.id);
 			if (error) throw error;
 
-			return data as ListType[];
+			return data.map((l) => {
+				// @ts-ignore
+				return { ...l, image: l.avatar_token && `${client.supabaseUrl}/storage/v1/object/public/lists/${l.id}?${l.avatar_token}` };
+			}) as ListType[];
 		},
 	});
 };
@@ -33,12 +37,25 @@ export const useCreateList = () => {
 					user_id: user.id,
 					name: list.name,
 					child_list: list.child_list,
+					bio: list.bio,
+					avatar_token: list.image ? Date.now() : null,
 				})
 				.select('*, groups( id, name )')
 				.single();
 			if (error) throw error;
-
 			var newlist = data as Omit<ListType, 'id' | 'created_at' | 'updated_at'>;
+
+			// upload image if exists
+			if (list.image?.startsWith('data:image/png;base64')) {
+				const { error: imageError } = await client.storage.from('lists').upload(`${data.id}`, await dataUrlToFile(list.image, 'avatar'), {
+					cacheControl: '3600',
+					upsert: true,
+				});
+				if (imageError) throw imageError;
+
+				// @ts-ignore
+				newlist.image = `${client.supabaseUrl}/storage/v1/object/public/lists/${data.id}?${data.avatar_token}`;
+			}
 
 			// Add list-group relationships
 			for (let group of list.groups) {
@@ -60,7 +77,7 @@ export const useCreateList = () => {
 		},
 		{
 			onSuccess: (list: ListType) => {
-				queryClient.setQueryData(QUERY_KEY, (prevLists: ListType[] | undefined) => (prevLists ? [...prevLists, list] : [list]));
+				queryClient.setQueryData(LISTS_QUERY_KEY, (prevLists: ListType[] | undefined) => (prevLists ? [...prevLists, list] : [list]));
 			},
 		}
 	);
@@ -72,14 +89,35 @@ export const useUpdateLists = () => {
 
 	return useMutation(
 		async (list: Omit<ListType, 'user_id' | 'created_at' | 'updated_at'>): Promise<ListType> => {
-			const { error } = await client
+			const { data, error } = await client
 				.from('lists')
 				.update({
 					name: list.name,
 					child_list: list.child_list,
+					bio: list.bio,
+					avatar_token: list.image ? Date.now() : null,
 				})
-				.eq('id', list.id);
+				.eq('id', list.id)
+				.select()
+				.single();
 			if (error) throw error;
+
+			// upload image if exists
+			if (list.image?.startsWith('data:image/png;base64') && data) {
+				const { error: imageError } = await client.storage.from('lists').upload(`${list.id}`, await dataUrlToFile(list.image, 'avatar'), {
+					cacheControl: '3600',
+					upsert: true,
+				});
+				if (imageError) throw imageError;
+
+				// @ts-ignore
+				list.image = `${client.supabaseUrl}/storage/v1/object/public/lists/${data.id}?${data.avatar_token}`;
+			} else if (data.avatar_token === null) {
+				const { error: imageDelError } = await client.storage.from('lists').remove([`${list.id}`]);
+				if (imageDelError) throw imageDelError;
+
+				list.image = undefined;
+			}
 
 			// update list-group relationships
 			const { data: listsData, error: ListsError } = await client.from('lists_groups').select('*').eq('list_id', list.id);
@@ -106,7 +144,7 @@ export const useUpdateLists = () => {
 		},
 		{
 			onSuccess: (list_updated: ListType) => {
-				queryClient.setQueryData(QUERY_KEY, (prevLists: ListType[] | undefined) => {
+				queryClient.setQueryData(LISTS_QUERY_KEY, (prevLists: ListType[] | undefined) => {
 					if (prevLists) {
 						const updatedLists = prevLists.map((list) => {
 							return list.id == list_updated.id ? list_updated : list;
@@ -132,7 +170,7 @@ export const useDeleteList = () => {
 		},
 		{
 			onSuccess: (id) => {
-				queryClient.setQueryData(QUERY_KEY, (prevLists: ListType[] | undefined) => (prevLists ? prevLists.filter((list) => list.id !== id) : prevLists));
+				queryClient.setQueryData(LISTS_QUERY_KEY, (prevLists: ListType[] | undefined) => (prevLists ? prevLists.filter((list) => list.id !== id) : prevLists));
 			},
 		}
 	);
