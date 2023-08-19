@@ -34,7 +34,7 @@ import {
 import { useGetProfile, useSupabase, useUpdateProfile } from '../lib/useSupabase';
 import EmailEditor from './EmailEditor';
 import { Link } from 'react-router-dom';
-import AvatarSelector from './AvatarSelector';
+import ImageCropper from './ImageCropper';
 
 const Transition = React.forwardRef(function Transition(
 	props: TransitionProps & {
@@ -172,7 +172,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 				<Container maxWidth='md' sx={{ marginTop: 6 }}>
 					<Grid container spacing={2}>
 						<Grid item xs={12}>
-							<AvatarSelector value={image} onChange={setImage} />
+							<ImageCropper value={image} onChange={setImage} />
 						</Grid>
 						<Grid item xs={6}>
 							<TextField fullWidth label='First Name' variant='outlined' value={firstName} onChange={(e) => setFirstName(e.target.value)} />

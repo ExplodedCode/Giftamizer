@@ -37,7 +37,7 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import { Delete, DeleteForever, Email, EscalatorWarning, Logout, Save, Send, Settings } from '@mui/icons-material';
 
 import UserSearch from './UserSearch';
-import AvatarSelector from './AvatarSelector';
+import ImageCropper from './ImageCropper';
 
 interface RenderItemOptionsProps {
 	member: Member;
@@ -240,7 +240,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 
 							<Grid container spacing={2}>
 								<Grid item xs={12}>
-									<AvatarSelector value={image} onChange={setImage} />
+									<ImageCropper value={image} onChange={setImage} />
 								</Grid>
 								<Grid item xs={12}>
 									<TextField label='Group Name' variant='outlined' fullWidth value={name} onChange={(e) => setName(e.target.value)} disabled={!owner} />

@@ -3,7 +3,8 @@ import moment from 'moment';
 
 import { useSupabase } from './useSupabase';
 import { ExternalInvite, GroupType, ListType, Member, Profile } from '../types';
-import { dataUrlToFile } from '../../../components/AvatarSelector';
+import { dataUrlToFile } from '../../../components/ImageCropper';
+import { LISTS_QUERY_KEY } from './useLists';
 
 export const GROUPS_QUERY_KEY = ['groups'];
 
@@ -609,6 +610,25 @@ export const useUpdateGroup = () => {
 					}
 					return prevGroups;
 				});
+
+				queryClient.setQueryData(LISTS_QUERY_KEY, (prevLists: ListType[] | undefined) => {
+					if (prevLists) {
+						const updatedLists = prevLists.map((list) => {
+							list.groups = list.groups?.map((g) => {
+								return g.id === update.group.id
+									? {
+											...g,
+											name: update.group.name,
+									  }
+									: g;
+							});
+
+							return list;
+						});
+						return updatedLists;
+					}
+					return prevLists;
+				});
 			},
 		}
 	);
@@ -794,6 +814,17 @@ export const useLeaveGroup = () => {
 		{
 			onSuccess: (id) => {
 				queryClient.setQueryData(GROUPS_QUERY_KEY, (prevGroups: GroupType[] | undefined) => (prevGroups ? prevGroups.filter((group) => group.id !== id) : prevGroups));
+
+				// update lists
+				queryClient.setQueryData(LISTS_QUERY_KEY, (prevLists: ListType[] | undefined) => {
+					if (prevLists) {
+						return prevLists.map((list) => {
+							list.groups = list.groups?.filter((g) => g.id !== id);
+							return list;
+						});
+					}
+					return prevLists;
+				});
 			},
 		}
 	);
@@ -816,6 +847,17 @@ export const useDeleteGroup = () => {
 		{
 			onSuccess: (id) => {
 				queryClient.setQueryData(GROUPS_QUERY_KEY, (prevGroups: GroupType[] | undefined) => (prevGroups ? prevGroups.filter((group) => group.id !== id) : prevGroups));
+
+				// update lists
+				queryClient.setQueryData(LISTS_QUERY_KEY, (prevLists: ListType[] | undefined) => {
+					if (prevLists) {
+						return prevLists.map((list) => {
+							list.groups = list.groups?.filter((g) => g.id !== id);
+							return list;
+						});
+					}
+					return prevLists;
+				});
 			},
 		}
 	);

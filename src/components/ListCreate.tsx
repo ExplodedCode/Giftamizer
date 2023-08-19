@@ -11,7 +11,7 @@ import { Button, Collapse, Dialog, DialogContent, DialogContentText, DialogTitle
 import LoadingButton from '@mui/lab/LoadingButton';
 import { Add } from '@mui/icons-material';
 import GroupSelector from './GroupSelector';
-import AvatarSelector from './AvatarSelector';
+import ImageCropper from './ImageCropper';
 
 export default function CreateList() {
 	const theme = useTheme();
@@ -68,7 +68,7 @@ export default function CreateList() {
 						</Grid>
 						{childList && (
 							<Grid item xs={12}>
-								<AvatarSelector value={image} onChange={setImage} />
+								<ImageCropper value={image} onChange={setImage} />
 							</Grid>
 						)}
 						<Grid item xs={12}>
