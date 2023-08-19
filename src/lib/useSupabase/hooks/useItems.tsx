@@ -146,10 +146,10 @@ export const useUpdateItems = () => {
 			onSuccess: (item_updated: ItemType) => {
 				queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => {
 					if (prevItems) {
-						const updatedLists = prevItems.map((item) => {
+						const updatedItems = prevItems.map((item) => {
 							return item.id == item_updated.id ? item_updated : item;
 						});
-						return updatedLists;
+						return updatedItems;
 					}
 					return prevItems;
 				});

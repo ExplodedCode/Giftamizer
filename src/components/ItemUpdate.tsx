@@ -23,7 +23,7 @@ import {
 	OutlinedInput,
 	Tooltip,
 } from '@mui/material';
-import { Add, AddLink, Delete } from '@mui/icons-material';
+import { Add, AddLink, Delete, Save } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 
 import ListSelector from './ListSelector';
@@ -207,7 +207,7 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 										Cancel
 									</Button>
 
-									<LoadingButton onClick={handleSave} disabled={name.length === 0} endIcon={<Add />} loading={updateItems.isLoading} loadingPosition='end' variant='contained'>
+									<LoadingButton onClick={handleSave} disabled={name.length === 0} endIcon={<Save />} loading={updateItems.isLoading} loadingPosition='end' variant='contained'>
 										Save
 									</LoadingButton>
 								</Stack>

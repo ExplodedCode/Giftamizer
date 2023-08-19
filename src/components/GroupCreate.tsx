@@ -7,7 +7,7 @@ import { useTheme } from '@mui/material/styles';
 import { Button, Dialog, DialogContent, DialogContentText, DialogTitle, Fab, Grid, Stack, TextField, useMediaQuery } from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
 import { Add, Group } from '@mui/icons-material';
-import AvatarSelector from './AvatarSelector';
+import ImageCropper from './ImageCropper';
 
 export default function GroupCreate() {
 	const theme = useTheme();
@@ -48,7 +48,7 @@ export default function GroupCreate() {
 							<DialogContentText>TODO: describe what groups do...</DialogContentText>
 						</Grid>
 						<Grid item xs={12}>
-							<AvatarSelector value={image} onChange={setImage} />
+							<ImageCropper value={image} onChange={setImage} />
 						</Grid>
 						<Grid item xs={12}>
 							<TextField autoFocus fullWidth label='Group Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} />

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useSupabase } from './useSupabase';
 import { ProfileType } from '../types';
-import { dataUrlToFile } from '../../../components/AvatarSelector';
+import { dataUrlToFile } from '../../../components/ImageCropper';
 
 const QUERY_KEY = ['profile'];
 

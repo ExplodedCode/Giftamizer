@@ -16,6 +16,7 @@ import {
 	IconButton,
 	InputAdornment,
 	InputLabel,
+	LinearProgress,
 	OutlinedInput,
 	Stack,
 	TextField,
@@ -23,9 +24,10 @@ import {
 	useMediaQuery,
 } from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
-import { Add, AddLink, Delete, Visibility, VisibilityOff } from '@mui/icons-material';
+import { Add, AddLink, Delete } from '@mui/icons-material';
 import ListSelector from './ListSelector';
 import { CustomField, ListType } from '../lib/useSupabase/types';
+import ImageCropper from './ImageCropper';
 
 export default function ItemCreate() {
 	const theme = useTheme();
@@ -33,13 +35,14 @@ export default function ItemCreate() {
 
 	const [open, setOpen] = React.useState(false);
 
+	const [image, setImage] = React.useState<string | undefined>();
 	const [name, setName] = React.useState('');
 	const [description, setDescription] = React.useState('');
 	const [links, setLinks] = React.useState<string[]>(['']);
 	const [customFields, setCustomFields] = React.useState<CustomField[]>([]);
 	const [lists, setLists] = React.useState<ListType[]>([]);
 
-	const { user } = useSupabase();
+	const { user, client } = useSupabase();
 	const { data: profile } = useGetProfile();
 	const createItem = useCreateItem();
 
@@ -70,6 +73,30 @@ export default function ItemCreate() {
 		setOpen(false);
 	};
 
+	const [metaImage, setMetaImage] = React.useState<string | undefined>();
+	const [metaLoading, setMetaloading] = React.useState(false);
+	const getUrlMetadata = async (url: string) => {
+		const { data, error } = await client.functions.invoke('url-metadata', {
+			body: {
+				url: url,
+			},
+		});
+
+		if (error) {
+			console.log(error);
+			enqueueSnackbar(`Unable to get metadata.`, {
+				variant: 'error',
+			});
+			setMetaloading(false);
+		} else {
+			setName(data?.name);
+			setDescription(data?.description);
+			setImage(data?.image);
+			setMetaImage(data?.image);
+			setMetaloading(false);
+		}
+	};
+
 	return (
 		<>
 			<Fab color='primary' aria-label='add' onClick={() => setOpen(true)} sx={{ position: 'fixed', bottom: { xs: 64, md: 16 }, right: { xs: 8, md: 16 } }}>
@@ -84,6 +111,9 @@ export default function ItemCreate() {
 							<DialogContentText>TODO: describe what items do...</DialogContentText>
 						</Grid>
 						<Grid item xs={12}>
+							<ImageCropper value={image} onChange={setImage} square importedImage={metaImage} />
+						</Grid>
+						<Grid item xs={12}>
 							<TextField fullWidth label='Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} autoFocus />
 						</Grid>
 						<Grid item xs={12}>
@@ -92,11 +122,18 @@ export default function ItemCreate() {
 						{links.map((link, index) => (
 							<Grid key={index} item xs={12}>
 								<FormControl fullWidth variant='outlined'>
-									<InputLabel htmlFor='outlined-adornment-password'>URL</InputLabel>
+									<InputLabel>URL</InputLabel>
 									<OutlinedInput
 										value={link}
 										onChange={(e) => {
 											setLinks(links.map((l, i) => (i === index ? e.target.value : l)));
+										}}
+										onPaste={(e) => {
+											const urlQuery = e.clipboardData.getData('Text');
+											if (index === 0 && urlQuery.length > 0) {
+												setMetaloading(true);
+												getUrlMetadata(urlQuery);
+											}
 										}}
 										endAdornment={
 											<InputAdornment position='end'>
@@ -119,6 +156,7 @@ export default function ItemCreate() {
 										label='URL'
 									/>
 								</FormControl>
+								{index === 0 && <LinearProgress style={{ display: metaLoading ? 'block' : 'none' }} />}
 							</Grid>
 						))}
 						{customFields.map((field, index) => (

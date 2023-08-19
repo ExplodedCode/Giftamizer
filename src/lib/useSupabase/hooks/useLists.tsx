@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useSupabase } from './useSupabase';
-import { ListType } from '../types';
-import { dataUrlToFile } from '../../../components/AvatarSelector';
+import { ItemType, ListType } from '../types';
+import { dataUrlToFile } from '../../../components/ImageCropper';
+import { ITEMS_QUERY_KEY } from './useItems';
 
 export const DEFAULT_LIST_ID = 'default';
 
@@ -153,6 +154,27 @@ export const useUpdateLists = () => {
 					}
 					return prevLists;
 				});
+
+				// update item list names
+				queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => {
+					if (prevItems) {
+						const updatedItems = prevItems.map((item) => {
+							item.lists = item.lists?.map((l) => {
+								return l.list_id === list_updated.id
+									? {
+											...l,
+											list: {
+												name: list_updated.name,
+											},
+									  }
+									: l;
+							});
+							return item;
+						});
+						return updatedItems;
+					}
+					return prevItems;
+				});
 			},
 		}
 	);
@@ -171,6 +193,18 @@ export const useDeleteList = () => {
 		{
 			onSuccess: (id) => {
 				queryClient.setQueryData(LISTS_QUERY_KEY, (prevLists: ListType[] | undefined) => (prevLists ? prevLists.filter((list) => list.id !== id) : prevLists));
+
+				// update item list names
+				queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => {
+					if (prevItems) {
+						const updatedItems = prevItems.map((item) => {
+							item.lists = item.lists?.filter((l) => l.list_id !== id);
+							return item;
+						});
+						return updatedItems;
+					}
+					return prevItems;
+				});
 			},
 		}
 	);

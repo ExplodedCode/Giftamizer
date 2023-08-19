@@ -9,7 +9,7 @@ import { Dialog, DialogTitle, DialogContent, Button, TextField, DialogContentTex
 import { Add } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import GroupSelector from './GroupSelector';
-import AvatarSelector from './AvatarSelector';
+import ImageCropper from './ImageCropper';
 
 type ListUpdateProps = {
 	list: ListType | null;
@@ -63,7 +63,7 @@ export default function ListUpdate({ list, onClose }: ListUpdateProps) {
 					</Grid>
 					{childList && (
 						<Grid item xs={12}>
-							<AvatarSelector value={image} onChange={setImage} />
+							<ImageCropper value={image} onChange={setImage} />
 						</Grid>
 					)}
 					<Grid item xs={12}>
