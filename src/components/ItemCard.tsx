@@ -1,7 +1,4 @@
 import React from 'react';
-
-import { ExtractDomain, useDeleteItem, useGetProfile, useSupabase } from '../lib/useSupabase';
-
 import { useSnackbar } from 'notistack';
 
 import { useTheme } from '@mui/material/styles';
@@ -11,7 +8,6 @@ import {
 	CardMedia,
 	Grid,
 	Typography,
-	Box,
 	Button,
 	Stack,
 	IconButton,
@@ -22,30 +18,47 @@ import {
 	ListItemIcon,
 	ListItemText,
 	Collapse,
-	List,
-	ListItem,
 	TableContainer,
 	Table,
 	Paper,
 	TableRow,
 	TableBody,
 	TableCell,
+	ButtonBase,
 } from '@mui/material';
 import { Delete, Edit, ExpandMore, MoreVert } from '@mui/icons-material';
-import { CustomField, ItemType } from '../lib/useSupabase/types';
+
 import ItemUpdate from '../components/ItemUpdate';
 
+import { ExtractDomain, useDeleteItem, useGetProfile, useSupabase } from '../lib/useSupabase';
+import { ItemType } from '../lib/useSupabase/types';
+
 interface VertMenuProps {
-	handleVertMenuOpen: (event: React.MouseEvent<HTMLElement>) => void;
-	handleVertMenuClose: () => void;
-	handleDelete: (id: string) => Promise<void>;
-	setItemEdit: (value: React.SetStateAction<ItemType | null>) => void;
-	anchorEl: HTMLElement | null;
-	open: boolean;
 	item: ItemType;
 }
 
-function VertMenu({ handleVertMenuOpen, handleVertMenuClose, setItemEdit, handleDelete, anchorEl, open, item }: VertMenuProps) {
+function VertMenu({ item }: VertMenuProps) {
+	const { enqueueSnackbar } = useSnackbar();
+
+	const [itemEdit, setItemEdit] = React.useState<ItemType | null>(null);
+	const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+
+	const open = Boolean(anchorEl);
+
+	const handleVertMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+		setAnchorEl(event.currentTarget);
+	};
+	const handleVertMenuClose = () => {
+		setAnchorEl(null);
+	};
+
+	const deleteItem = useDeleteItem();
+	const handleDelete = async (id: string) => {
+		await deleteItem.mutateAsync(id).catch((err) => {
+			enqueueSnackbar(`Unable to delete item! ${err.message}`, { variant: 'error' });
+		});
+	};
+
 	return (
 		<>
 			<IconButton onClick={handleVertMenuOpen}>
@@ -88,6 +101,8 @@ function VertMenu({ handleVertMenuOpen, handleVertMenuClose, setItemEdit, handle
 					<ListItemText>Delete</ListItemText>
 				</MenuItem>
 			</Menu>
+
+			<ItemUpdate item={itemEdit} onClose={() => setItemEdit(null)} />
 		</>
 	);
 }
@@ -142,88 +157,81 @@ function CustomFieldExpand({ handleExpand, expanded, item }: CustomFieldExpandPr
 
 export type ItemCardProps = {
 	item: ItemType;
+	editable?: boolean;
 };
-export default function ItemCard({ item }: ItemCardProps) {
-	const theme = useTheme();
-	const { enqueueSnackbar } = useSnackbar();
-
-	const { user } = useSupabase();
+export default function ItemCard({ item, editable }: ItemCardProps) {
+	const { user, client } = useSupabase();
 	const { data: profile } = useGetProfile();
 
-	const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-	const [itemEdit, setItemEdit] = React.useState<ItemType | null>(null);
 	const [expanded, setExpanded] = React.useState(false);
-
-	const open = Boolean(anchorEl);
-
-	const handleVertMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-		setAnchorEl(event.currentTarget);
-	};
-	const handleVertMenuClose = () => {
-		setAnchorEl(null);
-	};
 
 	const handleExpand = (event: React.MouseEvent<HTMLElement>) => {
 		setExpanded(!expanded);
 	};
 
-	const deleteItem = useDeleteItem();
-	const handleDelete = async (id: string) => {
-		await deleteItem.mutateAsync(id).catch((err) => {
-			enqueueSnackbar(`Unable to delete item! ${err.message}`, { variant: 'error' });
-		});
-	};
-
 	return (
 		<>
 			<Grid item xs={12}>
-				<Card sx={{ display: { sm: 'flex', xs: 'none' } }}>
-					<CardMedia component='img' sx={{ m: '24px 8px 24px 24px', maxWidth: 164, maxHeight: 164, borderRadius: 2 }} image={`https://picsum.photos/seed/${item.id}/200/300`} />
-					<Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-						<CardContent sx={{ flex: '1 0 auto' }}>
-							<Grid container justifyContent='flex-start' spacing={2}>
+				<Paper
+					sx={{
+						p: 2,
+						margin: 'auto',
+						flexGrow: 1,
+						display: { sm: 'flex', xs: 'none' },
+					}}
+				>
+					<Grid container spacing={2}>
+						{item.image && (
+							<Grid item>
+								<ButtonBase>
+									<img alt={item.name} src={item.image} style={{ objectFit: 'cover', width: 164, height: 200, borderRadius: 4 }} />
+								</ButtonBase>
+							</Grid>
+						)}
+
+						<Grid item xs={12} sm container>
+							<Grid item xs container direction='column' spacing={2}>
 								<Grid item xs>
 									<Typography component='div' variant='h6'>
 										{item.name}
 									</Typography>
-								</Grid>
-								<Grid item>
-									<VertMenu
-										handleVertMenuOpen={handleVertMenuOpen}
-										handleVertMenuClose={handleVertMenuClose}
-										setItemEdit={setItemEdit}
-										handleDelete={handleDelete}
-										anchorEl={anchorEl}
-										open={open}
-										item={item}
-									/>
-								</Grid>
-								{(item.description.length > 0 || profile?.enable_lists) && (
-									<Grid item xs={12}>
-										{item.description.length > 0 && (
-											<Typography variant='subtitle1' color='text.secondary' component='div'>
-												{item.description}
-											</Typography>
-										)}
+									<Typography variant='body1' gutterBottom>
+										{item.description}
+									</Typography>
+									{item.custom_fields?.map((c) => (
+										<Typography variant='body2' color='text.secondary'>
+											{c.name}: {c.value}
+										</Typography>
+									))}
+									{profile?.enable_lists && (
+										<Stack direction='row' justifyContent='flex-start' spacing={1} sx={{ mt: 0.5 }}>
+											{item.lists?.map((l) => (
+												<Chip label={l.list.name} size='small' />
+											))}
+										</Stack>
+									)}
 
-										{profile?.enable_lists && (
-											<>
-												<Stack direction='row' justifyContent='flex-start' spacing={1}>
-													{item.lists?.map((l) => (
-														<Chip label={l.list.name} size='small' />
-													))}
-												</Stack>
-											</>
-										)}
-									</Grid>
-								)}
-							</Grid>
-						</CardContent>
-
-						{item.links?.length !== 0 && (
-							<Box sx={{ display: 'flex', alignItems: 'center', padding: 1 }}>
-								<Grid container justifyContent='flex-start' spacing={2}>
-									<Grid item xs={12}>
+									<Button
+										onClick={() => {
+											let channel = client.channel(`items.dc733fa3-97f9-4570-8a12-290eef57b29f.faa1cc14-9935-46f0-827e-0e8b60fe7b40`).subscribe();
+											channel
+												.send({
+													type: 'broadcast',
+													event: 'UPSERT',
+													payload: item,
+												})
+												.then(() => {
+													setTimeout(() => {
+														channel.unsubscribe();
+													}, 1000);
+												});
+										}}
+									>
+										test
+									</Button>
+								</Grid>
+								{item.links && item.links.length > 0 && (
+									<Grid item>
 										<Stack direction='row' justifyContent='flex-start' spacing={1} useFlexGap flexWrap='wrap'>
 											{item.links?.map((link, i) => (
 												<Button key={i} href={link} target='_blank' color='info'>
@@ -232,17 +240,17 @@ export default function ItemCard({ item }: ItemCardProps) {
 											))}
 										</Stack>
 									</Grid>
-								</Grid>
-							</Box>
-						)}
-
-						{item.custom_fields && item.custom_fields?.length !== 0 && <CustomFieldExpand handleExpand={handleExpand} expanded={expanded} item={item} />}
-					</Box>
-				</Card>
+								)}
+							</Grid>
+							<Grid item>{editable && <VertMenu item={item} />}</Grid>
+						</Grid>
+					</Grid>
+				</Paper>
 
 				{/* Mobile card */}
 				<Card sx={{ display: { sm: 'none', xs: 'block' } }}>
-					<CardMedia component='img' alt='green iguana' height='240' image={`https://picsum.photos/seed/${item.id}/200/300`} />
+					{item.image && <CardMedia component='img' alt={item.name} sx={{ height: 240 }} image={item.image} />}
+
 					<CardContent>
 						<Grid container justifyContent='flex-start' spacing={2}>
 							<Grid item xs>
@@ -250,17 +258,7 @@ export default function ItemCard({ item }: ItemCardProps) {
 									{item.name}
 								</Typography>
 							</Grid>
-							<Grid item>
-								<VertMenu
-									handleVertMenuOpen={handleVertMenuOpen}
-									handleVertMenuClose={handleVertMenuClose}
-									setItemEdit={setItemEdit}
-									handleDelete={handleDelete}
-									anchorEl={anchorEl}
-									open={open}
-									item={item}
-								/>
-							</Grid>
+							<Grid item>{editable && <VertMenu item={item} />} </Grid>
 							{(item.description.length > 0 || profile?.enable_lists) && (
 								<Grid item xs={12}>
 									{item.description.length > 0 && (
@@ -268,7 +266,6 @@ export default function ItemCard({ item }: ItemCardProps) {
 											{item.description}
 										</Typography>
 									)}
-
 									{profile?.enable_lists && (
 										<Stack direction='row' justifyContent='flex-start' spacing={1}>
 											{item.lists?.map((l) => (
@@ -296,8 +293,6 @@ export default function ItemCard({ item }: ItemCardProps) {
 					{item.custom_fields && item.custom_fields?.length !== 0 && <CustomFieldExpand handleExpand={handleExpand} expanded={expanded} item={item} />}
 				</Card>
 			</Grid>
-
-			<ItemUpdate item={itemEdit} onClose={() => setItemEdit(null)} />
 		</>
 	);
 }

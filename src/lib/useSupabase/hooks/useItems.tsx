@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useSupabase } from './useSupabase';
 import { ItemType } from '../types';
+import { dataUrlToFile } from '../../../components/ImageCropper';
 
 export const ITEMS_QUERY_KEY = ['items'];
 
@@ -18,14 +19,18 @@ export const useGetItems = () => {
 					lists:items_lists( 
 						list_id,
 						list:lists!inner(
-							name
+							name,
+							child_list
 						)
 					)`
 				)
 				.eq('user_id', user.id);
 			if (error) throw error;
 
-			return data as ItemType[];
+			return data.map((i) => {
+				// @ts-ignore
+				return { ...i, image: i.image_token && `${client.supabaseUrl}/storage/v1/object/public/items/${i.id}?${i.image_token}` };
+			}) as ItemType[];
 		},
 	});
 };
@@ -44,6 +49,7 @@ export const useCreateItem = () => {
 					description: item.description,
 					links: item.links,
 					custom_fields: item.custom_fields,
+					image_token: item.image ? Date.now() : null,
 				})
 				.select('*')
 				.single();
@@ -51,6 +57,18 @@ export const useCreateItem = () => {
 
 			var newItem = data as Omit<ItemType, 'created_at' | 'updated_at'>;
 			newItem.lists = [];
+
+			// upload image if exists
+			if (item.image?.startsWith('data:')) {
+				const { error: imageError } = await client.storage.from('items').upload(`${data.id}`, await dataUrlToFile(item.image, 'avatar'), {
+					cacheControl: '3600',
+					upsert: true,
+				});
+				if (imageError) throw imageError;
+
+				// @ts-ignore
+				newItem.image = `${client.supabaseUrl}/storage/v1/object/public/items/${data.id}?${data.image_token}`;
+			}
 
 			// Add list-group relationships
 			for (let list of item.newLists!) {
@@ -71,6 +89,7 @@ export const useCreateItem = () => {
 					list_id: list.id,
 					list: {
 						name: itemList.list.name,
+						child_list: itemList.list.child_list,
 					},
 				});
 
@@ -97,17 +116,38 @@ export const useUpdateItems = () => {
 	const { client, user } = useSupabase();
 
 	return useMutation(
-		async (item: Omit<ItemType, 'user_id' | 'created_at' | 'updated_at'>): Promise<ItemType> => {
-			const { error } = await client
+		async (item: Omit<ItemType, 'created_at' | 'updated_at'>): Promise<ItemType> => {
+			const { data, error } = await client
 				.from('items')
 				.update({
+					user_id: item.user_id,
 					name: item.name,
 					description: item.description,
 					links: item.links,
 					custom_fields: item.custom_fields,
+					image_token: item.image ? Date.now() : null,
 				})
-				.eq('id', item.id);
+				.eq('id', item.id)
+				.select()
+				.single();
 			if (error) throw error;
+
+			// upload image if exists
+			if (item.image?.startsWith('data:') && data) {
+				const { error: imageError } = await client.storage.from('items').upload(`${item.id}`, await dataUrlToFile(item.image, 'avatar'), {
+					cacheControl: '3600',
+					upsert: true,
+				});
+				if (imageError) throw imageError;
+
+				// @ts-ignore
+				item.image = `${client.supabaseUrl}/storage/v1/object/public/items/${data.id}?${data.image_token}`;
+			} else if (data.image_token === null) {
+				const { error: imageDelError } = await client.storage.from('items').remove([`${item.id}`]);
+				if (imageDelError) throw imageDelError;
+
+				item.image = undefined;
+			}
 
 			// update list-group relationships
 			const { data: listsData, error: ListsError } = await client.from('items_lists').select('*').eq('item_id', item.id);
@@ -136,6 +176,7 @@ export const useUpdateItems = () => {
 					list_id: l.id,
 					list: {
 						name: l.name,
+						child_list: l.child_list,
 					},
 				};
 			});
@@ -164,8 +205,12 @@ export const useDeleteItem = () => {
 
 	return useMutation(
 		async (id: string): Promise<string> => {
+			const { error: avatarError } = await client.storage.from('items').remove([`${id}`]);
+			if (avatarError) console.log(`Unable to delete image.`, avatarError);
+
 			const { error } = await client.from('items').delete().eq('id', id);
 			if (error) throw error;
+
 			return id;
 		},
 		{

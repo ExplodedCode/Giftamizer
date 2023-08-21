@@ -39,6 +39,7 @@ export interface MemberType {
 export interface ItemType {
 	id: string;
 	user_id: string;
+	image?: string;
 	name: string;
 	description: string;
 	links?: string[];
@@ -64,6 +65,7 @@ export interface ItemListType {
 
 export interface ItemListDetType {
 	name: string;
+	child_list: boolean;
 }
 
 export interface ListType {

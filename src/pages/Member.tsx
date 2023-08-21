@@ -3,12 +3,13 @@ import React from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useGetGroupMembers, useGetGroups, useGetMemberItems, useSetGroupPin, useSupabase } from '../lib/useSupabase';
 
-import { Card, CardActionArea, CardContent, CardMedia, CircularProgress, Grid, Link as MUILink, Typography, Box, Breadcrumbs, AppBar, Toolbar, Checkbox, Grow } from '@mui/material';
+import { Card, CardActionArea, CardContent, CardMedia, CircularProgress, Grid, Link as MUILink, Typography, Box, Breadcrumbs, AppBar, Toolbar, Checkbox, Grow, Container } from '@mui/material';
 import { PushPinOutlined, PushPin, Person } from '@mui/icons-material';
 
 import GroupSettingsDialog from '../components/GroupSettingsDialog';
 import NotFound from '../components/NotFound';
 import { RealtimeChannel } from '@supabase/realtime-js';
+import ItemCard from '../components/ItemCard';
 
 export default function Member() {
 	const { group: groupID, user: userID } = useParams();
@@ -18,17 +19,15 @@ export default function Member() {
 	const { data: groups, isLoading: groupsLoading } = useGetGroups();
 	const { data: members, isLoading: membersLoading } = useGetGroupMembers(groupID!);
 
-	const { data: items, isLoading: memberLoading } = useGetMemberItems(groupID!, userID!.split('_')[0] ?? userID!, userID!.split('_')[1] ?? undefined);
+	const user_id = userID!.split('_')[0] ?? userID!;
+	const list_id = userID!.split('_')[1] ?? undefined;
+	const { data: items, isLoading: memberLoading, refetch } = useGetMemberItems(groupID!, user_id, list_id);
 
 	React.useEffect(() => {
-		// unsub from members realtime
+		// unsub from realtime
 		return () => {
-			// var groupMembersChannel = client.getChannels().find((c) => c.topic === `realtime:public:group_members:group_id=eq.${groupID}`);
-			// if (groupMembersChannel) client.removeChannel(groupMembersChannel);
-			// var childListsChannel = client.getChannels().find((c) => c.topic === `realtime:public:lists_groups:group_id=eq.${groupID}`);
-			// if (childListsChannel) client.removeChannel(childListsChannel);
-			// var externalInvitesChannel = client.getChannels().find((c) => c.topic === `realtime:public:external_invites:group_id=eq.${groupID}`);
-			// if (externalInvitesChannel) client.removeChannel(externalInvitesChannel);
+			var anyChannel = client.getChannels().find((c) => c.topic === `realtime:items.${groupID}.${user_id}${list_id ? `_${list_id}` : ''}`);
+			if (anyChannel) client.removeChannel(anyChannel);
 		};
 	}, [client, groupID]);
 
@@ -56,7 +55,7 @@ export default function Member() {
 							</AppBar>
 
 							<Grid container justifyContent='center'>
-								<Grid item xs={9}>
+								<Grid item xs={12}>
 									<Typography variant='h4' gutterBottom sx={{ mt: 4, textAlign: 'center' }}>
 										{members?.find((m) => m.user_id === userID)?.profile.first_name} {members?.find((m) => m.user_id === userID)?.profile.last_name}
 									</Typography>
@@ -66,15 +65,28 @@ export default function Member() {
 								</Grid>
 							</Grid>
 
-							<Grid container spacing={2}>
-								<Grid item xs={12}>
-									{items?.map((i) => (
-										<Typography key={i.id} variant='body1' gutterBottom>
-											- {i.name}
-										</Typography>
+							<Container sx={{ paddingTop: 2, paddingBottom: 12 }}>
+								<Grid container spacing={2}>
+									{items?.map((item, index) => (
+										// TODO: Change ItemCard to Renderer function to allow Grow transition/animation
+										<ItemCard item={item} />
 									))}
+
+									{items?.length === 0 && (
+										<Box style={{ marginTop: 100, textAlign: 'center', width: '100%' }}>
+											<Typography variant='h5' gutterBottom>
+												No items are shared with this group.
+											</Typography>
+										</Box>
+									)}
 								</Grid>
-							</Grid>
+
+								{memberLoading && (
+									<Box sx={{ display: 'flex', justifyContent: 'center', mt: 16 }}>
+										<CircularProgress />
+									</Box>
+								)}
+							</Container>
 						</>
 					) : (
 						<NotFound />

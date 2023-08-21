@@ -117,7 +117,7 @@ export const useCreateGroup = () => {
 			var newGroup = data;
 
 			// upload image if exists
-			if (group.image?.startsWith('data:image/png;base64')) {
+			if (group.image?.startsWith('data:')) {
 				const { error: imageError } = await client.storage.from('groups').upload(`${data.id}`, await dataUrlToFile(group.image, 'avatar'), {
 					cacheControl: '3600',
 					upsert: true,
@@ -534,7 +534,7 @@ export const useUpdateGroup = () => {
 			if (groupError) throw groupError;
 
 			// upload image if exists
-			if (update.group.image?.startsWith('data:image/png;base64') && data) {
+			if (update.group.image?.startsWith('data:') && data) {
 				const { error: imageError } = await client.storage.from('groups').upload(`${update.group.id}`, await dataUrlToFile(update.group.image, 'avatar'), {
 					cacheControl: '3600',
 					upsert: true,
@@ -659,7 +659,7 @@ export const useInviteToGroup = () => {
 			if (groupError) throw groupError;
 
 			// upload image if exists
-			if (update.group.image?.startsWith('data:image/png;base64') && data) {
+			if (update.group.image?.startsWith('data:') && data) {
 				const { error: imageError } = await client.storage.from('groups').upload(`${update.group.id}`, await dataUrlToFile(update.group.image, 'avatar'), {
 					cacheControl: '3600',
 					upsert: true,

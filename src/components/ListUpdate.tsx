@@ -63,7 +63,7 @@ export default function ListUpdate({ list, onClose }: ListUpdateProps) {
 					</Grid>
 					{childList && (
 						<Grid item xs={12}>
-							<ImageCropper value={image} onChange={setImage} />
+							<ImageCropper value={image} onChange={setImage} aspectRatio={1} />
 						</Grid>
 					)}
 					<Grid item xs={12}>

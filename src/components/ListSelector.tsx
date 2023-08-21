@@ -10,7 +10,9 @@ type ListSelectorProps = {
 };
 
 export default function ListSelector({ value, onChange, disabled }: ListSelectorProps) {
-	const { data: lists, isLoading, isError, error } = useGetLists();
+	const { data: lists } = useGetLists();
+
+	const listTypeSelected = value?.length == 0 ? undefined : value?.[0]?.child_list ? 'child' : 'list';
 
 	return lists ? (
 		<Autocomplete
@@ -22,6 +24,12 @@ export default function ListSelector({ value, onChange, disabled }: ListSelector
 			multiple
 			options={lists}
 			isOptionEqualToValue={(option, value) => option.id === value.id}
+			getOptionDisabled={(option) =>
+				// prevent bad assignments
+				// only allow one child list to be selected
+				// only allow lists if a list is selected
+				listTypeSelected === undefined ? false : listTypeSelected === 'list' && option?.child_list ? true : listTypeSelected === 'child' && value?.[0].id !== option.id ? true : false
+			}
 			getOptionLabel={(option) => option.name}
 			renderInput={(params) => <TextField {...params} label='Lists' />}
 			disabled={disabled}

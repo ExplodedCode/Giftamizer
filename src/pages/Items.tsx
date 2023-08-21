@@ -1,9 +1,9 @@
 import React from 'react';
 import { useSnackbar } from 'notistack';
 
-import { useGetItems } from '../lib/useSupabase';
+import { useGetItems, useSupabase } from '../lib/useSupabase';
 
-import { Container, Grid, Typography, Box, CircularProgress } from '@mui/material';
+import { Container, Grid, Typography, Box, CircularProgress, Button } from '@mui/material';
 
 import ItemCreate from '../components/ItemCreate';
 import ItemCard from '../components/ItemCard';
@@ -25,7 +25,7 @@ export default function Items() {
 				<Grid container spacing={2}>
 					{items?.map((item, index) => (
 						// TODO: Change ItemCard to Renderer function to allow Grow transition/animation
-						<ItemCard item={item} />
+						<ItemCard item={item} editable />
 					))}
 
 					{items?.length === 0 && (

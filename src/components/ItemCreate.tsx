@@ -49,6 +49,7 @@ export default function ItemCreate() {
 	const handleCreate = async () => {
 		createItem
 			.mutateAsync({
+				image: image,
 				name: name,
 				description: description,
 				links: links.map((l) => l.trim()).filter((l) => l.trim().length !== 0),
@@ -64,6 +65,9 @@ export default function ItemCreate() {
 	};
 
 	const handleClose = async () => {
+		setImage(undefined);
+		setMetaImage(undefined);
+
 		setName('');
 		setDescription('');
 		setLinks(['']);
@@ -114,10 +118,10 @@ export default function ItemCreate() {
 							<ImageCropper value={image} onChange={setImage} square importedImage={metaImage} />
 						</Grid>
 						<Grid item xs={12}>
-							<TextField fullWidth label='Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} autoFocus />
+							<TextField fullWidth label='Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} autoFocus inputProps={{ maxLength: 100 }} />
 						</Grid>
 						<Grid item xs={12}>
-							<TextField fullWidth label='Description' variant='outlined' value={description} onChange={(e) => setDescription(e.target.value)} />
+							<TextField fullWidth label='Description' variant='outlined' value={description} onChange={(e) => setDescription(e.target.value)} inputProps={{ maxLength: 250 }} />
 						</Grid>
 						{links.map((link, index) => (
 							<Grid key={index} item xs={12}>
@@ -154,6 +158,7 @@ export default function ItemCreate() {
 											</InputAdornment>
 										}
 										label='URL'
+										inputProps={{ maxLength: 2000 }}
 									/>
 								</FormControl>
 								{index === 0 && <LinearProgress style={{ display: metaLoading ? 'block' : 'none' }} />}
@@ -171,6 +176,7 @@ export default function ItemCreate() {
 											onChange={(e) => {
 												setCustomFields(customFields.map((f, i) => (f.id === field.id ? { ...f, name: e.target.value } : f)));
 											}}
+											inputProps={{ maxLength: 25 }}
 										/>
 									</Grid>
 
@@ -197,6 +203,7 @@ export default function ItemCreate() {
 													</InputAdornment>
 												}
 												label='Value'
+												inputProps={{ maxLength: 50 }}
 											/>
 										</FormControl>
 									</Grid>
