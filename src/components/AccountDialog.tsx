@@ -172,7 +172,10 @@ export default function AccountDialog(props: AccountDialogProps) {
 				<Container maxWidth='md' sx={{ marginTop: 6 }}>
 					<Grid container spacing={2}>
 						<Grid item xs={12}>
-							<ImageCropper value={image} onChange={setImage} />
+							<ImageCropper value={image} onChange={setImage} aspectRatio={1} />
+							<Typography variant='h6' gutterBottom>
+								Account Settings
+							</Typography>
 						</Grid>
 						<Grid item xs={6}>
 							<TextField fullWidth label='First Name' variant='outlined' value={firstName} onChange={(e) => setFirstName(e.target.value)} />
@@ -206,9 +209,6 @@ export default function AccountDialog(props: AccountDialogProps) {
 						</Grid>
 
 						<Grid item xs={12}>
-							<Typography variant='h6' gutterBottom>
-								Account Settings
-							</Typography>
 							<FormControl component='fieldset' variant='standard'>
 								<FormGroup>
 									<FormControlLabel control={<Switch checked={enableLists} onChange={(e) => setEnableLists(e.target.checked)} />} label='Enable Lists' />

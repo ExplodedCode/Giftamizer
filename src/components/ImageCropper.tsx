@@ -17,11 +17,13 @@ type ImageCropperProps = {
 	value?: string | undefined;
 	onChange?: (value: string | undefined) => void;
 	disabled?: boolean;
+	aspectRatio?: number;
+	autoCropArea?: number;
 	square?: boolean;
 	importedImage?: string | undefined;
 };
 
-export default function ImageCropper({ value, onChange, disabled, square, importedImage }: ImageCropperProps) {
+export default function ImageCropper({ value, onChange, disabled, aspectRatio, autoCropArea, square, importedImage }: ImageCropperProps) {
 	const cropperRef = React.useRef(null);
 
 	const [open, setOpen] = React.useState(false);
@@ -77,8 +79,8 @@ export default function ImageCropper({ value, onChange, disabled, square, import
 
 	return (
 		<>
-			<IconButton onClick={handleOpen} disabled={disabled}>
-				<Avatar children={<AddPhotoAlternateOutlined sx={{ fontSize: 128 }} />} src={value} sx={{ height: 196, width: 196 }} />
+			<IconButton onClick={handleOpen} disabled={disabled} sx={{ borderRadius: square ? 2 : 'inherited' }}>
+				<Avatar children={<AddPhotoAlternateOutlined sx={{ fontSize: 128 }} />} src={value} sx={{ height: 196, width: 196, borderRadius: square ? 2 : 'inherited' }} />
 			</IconButton>
 
 			<Dialog open={open} onClose={handleClose} maxWidth='sm' fullWidth>
@@ -102,8 +104,10 @@ export default function ImageCropper({ value, onChange, disabled, square, import
 									style={{ height: 400, width: '100%' }}
 									guides={true}
 									ref={cropperRef}
-									aspectRatio={1}
-									autoCropArea={0.9}
+									aspectRatio={aspectRatio}
+									autoCropArea={autoCropArea ?? 1}
+									background={false}
+									viewMode={1}
 								/>
 							</>
 						) : (

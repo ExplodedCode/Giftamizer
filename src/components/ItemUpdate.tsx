@@ -22,11 +22,13 @@ import {
 	InputLabel,
 	OutlinedInput,
 	Tooltip,
+	LinearProgress,
 } from '@mui/material';
 import { Add, AddLink, Delete, Save } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 
 import ListSelector from './ListSelector';
+import ImageCropper from './ImageCropper';
 
 type ItemUpdateProps = {
 	item: ItemType | null;
@@ -37,12 +39,12 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 	const theme = useTheme();
 	const { enqueueSnackbar } = useSnackbar();
 
-	const { user } = useSupabase();
+	const { user, client } = useSupabase();
 	const { data: profile } = useGetProfile();
 
 	const updateItems = useUpdateItems();
-	const { data: groups } = useGetGroups();
 
+	const [image, setImage] = React.useState<string | undefined>();
 	const [name, setName] = React.useState('');
 	const [description, setDescription] = React.useState('');
 	const [links, setLinks] = React.useState<string[]>(['']);
@@ -53,7 +55,9 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 		if (item) {
 			await updateItems
 				.mutateAsync({
+					user_id: user.id,
 					id: item.id,
+					image: image,
 					name: name,
 					description: description,
 					links: links.map((l) => l.trim()).filter((l) => l.trim().length !== 0),
@@ -72,6 +76,8 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 
 	useEffect(() => {
 		if (item) {
+			setImage(item.image);
+			setMetaImage(item.image);
 			setName(item.name);
 			setDescription(item.description);
 			setLinks(item?.links?.length === 0 ? [''] : item?.links ?? ['']);
@@ -82,13 +88,37 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 						id: l.list_id,
 						user_id: user.id,
 						name: l.list.name,
-						child_list: false,
+						child_list: l.list.child_list,
 						groups: [],
 					};
 				}) ?? []
 			);
 		}
 	}, [item]);
+
+	const [metaImage, setMetaImage] = React.useState<string | undefined>();
+	const [metaLoading, setMetaloading] = React.useState(false);
+	const getUrlMetadata = async (url: string) => {
+		const { data, error } = await client.functions.invoke('url-metadata', {
+			body: {
+				url: url,
+			},
+		});
+
+		if (error) {
+			console.log(error);
+			enqueueSnackbar(`Unable to get metadata.`, {
+				variant: 'error',
+			});
+			setMetaloading(false);
+		} else {
+			setName(data?.name);
+			setDescription(data?.description);
+			setImage(data?.image);
+			setMetaImage(data?.image);
+			setMetaloading(false);
+		}
+	};
 
 	return (
 		<Dialog open={item !== null} onClose={updateItems.isLoading ? undefined : onClose} maxWidth='sm' fullScreen={useMediaQuery(theme.breakpoints.down('md'))}>
@@ -99,10 +129,13 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 						<DialogContentText>TODO: describe what items do...</DialogContentText>
 					</Grid>
 					<Grid item xs={12}>
-						<TextField fullWidth label='Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} autoFocus />
+						<ImageCropper value={image} onChange={setImage} square importedImage={metaImage} />
 					</Grid>
 					<Grid item xs={12}>
-						<TextField fullWidth label='Description' variant='outlined' value={description} onChange={(e) => setDescription(e.target.value)} />
+						<TextField fullWidth label='Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} autoFocus inputProps={{ maxLength: 100 }} />
+					</Grid>
+					<Grid item xs={12}>
+						<TextField fullWidth label='Description' variant='outlined' value={description} onChange={(e) => setDescription(e.target.value)} inputProps={{ maxLength: 250 }} />
 					</Grid>
 					{links.map((link, index) => (
 						<Grid key={index} item xs={12}>
@@ -112,6 +145,13 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 									value={link}
 									onChange={(e) => {
 										setLinks(links.map((l, i) => (i === index ? e.target.value : l)));
+									}}
+									onPaste={(e) => {
+										const urlQuery = e.clipboardData.getData('Text');
+										if (index === 0 && urlQuery.length > 0) {
+											setMetaloading(true);
+											getUrlMetadata(urlQuery);
+										}
 									}}
 									endAdornment={
 										<InputAdornment position='end'>
@@ -132,8 +172,10 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 										</InputAdornment>
 									}
 									label='URL'
+									inputProps={{ maxLength: 2000 }}
 								/>
 							</FormControl>
+							{index === 0 && <LinearProgress style={{ display: metaLoading ? 'block' : 'none' }} />}
 						</Grid>
 					))}
 					{customFields.map((field, index) => (
@@ -148,6 +190,7 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 										onChange={(e) => {
 											setCustomFields(customFields.map((f, i) => (f.id === field.id ? { ...f, name: e.target.value } : f)));
 										}}
+										inputProps={{ maxLength: 25 }}
 									/>
 								</Grid>
 
@@ -174,6 +217,7 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 												</InputAdornment>
 											}
 											label='Value'
+											inputProps={{ maxLength: 50 }}
 										/>
 									</FormControl>
 								</Grid>

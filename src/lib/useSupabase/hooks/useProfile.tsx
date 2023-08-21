@@ -77,7 +77,7 @@ export const useUpdateProfile = () => {
 			var profile = data as unknown as ProfileType;
 
 			// upload image if exists
-			if (update.image?.startsWith('data:image/png;base64') && data) {
+			if (update.image?.startsWith('data:') && data) {
 				const { error: imageError } = await client.storage.from('avatars').upload(`${user.id}`, await dataUrlToFile(update.image, 'avatar'), {
 					cacheControl: '3600',
 					upsert: true,

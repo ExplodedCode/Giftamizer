@@ -4,9 +4,14 @@ CREATE TABLE items (
   name TEXT NOT NULL,
   description TEXT,
   url TEXT,
+  image_token numeric,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  fbid text null,
 );
+create trigger handle_updated_at before update on items
+  for each row execute procedure moddatetime (updated_at);
+
 CREATE TABLE lists (
   id TEXT DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE,
@@ -16,6 +21,7 @@ CREATE TABLE lists (
   avatar_token numeric,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  fbid text null,
   
   PRIMARY KEY (id, user_id)
 );

@@ -7,8 +7,6 @@ export async function URLMetadata(request: Request, response: Response) {
 	try {
 		urlMetadata(request.body.url).then(
 			async (metadata: any) => {
-				console.log(metadata);
-
 				let data = {
 					name: metadata.title ?? metadata['og:title'] ?? metadata['twitter:title'] ?? '',
 					description: metadata.description ?? metadata['og:description'] ?? metadata['twitter:description'] ?? '',
@@ -18,7 +16,6 @@ export async function URLMetadata(request: Request, response: Response) {
 				if (data.image?.startsWith('/') && !data.image?.startsWith('//')) {
 					data.image = request.body.url.split('/')[0] + '//' + request.body.url.split('/')[2] + data.image;
 				}
-				console.log(data);
 
 				try {
 					if (data.image !== null) {

@@ -48,7 +48,7 @@ export default function GroupCreate() {
 							<DialogContentText>TODO: describe what groups do...</DialogContentText>
 						</Grid>
 						<Grid item xs={12}>
-							<ImageCropper value={image} onChange={setImage} />
+							<ImageCropper value={image} onChange={setImage} aspectRatio={1} />
 						</Grid>
 						<Grid item xs={12}>
 							<TextField autoFocus fullWidth label='Group Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} />

@@ -47,7 +47,7 @@ export const useCreateList = () => {
 			var newlist = data as Omit<ListType, 'id' | 'created_at' | 'updated_at'>;
 
 			// upload image if exists
-			if (list.image?.startsWith('data:image/png;base64')) {
+			if (list.image?.startsWith('data:')) {
 				const { error: imageError } = await client.storage.from('lists').upload(`${data.id}`, await dataUrlToFile(list.image, 'avatar'), {
 					cacheControl: '3600',
 					upsert: true,
@@ -104,7 +104,7 @@ export const useUpdateLists = () => {
 			if (error) throw error;
 
 			// upload image if exists
-			if (list.image?.startsWith('data:image/png;base64') && data) {
+			if (list.image?.startsWith('data:') && data) {
 				const { error: imageError } = await client.storage.from('lists').upload(`${list.id}`, await dataUrlToFile(list.image, 'avatar'), {
 					cacheControl: '3600',
 					upsert: true,
@@ -165,6 +165,7 @@ export const useUpdateLists = () => {
 											...l,
 											list: {
 												name: list_updated.name,
+												child_list: list_updated.child_list,
 											},
 									  }
 									: l;
@@ -186,8 +187,12 @@ export const useDeleteList = () => {
 
 	return useMutation(
 		async (id: string): Promise<string> => {
+			const { error: avatarError } = await client.storage.from('lists').remove([`${id}`]);
+			if (avatarError) console.log(`Unable to delete image.`, avatarError);
+
 			const { error } = await client.from('lists').delete().eq('id', id);
 			if (error) throw error;
+
 			return id;
 		},
 		{
