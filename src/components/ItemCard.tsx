@@ -210,25 +210,6 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 											))}
 										</Stack>
 									)}
-
-									<Button
-										onClick={() => {
-											let channel = client.channel(`items.dc733fa3-97f9-4570-8a12-290eef57b29f.faa1cc14-9935-46f0-827e-0e8b60fe7b40`).subscribe();
-											channel
-												.send({
-													type: 'broadcast',
-													event: 'UPSERT',
-													payload: item,
-												})
-												.then(() => {
-													setTimeout(() => {
-														channel.unsubscribe();
-													}, 1000);
-												});
-										}}
-									>
-										test
-									</Button>
 								</Grid>
 								{item.links && item.links.length > 0 && (
 									<Grid item>
@@ -257,22 +238,22 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 								<Typography variant='h5' component='div'>
 									{item.name}
 								</Typography>
+								<Typography gutterBottom variant='body2' color='text.secondary'>
+									{item.description}
+								</Typography>
 							</Grid>
-							<Grid item>{editable && <VertMenu item={item} />} </Grid>
-							{(item.description.length > 0 || profile?.enable_lists) && (
+							{editable && (
+								<Grid item>
+									<VertMenu item={item} />
+								</Grid>
+							)}
+							{profile?.enable_lists && editable && (
 								<Grid item xs={12}>
-									{item.description.length > 0 && (
-										<Typography gutterBottom variant='body2' color='text.secondary'>
-											{item.description}
-										</Typography>
-									)}
-									{profile?.enable_lists && (
-										<Stack direction='row' justifyContent='flex-start' spacing={1}>
-											{item.lists?.map((l) => (
-												<Chip label={l.list.name} size='small' />
-											))}
-										</Stack>
-									)}
+									<Stack direction='row' justifyContent='flex-start' spacing={1}>
+										{item.lists?.map((l) => (
+											<Chip label={l.list.name} size='small' />
+										))}
+									</Stack>
 								</Grid>
 							)}
 

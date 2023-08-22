@@ -1,21 +1,17 @@
 import React from 'react';
 
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useGetGroupMembers, useGetGroups, useGetMemberItems, useSetGroupPin, useSupabase } from '../lib/useSupabase';
+import { useParams, Link } from 'react-router-dom';
+import { useGetGroupMembers, useGetGroups, useGetMemberItems, useSupabase } from '../lib/useSupabase';
 
-import { Card, CardActionArea, CardContent, CardMedia, CircularProgress, Grid, Link as MUILink, Typography, Box, Breadcrumbs, AppBar, Toolbar, Checkbox, Grow, Container } from '@mui/material';
-import { PushPinOutlined, PushPin, Person } from '@mui/icons-material';
+import { CircularProgress, Grid, Link as MUILink, Typography, Box, Breadcrumbs, AppBar, Toolbar, Container } from '@mui/material';
 
-import GroupSettingsDialog from '../components/GroupSettingsDialog';
 import NotFound from '../components/NotFound';
-import { RealtimeChannel } from '@supabase/realtime-js';
 import ItemCard from '../components/ItemCard';
 
 export default function Member() {
 	const { group: groupID, user: userID } = useParams();
 
-	const navigate = useNavigate();
-	const { client, user } = useSupabase();
+	const { client } = useSupabase();
 	const { data: groups, isLoading: groupsLoading } = useGetGroups();
 	const { data: members, isLoading: membersLoading } = useGetGroupMembers(groupID!);
 
@@ -26,8 +22,8 @@ export default function Member() {
 	React.useEffect(() => {
 		// unsub from realtime
 		return () => {
-			var anyChannel = client.getChannels().find((c) => c.topic === `realtime:items.${groupID}.${user_id}${list_id ? `_${list_id}` : ''}`);
-			if (anyChannel) client.removeChannel(anyChannel);
+			var itemRealtimeChannel = client.getChannels().find((c) => c.topic === `realtime:public:item_links:realtime=eq.${groupID}.${user_id}${list_id ? `_${list_id}` : ''}`);
+			if (itemRealtimeChannel) client.removeChannel(itemRealtimeChannel);
 		};
 	}, [client, groupID]);
 

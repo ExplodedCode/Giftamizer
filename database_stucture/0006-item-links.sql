@@ -2,30 +2,42 @@
 CREATE TABLE item_links (
   user_id UUID NOT NULL,
   item_id UUID NOT NULL,
-  list_id TEXT NOT NULL,
   group_id UUID NOT NULL,
-  child_list boolean NOT NULL,
-  realtime TEXT GENERATED ALWAYS AS ((group_id::TEXT || '.' || user_id::TEXT || (CASE WHEN child_list = true THEN ( '_' || list_id) else '' end) )) STORED,
+  list_id TEXT,
+  realtime TEXT GENERATED ALWAYS AS ((group_id::TEXT || '.' || user_id::TEXT || (CASE WHEN list_id IS NOT NULL THEN ( '_' || list_id) else '' end) )) STORED,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   
-  PRIMARY KEY (user_id, item_id, list_id, group_id),
+  PRIMARY KEY (user_id, item_id, realtime),
   
   FOREIGN KEY (user_id) REFERENCES profiles(user_id) ON DELETE CASCADE,
   FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
   FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE
 );
 alter publication supabase_realtime add table item_links;
+alter table item_links replica identity full;
+
+
+
 
 -- Function to insert into item_links on insert to items_lists
 CREATE OR REPLACE FUNCTION insert_item_links_on_items_lists_insert() 
 RETURNS TRIGGER AS $$
+DECLARE 
+  child_list boolean;
 BEGIN
-  INSERT INTO item_links (user_id, item_id, list_id, group_id, child_list)
-  SELECT NEW.user_id, NEW.item_id, NEW.list_id, lists_groups.group_id, lists.child_list
+  select lists.child_list into child_list from lists where lists.id = NEW.list_id AND lists.user_id = NEW.user_id;
+  IF child_list = true THEN
+    DELETE FROM item_links WHERE item_id = NEW.item_id;
+  ELSE 
+    DELETE FROM item_links WHERE list_id IS NOT NULL;
+  END IF;
+
+  INSERT INTO item_links (user_id, item_id, list_id, group_id)
+  SELECT NEW.user_id, NEW.item_id, (CASE WHEN lists.child_list = true THEN NEW.list_id else NULL end), lists_groups.group_id
   FROM lists_groups
   INNER JOIN lists on lists_groups.list_id = lists.id and lists.user_id = NEW.user_id
-  WHERE lists_groups.list_id = NEW.list_id;
-  
+  WHERE lists_groups.list_id = NEW.list_id ON CONFLICT DO NOTHING;
+	
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -35,16 +47,21 @@ CREATE TRIGGER insert_item_links_on_items_lists_insert
 AFTER INSERT ON items_lists
 FOR EACH ROW EXECUTE PROCEDURE insert_item_links_on_items_lists_insert();
 
+
+
+
+
 -- Function to insert into item_links on insert to lists_groups
 CREATE OR REPLACE FUNCTION insert_item_links_on_lists_groups_insert()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO item_links (user_id, item_id, list_id, group_id, child_list) 
-  SELECT NEW.user_id, items_lists.item_id, NEW.list_id, NEW.group_id, lists.child_list
+
+  INSERT INTO item_links (user_id, item_id, list_id, group_id) 
+  SELECT NEW.user_id, items_lists.item_id, (CASE WHEN lists.child_list = true THEN NEW.list_id else NULL end), NEW.group_id
   FROM items_lists
   INNER JOIN lists on items_lists.list_id = lists.id and lists.user_id = NEW.user_id
-  WHERE items_lists.list_id = NEW.list_id;
-
+  WHERE items_lists.list_id = NEW.list_id ON CONFLICT DO NOTHING;
+	
   RETURN NEW;  
 END;
 $$ LANGUAGE plpgsql;
@@ -54,12 +71,26 @@ CREATE TRIGGER insert_item_links_on_lists_groups_insert
 AFTER INSERT ON lists_groups
 FOR EACH ROW EXECUTE PROCEDURE insert_item_links_on_lists_groups_insert();
 
+
+
+
+
 -- Function to delete from item_links on delete from items_lists
 CREATE OR REPLACE FUNCTION delete_item_links_on_items_lists_delete()
 RETURNS TRIGGER AS $$
+DECLARE 
+  item_count integer;
 BEGIN
-  DELETE FROM item_links 
-  WHERE item_id = OLD.item_id AND list_id = OLD.list_id;
+
+  SELECT count(*) INTO item_count
+  FROM items
+  LEFT JOIN items_lists ON items_lists.item_id = items.id
+  WHERE items_lists.item_id = OLD.item_id AND items_lists.user_id = OLD.user_id;
+
+  IF item_count = 0 THEN
+    DELETE FROM item_links 
+    WHERE item_id = OLD.item_id;
+  END IF;
   
   RETURN OLD;
 END;
@@ -70,21 +101,48 @@ CREATE TRIGGER delete_item_links_on_items_lists_delete
 AFTER DELETE ON items_lists
 FOR EACH ROW EXECUTE PROCEDURE delete_item_links_on_items_lists_delete();
 
+
+
+
+
+
 -- Function to delete from item_links on delete from lists_groups
 CREATE OR REPLACE FUNCTION delete_item_links_on_lists_groups_delete()
 RETURNS TRIGGER AS $$
+DECLARE
+  item_row record;
 BEGIN
-  DELETE FROM item_links
-  WHERE list_id = OLD.list_id AND group_id = OLD.group_id;
-  
+
+  FOR item_row IN 
+    SELECT items.id, count(lists_groups.group_id) as assigned, lists.child_list FROM items
+    LEFT JOIN items_lists ON items_lists.item_id = items.id
+    LEFT JOIN lists_groups ON lists_groups.list_id = items_lists.list_id
+    INNER JOIN lists ON lists.id = items_lists.list_id AND lists.user_id = items.user_id
+    WHERE lists_groups.group_id = OLD.group_id
+    GROUP BY items.id, lists_groups.group_id, lists.child_list
+  LOOP
+    IF item_row.child_list = true THEN
+      DELETE FROM item_links WHERE list_id IS NOT NULL AND group_id = OLD.group_id;
+    ELSIF item_row.assigned = 1 THEN
+      DELETE FROM item_links WHERE list_id IS NULL AND group_id = OLD.group_id;
+    END IF;
+  END LOOP;
+
   RETURN OLD;
+
 END; 
 $$ LANGUAGE plpgsql;
 
 -- Trigger on delete from lists_groups
 CREATE TRIGGER delete_item_links_on_lists_groups_delete
-AFTER DELETE ON lists_groups
+BEFORE DELETE ON lists_groups
 FOR EACH ROW EXECUTE PROCEDURE delete_item_links_on_lists_groups_delete();
+
+
+
+
+
+
 
 -- Function to update updated_at on update to items
 CREATE OR REPLACE FUNCTION update_item_links_on_items_update()
@@ -101,6 +159,3 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER update_item_links_on_items_update
 AFTER UPDATE ON items
 FOR EACH ROW EXECUTE PROCEDURE update_item_links_on_items_update();
-
--- Enable realtime on item_links
-ALTER PUBLICATION supabase_realtime ADD TABLE item_links;
