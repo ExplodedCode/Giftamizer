@@ -112,10 +112,10 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 			});
 			setMetaloading(false);
 		} else {
-			setName(data?.name);
-			setDescription(data?.description);
-			setImage(data?.image);
-			setMetaImage(data?.image);
+			if (data?.name) setName(data?.name);
+			if (data?.description) setDescription(data?.description);
+			if (data?.image) setImage(data?.image);
+			if (data?.image) setMetaImage(data?.image);
 			setMetaloading(false);
 		}
 	};

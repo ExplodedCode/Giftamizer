@@ -16,16 +16,15 @@ export const useGetGroups = () => {
 	client
 		.channel(`public:group_members:user_id=eq.${user.id}`)
 		.on('postgres_changes', { event: '*', schema: 'public', table: 'group_members', filter: `user_id=eq.${user.id}` }, async (payload) => {
-			console.log(payload);
 			switch (payload.eventType) {
 				case 'INSERT':
-					if (payload.new.user_id == user.id) await refreshGroup.mutateAsync(payload.new.group_id);
+					if (payload.new.user_id === user.id) await refreshGroup.mutateAsync(payload.new.group_id);
 					break;
 				case 'UPDATE':
-					if (payload.new.user_id == user.id) await refreshGroup.mutateAsync(payload.new.group_id);
+					if (payload.new.user_id === user.id) await refreshGroup.mutateAsync(payload.new.group_id);
 					break;
 				case 'DELETE':
-					if (payload.old.user_id == user.id)
+					if (payload.old.user_id === user.id)
 						queryClient.setQueryData(GROUPS_QUERY_KEY, (prevGroups: GroupType[] | undefined) =>
 							prevGroups ? prevGroups.filter((group) => group.id !== payload.old.group_id) : prevGroups
 						);
@@ -75,7 +74,7 @@ export const useRefreshGroup = () => {
 				.single();
 
 			// @ts-ignore
-			return { ...data, image: g.image_token && `${client.supabaseUrl}/storage/v1/object/public/groups/${g.id}?${g.image_token}` } as GroupType;
+			return { ...data, image: data.image_token && `${client.supabaseUrl}/storage/v1/object/public/groups/${data.id}?${data.image_token}` } as GroupType;
 		},
 		{
 			onSuccess: (update: GroupType) => {

@@ -73,7 +73,7 @@ export default function ListUpdate({ list, onClose }: ListUpdateProps) {
 						<GroupSelector groups={groups as Omit<GroupType, 'image_token' | 'my_membership'>[]} value={selectedGroups} onChange={setSelectedGroups} disabled={updateLists.isLoading} />
 					</Grid>
 
-					{list?.id !== DEFAULT_LIST_ID && (
+					{/* {list?.id !== DEFAULT_LIST_ID && (
 						<Grid item xs={12}>
 							<FormControl component='fieldset' variant='standard'>
 								<FormControlLabel
@@ -82,7 +82,7 @@ export default function ListUpdate({ list, onClose }: ListUpdateProps) {
 								/>
 							</FormControl>
 						</Grid>
-					)}
+					)} */}
 					{childList && (
 						<Grid item xs={12}>
 							<TextField

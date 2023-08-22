@@ -9,21 +9,31 @@ const MEMBER_ITEMS_QUERY_KEY = ['items'];
 export const useGetMemberItems = (group_id: string, user_id: string, list_id?: string) => {
 	const { client } = useSupabase();
 
-	console.log(`public:group_members:realtime=eq.${group_id}.${user_id}${list_id ? `_${list_id}` : ''}`);
-
+	const refreshItem = useRefreshItem([...GROUPS_QUERY_KEY, group_id, user_id, ...MEMBER_ITEMS_QUERY_KEY, list_id!]);
+	const queryClient = useQueryClient();
 	client
-		.channel(`public:group_members:realtime=eq.${group_id}.${user_id}${list_id ? `_${list_id}` : ''}`)
+		.channel(`public:item_links:realtime=eq.${group_id}.${user_id}${list_id ? `_${list_id}` : ''}`)
 		.on('postgres_changes', { event: '*', schema: 'public', table: 'item_links', filter: `realtime=eq.${group_id}.${user_id}${list_id ? `_${list_id}` : ''}` }, async (payload) => {
 			switch (payload.eventType) {
 				case 'INSERT':
-					console.log('INSERT', payload.new);
+					if (payload.new.group_id === group_id) {
+						console.log(payload);
+						await refreshItem.mutateAsync(payload.new.item_id);
+					}
 					break;
 				case 'UPDATE':
-					console.log('UPDATE', payload.new);
+					if (payload.new.group_id === group_id) {
+						console.log(payload);
+						await refreshItem.mutateAsync(payload.new.item_id);
+					}
 					break;
 				case 'DELETE':
-					console.log('DELETE', payload.old);
-
+					if (payload.old.group_id === group_id) {
+						console.log(payload);
+						queryClient.setQueryData([...GROUPS_QUERY_KEY, group_id, user_id, ...MEMBER_ITEMS_QUERY_KEY, list_id], (prevItems: ItemType[] | undefined) =>
+							prevItems ? prevItems.filter((item) => item.id !== payload.old.item_id) : prevItems
+						);
+					}
 					break;
 			}
 		})
@@ -94,4 +104,49 @@ export const useGetMemberItems = (group_id: string, user_id: string, list_id?: s
 			}
 		},
 	});
+};
+
+export const useRefreshItem = (QUERY_KEY: string[]) => {
+	const queryClient = useQueryClient();
+	const { client, user } = useSupabase();
+
+	return useMutation(
+		async (item_id: string): Promise<ItemType> => {
+			const { data, error } = await client
+				.from('items')
+				.select(
+					`*,
+					items_lists!inner( 
+						lists!inner(
+							lists_groups!inner(
+								group_id
+							)
+						)
+					)`
+				)
+				.eq('id', item_id)
+				.single();
+
+			// @ts-ignore
+			return { ...data, image: data.image_token && `${client.supabaseUrl}/storage/v1/object/public/items/${data.id}?${data.image_token}` } as ItemType;
+		},
+		{
+			onSuccess: (update: ItemType) => {
+				queryClient.setQueryData(QUERY_KEY, (prevItems: ItemType[] | undefined) => {
+					if (prevItems) {
+						var updatedItems: ItemType[];
+						if (prevItems.find((g) => g.id === update.id)) {
+							updatedItems = prevItems.map((item) => {
+								return item.id === update.id ? update : item;
+							});
+						} else {
+							updatedItems = [...prevItems, update];
+						}
+						return updatedItems;
+					}
+					return prevItems;
+				});
+			},
+		}
+	);
 };
