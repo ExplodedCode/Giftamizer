@@ -1,9 +1,9 @@
 import React from 'react';
 import { useSnackbar } from 'notistack';
 
-import { useGetItems, useSupabase } from '../lib/useSupabase';
+import { useGetItems } from '../lib/useSupabase';
 
-import { Container, Grid, Typography, Box, CircularProgress, Button } from '@mui/material';
+import { Container, Grid, Typography, Box, CircularProgress } from '@mui/material';
 
 import ItemCreate from '../components/ItemCreate';
 import ItemCard from '../components/ItemCard';

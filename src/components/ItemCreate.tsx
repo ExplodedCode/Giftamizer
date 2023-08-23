@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { useSupabase, useCreateItem, useGetProfile, DEFAULT_LIST_ID } from '../lib/useSupabase';
+import { useSupabase, useCreateItem, useGetProfile } from '../lib/useSupabase';
 import { useSnackbar } from 'notistack';
 
 import { useTheme } from '@mui/material/styles';
@@ -29,7 +29,10 @@ import ListSelector from './ListSelector';
 import { CustomField, ListType } from '../lib/useSupabase/types';
 import ImageCropper from './ImageCropper';
 
-export default function ItemCreate() {
+interface ItemCreateProps {
+	defaultList?: ListType;
+}
+export default function ItemCreate({ defaultList }: ItemCreateProps) {
 	const theme = useTheme();
 	const { enqueueSnackbar } = useSnackbar();
 
@@ -40,9 +43,9 @@ export default function ItemCreate() {
 	const [description, setDescription] = React.useState('');
 	const [links, setLinks] = React.useState<string[]>(['']);
 	const [customFields, setCustomFields] = React.useState<CustomField[]>([]);
-	const [lists, setLists] = React.useState<ListType[]>([]);
+	const [lists, setLists] = React.useState<ListType[]>(defaultList ? [defaultList] : []);
 
-	const { user, client } = useSupabase();
+	const { client } = useSupabase();
 	const { data: profile } = useGetProfile();
 	const createItem = useCreateItem();
 
@@ -72,7 +75,7 @@ export default function ItemCreate() {
 		setDescription('');
 		setLinks(['']);
 		setCustomFields([]);
-		setLists([]);
+		setLists(defaultList ? [defaultList] : []);
 
 		setOpen(false);
 	};
@@ -151,6 +154,7 @@ export default function ItemCreate() {
 															}
 														}}
 														edge='end'
+														disabled={links.length === 5 && index === 0}
 													>
 														{index === 0 ? <AddLink /> : <Delete />}
 													</IconButton>
@@ -226,6 +230,7 @@ export default function ItemCreate() {
 											color='inherit'
 											startIcon={<Add />}
 											onClick={() => setCustomFields([...customFields, { id: customFields.length, name: '', value: '' }])}
+											disabled={customFields.length === 10}
 										>
 											Field
 										</Button>

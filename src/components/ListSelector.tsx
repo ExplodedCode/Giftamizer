@@ -12,7 +12,7 @@ type ListSelectorProps = {
 export default function ListSelector({ value, onChange, disabled }: ListSelectorProps) {
 	const { data: lists } = useGetLists();
 
-	const listTypeSelected = value?.length == 0 ? undefined : value?.[0]?.child_list ? 'child' : 'list';
+	const listTypeSelected = value?.length === 0 ? undefined : value?.[0]?.child_list ? 'child' : 'list';
 
 	return lists ? (
 		<Autocomplete

@@ -79,7 +79,7 @@ export const useCreateItem = () => {
 						list_id: list.id,
 						user_id: user.id,
 					})
-					.select('*, list:lists( id, name )')
+					.select('*, list:lists( id, name, child_list )')
 					.single();
 				if (listGroupError) throw listGroupError;
 
@@ -90,13 +90,6 @@ export const useCreateItem = () => {
 					list: {
 						name: itemList.list.name,
 						child_list: itemList.list.child_list,
-					},
-				});
-
-				console.log({
-					list_id: list.id,
-					list: {
-						name: itemList.list.name,
 					},
 				});
 			}
@@ -188,7 +181,7 @@ export const useUpdateItems = () => {
 				queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => {
 					if (prevItems) {
 						const updatedItems = prevItems.map((item) => {
-							return item.id == item_updated.id ? item_updated : item;
+							return item.id === item_updated.id ? item_updated : item;
 						});
 						return updatedItems;
 					}

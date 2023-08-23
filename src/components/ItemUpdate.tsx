@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 
-import { DEFAULT_LIST_ID, useGetGroups, useGetProfile, useSupabase, useUpdateItems } from '../lib/useSupabase';
+import { useGetProfile, useSupabase, useUpdateItems } from '../lib/useSupabase';
 import { CustomField, ItemType, ListType } from '../lib/useSupabase/types';
 
 import { useSnackbar } from 'notistack';
@@ -94,7 +94,7 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 				}) ?? []
 			);
 		}
-	}, [item]);
+	}, [item, user]);
 
 	const [metaImage, setMetaImage] = React.useState<string | undefined>();
 	const [metaLoading, setMetaloading] = React.useState(false);
@@ -165,6 +165,7 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 														}
 													}}
 													edge='end'
+													disabled={links.length === 5 && index === 0}
 												>
 													{index === 0 ? <AddLink /> : <Delete />}
 												</IconButton>
@@ -240,6 +241,7 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 										color='inherit'
 										startIcon={<Add />}
 										onClick={() => setCustomFields([...customFields, { id: customFields.length, name: '', value: '' }])}
+										disabled={customFields.length === 10}
 									>
 										Field
 									</Button>

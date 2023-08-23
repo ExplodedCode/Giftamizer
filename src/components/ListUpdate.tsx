@@ -1,13 +1,14 @@
 import React, { useEffect } from 'react';
 
-import { DEFAULT_LIST_ID, useGetGroups, useSupabase, useUpdateLists } from '../lib/useSupabase/hooks';
+import { useGetGroups, useUpdateLists } from '../lib/useSupabase/hooks';
 import { GroupType, ListType } from '../lib/useSupabase/types';
 
 import { useSnackbar } from 'notistack';
 
-import { Dialog, DialogTitle, DialogContent, Button, TextField, DialogContentText, FormControl, FormControlLabel, Grid, Switch, Stack, useMediaQuery, useTheme } from '@mui/material';
-import { Add } from '@mui/icons-material';
+import { Dialog, DialogTitle, DialogContent, Button, TextField, DialogContentText, Grid, Stack, useMediaQuery, useTheme } from '@mui/material';
+import { Save } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
+
 import GroupSelector from './GroupSelector';
 import ImageCropper from './ImageCropper';
 
@@ -20,7 +21,6 @@ export default function ListUpdate({ list, onClose }: ListUpdateProps) {
 	const theme = useTheme();
 	const { enqueueSnackbar } = useSnackbar();
 
-	const { client } = useSupabase();
 	const { data: groups } = useGetGroups();
 
 	const [name, setName] = React.useState('');
@@ -106,7 +106,7 @@ export default function ListUpdate({ list, onClose }: ListUpdateProps) {
 								Cancel
 							</Button>
 
-							<LoadingButton onClick={handleSave} disabled={name.length === 0} endIcon={<Add />} loading={updateLists.isLoading} loadingPosition='end' variant='contained'>
+							<LoadingButton onClick={handleSave} disabled={name.length === 0} endIcon={<Save />} loading={updateLists.isLoading} loadingPosition='end' variant='contained'>
 								Save
 							</LoadingButton>
 						</Stack>

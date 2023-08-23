@@ -30,13 +30,14 @@ import { Delete, Edit, ExpandMore, MoreVert } from '@mui/icons-material';
 
 import ItemUpdate from '../components/ItemUpdate';
 
-import { ExtractDomain, useDeleteItem, useGetProfile, useSupabase } from '../lib/useSupabase';
-import { ItemType } from '../lib/useSupabase/types';
+import { ExtractDomain, useDeleteItem, useGetProfile, useSupabase, useUpdateItemStatus } from '../lib/useSupabase';
+import { ItemStatuses, ItemType, MemberItemType } from '../lib/useSupabase/types';
+import { LoadingButton } from '@mui/lab';
+import { useParams } from 'react-router-dom';
 
 interface VertMenuProps {
-	item: ItemType;
+	item: ItemType | MemberItemType;
 }
-
 function VertMenu({ item }: VertMenuProps) {
 	const { enqueueSnackbar } = useSnackbar();
 
@@ -107,12 +108,96 @@ function VertMenu({ item }: VertMenuProps) {
 	);
 }
 
+interface ItemStatusProps {
+	item: MemberItemType;
+}
+function ItemStatus({ item }: ItemStatusProps) {
+	const theme = useTheme();
+
+	const { group: groupID, user: userID } = useParams();
+	const user_id = userID!.split('_')[0] ?? userID!;
+	const list_id = userID!.split('_')[1] ?? undefined;
+
+	const { enqueueSnackbar } = useSnackbar();
+	const { user } = useSupabase();
+	const updateItemStatus = useUpdateItemStatus(groupID!, user_id, list_id);
+
+	const handleUpdateItemStatus = async (status: ItemStatuses) => {
+		await updateItemStatus.mutateAsync({ item_id: item.id, user_id: user.id, status: status }).catch((err) => {
+			enqueueSnackbar(`Unable to update item status! ${err.message}`, { variant: 'error' });
+		});
+	};
+	return (
+		<>
+			<LoadingButton
+				variant='outlined'
+				color={(() => {
+					switch (item.status?.status) {
+						default:
+							return 'success';
+						case ItemStatuses.planned:
+							return 'warning';
+						case ItemStatuses.unavailable:
+							return 'error';
+					}
+				})()}
+				size='small'
+				onClick={() => {
+					handleUpdateItemStatus(
+						(() => {
+							switch (item.status?.status) {
+								default:
+									return ItemStatuses.planned;
+								case ItemStatuses.planned:
+									return ItemStatuses.unavailable;
+								case ItemStatuses.unavailable:
+									return ItemStatuses.available;
+							}
+						})()
+					);
+				}}
+				loading={updateItemStatus.isLoading}
+				disabled={item.status?.user_id !== undefined && item.status?.user_id !== user.id}
+				sx={
+					item.status?.user_id !== user.id
+						? {
+								'&.Mui-disabled': {
+									// color: theme.palette.warning.main,
+									color: (() => {
+										switch (item.status?.status) {
+											default:
+												return theme.palette.success.main;
+											case ItemStatuses.planned:
+												return theme.palette.warning.main;
+											case ItemStatuses.unavailable:
+												return theme.palette.error.main;
+										}
+									})(),
+								},
+						  }
+						: {}
+				}
+			>
+				{(() => {
+					switch (item.status?.status) {
+						default:
+							return 'Available';
+						case ItemStatuses.planned:
+							return 'Planned';
+						case ItemStatuses.unavailable:
+							return 'Unavailable';
+					}
+				})()}
+			</LoadingButton>
+		</>
+	);
+}
+
 interface CustomFieldExpandProps {
 	handleExpand: (event: React.MouseEvent<HTMLElement>) => void;
 	expanded: boolean;
-	item: ItemType;
+	item: ItemType | MemberItemType;
 }
-
 function CustomFieldExpand({ handleExpand, expanded, item }: CustomFieldExpandProps) {
 	const theme = useTheme();
 
@@ -156,11 +241,11 @@ function CustomFieldExpand({ handleExpand, expanded, item }: CustomFieldExpandPr
 }
 
 export type ItemCardProps = {
-	item: ItemType;
+	item: ItemType | MemberItemType;
 	editable?: boolean;
 };
 export default function ItemCard({ item, editable }: ItemCardProps) {
-	const { user, client } = useSupabase();
+	const { user } = useSupabase();
 	const { data: profile } = useGetProfile();
 
 	const [expanded, setExpanded] = React.useState(false);
@@ -184,7 +269,7 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 						{item.image && (
 							<Grid item>
 								<ButtonBase>
-									<img alt={item.name} src={item.image} style={{ objectFit: 'cover', width: 164, height: 200, borderRadius: 4 }} />
+									<img alt={item.name} src={item.image} style={{ objectFit: 'cover', width: 150, height: 150, borderRadius: 4 }} />
 								</ButtonBase>
 							</Grid>
 						)}
@@ -211,11 +296,13 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 										</Stack>
 									)}
 								</Grid>
-								{item.links && item.links.length > 0 && (
+								{(!editable || (item.links && item.links.length > 0)) && (
 									<Grid item>
 										<Stack direction='row' justifyContent='flex-start' spacing={1} useFlexGap flexWrap='wrap'>
+											{!editable && item.user_id !== user.id && <ItemStatus item={item as MemberItemType} />}
+
 											{item.links?.map((link, i) => (
-												<Button key={i} href={link} target='_blank' color='info'>
+												<Button key={i} href={link} target='_blank' color='info' size='small'>
 													{ExtractDomain(link)}
 												</Button>
 											))}
@@ -257,9 +344,11 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 								</Grid>
 							)}
 
-							{item.links?.length !== 0 && (
+							{(!editable || (item.links && item.links.length > 0)) && (
 								<Grid item xs={12}>
 									<Stack direction='row' justifyContent='flex-start' spacing={1} useFlexGap flexWrap='wrap'>
+										{!editable && item.user_id !== user.id && <ItemStatus item={item as MemberItemType} />}
+
 										{item.links?.map((link, i) => (
 											<Button key={i} href={link} target='_blank' color='info' size='small'>
 												{ExtractDomain(link)}

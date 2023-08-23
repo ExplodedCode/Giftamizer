@@ -148,7 +148,7 @@ export const useUpdateLists = () => {
 				queryClient.setQueryData(LISTS_QUERY_KEY, (prevLists: ListType[] | undefined) => {
 					if (prevLists) {
 						const updatedLists = prevLists.map((list) => {
-							return list.id == list_updated.id ? list_updated : list;
+							return list.id === list_updated.id ? list_updated : list;
 						});
 						return updatedLists;
 					}

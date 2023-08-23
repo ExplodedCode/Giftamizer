@@ -117,7 +117,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 	const navigate = useNavigate();
 	const { enqueueSnackbar } = useSnackbar();
 
-	const { client, user } = useSupabase();
+	const { user } = useSupabase();
 	const { data: profile } = useGetProfile();
 
 	const queryClient = useQueryClient();

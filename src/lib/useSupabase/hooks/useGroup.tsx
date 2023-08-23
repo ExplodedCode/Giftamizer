@@ -61,7 +61,7 @@ export const useRefreshGroup = () => {
 
 	return useMutation(
 		async (group_id: string): Promise<GroupType> => {
-			const { data, error } = await client
+			const { data } = await client
 				.from('groups')
 				.select(
 					`id,
@@ -170,7 +170,7 @@ export const useGetGroupMembers = (group_id: string) => {
 					queryClient.setQueryData([...GROUPS_QUERY_KEY, group_id, 'members'], (prevGroupMember: Member[] | undefined) =>
 						prevGroupMember ? prevGroupMember.filter((member) => member.user_id !== payload.old.user_id) : prevGroupMember
 					);
-					if (payload.old.user_id == user.id)
+					if (payload.old.user_id === user.id)
 						queryClient.setQueryData(GROUPS_QUERY_KEY, (prevGroups: GroupType[] | undefined) =>
 							prevGroups ? prevGroups.filter((group) => group.id !== payload.old.group_id) : prevGroups
 						);
@@ -240,7 +240,6 @@ export const useGetGroupMembers = (group_id: string) => {
 						profile: { first_name: '', last_name: '', email: payload.new.email, bio: '', avatar_token: null },
 						external: true,
 					} as Member);
-					// if (payload.new.user_id == user.id) await refreshGroup.mutateAsync(payload.new.group_id);
 					break;
 				case 'UPDATE':
 					await refreshGroupMembers.mutateAsync({
@@ -250,13 +249,12 @@ export const useGetGroupMembers = (group_id: string) => {
 						profile: { first_name: '', last_name: '', email: payload.new.email, bio: '', avatar_token: null },
 						external: true,
 					} as Member);
-					// if (payload.new.user_id == user.id) await refreshGroup.mutateAsync(payload.new.group_id);
 					break;
 				case 'DELETE':
 					queryClient.setQueryData([...GROUPS_QUERY_KEY, group_id, 'members'], (prevGroupMember: Member[] | undefined) =>
 						prevGroupMember ? prevGroupMember.filter((member) => member.user_id !== payload.old.email) : prevGroupMember
 					);
-					if (payload.old.email == user.id)
+					if (payload.old.email === user.id)
 						queryClient.setQueryData(GROUPS_QUERY_KEY, (prevGroups: GroupType[] | undefined) =>
 							prevGroups ? prevGroups.filter((group) => group.id !== payload.old.group_id) : prevGroups
 						);
