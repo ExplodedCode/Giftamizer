@@ -17,7 +17,7 @@ export default function Member() {
 
 	const user_id = userID!.split('_')[0] ?? userID!;
 	const list_id = userID!.split('_')[1] ?? undefined;
-	const { data: items, isLoading: memberLoading, refetch } = useGetMemberItems(groupID!, user_id, list_id);
+	const { data: items, isLoading: memberLoading } = useGetMemberItems(groupID!, user_id, list_id);
 
 	React.useEffect(() => {
 		// unsub from realtime
@@ -25,7 +25,7 @@ export default function Member() {
 			var itemRealtimeChannel = client.getChannels().find((c) => c.topic === `realtime:public:item_links:realtime=eq.${groupID}.${user_id}${list_id ? `_${list_id}` : ''}`);
 			if (itemRealtimeChannel) client.removeChannel(itemRealtimeChannel);
 		};
-	}, [client, groupID]);
+	}, [client, groupID, user_id, list_id]);
 
 	return (
 		<>

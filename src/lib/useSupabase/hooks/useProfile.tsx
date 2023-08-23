@@ -12,7 +12,16 @@ export const useGetProfile = () => {
 	return useQuery({
 		queryKey: QUERY_KEY,
 		queryFn: async (): Promise<ProfileType> => {
-			const { data, error } = await client.from('profiles').select('*').eq('user_id', user.id).single();
+			const { data, error } = await client
+				.from('profiles')
+				.select(
+					`*,
+					role:user_roles(
+						role
+					)`
+				)
+				.eq('user_id', user.id)
+				.single();
 			if (error) throw error;
 			var profile = data as unknown as ProfileType;
 
@@ -71,7 +80,12 @@ export const useUpdateProfile = () => {
 					avatar_token: update.image ? Date.now() : -1,
 				})
 				.eq('user_id', user.id)
-				.select('*')
+				.select(
+					`*,
+					role:user_roles(
+						role
+					)`
+				)
 				.single();
 			if (error) throw error;
 			var profile = data as unknown as ProfileType;

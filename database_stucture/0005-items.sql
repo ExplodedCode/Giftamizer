@@ -52,7 +52,6 @@ CREATE TABLE lists_groups (
     ON DELETE CASCADE
 );
 
-
 --
 -- items
 alter table items enable row level security;

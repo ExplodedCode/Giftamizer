@@ -7,7 +7,7 @@ import { useCreateList, useGetGroups } from '../lib/useSupabase/hooks';
 import { useSnackbar } from 'notistack';
 
 import { useTheme } from '@mui/material/styles';
-import { Button, Collapse, Dialog, DialogContent, DialogContentText, DialogTitle, Fab, FormControl, FormControlLabel, Grid, Stack, Switch, TextField, useMediaQuery } from '@mui/material';
+import { Button, Dialog, DialogContent, DialogContentText, DialogTitle, Fab, FormControl, FormControlLabel, Grid, Stack, Switch, TextField, useMediaQuery } from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
 import { Add } from '@mui/icons-material';
 import GroupSelector from './GroupSelector';
