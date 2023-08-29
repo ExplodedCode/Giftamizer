@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 
 import { useNavigate } from 'react-router-dom';
 
-import { useSupabase } from '../lib/useSupabase';
 import { useDeleteList, useGetLists, DEFAULT_LIST_ID } from '../lib/useSupabase/hooks';
 import { ListType } from '../lib/useSupabase/types';
 
@@ -26,6 +25,9 @@ import {
 	ListItemButton,
 	Chip,
 	Stack,
+	AppBar,
+	Breadcrumbs,
+	Toolbar,
 } from '@mui/material';
 import { Delete, Edit, EscalatorWarning, ListAlt, MoreVert } from '@mui/icons-material';
 import { TransitionGroup } from 'react-transition-group';
@@ -110,14 +112,18 @@ function RenderListItem({ list, handleListEdit }: RenderListItemProps) {
 		>
 			<ListItemButton onClick={() => navigate(`/lists/${list.id}`)}>
 				<ListItemAvatar>
-					<Avatar sx={{ bgcolor: list.id === DEFAULT_LIST_ID ? 'primary.main' : undefined }}>{list.child_list ? <EscalatorWarning /> : <ListAlt />}</Avatar>
+					{list.image ? (
+						<Avatar alt={list.name} src={list.image} />
+					) : (
+						<Avatar sx={{ bgcolor: list.id === DEFAULT_LIST_ID ? 'primary.main' : undefined }}>{list.child_list ? <EscalatorWarning /> : <ListAlt />}</Avatar>
+					)}
 				</ListItemAvatar>
 
 				<ListItemText
 					primary={list.name}
 					secondary={
 						list.groups.length === 0 ? (
-							<b>This list assigned to a group!</b>
+							<b>This list is not assigned any groups!</b>
 						) : (
 							<Stack direction='row' spacing={1}>
 								{list.groups.map((g) => (
@@ -133,8 +139,8 @@ function RenderListItem({ list, handleListEdit }: RenderListItemProps) {
 }
 
 export default function Lists() {
-	const { user } = useSupabase();
 	const { enqueueSnackbar } = useSnackbar();
+	const navigate = useNavigate();
 
 	const { data: lists, isLoading, isError, error } = useGetLists();
 	const [listEdit, setListEdit] = React.useState<ListType | null>(null);
@@ -147,27 +153,30 @@ export default function Lists() {
 
 	return (
 		<>
+			<AppBar position='static' sx={{ marginBottom: 2, bgcolor: 'background.paper' }}>
+				<Toolbar variant='dense'>
+					<Breadcrumbs aria-label='breadcrumb' sx={{ flexGrow: 1 }}>
+						<Typography color='text.primary'>Lists</Typography>
+					</Breadcrumbs>
+				</Toolbar>
+			</AppBar>
+
 			<Container maxWidth='sm' sx={{ paddingTop: 5, paddingBottom: 12 }}>
 				<Grid container spacing={2}>
 					{lists && (
 						<TransitionGroup component={List} sx={{ width: '100%' }} dense>
 							{[...lists.filter((l) => l.id === DEFAULT_LIST_ID)!, ...lists.filter((l) => l.id !== DEFAULT_LIST_ID)!]?.map((list) => (
 								<Collapse key={list.id}>
-									<RenderListItem list={list} handleListEdit={setListEdit} />
+									<RenderListItem
+										list={list}
+										handleListEdit={(l) => {
+											setListEdit(l);
+											navigate('#list-edit'); // close dialog
+										}}
+									/>
 								</Collapse>
 							))}
 						</TransitionGroup>
-					)}
-
-					{lists?.length === 0 && !isLoading && (
-						<Box style={{ marginTop: 100, textAlign: 'center', width: '100%' }}>
-							<Typography variant='h5' gutterBottom>
-								You don't have any lists!
-							</Typography>
-							<Typography variant='body1' gutterBottom>
-								Add some gift ideas to share with your friends and family!
-							</Typography>
-						</Box>
 					)}
 				</Grid>
 				{isLoading && (
@@ -178,7 +187,13 @@ export default function Lists() {
 			</Container>
 
 			<ListCreate />
-			<ListUpdate list={listEdit} onClose={() => setListEdit(null)} />
+			<ListUpdate
+				list={listEdit}
+				onClose={() => {
+					setListEdit(null);
+					navigate('#'); // close dialog
+				}}
+			/>
 		</>
 	);
 }

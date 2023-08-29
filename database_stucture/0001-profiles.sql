@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS public.profiles
   last_name character varying(255) NOT NULL,
   bio text NOT NULL DEFAULT ''::text,
   enable_lists boolean NOT NULL DEFAULT false,
+  enable_archive boolean NOT NULL DEFAULT false,
+  enable_trash boolean NOT NULL DEFAULT false,
   avatar_token numeric,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
@@ -113,3 +115,24 @@ CREATE POLICY "allow user delete"
   FOR DELETE
   USING (((bucket_id = 'avatars'::text) AND (storage.filename(name) = (auth.uid())::text)));
 
+
+-- Function update item archived/deleted when disabled
+CREATE OR REPLACE FUNCTION update_item_archived_n_deleted_on_profile_update()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF OLD.enable_archive <> NEW.enable_archive AND NEW.enable_archive = false THEN
+    UPDATE items SET archived = false WHERE user_id = NEW.user_id;
+  END IF;
+
+  IF OLD.enable_trash <> NEW.enable_trash AND NEW.enable_trash = false THEN
+    UPDATE items SET deleted = false WHERE user_id = NEW.user_id;
+  END IF;
+  
+  RETURN NEW;  
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger on update to profiles
+CREATE TRIGGER update_item_archived_n_deleted_on_profile_update
+AFTER UPDATE ON profiles
+FOR EACH ROW EXECUTE PROCEDURE update_item_archived_n_deleted_on_profile_update();

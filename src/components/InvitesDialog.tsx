@@ -1,6 +1,7 @@
 import * as React from 'react';
-
-import { SUPABASE_URL, useGetGroups, useAcceptGroupInvite, useDeclineGroupInvite } from '../lib/useSupabase';
+import { useLocation, useNavigate } from 'react-router-dom';
+import moment from 'moment';
+import { useSnackbar } from 'notistack';
 
 import {
 	Dialog,
@@ -22,9 +23,8 @@ import {
 	CircularProgress,
 } from '@mui/material';
 import { Check, Clear } from '@mui/icons-material';
-import moment from 'moment';
-import { useSnackbar } from 'notistack';
-import { useNavigate } from 'react-router-dom';
+
+import { SUPABASE_URL, useGetGroups, useAcceptGroupInvite, useDeclineGroupInvite } from '../lib/useSupabase';
 import { GroupType } from '../lib/useSupabase/types';
 
 export type InvitesDialogRefs = {
@@ -34,22 +34,23 @@ export type InvitesDialogRefs = {
 const AlertDialog: React.ForwardRefRenderFunction<InvitesDialogRefs> = (props, forwardedRef) => {
 	const theme = useTheme();
 	const navigate = useNavigate();
+	const location = useLocation();
 	const { enqueueSnackbar } = useSnackbar();
 
 	const { data: groups } = useGetGroups();
 
-	const [open, setOpen] = React.useState(false);
+	const open = location.hash === '#group-invitations';
 
 	React.useImperativeHandle(forwardedRef, () => ({
 		handleClickOpen,
 	}));
 
 	const handleClickOpen = () => {
-		setOpen(true);
+		navigate('#group-invitations'); // open dialog
 	};
 
 	const handleClose = () => {
-		setOpen(false);
+		navigate('#'); // close dialog
 	};
 
 	const acceptGroupInvite = useAcceptGroupInvite();

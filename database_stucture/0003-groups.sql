@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS public.groups
   name text NOT NULL,
   image_token numeric,
   created_at timestamp with time zone DEFAULT now(),
-  updated_at timestamp with time zone DEFAULT now()
+  updated_at timestamp with time zone DEFAULT now(),
+  fbid text null,
 );
 create trigger handle_updated_at before update on groups
   for each row execute procedure moddatetime (updated_at);

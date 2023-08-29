@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useGetProfile, useSupabase, validateEmail } from '../lib/useSupabase';
 import { useSnackbar } from 'notistack';
@@ -8,19 +9,21 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import { Close, Edit, SyncAlt } from '@mui/icons-material';
 
 export default function EmailEditor() {
+	const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+	const navigate = useNavigate();
+	const location = useLocation();
+
 	const { client } = useSupabase();
 	const { data: profile } = useGetProfile();
 
-	const { enqueueSnackbar, closeSnackbar } = useSnackbar();
-
-	const [open, setOpen] = React.useState(false);
+	const open = location.hash === '#my-account-email';
 	const [loading, setLoading] = React.useState(false);
 
 	const [email, setEmail] = React.useState('');
 	const [emailConfirm, setEmailConfirm] = React.useState('');
 
 	const handleClose = () => {
-		setOpen(false);
+		navigate('#my-account'); // close dialog
 		setLoading(false);
 		setEmail('');
 		setEmailConfirm('');
@@ -65,10 +68,10 @@ export default function EmailEditor() {
 					endAdornment={
 						<InputAdornment position='end'>
 							<Divider sx={{ height: 28, m: 0.5, display: { xs: 'inherit', sm: 'none' } }} orientation='vertical' />
-							<IconButton sx={{ display: { xs: 'block', sm: 'none' } }} color='primary' edge='end' onClick={() => setOpen(true)}>
+							<IconButton sx={{ display: { xs: 'block', sm: 'none' } }} color='primary' edge='end' onClick={() => navigate('#my-account-email')}>
 								<Edit />
 							</IconButton>
-							<Button variant='contained' sx={{ display: { xs: 'none', sm: 'inherit' } }} endIcon={<Edit />} onClick={() => setOpen(true)}>
+							<Button variant='contained' sx={{ display: { xs: 'none', sm: 'inherit' } }} endIcon={<Edit />} onClick={() => navigate('#my-account-email')}>
 								Change email
 							</Button>
 						</InputAdornment>

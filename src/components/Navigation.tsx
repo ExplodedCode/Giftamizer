@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { Link, useNavigate, useLocation, Location } from 'react-router-dom';
 import { SnackbarKey, useSnackbar } from 'notistack';
+import moment from 'moment';
 
-import { useSupabase, SUPABASE_URL, useGetProfile } from '../lib/useSupabase';
-import { GroupType, Profile } from '../lib/useSupabase/types';
+import { useSupabase, SUPABASE_URL, useGetProfile, useGetSystem, useSetMaintenance } from '../lib/useSupabase';
+import { GroupType, UserRoles } from '../lib/useSupabase/types';
 
 import { TransitionGroup } from 'react-transition-group';
 import { styled, Theme } from '@mui/material/styles';
@@ -32,12 +33,16 @@ import {
 	Typography,
 	CircularProgress,
 	ListItemAvatar,
-	Button,
+	ListSubheader,
+	FormControlLabel,
+	Switch,
+	Link as MUILink,
 } from '@mui/material';
-import { ExpandLess, ExpandMore, Archive, Delete, Group, ListAlt, Logout, ShoppingCart, Menu as MenuIcon, Podcasts, Close } from '@mui/icons-material';
+import { ExpandLess, ExpandMore, Archive, Delete, Group, ListAlt, Logout, ShoppingCart, Menu as MenuIcon, Podcasts, Close, Build } from '@mui/icons-material';
 
 import AccountDialog from './AccountDialog';
 import Notifications from './Notifications';
+
 import { useGetGroups } from '../lib/useSupabase/hooks/useGroup';
 
 const drawerWidth = 240;
@@ -85,10 +90,6 @@ interface RenderItemOptions {
 function renderItem({ group, location }: RenderItemOptions) {
 	return (
 		<ListItemButton key={group.id} sx={{ pl: 4 }} component={Link} to={`/groups/${group.id}`} selected={location.pathname.startsWith(`/groups/${group.id}`)}>
-			{/* <ListItemIcon>
-				<Star />
-			</ListItemIcon> */}
-
 			<ListItemAvatar>
 				<Avatar
 					alt={group.name}
@@ -106,19 +107,16 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 	const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 	const navigate = useNavigate();
 	const location = useLocation();
-	const [mobileNav, setMobileNav] = React.useState(getLocation(location.pathname));
 
 	const { client, user } = useSupabase();
 	const { data: profile, isLoading, refetch: refetchProfile } = useGetProfile();
+	const { data: system, isLoading: systemLoading } = useGetSystem();
 
 	React.useEffect(() => {
 		client
 			.channel(`public:profiles:user_id=eq.${user.id}`)
 			.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `user_id=eq.${user.id}` }, (payload) => {
-				const newProfile = payload.new as Profile;
-				if (newProfile.avatar_token !== profile?.avatar_token) {
-					refetchProfile();
-				}
+				refetchProfile();
 			})
 			.subscribe();
 	}, [user, client, profile?.avatar_token, refetchProfile]);
@@ -140,6 +138,22 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 
 	const toggleDrawer = () => {
 		setDrawerOpen(!drawerOpen);
+	};
+
+	const setMaintenance = useSetMaintenance();
+	const handleMaintenance = async (maintenance: boolean) => {
+		await setMaintenance
+			.mutateAsync({ ...system!, maintenance })
+			.then(() => {
+				if (maintenance) {
+					enqueueSnackbar(`Maintenance mode enabled!`, { variant: 'info' });
+				} else {
+					enqueueSnackbar(`Maintenance mode disabled!`, { variant: 'info' });
+				}
+			})
+			.catch((err) => {
+				enqueueSnackbar(`Unable to set maintenance! ${err.message}`, { variant: 'error' });
+			});
 	};
 
 	return (
@@ -166,7 +180,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 
 					<Box sx={{ flexGrow: 0 }}>
 						<Stack direction='row' spacing={2}>
-							{window.location.hostname !== 'giftamizer.com' && (
+							{profile?.roles?.roles.includes(UserRoles.debug) && (
 								<Tooltip title='Get Realtime Channels'>
 									<IconButton
 										size='large'
@@ -198,7 +212,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 
 							<Notifications />
 							<Tooltip title='Open settings'>
-								<IconButton onClick={isLoading ? undefined : handleOpenUserMenu} sx={{ p: 0 }}>
+								<IconButton onClick={isLoading ? undefined : handleOpenUserMenu} sx={{ p: 0 }} className='profile-icon'>
 									{isLoading ? <CircularProgress color='inherit' /> : <Avatar alt={profile?.first_name} src={profile?.image || '/defaultAvatar.png'} />}
 								</IconButton>
 							</Tooltip>
@@ -221,23 +235,28 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 						>
 							<AccountDialog handleCloseMenu={handleCloseUserMenu} />
 
-							<MenuItem onClick={handleCloseUserMenu} component={Link} to='/archive' sx={{ display: { xs: 'flex', md: 'none' } }}>
-								<ListItemIcon>
-									<Archive fontSize='small' />
-								</ListItemIcon>
-								<Typography textAlign='center'>Archive</Typography>
-							</MenuItem>
-							<MenuItem onClick={handleCloseUserMenu} component={Link} to='/trash' sx={{ display: { xs: 'flex', md: 'none' } }}>
-								<ListItemIcon>
-									<Delete fontSize='small' />
-								</ListItemIcon>
-								<Typography textAlign='center'>Trash</Typography>
-							</MenuItem>
+							{profile?.enable_archive && (
+								<MenuItem onClick={handleCloseUserMenu} component={Link} to='/archive' sx={{ display: { xs: 'flex', md: 'none' } }}>
+									<ListItemIcon>
+										<Archive fontSize='small' />
+									</ListItemIcon>
+									<Typography textAlign='center'>Archive</Typography>
+								</MenuItem>
+							)}
+							{profile?.enable_trash && (
+								<MenuItem onClick={handleCloseUserMenu} component={Link} to='/trash' sx={{ display: { xs: 'flex', md: 'none' } }}>
+									<ListItemIcon>
+										<Delete fontSize='small' />
+									</ListItemIcon>
+									<Typography textAlign='center'>Trash</Typography>
+								</MenuItem>
+							)}
 
 							<MenuItem
 								onClick={() => {
 									handleCloseUserMenu();
 									client.auth.signOut();
+									navigate('/signin');
 								}}
 							>
 								<ListItemIcon>
@@ -335,25 +354,92 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 							</ListItemButton>
 						</ListItem>
 					</List>
-					<Divider />
-					<List>
-						<ListItem disablePadding>
-							<ListItemButton component={Link} to='/archive' selected={location.pathname === '/archive'}>
-								<ListItemIcon>
-									<Archive color={location.pathname === '/archive' ? 'primary' : undefined} />
-								</ListItemIcon>
-								<ListItemText primary='Archive' />
-							</ListItemButton>
-						</ListItem>
-						<ListItem disablePadding>
-							<ListItemButton component={Link} to='/trash' selected={location.pathname === '/trash'}>
-								<ListItemIcon>
-									<Delete color={location.pathname === '/trash' ? 'primary' : undefined} />
-								</ListItemIcon>
-								<ListItemText primary='Trash' />
-							</ListItemButton>
-						</ListItem>
-					</List>
+					{(profile?.enable_archive || profile?.enable_trash) && (
+						<>
+							<Divider />
+							<List>
+								{profile?.enable_archive && (
+									<ListItem disablePadding>
+										<ListItemButton component={Link} to='/archive' selected={location.pathname === '/archive'}>
+											<ListItemIcon>
+												<Archive color={location.pathname === '/archive' ? 'primary' : undefined} />
+											</ListItemIcon>
+											<ListItemText primary='Archive' />
+										</ListItemButton>
+									</ListItem>
+								)}
+								{profile?.enable_trash && (
+									<ListItem disablePadding>
+										<ListItemButton component={Link} to='/trash' selected={location.pathname === '/trash'}>
+											<ListItemIcon>
+												<Delete color={location.pathname === '/trash' ? 'primary' : undefined} />
+											</ListItemIcon>
+											<ListItemText primary='Trash' />
+										</ListItemButton>
+									</ListItem>
+								)}
+							</List>
+						</>
+					)}
+
+					{profile?.roles?.roles.includes(UserRoles.admin) && !systemLoading && (
+						<>
+							<Divider />
+							<ListSubheader inset sx={{ lineHeight: 1, position: 'relative', top: 12 }}>
+								System
+							</ListSubheader>
+							<List>
+								<ListItem>
+									<ListItemIcon>
+										<Build />
+									</ListItemIcon>
+									<ListItemText
+										primary={
+											<FormControlLabel
+												control={
+													setMaintenance.isLoading ? (
+														<CircularProgress size={20} sx={{ ml: 2.5, mr: 2.25, mb: 1.1, mt: 1.1 }} />
+													) : (
+														<Switch
+															checked={system?.maintenance}
+															onChange={(e) => {
+																handleMaintenance(e.target.checked);
+															}}
+															color='primary'
+														/>
+													)
+												}
+												label='Maintenance'
+											/>
+										}
+										secondary={
+											system?.user && (
+												<Tooltip
+													title={
+														<>
+															<Typography variant='body2'>
+																{system.user.first_name} {system.user.last_name}
+															</Typography>
+															<Typography variant='body2' color='text.secondary'>
+																{system.user.email}
+															</Typography>
+															<Typography variant='caption' color='text.secondary'>
+																{moment(system.updated_at).format('L LTS')}
+															</Typography>
+														</>
+													}
+												>
+													<MUILink color='inherit' sx={{ cursor: 'pointer' }}>
+														Last Modified
+													</MUILink>
+												</Tooltip>
+											)
+										}
+									/>
+								</ListItem>
+							</List>
+						</>
+					)}
 				</Box>
 			</Drawer>
 			<Box component='main' sx={{ flexGrow: 1 }}>
@@ -363,9 +449,22 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 			<Paper sx={{ position: 'fixed', bottom: 0, left: 0, right: 0, display: { xs: 'block', md: 'none' } }} elevation={3}>
 				<BottomNavigation
 					showLabels
-					value={mobileNav}
+					value={(() => {
+						switch (true) {
+							case location.pathname === '/':
+								return 0;
+							case location.pathname.startsWith('/list'):
+								return 1;
+							case location.pathname.startsWith('/group'):
+								return 2;
+							case location.pathname.startsWith('/shopping'):
+								return 3;
+							default:
+								return -1;
+						}
+					})()}
 					onChange={(event, newValue) => {
-						setMobileNav(newValue);
+						// setMobileNav(newValue);
 						switch (newValue) {
 							case 0:
 								navigate('/');
@@ -393,14 +492,3 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 };
 
 export default Navigation;
-
-function getLocation(path: string) {
-	if (path.startsWith('/list')) {
-		return 1;
-	} else if (path.startsWith('/group')) {
-		return 2;
-	} else if (path.startsWith('/shopping')) {
-		return 3;
-	}
-	return 0;
-}
