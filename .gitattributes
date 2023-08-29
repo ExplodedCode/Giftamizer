@@ -1,2 +1,5 @@
 *.tsx linguist-language=TYPESCRIPT
 *.ts linguist-language=TYPESCRIPT
+
+database_stucture/* linguist-vendored
+Mobile/* linguist-vendored
