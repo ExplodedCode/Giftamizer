@@ -27,6 +27,7 @@
 		"react-dom": "^18.2.0",
 		"react-dropzone": "^14.2.3",
 		"react-email-validator": "^1.0.2",
+		"react-joyride": "^2.5.5",
 		"react-router-dom": "^6.5.0",
 		"react-router-dom-last-location": "^0.2.5",
 		"react-scripts": "^5.0.1",

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Link, useNavigate, useLocation, Location } from 'react-router-dom';
 import { SnackbarKey, useSnackbar } from 'notistack';
+import moment from 'moment';
 
 import { useSupabase, SUPABASE_URL, useGetProfile, useGetSystem, useSetMaintenance } from '../lib/useSupabase';
 import { GroupType, UserRoles } from '../lib/useSupabase/types';
@@ -41,8 +42,8 @@ import { ExpandLess, ExpandMore, Archive, Delete, Group, ListAlt, Logout, Shoppi
 
 import AccountDialog from './AccountDialog';
 import Notifications from './Notifications';
+
 import { useGetGroups } from '../lib/useSupabase/hooks/useGroup';
-import moment from 'moment';
 
 const drawerWidth = 240;
 
@@ -106,7 +107,6 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 	const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 	const navigate = useNavigate();
 	const location = useLocation();
-	const [mobileNav, setMobileNav] = React.useState(getLocation(location.pathname));
 
 	const { client, user } = useSupabase();
 	const { data: profile, isLoading, refetch: refetchProfile } = useGetProfile();
@@ -180,7 +180,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 
 					<Box sx={{ flexGrow: 0 }}>
 						<Stack direction='row' spacing={2}>
-							{profile?.role?.role === UserRoles.admin && (
+							{profile?.roles?.roles.includes(UserRoles.debug) && (
 								<Tooltip title='Get Realtime Channels'>
 									<IconButton
 										size='large'
@@ -212,7 +212,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 
 							<Notifications />
 							<Tooltip title='Open settings'>
-								<IconButton onClick={isLoading ? undefined : handleOpenUserMenu} sx={{ p: 0 }}>
+								<IconButton onClick={isLoading ? undefined : handleOpenUserMenu} sx={{ p: 0 }} className='profile-icon'>
 									{isLoading ? <CircularProgress color='inherit' /> : <Avatar alt={profile?.first_name} src={profile?.image || '/defaultAvatar.png'} />}
 								</IconButton>
 							</Tooltip>
@@ -235,23 +235,28 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 						>
 							<AccountDialog handleCloseMenu={handleCloseUserMenu} />
 
-							<MenuItem onClick={handleCloseUserMenu} component={Link} to='/archive' sx={{ display: { xs: 'flex', md: 'none' } }}>
-								<ListItemIcon>
-									<Archive fontSize='small' />
-								</ListItemIcon>
-								<Typography textAlign='center'>Archive</Typography>
-							</MenuItem>
-							<MenuItem onClick={handleCloseUserMenu} component={Link} to='/trash' sx={{ display: { xs: 'flex', md: 'none' } }}>
-								<ListItemIcon>
-									<Delete fontSize='small' />
-								</ListItemIcon>
-								<Typography textAlign='center'>Trash</Typography>
-							</MenuItem>
+							{profile?.enable_archive && (
+								<MenuItem onClick={handleCloseUserMenu} component={Link} to='/archive' sx={{ display: { xs: 'flex', md: 'none' } }}>
+									<ListItemIcon>
+										<Archive fontSize='small' />
+									</ListItemIcon>
+									<Typography textAlign='center'>Archive</Typography>
+								</MenuItem>
+							)}
+							{profile?.enable_trash && (
+								<MenuItem onClick={handleCloseUserMenu} component={Link} to='/trash' sx={{ display: { xs: 'flex', md: 'none' } }}>
+									<ListItemIcon>
+										<Delete fontSize='small' />
+									</ListItemIcon>
+									<Typography textAlign='center'>Trash</Typography>
+								</MenuItem>
+							)}
 
 							<MenuItem
 								onClick={() => {
 									handleCloseUserMenu();
 									client.auth.signOut();
+									navigate('/signin');
 								}}
 							>
 								<ListItemIcon>
@@ -349,27 +354,35 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 							</ListItemButton>
 						</ListItem>
 					</List>
-					<Divider />
-					<List>
-						<ListItem disablePadding>
-							<ListItemButton component={Link} to='/archive' selected={location.pathname === '/archive'}>
-								<ListItemIcon>
-									<Archive color={location.pathname === '/archive' ? 'primary' : undefined} />
-								</ListItemIcon>
-								<ListItemText primary='Archive' />
-							</ListItemButton>
-						</ListItem>
-						<ListItem disablePadding>
-							<ListItemButton component={Link} to='/trash' selected={location.pathname === '/trash'}>
-								<ListItemIcon>
-									<Delete color={location.pathname === '/trash' ? 'primary' : undefined} />
-								</ListItemIcon>
-								<ListItemText primary='Trash' />
-							</ListItemButton>
-						</ListItem>
-					</List>
+					{(profile?.enable_archive || profile?.enable_trash) && (
+						<>
+							<Divider />
+							<List>
+								{profile?.enable_archive && (
+									<ListItem disablePadding>
+										<ListItemButton component={Link} to='/archive' selected={location.pathname === '/archive'}>
+											<ListItemIcon>
+												<Archive color={location.pathname === '/archive' ? 'primary' : undefined} />
+											</ListItemIcon>
+											<ListItemText primary='Archive' />
+										</ListItemButton>
+									</ListItem>
+								)}
+								{profile?.enable_trash && (
+									<ListItem disablePadding>
+										<ListItemButton component={Link} to='/trash' selected={location.pathname === '/trash'}>
+											<ListItemIcon>
+												<Delete color={location.pathname === '/trash' ? 'primary' : undefined} />
+											</ListItemIcon>
+											<ListItemText primary='Trash' />
+										</ListItemButton>
+									</ListItem>
+								)}
+							</List>
+						</>
+					)}
 
-					{profile?.role?.role === UserRoles.admin && !systemLoading && (
+					{profile?.roles?.roles.includes(UserRoles.admin) && !systemLoading && (
 						<>
 							<Divider />
 							<ListSubheader inset sx={{ lineHeight: 1, position: 'relative', top: 12 }}>
@@ -436,9 +449,22 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 			<Paper sx={{ position: 'fixed', bottom: 0, left: 0, right: 0, display: { xs: 'block', md: 'none' } }} elevation={3}>
 				<BottomNavigation
 					showLabels
-					value={mobileNav}
+					value={(() => {
+						switch (true) {
+							case location.pathname === '/':
+								return 0;
+							case location.pathname.startsWith('/list'):
+								return 1;
+							case location.pathname.startsWith('/group'):
+								return 2;
+							case location.pathname.startsWith('/shopping'):
+								return 3;
+							default:
+								return -1;
+						}
+					})()}
 					onChange={(event, newValue) => {
-						setMobileNav(newValue);
+						// setMobileNav(newValue);
 						switch (newValue) {
 							case 0:
 								navigate('/');
@@ -466,14 +492,3 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 };
 
 export default Navigation;
-
-function getLocation(path: string) {
-	if (path.startsWith('/list')) {
-		return 1;
-	} else if (path.startsWith('/group')) {
-		return 2;
-	} else if (path.startsWith('/shopping')) {
-		return 3;
-	}
-	return 0;
-}

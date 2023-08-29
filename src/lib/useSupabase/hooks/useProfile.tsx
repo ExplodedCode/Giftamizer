@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSupabase } from './useSupabase';
 import { ProfileType } from '../types';
 import { dataUrlToFile } from '../../../components/ImageCropper';
+import { useGetItems } from './useItems';
 
 const QUERY_KEY = ['profile'];
 
@@ -16,8 +17,8 @@ export const useGetProfile = () => {
 				.from('profiles')
 				.select(
 					`*,
-					role:user_roles(
-						role
+					roles:user_roles(
+						roles
 					)`
 				)
 				.eq('user_id', user.id)
@@ -54,7 +55,7 @@ export const useGetProfile = () => {
 			//#endregion
 
 			// @ts-ignore
-			profile.image = profile.avatar_token && profile.avatar_token !== -1 && `${client.supabaseUrl}/storage/v1/object/public/avatars/${user.id}?${profile.avatar_token}`;
+			profile.image = profile.avatar_token && profile.avatar_token !== -1 ? `${client.supabaseUrl}/storage/v1/object/public/avatars/${user.id}?${profile.avatar_token}` : undefined;
 
 			return profile as ProfileType;
 		},
@@ -68,6 +69,8 @@ export const useUpdateProfile = () => {
 	const queryClient = useQueryClient();
 	const { client, user } = useSupabase();
 
+	const { refetch } = useGetItems();
+
 	return useMutation(
 		async (update: Omit<ProfileType, 'user_id' | 'email'>): Promise<ProfileType> => {
 			const { error, data } = await client
@@ -77,13 +80,15 @@ export const useUpdateProfile = () => {
 					last_name: update.last_name,
 					bio: update.bio,
 					enable_lists: update.enable_lists,
+					enable_archive: update.enable_archive,
+					enable_trash: update.enable_trash,
 					avatar_token: update.image ? Date.now() : -1,
 				})
 				.eq('user_id', user.id)
 				.select(
 					`*,
-					role:user_roles(
-						role
+					roles:user_roles(
+						roles
 					)`
 				)
 				.single();
@@ -91,7 +96,7 @@ export const useUpdateProfile = () => {
 			var profile = data as unknown as ProfileType;
 
 			// upload image if exists
-			if (update.image?.startsWith('data:') && data) {
+			if (update?.image?.startsWith('data:') && data) {
 				const { error: imageError } = await client.storage.from('avatars').upload(`${user.id}`, await dataUrlToFile(update.image, 'avatar'), {
 					cacheControl: '3600',
 					upsert: true,
@@ -112,6 +117,7 @@ export const useUpdateProfile = () => {
 		},
 		{
 			onSuccess: (update: ProfileType) => {
+				refetch();
 				queryClient.setQueryData(QUERY_KEY, () => update);
 			},
 		}

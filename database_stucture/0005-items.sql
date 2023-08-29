@@ -3,7 +3,10 @@ CREATE TABLE items (
   user_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   description TEXT,
-  url TEXT,
+  links array null,
+  custom_fields jsonb null,
+  archived boolean not null default false,
+  deleted boolean not null default false,
   image_token numeric,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

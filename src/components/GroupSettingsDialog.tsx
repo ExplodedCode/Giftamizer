@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -49,7 +49,7 @@ function renderItem({ member, handleMemberEdit, owner }: RenderItemOptionsProps)
 	return (
 		<ListItem>
 			<ListItemAvatar>
-				{!member.child_list && !member.external ? (
+				{!member.external ? (
 					<Avatar alt={`${member.profile.first_name} ${member.profile.last_name}`} src={member.profile.image ?? '/defaultAvatar.png'} />
 				) : (
 					<Avatar sx={{ bgcolor: 'primary.main' }}>
@@ -111,11 +111,12 @@ type GroupSettingsDialogProps = {
 	owner: boolean;
 };
 export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialogProps) {
-	const { group: groupID } = useParams();
-
 	const theme = useTheme();
 	const navigate = useNavigate();
+	const location = useLocation();
 	const { enqueueSnackbar } = useSnackbar();
+
+	const { group: groupID } = useParams();
 
 	const { user } = useSupabase();
 	const { data: profile } = useGetProfile();
@@ -123,15 +124,16 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 	const queryClient = useQueryClient();
 	const { data: members, isLoading: membersLoading, refetch: refetchMembers } = useGetGroupMembers(groupID!);
 
-	const [open, setOpen] = React.useState(false);
+	const open = location.hash.startsWith('#group-settings');
+
 	const [name, setName] = React.useState('');
 	const [image, setImage] = React.useState<string | undefined>();
 
 	const [selectedInviteUsers, setSelectedInviteUsers] = React.useState<Profile[]>([]);
 	const [inviteUsersOwner, setInviteUsersOwner] = React.useState(false);
 
-	const [confirmLeaveOpen, setConfirmLeaveOpen] = React.useState(false);
-	const [confirmOpen, setConfirmOpen] = React.useState(false);
+	const confirmLeaveOpen = location.hash === '#group-settings-leave';
+	const confirmDeleteOpen = location.hash === '#group-settings-delete';
 
 	const [stateUpdater, setStateUpdater] = React.useState('');
 
@@ -174,21 +176,21 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 	const handleOpen = async () => {
 		setName(group.name);
 		setImage(group.image);
-		setOpen(true);
+		navigate('#group-settings'); // open dialog
 	};
 
 	const handleClose = async () => {
-		setOpen(false);
+		navigate('#'); // close dialog
 
 		setSelectedInviteUsers([]);
 		if (changed) refetchMembers();
 	};
 
 	const handleLeaveOpen = () => {
-		setConfirmLeaveOpen(true);
+		navigate('#group-settings-leave'); // open dialog
 	};
 	const handleLeaveClose = () => {
-		setConfirmLeaveOpen(false);
+		navigate('#group-settings'); // close dialog
 	};
 	const leaveGroup = useLeaveGroup();
 	const handleLeave = async (id: string) => {
@@ -203,10 +205,10 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 	};
 
 	const handleDeleteOpen = () => {
-		setConfirmOpen(true);
+		navigate('#group-settings-delete'); // open dialog
 	};
 	const handleDeleteClose = () => {
-		setConfirmOpen(false);
+		navigate('#group-settings'); // close dialog
 	};
 	const deleteGroup = useDeleteGroup();
 	const handleDelete = async (id: string) => {
@@ -290,7 +292,6 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 											)}
 
 											<Divider />
-											{/* {JSON.stringify(members)} */}
 											<TransitionGroup>
 												{members
 													?.filter((m) => !m.deleted)
@@ -356,7 +357,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 				</DialogContent>
 			</Dialog>
 
-			<Dialog open={confirmOpen} onClose={handleDeleteClose}>
+			<Dialog open={confirmDeleteOpen} onClose={handleDeleteClose}>
 				<DialogTitle>Delete {group.name} Group?</DialogTitle>
 				<DialogContent>
 					<DialogContentText>

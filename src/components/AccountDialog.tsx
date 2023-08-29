@@ -33,7 +33,7 @@ import {
 } from '@mui/material';
 import { useGetProfile, useSupabase, useUpdateProfile } from '../lib/useSupabase';
 import EmailEditor from './EmailEditor';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import ImageCropper from './ImageCropper';
 
 const Transition = React.forwardRef(function Transition(
@@ -57,11 +57,13 @@ export type AccountDialogProps = {
 
 export default function AccountDialog(props: AccountDialogProps) {
 	const { enqueueSnackbar } = useSnackbar();
+	const navigate = useNavigate();
+	const location = useLocation();
 
 	const { client, user } = useSupabase();
 	const { data: profile } = useGetProfile();
 
-	const [open, setOpen] = React.useState(false);
+	const open = location.hash.startsWith('#my-account');
 
 	const [firstName, setFirstName] = React.useState('');
 	const [lastName, setLastName] = React.useState('');
@@ -69,38 +71,49 @@ export default function AccountDialog(props: AccountDialogProps) {
 	const [bio, setBio] = React.useState('');
 
 	const [enableLists, setEnableLists] = React.useState(false);
+	const [enableArchive, setEnableArchive] = React.useState(false);
+	const [enableTrash, setEnableTrash] = React.useState(false);
 
 	const [groupsWithoutCoOwner, setGroupsWithoutCoOwner] = React.useState<GroupsWithoutCoOwner[] | undefined>();
-	const [deleteOpen, setDeleteOpen] = React.useState(false);
+
+	const deleteOpen = location.hash === '#my-account-delete';
+
+	React.useEffect(() => {
+		const loadProfile = async () => {
+			if (profile) {
+				setFirstName(profile.first_name);
+				setLastName(profile.last_name);
+				setImage(profile.image);
+				setBio(profile.bio);
+				setEnableLists(profile.enable_lists);
+				setEnableArchive(profile.enable_archive);
+				setEnableTrash(profile.enable_trash);
+			}
+
+			const { data, error } = await client.rpc('get_groups_without_coowner', { owner_id: user.id });
+
+			if (error) {
+				console.log(error);
+
+				enqueueSnackbar('Unable to query groups you own!', {
+					variant: 'error',
+				});
+			} else {
+				setGroupsWithoutCoOwner(data! as GroupsWithoutCoOwner[]);
+			}
+		};
+
+		loadProfile();
+	}, [profile]);
 
 	const handleClickOpen = async () => {
 		if (props.handleCloseMenu) props.handleCloseMenu();
 
-		if (profile) {
-			setFirstName(profile.first_name);
-			setLastName(profile.last_name);
-			setImage(profile.image);
-			setBio(profile.bio);
-			setEnableLists(profile.enable_lists);
-
-			setOpen(true);
-		}
-
-		const { data, error } = await client.rpc('get_groups_without_coowner', { owner_id: user.id });
-
-		if (error) {
-			console.log(error);
-
-			enqueueSnackbar('Unable to query groups you own!', {
-				variant: 'error',
-			});
-		} else {
-			setGroupsWithoutCoOwner(data! as GroupsWithoutCoOwner[]);
-		}
+		navigate('#my-account'); // open dialog
 	};
 
 	const handleClose = () => {
-		setOpen(false);
+		navigate('#'); // close dialog
 	};
 
 	const updateProfile = useUpdateProfile();
@@ -112,16 +125,22 @@ export default function AccountDialog(props: AccountDialogProps) {
 				image: image,
 				bio: bio,
 				enable_lists: enableLists,
+				enable_archive: enableArchive,
+				enable_trash: enableTrash,
 				avatar_token: profile?.avatar_token!,
 			})
 			.then(() => {
-				setOpen(false);
+				navigate('#'); // close dialog
 			})
 			.catch((error) => {
 				enqueueSnackbar(`Unable to update your profile. ${error}`, {
 					variant: 'error',
 				});
 			});
+
+		if ((!enableLists && location.pathname.startsWith('/list')) || (!enableArchive && location.pathname.startsWith('/archive')) || (!enableTrash && location.pathname.startsWith('/trash'))) {
+			navigate('/');
+		}
 	};
 
 	const handleDelete = async () => {
@@ -220,6 +239,23 @@ export default function AccountDialog(props: AccountDialogProps) {
 						</Grid>
 
 						<Grid item xs={12}>
+							<FormControl component='fieldset' variant='standard'>
+								<FormGroup>
+									<FormControlLabel control={<Switch checked={enableTrash} onChange={(e) => setEnableTrash(e.target.checked)} />} label='Enable Trash Can' />
+									<FormHelperText>Recover deleted items.</FormHelperText>
+								</FormGroup>
+							</FormControl>
+						</Grid>
+
+						<Grid item xs={12}>
+							<FormControl component='fieldset' variant='standard'>
+								<FormGroup>
+									<FormControlLabel control={<Switch checked={enableArchive} onChange={(e) => setEnableArchive(e.target.checked)} />} label='Enable Item Archive' />
+								</FormGroup>
+							</FormControl>
+						</Grid>
+
+						<Grid item xs={12}>
 							<Divider />
 						</Grid>
 
@@ -260,7 +296,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 										</Grid>
 									)}
 									<Grid item xs={12}>
-										<Button variant='outlined' color='error' disabled={!groupsWithoutCoOwner || groupsWithoutCoOwner.length > 0} onClick={() => setDeleteOpen(true)}>
+										<Button variant='outlined' color='error' disabled={!groupsWithoutCoOwner || groupsWithoutCoOwner.length > 0} onClick={() => navigate('#my-account-delete')}>
 											Delete My Account
 										</Button>
 									</Grid>
@@ -271,7 +307,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 				</Container>
 			</Dialog>
 
-			<Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)}>
+			<Dialog open={deleteOpen} onClose={() => navigate('#my-account')}>
 				<DialogTitle>Delete Account</DialogTitle>
 				<DialogContent>
 					<Typography variant='body1'>
@@ -279,10 +315,10 @@ export default function AccountDialog(props: AccountDialogProps) {
 					</Typography>
 				</DialogContent>
 				<DialogActions>
-					<Button color='inherit' onClick={() => setDeleteOpen(false)}>
+					<Button color='inherit' onClick={() => navigate('#my-account')}>
 						Cancel
 					</Button>
-					<Button color='error' variant='contained' onClick={handleDelete}>
+					<Button color='error' variant='contained' onClick={handleDelete} disabled={!groupsWithoutCoOwner || groupsWithoutCoOwner.length > 0}>
 						Yes Delete my Account
 					</Button>
 				</DialogActions>

@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { useSnackbar } from 'notistack';
 
 import { useGetProfile, useSupabase, useUpdateItems } from '../lib/useSupabase';
 import { CustomField, ItemType, ListType } from '../lib/useSupabase/types';
-
-import { useSnackbar } from 'notistack';
 
 import {
 	Dialog,
@@ -38,11 +38,12 @@ type ItemUpdateProps = {
 export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 	const theme = useTheme();
 	const { enqueueSnackbar } = useSnackbar();
+	const location = useLocation();
+
+	const open = location.hash === '#item-edit';
 
 	const { user, client } = useSupabase();
 	const { data: profile } = useGetProfile();
-
-	const updateItems = useUpdateItems();
 
 	const [image, setImage] = React.useState<string | undefined>();
 	const [name, setName] = React.useState('');
@@ -51,6 +52,7 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 	const [customFields, setCustomFields] = React.useState<CustomField[]>([]);
 	const [lists, setLists] = React.useState<ListType[]>([]);
 
+	const updateItems = useUpdateItems();
 	const handleSave = async () => {
 		if (item) {
 			await updateItems
@@ -121,7 +123,7 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 	};
 
 	return (
-		<Dialog open={item !== null} onClose={updateItems.isLoading ? undefined : onClose} maxWidth='sm' fullScreen={useMediaQuery(theme.breakpoints.down('md'))}>
+		<Dialog open={item !== null && open} onClose={updateItems.isLoading ? undefined : onClose} maxWidth='sm' fullScreen={useMediaQuery(theme.breakpoints.down('md'))}>
 			<DialogTitle>Edit Item</DialogTitle>
 			<DialogContent>
 				<Grid container spacing={2}>
