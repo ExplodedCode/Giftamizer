@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useSupabase } from './useSupabase';
 import { ItemType } from '../types';
+import { dataUrlToFile } from '../../../components/ImageCropper';
+import { useGetProfile } from './useProfile';
 
 export const ITEMS_QUERY_KEY = ['items'];
 
@@ -18,14 +20,18 @@ export const useGetItems = () => {
 					lists:items_lists( 
 						list_id,
 						list:lists!inner(
-							name
+							name,
+							child_list
 						)
 					)`
 				)
 				.eq('user_id', user.id);
 			if (error) throw error;
 
-			return data as ItemType[];
+			return data.map((i) => {
+				// @ts-ignore
+				return { ...i, image: i.image_token && `${client.supabaseUrl}/storage/v1/object/public/items/${i.id}?${i.image_token}` };
+			}) as ItemType[];
 		},
 	});
 };
@@ -35,7 +41,7 @@ export const useCreateItem = () => {
 	const { client, user } = useSupabase();
 
 	return useMutation(
-		async (item: Omit<ItemType, 'id' | 'user_id' | 'created_at' | 'updated_at'>): Promise<ItemType> => {
+		async (item: Omit<ItemType, 'id' | 'user_id' | 'archived' | 'deleted' | 'created_at' | 'updated_at'>): Promise<ItemType> => {
 			const { data, error } = await client
 				.from('items')
 				.insert({
@@ -44,6 +50,7 @@ export const useCreateItem = () => {
 					description: item.description,
 					links: item.links,
 					custom_fields: item.custom_fields,
+					image_token: item.image ? Date.now() : null,
 				})
 				.select('*')
 				.single();
@@ -51,6 +58,18 @@ export const useCreateItem = () => {
 
 			var newItem = data as Omit<ItemType, 'created_at' | 'updated_at'>;
 			newItem.lists = [];
+
+			// upload image if exists
+			if (item.image?.startsWith('data:')) {
+				const { error: imageError } = await client.storage.from('items').upload(`${data.id}`, await dataUrlToFile(item.image, 'avatar'), {
+					cacheControl: '3600',
+					upsert: true,
+				});
+				if (imageError) throw imageError;
+
+				// @ts-ignore
+				newItem.image = `${client.supabaseUrl}/storage/v1/object/public/items/${data.id}?${data.image_token}`;
+			}
 
 			// Add list-group relationships
 			for (let list of item.newLists!) {
@@ -61,7 +80,7 @@ export const useCreateItem = () => {
 						list_id: list.id,
 						user_id: user.id,
 					})
-					.select('*, list:lists( id, name )')
+					.select('*, list:lists( id, name, child_list )')
 					.single();
 				if (listGroupError) throw listGroupError;
 
@@ -71,13 +90,7 @@ export const useCreateItem = () => {
 					list_id: list.id,
 					list: {
 						name: itemList.list.name,
-					},
-				});
-
-				console.log({
-					list_id: list.id,
-					list: {
-						name: itemList.list.name,
+						child_list: itemList.list.child_list,
 					},
 				});
 			}
@@ -97,17 +110,38 @@ export const useUpdateItems = () => {
 	const { client, user } = useSupabase();
 
 	return useMutation(
-		async (item: Omit<ItemType, 'user_id' | 'created_at' | 'updated_at'>): Promise<ItemType> => {
-			const { error } = await client
+		async (item: Omit<ItemType, 'archived' | 'deleted' | 'created_at' | 'updated_at'>): Promise<ItemType> => {
+			const { data, error } = await client
 				.from('items')
 				.update({
+					user_id: item.user_id,
 					name: item.name,
 					description: item.description,
 					links: item.links,
 					custom_fields: item.custom_fields,
+					image_token: item.image ? Date.now() : null,
 				})
-				.eq('id', item.id);
+				.eq('id', item.id)
+				.select()
+				.single();
 			if (error) throw error;
+
+			// upload image if exists
+			if (item.image?.startsWith('data:') && data) {
+				const { error: imageError } = await client.storage.from('items').upload(`${item.id}`, await dataUrlToFile(item.image, 'avatar'), {
+					cacheControl: '3600',
+					upsert: true,
+				});
+				if (imageError) throw imageError;
+
+				// @ts-ignore
+				item.image = `${client.supabaseUrl}/storage/v1/object/public/items/${data.id}?${data.image_token}`;
+			} else if (data.image_token === null) {
+				const { error: imageDelError } = await client.storage.from('items').remove([`${item.id}`]);
+				if (imageDelError) throw imageDelError;
+
+				item.image = undefined;
+			}
 
 			// update list-group relationships
 			const { data: listsData, error: ListsError } = await client.from('items_lists').select('*').eq('item_id', item.id);
@@ -136,6 +170,7 @@ export const useUpdateItems = () => {
 					list_id: l.id,
 					list: {
 						name: l.name,
+						child_list: l.child_list,
 					},
 				};
 			});
@@ -146,10 +181,47 @@ export const useUpdateItems = () => {
 			onSuccess: (item_updated: ItemType) => {
 				queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => {
 					if (prevItems) {
-						const updatedLists = prevItems.map((item) => {
-							return item.id == item_updated.id ? item_updated : item;
+						const updatedItems = prevItems.map((item) => {
+							return item.id === item_updated.id ? item_updated : item;
 						});
-						return updatedLists;
+						return updatedItems;
+					}
+					return prevItems;
+				});
+			},
+		}
+	);
+};
+
+export const useArchiveItem = () => {
+	const queryClient = useQueryClient();
+	const { client } = useSupabase();
+
+	interface ArchiveItem {
+		id: string;
+		archive: boolean;
+	}
+
+	return useMutation(
+		async (a: ArchiveItem): Promise<ArchiveItem> => {
+			const { error } = await client
+				.from('items')
+				.update({
+					archived: a.archive,
+				})
+				.eq('id', a.id);
+			if (error) throw error;
+
+			return a;
+		},
+		{
+			onSuccess: (a) => {
+				queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => {
+					if (prevItems) {
+						const updatedItems = prevItems.map((item) => {
+							return item.id === a.id ? { ...item, archived: a.archive } : item;
+						});
+						return updatedItems;
 					}
 					return prevItems;
 				});
@@ -162,15 +234,105 @@ export const useDeleteItem = () => {
 	const queryClient = useQueryClient();
 	const { client } = useSupabase();
 
+	const { data: profile } = useGetProfile();
+
+	interface DeleteItem {
+		id: string;
+		deleted: boolean;
+	}
+
+	return useMutation(
+		async (d: DeleteItem): Promise<DeleteItem> => {
+			if (profile?.enable_trash && !d.deleted) {
+				const { error } = await client
+					.from('items')
+					.update({
+						deleted: true,
+						archived: false,
+					})
+					.eq('id', d.id);
+				if (error) throw error;
+			} else {
+				const { error: avatarError } = await client.storage.from('items').remove([`${d.id}`]);
+				if (avatarError) console.log(`Unable to delete image.`, avatarError);
+
+				const { error } = await client.from('items').delete().eq('id', d.id);
+				if (error) throw error;
+			}
+
+			return d;
+		},
+		{
+			onSuccess: (d) => {
+				if (profile?.enable_trash && !d.deleted) {
+					queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => {
+						if (prevItems) {
+							const updatedItems = prevItems.map((item) => {
+								return item.id === d.id ? { ...item, deleted: true, archived: false } : item;
+							});
+							return updatedItems;
+						}
+						return prevItems;
+					});
+				} else {
+					queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => (prevItems ? prevItems.filter((item) => item.id !== d.id) : prevItems));
+				}
+			},
+		}
+	);
+};
+
+export const useRestoreItem = () => {
+	const queryClient = useQueryClient();
+	const { client } = useSupabase();
+
 	return useMutation(
 		async (id: string): Promise<string> => {
-			const { error } = await client.from('items').delete().eq('id', id);
+			const { error } = await client
+				.from('items')
+				.update({
+					deleted: false,
+				})
+				.eq('id', id);
 			if (error) throw error;
+
 			return id;
 		},
 		{
 			onSuccess: (id) => {
-				queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => (prevItems ? prevItems.filter((item) => item.id !== id) : prevItems));
+				queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => {
+					if (prevItems) {
+						const updatedItems = prevItems.map((item) => {
+							return item.id === id ? { ...item, deleted: false } : item;
+						});
+						return updatedItems;
+					}
+					return prevItems;
+				});
+			},
+		}
+	);
+};
+
+export const useEmptyTrash = () => {
+	const queryClient = useQueryClient();
+	const { client } = useSupabase();
+
+	return useMutation(
+		async (items: string[]): Promise<string[]> => {
+			for (let item of items) {
+				const { error: avatarError } = await client.storage.from('items').remove([`${item}`]);
+				if (avatarError) console.log(`Unable to delete image.`, avatarError);
+
+				const { error } = await client.from('items').delete().eq('id', item);
+				if (error) throw error;
+			}
+
+			return items;
+		},
+		{
+			onSuccess: (items) => {
+				queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => (prevItems ? prevItems.filter((item) => !items.includes(item.id)) : prevItems));
 			},
 		}
 	);

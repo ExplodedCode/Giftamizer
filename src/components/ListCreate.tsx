@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 import { useSupabase } from '../lib/useSupabase';
 import { GroupType } from '../lib/useSupabase/types';
@@ -7,22 +8,24 @@ import { useCreateList, useGetGroups } from '../lib/useSupabase/hooks';
 import { useSnackbar } from 'notistack';
 
 import { useTheme } from '@mui/material/styles';
-import { Button, Collapse, Dialog, DialogContent, DialogContentText, DialogTitle, Fab, FormControl, FormControlLabel, Grid, Stack, Switch, TextField, useMediaQuery } from '@mui/material';
+import { Button, Dialog, DialogContent, DialogContentText, DialogTitle, Fab, FormControl, FormControlLabel, FormHelperText, Grid, Stack, Switch, TextField, useMediaQuery } from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
-import { Add } from '@mui/icons-material';
+import { Add, PlaylistAdd } from '@mui/icons-material';
 import GroupSelector from './GroupSelector';
-import AvatarSelector from './AvatarSelector';
+import ImageCropper from './ImageCropper';
 
 export default function CreateList() {
 	const theme = useTheme();
 	const { enqueueSnackbar } = useSnackbar();
+	const navigate = useNavigate();
+	const location = useLocation();
 
 	const { user } = useSupabase();
 
 	const createList = useCreateList();
 	const { data: groups } = useGetGroups();
 
-	const [open, setOpen] = React.useState(false);
+	const open = location.hash === '#new-list';
 
 	const [name, setName] = React.useState('');
 	const [selectedGroups, setSelectedGroups] = React.useState<Omit<GroupType, 'image_token' | 'my_membership'>[]>([]);
@@ -50,13 +53,13 @@ export default function CreateList() {
 		setImage(undefined);
 		setBio('');
 
-		setOpen(false);
+		navigate('#'); // close dialog
 	};
 
 	return (
 		<>
-			<Fab color='primary' aria-label='add' onClick={() => setOpen(true)} sx={{ position: 'fixed', bottom: { xs: 64, md: 16 }, right: { xs: 8, md: 16 } }}>
-				<Add />
+			<Fab color='primary' aria-label='add' onClick={() => navigate('#new-list')} sx={{ position: 'fixed', bottom: { xs: 64, md: 16 }, right: { xs: 8, md: 16 } }}>
+				<PlaylistAdd />
 			</Fab>
 
 			<Dialog open={open} onClose={() => (createList.isLoading ? undefined : handleClose())} maxWidth='sm' fullScreen={useMediaQuery(theme.breakpoints.down('md'))}>
@@ -68,7 +71,7 @@ export default function CreateList() {
 						</Grid>
 						{childList && (
 							<Grid item xs={12}>
-								<AvatarSelector value={image} onChange={setImage} />
+								<ImageCropper value={image} onChange={setImage} aspectRatio={1} />
 							</Grid>
 						)}
 						<Grid item xs={12}>
@@ -83,6 +86,7 @@ export default function CreateList() {
 									control={<Switch checked={childList} onChange={(e) => setChildList(e.target.checked)} disabled={createList.isLoading} />}
 									label='Display Separately in Groups'
 								/>
+								<FormHelperText>This can only be set when creating a new list.</FormHelperText>
 							</FormControl>
 						</Grid>
 						{childList && (
