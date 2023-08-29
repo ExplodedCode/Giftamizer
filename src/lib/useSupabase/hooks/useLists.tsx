@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useSupabase } from './useSupabase';
-import { ListType } from '../types';
-import { dataUrlToFile } from '../../../components/AvatarSelector';
+import { ItemType, ListType } from '../types';
+import { dataUrlToFile } from '../../../components/ImageCropper';
+import { ITEMS_QUERY_KEY } from './useItems';
 
 export const DEFAULT_LIST_ID = 'default';
 
@@ -46,7 +47,7 @@ export const useCreateList = () => {
 			var newlist = data as Omit<ListType, 'id' | 'created_at' | 'updated_at'>;
 
 			// upload image if exists
-			if (list.image?.startsWith('data:image/png;base64')) {
+			if (list.image?.startsWith('data:')) {
 				const { error: imageError } = await client.storage.from('lists').upload(`${data.id}`, await dataUrlToFile(list.image, 'avatar'), {
 					cacheControl: '3600',
 					upsert: true,
@@ -103,7 +104,7 @@ export const useUpdateLists = () => {
 			if (error) throw error;
 
 			// upload image if exists
-			if (list.image?.startsWith('data:image/png;base64') && data) {
+			if (list.image?.startsWith('data:') && data) {
 				const { error: imageError } = await client.storage.from('lists').upload(`${list.id}`, await dataUrlToFile(list.image, 'avatar'), {
 					cacheControl: '3600',
 					upsert: true,
@@ -120,7 +121,7 @@ export const useUpdateLists = () => {
 			}
 
 			// update list-group relationships
-			const { data: listsData, error: ListsError } = await client.from('lists_groups').select('*').eq('list_id', list.id);
+			const { data: listsData, error: ListsError } = await client.from('lists_groups').select('*').eq('list_id', list.id).eq('user_id', user.id);
 			if (ListsError) throw ListsError;
 			for (let group of list.groups) {
 				if (!listsData?.find((l) => l.group_id === group.id)) {
@@ -147,11 +148,33 @@ export const useUpdateLists = () => {
 				queryClient.setQueryData(LISTS_QUERY_KEY, (prevLists: ListType[] | undefined) => {
 					if (prevLists) {
 						const updatedLists = prevLists.map((list) => {
-							return list.id == list_updated.id ? list_updated : list;
+							return list.id === list_updated.id ? list_updated : list;
 						});
 						return updatedLists;
 					}
 					return prevLists;
+				});
+
+				// update item list names
+				queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => {
+					if (prevItems) {
+						const updatedItems = prevItems.map((item) => {
+							item.lists = item.lists?.map((l) => {
+								return l.list_id === list_updated.id
+									? {
+											...l,
+											list: {
+												name: list_updated.name,
+												child_list: list_updated.child_list,
+											},
+									  }
+									: l;
+							});
+							return item;
+						});
+						return updatedItems;
+					}
+					return prevItems;
 				});
 			},
 		}
@@ -164,13 +187,29 @@ export const useDeleteList = () => {
 
 	return useMutation(
 		async (id: string): Promise<string> => {
+			const { error: avatarError } = await client.storage.from('lists').remove([`${id}`]);
+			if (avatarError) console.log(`Unable to delete image.`, avatarError);
+
 			const { error } = await client.from('lists').delete().eq('id', id);
 			if (error) throw error;
+
 			return id;
 		},
 		{
 			onSuccess: (id) => {
 				queryClient.setQueryData(LISTS_QUERY_KEY, (prevLists: ListType[] | undefined) => (prevLists ? prevLists.filter((list) => list.id !== id) : prevLists));
+
+				// update item list names
+				queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => {
+					if (prevItems) {
+						const updatedItems = prevItems.map((item) => {
+							item.lists = item.lists?.filter((l) => l.list_id !== id);
+							return item;
+						});
+						return updatedItems;
+					}
+					return prevItems;
+				});
 			},
 		}
 	);

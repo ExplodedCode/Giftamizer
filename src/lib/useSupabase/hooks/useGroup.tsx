@@ -3,7 +3,9 @@ import moment from 'moment';
 
 import { useSupabase } from './useSupabase';
 import { ExternalInvite, GroupType, ListType, Member, Profile } from '../types';
-import { dataUrlToFile } from '../../../components/AvatarSelector';
+import { dataUrlToFile } from '../../../components/ImageCropper';
+import { LISTS_QUERY_KEY } from './useLists';
+import { FakeDelay } from '.';
 
 export const GROUPS_QUERY_KEY = ['groups'];
 
@@ -15,16 +17,15 @@ export const useGetGroups = () => {
 	client
 		.channel(`public:group_members:user_id=eq.${user.id}`)
 		.on('postgres_changes', { event: '*', schema: 'public', table: 'group_members', filter: `user_id=eq.${user.id}` }, async (payload) => {
-			console.log(payload);
 			switch (payload.eventType) {
 				case 'INSERT':
-					if (payload.new.user_id == user.id) await refreshGroup.mutateAsync(payload.new.group_id);
+					if (payload.new.user_id === user.id) await refreshGroup.mutateAsync(payload.new.group_id);
 					break;
 				case 'UPDATE':
-					if (payload.new.user_id == user.id) await refreshGroup.mutateAsync(payload.new.group_id);
+					if (payload.new.user_id === user.id) await refreshGroup.mutateAsync(payload.new.group_id);
 					break;
 				case 'DELETE':
-					if (payload.old.user_id == user.id)
+					if (payload.old.user_id === user.id)
 						queryClient.setQueryData(GROUPS_QUERY_KEY, (prevGroups: GroupType[] | undefined) =>
 							prevGroups ? prevGroups.filter((group) => group.id !== payload.old.group_id) : prevGroups
 						);
@@ -61,7 +62,7 @@ export const useRefreshGroup = () => {
 
 	return useMutation(
 		async (group_id: string): Promise<GroupType> => {
-			const { data, error } = await client
+			const { data } = await client
 				.from('groups')
 				.select(
 					`id,
@@ -74,7 +75,7 @@ export const useRefreshGroup = () => {
 				.single();
 
 			// @ts-ignore
-			return { ...data, image: g.image_token && `${client.supabaseUrl}/storage/v1/object/public/groups/${g.id}?${g.image_token}` } as GroupType;
+			return { ...data, image: data.image_token && `${client.supabaseUrl}/storage/v1/object/public/groups/${data.id}?${data.image_token}` } as GroupType;
 		},
 		{
 			onSuccess: (update: GroupType) => {
@@ -116,7 +117,7 @@ export const useCreateGroup = () => {
 			var newGroup = data;
 
 			// upload image if exists
-			if (group.image?.startsWith('data:image/png;base64')) {
+			if (group.image?.startsWith('data:')) {
 				const { error: imageError } = await client.storage.from('groups').upload(`${data.id}`, await dataUrlToFile(group.image, 'avatar'), {
 					cacheControl: '3600',
 					upsert: true,
@@ -170,7 +171,7 @@ export const useGetGroupMembers = (group_id: string) => {
 					queryClient.setQueryData([...GROUPS_QUERY_KEY, group_id, 'members'], (prevGroupMember: Member[] | undefined) =>
 						prevGroupMember ? prevGroupMember.filter((member) => member.user_id !== payload.old.user_id) : prevGroupMember
 					);
-					if (payload.old.user_id == user.id)
+					if (payload.old.user_id === user.id)
 						queryClient.setQueryData(GROUPS_QUERY_KEY, (prevGroups: GroupType[] | undefined) =>
 							prevGroups ? prevGroups.filter((group) => group.id !== payload.old.group_id) : prevGroups
 						);
@@ -240,7 +241,6 @@ export const useGetGroupMembers = (group_id: string) => {
 						profile: { first_name: '', last_name: '', email: payload.new.email, bio: '', avatar_token: null },
 						external: true,
 					} as Member);
-					// if (payload.new.user_id == user.id) await refreshGroup.mutateAsync(payload.new.group_id);
 					break;
 				case 'UPDATE':
 					await refreshGroupMembers.mutateAsync({
@@ -250,13 +250,12 @@ export const useGetGroupMembers = (group_id: string) => {
 						profile: { first_name: '', last_name: '', email: payload.new.email, bio: '', avatar_token: null },
 						external: true,
 					} as Member);
-					// if (payload.new.user_id == user.id) await refreshGroup.mutateAsync(payload.new.group_id);
 					break;
 				case 'DELETE':
 					queryClient.setQueryData([...GROUPS_QUERY_KEY, group_id, 'members'], (prevGroupMember: Member[] | undefined) =>
 						prevGroupMember ? prevGroupMember.filter((member) => member.user_id !== payload.old.email) : prevGroupMember
 					);
-					if (payload.old.email == user.id)
+					if (payload.old.email === user.id)
 						queryClient.setQueryData(GROUPS_QUERY_KEY, (prevGroups: GroupType[] | undefined) =>
 							prevGroups ? prevGroups.filter((group) => group.id !== payload.old.group_id) : prevGroups
 						);
@@ -479,6 +478,8 @@ export const useSetGroupPin = () => {
 
 	return useMutation(
 		async (pinUpdate: PinUpdate): Promise<PinUpdate> => {
+			await FakeDelay(500); // fake delay
+
 			const { error } = await client.from('group_members').update({ pinned: pinUpdate.pinned }).eq('group_id', pinUpdate.id).eq('user_id', user.id);
 			if (error) throw error;
 
@@ -533,7 +534,7 @@ export const useUpdateGroup = () => {
 			if (groupError) throw groupError;
 
 			// upload image if exists
-			if (update.group.image?.startsWith('data:image/png;base64') && data) {
+			if (update.group.image?.startsWith('data:') && data) {
 				const { error: imageError } = await client.storage.from('groups').upload(`${update.group.id}`, await dataUrlToFile(update.group.image, 'avatar'), {
 					cacheControl: '3600',
 					upsert: true,
@@ -609,6 +610,25 @@ export const useUpdateGroup = () => {
 					}
 					return prevGroups;
 				});
+
+				queryClient.setQueryData(LISTS_QUERY_KEY, (prevLists: ListType[] | undefined) => {
+					if (prevLists) {
+						const updatedLists = prevLists.map((list) => {
+							list.groups = list.groups?.map((g) => {
+								return g.id === update.group.id
+									? {
+											...g,
+											name: update.group.name,
+									  }
+									: g;
+							});
+
+							return list;
+						});
+						return updatedLists;
+					}
+					return prevLists;
+				});
 			},
 		}
 	);
@@ -639,7 +659,7 @@ export const useInviteToGroup = () => {
 			if (groupError) throw groupError;
 
 			// upload image if exists
-			if (update.group.image?.startsWith('data:image/png;base64') && data) {
+			if (update.group.image?.startsWith('data:') && data) {
 				const { error: imageError } = await client.storage.from('groups').upload(`${update.group.id}`, await dataUrlToFile(update.group.image, 'avatar'), {
 					cacheControl: '3600',
 					upsert: true,
@@ -794,6 +814,17 @@ export const useLeaveGroup = () => {
 		{
 			onSuccess: (id) => {
 				queryClient.setQueryData(GROUPS_QUERY_KEY, (prevGroups: GroupType[] | undefined) => (prevGroups ? prevGroups.filter((group) => group.id !== id) : prevGroups));
+
+				// update lists
+				queryClient.setQueryData(LISTS_QUERY_KEY, (prevLists: ListType[] | undefined) => {
+					if (prevLists) {
+						return prevLists.map((list) => {
+							list.groups = list.groups?.filter((g) => g.id !== id);
+							return list;
+						});
+					}
+					return prevLists;
+				});
 			},
 		}
 	);
@@ -816,6 +847,17 @@ export const useDeleteGroup = () => {
 		{
 			onSuccess: (id) => {
 				queryClient.setQueryData(GROUPS_QUERY_KEY, (prevGroups: GroupType[] | undefined) => (prevGroups ? prevGroups.filter((group) => group.id !== id) : prevGroups));
+
+				// update lists
+				queryClient.setQueryData(LISTS_QUERY_KEY, (prevLists: ListType[] | undefined) => {
+					if (prevLists) {
+						return prevLists.map((list) => {
+							list.groups = list.groups?.filter((g) => g.id !== id);
+							return list;
+						});
+					}
+					return prevLists;
+				});
 			},
 		}
 	);

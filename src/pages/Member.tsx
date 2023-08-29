@@ -1,36 +1,50 @@
 import React from 'react';
 
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useGetGroupMembers, useGetGroups, useGetMemberItems, useSetGroupPin, useSupabase } from '../lib/useSupabase';
+import { useParams, Link } from 'react-router-dom';
+import { useSupabase, useGetGroupMembers, useGetGroups, useGetMemberItems } from '../lib/useSupabase';
 
-import { Card, CardActionArea, CardContent, CardMedia, CircularProgress, Grid, Link as MUILink, Typography, Box, Breadcrumbs, AppBar, Toolbar, Checkbox, Grow } from '@mui/material';
-import { PushPinOutlined, PushPin, Person } from '@mui/icons-material';
+import { CircularProgress, Grid, Link as MUILink, Typography, Box, Breadcrumbs, AppBar, Toolbar, Container, IconButton, Popover, FormControlLabel, FormGroup, Switch } from '@mui/material';
+import { FilterAlt } from '@mui/icons-material';
 
-import GroupSettingsDialog from '../components/GroupSettingsDialog';
 import NotFound from '../components/NotFound';
-import { RealtimeChannel } from '@supabase/realtime-js';
+import ItemCard from '../components/ItemCard';
+import { ItemStatuses, MemberItemType } from '../lib/useSupabase/types';
 
 export default function Member() {
 	const { group: groupID, user: userID } = useParams();
 
-	const navigate = useNavigate();
-	const { client, user } = useSupabase();
+	const { user } = useSupabase();
 	const { data: groups, isLoading: groupsLoading } = useGetGroups();
 	const { data: members, isLoading: membersLoading } = useGetGroupMembers(groupID!);
 
-	const { data: items, isLoading: memberLoading } = useGetMemberItems(groupID!, userID!.split('_')[0] ?? userID!, userID!.split('_')[1] ?? undefined);
+	const user_id = userID!.split('_')[0] ?? userID!;
+	const list_id = userID!.split('_')[1] ?? undefined;
+	const { data: items, isLoading: memberLoading } = useGetMemberItems(groupID!, user_id, list_id);
 
-	React.useEffect(() => {
-		// unsub from members realtime
-		return () => {
-			// var groupMembersChannel = client.getChannels().find((c) => c.topic === `realtime:public:group_members:group_id=eq.${groupID}`);
-			// if (groupMembersChannel) client.removeChannel(groupMembersChannel);
-			// var childListsChannel = client.getChannels().find((c) => c.topic === `realtime:public:lists_groups:group_id=eq.${groupID}`);
-			// if (childListsChannel) client.removeChannel(childListsChannel);
-			// var externalInvitesChannel = client.getChannels().find((c) => c.topic === `realtime:public:external_invites:group_id=eq.${groupID}`);
-			// if (externalInvitesChannel) client.removeChannel(externalInvitesChannel);
-		};
-	}, [client, groupID]);
+	const [hideUnavailableItems, setHideUnavailableItems] = React.useState<boolean>(true);
+
+	const [filterAnchorEl, setFilterAnchorEl] = React.useState<HTMLButtonElement | null>(null);
+	const filterOpen = Boolean(filterAnchorEl);
+
+	const handleFilterOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
+		setFilterAnchorEl(event.currentTarget);
+	};
+
+	const handleFilterClose = (event: React.MouseEvent<HTMLButtonElement>) => {
+		setFilterAnchorEl(null);
+	};
+
+	const filterItems = (item: MemberItemType) => {
+		let show = true;
+
+		if (hideUnavailableItems) {
+			if (item.status !== undefined && item.status?.user_id !== user.id && (item.status?.status === ItemStatuses.unavailable || item.status?.status === ItemStatuses.planned)) {
+				show = false;
+			}
+		}
+
+		return show;
+	};
 
 	return (
 		<>
@@ -52,11 +66,38 @@ export default function Member() {
 											{members?.find((m) => m.user_id === userID)?.profile.first_name} {members?.find((m) => m.user_id === userID)?.profile.last_name}
 										</Typography>
 									</Breadcrumbs>
+
+									<IconButton onClick={handleFilterOpen}>
+										<FilterAlt />
+									</IconButton>
+
+									<Popover
+										open={filterOpen}
+										anchorEl={filterAnchorEl}
+										onClose={handleFilterClose}
+										anchorOrigin={{
+											vertical: 'bottom',
+											horizontal: 'right',
+										}}
+										transformOrigin={{
+											vertical: 'top',
+											horizontal: 'right',
+										}}
+									>
+										<Box sx={{ ml: 2, mr: 2, mt: 1, mb: 1 }}>
+											<FormGroup>
+												<FormControlLabel
+													control={<Switch checked={hideUnavailableItems} onChange={(e) => setHideUnavailableItems(e.target.checked)} />}
+													label='Hide Unavailable Items'
+												/>
+											</FormGroup>
+										</Box>
+									</Popover>
 								</Toolbar>
 							</AppBar>
 
 							<Grid container justifyContent='center'>
-								<Grid item xs={9}>
+								<Grid item xs={12}>
 									<Typography variant='h4' gutterBottom sx={{ mt: 4, textAlign: 'center' }}>
 										{members?.find((m) => m.user_id === userID)?.profile.first_name} {members?.find((m) => m.user_id === userID)?.profile.last_name}
 									</Typography>
@@ -66,15 +107,28 @@ export default function Member() {
 								</Grid>
 							</Grid>
 
-							<Grid container spacing={2}>
-								<Grid item xs={12}>
-									{items?.map((i) => (
-										<Typography key={i.id} variant='body1' gutterBottom>
-											- {i.name}
-										</Typography>
+							<Container sx={{ paddingTop: 2, paddingBottom: 12 }}>
+								<Grid container spacing={2}>
+									{items?.filter(filterItems).map((item, index) => (
+										// TODO: Change ItemCard to Renderer function to allow Grow transition/animation
+										<ItemCard item={item} />
 									))}
+
+									{items?.filter(filterItems).length === 0 && (
+										<Box style={{ marginTop: 100, textAlign: 'center', width: '100%' }}>
+											<Typography variant='h5' gutterBottom>
+												No {items?.length !== 0 ? 'available ' : ''}items are shared with this group.
+											</Typography>
+										</Box>
+									)}
 								</Grid>
-							</Grid>
+
+								{memberLoading && (
+									<Box sx={{ display: 'flex', justifyContent: 'center', mt: 16 }}>
+										<CircularProgress />
+									</Box>
+								)}
+							</Container>
 						</>
 					) : (
 						<NotFound />

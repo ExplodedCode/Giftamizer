@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 import { useCreateGroup } from '../lib/useSupabase';
 import { useSnackbar } from 'notistack';
@@ -6,14 +7,18 @@ import { useSnackbar } from 'notistack';
 import { useTheme } from '@mui/material/styles';
 import { Button, Dialog, DialogContent, DialogContentText, DialogTitle, Fab, Grid, Stack, TextField, useMediaQuery } from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
-import { Add, Group } from '@mui/icons-material';
-import AvatarSelector from './AvatarSelector';
+import { Add, GroupAdd } from '@mui/icons-material';
+
+import ImageCropper from './ImageCropper';
 
 export default function GroupCreate() {
 	const theme = useTheme();
 	const { enqueueSnackbar } = useSnackbar();
+	const navigate = useNavigate();
+	const location = useLocation();
 
-	const [open, setOpen] = React.useState(false);
+	const open = location.hash === '#new-group';
+
 	const [name, setName] = React.useState('');
 	const [image, setImage] = React.useState<string | undefined>();
 
@@ -31,13 +36,13 @@ export default function GroupCreate() {
 
 	const handleClose = async () => {
 		setName('');
-		setOpen(false);
+		navigate('#'); // close dialog
 	};
 
 	return (
 		<>
-			<Fab color='primary' aria-label='add' onClick={() => setOpen(true)} sx={{ position: 'fixed', bottom: { xs: 64, md: 16 }, right: { xs: 8, md: 16 } }}>
-				<Add />
+			<Fab color='primary' aria-label='add' onClick={() => navigate('#new-group')} sx={{ position: 'fixed', bottom: { xs: 64, md: 16 }, right: { xs: 8, md: 16 } }}>
+				<GroupAdd />
 			</Fab>
 
 			<Dialog open={open} onClose={handleClose} maxWidth='sm' fullScreen={useMediaQuery(theme.breakpoints.down('md'))}>
@@ -48,7 +53,7 @@ export default function GroupCreate() {
 							<DialogContentText>TODO: describe what groups do...</DialogContentText>
 						</Grid>
 						<Grid item xs={12}>
-							<AvatarSelector value={image} onChange={setImage} />
+							<ImageCropper value={image} onChange={setImage} aspectRatio={1} />
 						</Grid>
 						<Grid item xs={12}>
 							<TextField autoFocus fullWidth label='Group Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} />
@@ -59,7 +64,7 @@ export default function GroupCreate() {
 									Cancel
 								</Button>
 
-								<LoadingButton onClick={handleCreate} endIcon={<Group />} loading={createGroup.isLoading} loadingPosition='end' variant='contained'>
+								<LoadingButton onClick={handleCreate} endIcon={<Add />} loading={createGroup.isLoading} loadingPosition='end' variant='contained'>
 									Create
 								</LoadingButton>
 							</Stack>

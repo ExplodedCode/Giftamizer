@@ -10,6 +10,8 @@ import * as Groups from './lib/Groups';
 
 import { DeleteAccount } from './lib/DeleteAccount';
 
+import { URLMetadata } from './lib/URLMetadata';
+
 require('dotenv').config();
 
 const api = express();
@@ -37,6 +39,8 @@ api.use(bodyParser.json());
 	api.post('/groups/invite', Groups.Invite);
 
 	api.post('/user/delete', DeleteAccount);
+
+	api.post('/url-metadata', URLMetadata);
 
 	// api.post('/hello', (req, res) => {
 	// 	console.log(req.body);
