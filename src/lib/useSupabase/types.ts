@@ -18,10 +18,16 @@ export type SystemType = {
 	id?: string;
 	maintenance: boolean;
 	updated_at: Date;
-	user?: AdminUserType;
+	user?: RoleProfileType;
 };
 
-export type AdminUserType = {
+export type UserRoleType = {
+	user_id: string;
+	roles: UserRole;
+	profile: RoleProfileType;
+};
+
+export type RoleProfileType = {
 	user_id: string;
 	email: string;
 	first_name: string;
@@ -36,17 +42,20 @@ export type ProfileType = {
 	image?: string;
 	bio: string;
 	enable_lists: boolean;
+	enable_archive: boolean;
+	enable_trash: boolean;
 	avatar_token: number | null;
 	created_at?: string;
-	role?: UserRole;
+	roles?: UserRole;
 };
 
 export interface UserRole {
-	role: UserRoles;
+	roles: UserRoles[];
 }
 
 export enum UserRoles {
 	user = 'user',
+	debug = 'debug',
 	admin = 'admin',
 }
 
@@ -68,6 +77,9 @@ export interface ItemType {
 	description: string;
 	links?: string[];
 	custom_fields?: CustomField[];
+
+	archived: boolean;
+	deleted: boolean;
 
 	lists?: ItemListType[];
 	newLists?: ListType[];

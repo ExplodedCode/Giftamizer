@@ -1,9 +1,8 @@
 import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-import { useSupabase, useCreateItem, useGetProfile } from '../lib/useSupabase';
 import { useSnackbar } from 'notistack';
 
-import { useTheme } from '@mui/material/styles';
 import {
 	Button,
 	Dialog,
@@ -23,10 +22,14 @@ import {
 	Tooltip,
 	useMediaQuery,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import LoadingButton from '@mui/lab/LoadingButton';
 import { Add, AddLink, Delete } from '@mui/icons-material';
-import ListSelector from './ListSelector';
+
+import { useSupabase, useCreateItem, useGetProfile } from '../lib/useSupabase';
 import { CustomField, ListType } from '../lib/useSupabase/types';
+
+import ListSelector from './ListSelector';
 import ImageCropper from './ImageCropper';
 
 interface ItemCreateProps {
@@ -35,8 +38,11 @@ interface ItemCreateProps {
 export default function ItemCreate({ defaultList }: ItemCreateProps) {
 	const theme = useTheme();
 	const { enqueueSnackbar } = useSnackbar();
+	const navigate = useNavigate();
+	const location = useLocation();
 
-	const [open, setOpen] = React.useState(false);
+	// const [open, setOpen] = React.useState(false);
+	const open = location.hash === '#create-item';
 
 	const [image, setImage] = React.useState<string | undefined>();
 	const [name, setName] = React.useState('');
@@ -77,7 +83,7 @@ export default function ItemCreate({ defaultList }: ItemCreateProps) {
 		setCustomFields([]);
 		setLists(defaultList ? [defaultList] : []);
 
-		setOpen(false);
+		navigate('#'); // close dialog
 	};
 
 	const [metaImage, setMetaImage] = React.useState<string | undefined>();
@@ -106,7 +112,7 @@ export default function ItemCreate({ defaultList }: ItemCreateProps) {
 
 	return (
 		<>
-			<Fab color='primary' aria-label='add' onClick={() => setOpen(true)} sx={{ position: 'fixed', bottom: { xs: 64, md: 16 }, right: { xs: 8, md: 16 } }}>
+			<Fab color='primary' aria-label='add' onClick={() => navigate('#create-item')} sx={{ position: 'fixed', bottom: { xs: 64, md: 16 }, right: { xs: 8, md: 16 } }}>
 				<Add />
 			</Fab>
 

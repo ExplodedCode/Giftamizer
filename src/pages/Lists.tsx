@@ -140,6 +140,7 @@ function RenderListItem({ list, handleListEdit }: RenderListItemProps) {
 
 export default function Lists() {
 	const { enqueueSnackbar } = useSnackbar();
+	const navigate = useNavigate();
 
 	const { data: lists, isLoading, isError, error } = useGetLists();
 	const [listEdit, setListEdit] = React.useState<ListType | null>(null);
@@ -166,21 +167,16 @@ export default function Lists() {
 						<TransitionGroup component={List} sx={{ width: '100%' }} dense>
 							{[...lists.filter((l) => l.id === DEFAULT_LIST_ID)!, ...lists.filter((l) => l.id !== DEFAULT_LIST_ID)!]?.map((list) => (
 								<Collapse key={list.id}>
-									<RenderListItem list={list} handleListEdit={setListEdit} />
+									<RenderListItem
+										list={list}
+										handleListEdit={(l) => {
+											setListEdit(l);
+											navigate('#list-edit'); // close dialog
+										}}
+									/>
 								</Collapse>
 							))}
 						</TransitionGroup>
-					)}
-
-					{lists?.length === 0 && !isLoading && (
-						<Box style={{ marginTop: 100, textAlign: 'center', width: '100%' }}>
-							<Typography variant='h5' gutterBottom>
-								You don't have any lists!
-							</Typography>
-							<Typography variant='body1' gutterBottom>
-								Add some gift ideas to share with your friends and family!
-							</Typography>
-						</Box>
 					)}
 				</Grid>
 				{isLoading && (
@@ -191,7 +187,13 @@ export default function Lists() {
 			</Container>
 
 			<ListCreate />
-			<ListUpdate list={listEdit} onClose={() => setListEdit(null)} />
+			<ListUpdate
+				list={listEdit}
+				onClose={() => {
+					setListEdit(null);
+					navigate('#'); // close dialog
+				}}
+			/>
 		</>
 	);
 }

@@ -1,18 +1,9 @@
 import * as React from 'react';
 
-import { useSupabase, SUPABASE_URL, validateEmail } from '../lib/useSupabase';
+import { useSupabase, SUPABASE_URL, validateEmail, FakeDelay } from '../lib/useSupabase';
 import { Member, Profile } from '../lib/useSupabase/types';
 
 import { Autocomplete, Avatar, Chip, CircularProgress, debounce, Grid, TextField, Typography } from '@mui/material';
-
-// export interface InviteUserType {
-// 	email: string;
-// 	// name: string;
-
-// 	first_name: string;
-// 	last_name: string;
-// 	user_id?: string;
-// }
 
 type UserSearchProps = {
 	selectedInviteUsers: Profile[];
@@ -34,6 +25,8 @@ export default function UserSearch(props: UserSearchProps) {
 			debounce(async (request: { input: string }, callback: (results?: readonly Profile[]) => void) => {
 				setLoading(true);
 
+				await FakeDelay(500); // fake delay
+
 				const search = request.input.replaceAll(' ', '+') + ':*';
 				const excludeUsers = props.members
 					.filter((m) => !m.external && !m.user_id.includes('_'))
@@ -53,7 +46,7 @@ export default function UserSearch(props: UserSearchProps) {
 	React.useEffect(() => {
 		let active = true;
 
-		if (inputValue.trim().length > 0) {
+		if (inputValue.trim().length >= 2) {
 			fetch({ input: inputValue }, (results?: readonly Profile[]) => {
 				if (active) {
 					let newOptions: Profile[] = [];

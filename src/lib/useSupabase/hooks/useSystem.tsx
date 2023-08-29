@@ -2,14 +2,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useSupabase } from './useSupabase';
 import { SystemType } from '../types';
+import { FakeDelay } from '.';
 
-const QUERY_KEY = ['system'];
+const SYSTEM_QUERY_KEY = ['system'];
 
 export const useGetSystem = () => {
 	const { client } = useSupabase();
 
 	return useQuery({
-		queryKey: QUERY_KEY,
+		queryKey: SYSTEM_QUERY_KEY,
 		queryFn: async (): Promise<SystemType> => {
 			const { data, error } = await client
 				.from('system')
@@ -37,7 +38,7 @@ export const useSetMaintenance = () => {
 
 	return useMutation(
 		async (system: SystemType): Promise<SystemType> => {
-			await wait(500); // fake delay
+			await FakeDelay(500); // fake delay
 
 			const { data, error } = await client
 				.from('system')
@@ -62,14 +63,8 @@ export const useSetMaintenance = () => {
 		},
 		{
 			onSuccess: (system: SystemType) => {
-				queryClient.setQueryData(QUERY_KEY, system);
+				queryClient.setQueryData(SYSTEM_QUERY_KEY, system);
 			},
 		}
 	);
 };
-
-function wait(time: number) {
-	return new Promise((resolve) => {
-		setTimeout(resolve, time);
-	});
-}

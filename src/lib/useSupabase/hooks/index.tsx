@@ -20,3 +20,9 @@ export function ExtractDomain(url: string) {
 
 	return domain.replace('www.', '');
 }
+
+export function FakeDelay(time: number) {
+	return new Promise((resolve) => {
+		setTimeout(resolve, time);
+	});
+}

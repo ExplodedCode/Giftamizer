@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import { useGetGroups, useUpdateLists } from '../lib/useSupabase/hooks';
 import { GroupType, ListType } from '../lib/useSupabase/types';
@@ -20,6 +21,9 @@ type ListUpdateProps = {
 export default function ListUpdate({ list, onClose }: ListUpdateProps) {
 	const theme = useTheme();
 	const { enqueueSnackbar } = useSnackbar();
+	const location = useLocation();
+
+	const open = location.hash === '#list-edit';
 
 	const { data: groups } = useGetGroups();
 
@@ -54,7 +58,7 @@ export default function ListUpdate({ list, onClose }: ListUpdateProps) {
 	}, [list]);
 
 	return (
-		<Dialog open={list !== null} onClose={updateLists.isLoading ? undefined : onClose} maxWidth='sm' fullScreen={useMediaQuery(theme.breakpoints.down('md'))}>
+		<Dialog open={list !== null && open} onClose={updateLists.isLoading ? undefined : onClose} maxWidth='sm' fullScreen={useMediaQuery(theme.breakpoints.down('md'))}>
 			<DialogTitle>Edit List</DialogTitle>
 			<DialogContent>
 				<Grid container spacing={2}>

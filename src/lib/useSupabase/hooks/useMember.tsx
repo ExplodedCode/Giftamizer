@@ -1,48 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useDebouncedCallback } from 'use-debounce';
 
 import { useSupabase } from './useSupabase';
 import { GROUPS_QUERY_KEY } from './useGroup';
 import { ItemStatus, ItemStatuses, MemberItemType } from '../types';
+import { FakeDelay } from '.';
 
 const MEMBER_ITEMS_QUERY_KEY = ['items'];
+const CLAIMED_ITEMS_QUERY_KEY = ['claimed_items'];
 
 export const useGetMemberItems = (group_id: string, user_id: string, list_id?: string) => {
 	const { client } = useSupabase();
-
-	const debounced = useDebouncedCallback(async (payload) => {
-		switch (payload.eventType) {
-			case 'INSERT':
-				if (payload.new.group_id === group_id) {
-					console.log(payload);
-					await refreshItem.mutateAsync(payload.new.item_id);
-				}
-				break;
-			case 'UPDATE':
-				if (payload.new.group_id === group_id) {
-					console.log(payload);
-					await refreshItem.mutateAsync(payload.new.item_id);
-				}
-				break;
-			case 'DELETE':
-				if (payload.old.group_id === group_id) {
-					console.log(payload);
-					queryClient.setQueryData([...GROUPS_QUERY_KEY, group_id, user_id, ...MEMBER_ITEMS_QUERY_KEY, list_id], (prevItems: MemberItemType[] | undefined) =>
-						prevItems ? prevItems.filter((item) => item.id !== payload.old.item_id) : prevItems
-					);
-				}
-				break;
-		}
-	}, 200);
-
-	const refreshItem = useRefreshItem(group_id, user_id, list_id!);
-	const queryClient = useQueryClient();
-	client
-		.channel(`public:item_links:realtime=eq.${group_id}.${user_id}${list_id ? `_${list_id}` : ''}`)
-		.on('postgres_changes', { event: '*', schema: 'public', table: 'item_links', filter: `realtime=eq.${group_id}.${user_id}${list_id ? `_${list_id}` : ''}` }, async (payload) => {
-			await debounced(payload);
-		})
-		.subscribe();
 
 	return useQuery({
 		// disable data cacheing
@@ -75,6 +42,9 @@ export const useGetMemberItems = (group_id: string, user_id: string, list_id?: s
 							)`
 						)
 						.eq('user_id', user_id)
+						.eq('archived', false)
+						.eq('deleted', false)
+						.eq('user_id', user_id)
 						.eq('items_lists.lists.child_list', false)
 						.eq('items_lists.lists.lists_groups.group_id', group_id);
 				} else {
@@ -105,6 +75,8 @@ export const useGetMemberItems = (group_id: string, user_id: string, list_id?: s
 					)`
 					)
 					.eq('user_id', user_id)
+					.eq('archived', false)
+					.eq('deleted', false)
 					.eq('items_lists.lists.id', list_id)
 					.eq('items_lists.lists.lists_groups.group_id', group_id);
 				if (res.error) throw res.error;
@@ -142,6 +114,8 @@ export const useRefreshItem = (group_id: string, user_id: string, list_id?: stri
 					)`
 				)
 				.eq('id', item_id)
+				.eq('archived', false)
+				.eq('deleted', false)
 				.eq('items_lists.lists.id', list_id)
 				.eq('items_lists.lists.lists_groups.group_id', group_id)
 				.single();
@@ -170,13 +144,13 @@ export const useRefreshItem = (group_id: string, user_id: string, list_id?: stri
 	);
 };
 
-export const useUpdateItemStatus = (group_id: string, user_id: string, list_id?: string) => {
+export const useUpdateItemStatus = (group_id?: string, user_id?: string, list_id?: string) => {
 	const queryClient = useQueryClient();
 	const { client } = useSupabase();
 
 	return useMutation(
 		async (status: ItemStatus): Promise<ItemStatus> => {
-			await wait(500); // fake delay
+			await FakeDelay(500); // fake delay
 
 			if (status.status === ItemStatuses.available) {
 				// delete row
@@ -192,32 +166,67 @@ export const useUpdateItemStatus = (group_id: string, user_id: string, list_id?:
 		},
 		{
 			onSuccess: (status: ItemStatus) => {
-				queryClient.setQueryData([...GROUPS_QUERY_KEY, group_id, user_id, ...MEMBER_ITEMS_QUERY_KEY, list_id], (prevItems: MemberItemType[] | undefined) => {
-					if (prevItems) {
-						var updatedItems: MemberItemType[];
-						if (prevItems.find((i) => i.id === status.item_id)) {
-							updatedItems = prevItems.map((item) => {
-								return item.id === status.item_id
-									? {
-											...item,
-											status: status.status === ItemStatuses.available ? undefined : status,
-									  }
-									: item;
-							});
-						} else {
-							updatedItems = prevItems;
+				queryClient.setQueryData(
+					group_id ? [...GROUPS_QUERY_KEY, group_id, user_id, ...MEMBER_ITEMS_QUERY_KEY, list_id] : CLAIMED_ITEMS_QUERY_KEY,
+					(prevItems: MemberItemType[] | undefined) => {
+						if (prevItems) {
+							var updatedItems: MemberItemType[];
+							if (prevItems.find((i) => i.id === status.item_id)) {
+								updatedItems = prevItems.map((item) => {
+									return item.id === status.item_id
+										? {
+												...item,
+												status: status.status === ItemStatuses.available ? undefined : status,
+										  }
+										: item;
+								});
+							} else {
+								updatedItems = prevItems;
+							}
+							return updatedItems;
 						}
-						return updatedItems;
+						return prevItems;
 					}
-					return prevItems;
-				});
+				);
 			},
 		}
 	);
 };
 
-function wait(time: number) {
-	return new Promise((resolve) => {
-		setTimeout(resolve, time);
+export const useClaimedItems = () => {
+	const { client, user } = useSupabase();
+
+	return useQuery({
+		// disable data cacheing
+		staleTime: 0,
+		cacheTime: 0,
+
+		queryKey: CLAIMED_ITEMS_QUERY_KEY,
+		queryFn: async (): Promise<MemberItemType[]> => {
+			const { data, error } = await client
+				.from('items')
+				.select(
+					`*,
+					items_lists( 
+						lists(
+							lists_groups(
+								group_id
+							)
+						)
+					),
+					status:items_status!inner(
+						item_id,
+						user_id,
+						status
+					)`
+				)
+				.eq('status.user_id', user.id);
+			if (error) throw error;
+
+			return data.map((i) => {
+				// @ts-ignore
+				return { ...i, image: i.image_token && `${client.supabaseUrl}/storage/v1/object/public/items/${i.id}?${i.image_token}` };
+			}) as MemberItemType[];
+		},
 	});
-}
+};

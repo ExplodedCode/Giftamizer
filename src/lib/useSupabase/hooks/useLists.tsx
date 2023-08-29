@@ -121,7 +121,7 @@ export const useUpdateLists = () => {
 			}
 
 			// update list-group relationships
-			const { data: listsData, error: ListsError } = await client.from('lists_groups').select('*').eq('list_id', list.id);
+			const { data: listsData, error: ListsError } = await client.from('lists_groups').select('*').eq('list_id', list.id).eq('user_id', user.id);
 			if (ListsError) throw ListsError;
 			for (let group of list.groups) {
 				if (!listsData?.find((l) => l.group_id === group.id)) {

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 
 import { useTheme } from '@mui/material/styles';
@@ -25,21 +26,27 @@ import {
 	TableBody,
 	TableCell,
 	ButtonBase,
+	Tooltip,
+	Box,
+	Alert,
+	AlertTitle,
 } from '@mui/material';
-import { Delete, Edit, ExpandMore, MoreVert } from '@mui/icons-material';
+import { Archive, Close, Delete, DeleteForever, Edit, ExpandMore, MoreVert, Restore, Unarchive } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 
 import ItemUpdate from '../components/ItemUpdate';
 
-import { ExtractDomain, useDeleteItem, useGetProfile, useSupabase, useUpdateItemStatus } from '../lib/useSupabase';
+import { ExtractDomain, useArchiveItem, useDeleteItem, useGetProfile, useRefreshItem, useRestoreItem, useSupabase, useUpdateItemStatus } from '../lib/useSupabase';
 import { ItemStatuses, ItemType, MemberItemType } from '../lib/useSupabase/types';
-import { LoadingButton } from '@mui/lab';
-import { useParams } from 'react-router-dom';
 
 interface VertMenuProps {
 	item: ItemType | MemberItemType;
 }
 function VertMenu({ item }: VertMenuProps) {
 	const { enqueueSnackbar } = useSnackbar();
+	const navigate = useNavigate();
+
+	const { data: profile } = useGetProfile();
 
 	const [itemEdit, setItemEdit] = React.useState<ItemType | null>(null);
 	const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -53,10 +60,24 @@ function VertMenu({ item }: VertMenuProps) {
 		setAnchorEl(null);
 	};
 
+	const archiveItem = useArchiveItem();
+	const handleArchive = async (id: string, archive: boolean) => {
+		await archiveItem.mutateAsync({ id: id, archive: archive }).catch((err) => {
+			enqueueSnackbar(`Unable to ${archive ? '' : 'un'}archive item! ${err.message}`, { variant: 'error' });
+		});
+	};
+
 	const deleteItem = useDeleteItem();
-	const handleDelete = async (id: string) => {
-		await deleteItem.mutateAsync(id).catch((err) => {
+	const handleDelete = async (id: string, deleted: boolean) => {
+		await deleteItem.mutateAsync({ id: id, deleted: deleted }).catch((err) => {
 			enqueueSnackbar(`Unable to delete item! ${err.message}`, { variant: 'error' });
+		});
+	};
+
+	const restoreItem = useRestoreItem();
+	const handleRestore = async (id: string) => {
+		await restoreItem.mutateAsync(id).catch((err) => {
+			enqueueSnackbar(`Unable to restore item! ${err.message}`, { variant: 'error' });
 		});
 	};
 
@@ -79,116 +100,194 @@ function VertMenu({ item }: VertMenuProps) {
 				open={open}
 				onClose={handleVertMenuClose}
 			>
-				<MenuItem
-					onClick={() => {
-						setItemEdit(item);
-						handleVertMenuClose();
-					}}
-				>
-					<ListItemIcon>
-						<Edit fontSize='small' />
-					</ListItemIcon>
-					<ListItemText>Edit</ListItemText>
-				</MenuItem>
-				<MenuItem
-					onClick={() => {
-						handleDelete(item.id);
-						handleVertMenuClose();
-					}}
-				>
-					<ListItemIcon>
-						<Delete fontSize='small' />
-					</ListItemIcon>
-					<ListItemText>Delete</ListItemText>
-				</MenuItem>
+				{!item.archived && !item.deleted && (
+					<MenuItem
+						onClick={() => {
+							setItemEdit(item);
+							navigate('#item-edit'); // open dialog
+							handleVertMenuClose();
+						}}
+					>
+						<ListItemIcon>
+							<Edit fontSize='small' />
+						</ListItemIcon>
+						<ListItemText>Edit</ListItemText>
+					</MenuItem>
+				)}
+
+				{profile?.enable_archive && !item.deleted && (
+					<MenuItem
+						onClick={() => {
+							handleArchive(item.id, !item.archived);
+							handleVertMenuClose();
+						}}
+					>
+						<ListItemIcon>{item.archived ? <Unarchive fontSize='small' /> : <Archive fontSize='small' />}</ListItemIcon>
+						<ListItemText>{item.archived ? 'Unarchive' : 'Archive'}</ListItemText>
+					</MenuItem>
+				)}
+				{!item.deleted ? (
+					<MenuItem
+						onClick={() => {
+							handleDelete(item.id, item.deleted);
+							handleVertMenuClose();
+						}}
+					>
+						<ListItemIcon>{profile?.enable_trash ? <Delete fontSize='small' /> : <DeleteForever fontSize='small' />}</ListItemIcon>
+						<ListItemText>{profile?.enable_trash ? 'Trash' : 'Delete'}</ListItemText>
+					</MenuItem>
+				) : (
+					<>
+						<MenuItem
+							onClick={() => {
+								handleRestore(item.id);
+								handleVertMenuClose();
+							}}
+						>
+							<ListItemIcon>
+								<Restore fontSize='small' />
+							</ListItemIcon>
+							<ListItemText>Restore</ListItemText>
+						</MenuItem>
+						<MenuItem
+							onClick={() => {
+								handleDelete(item.id, item.deleted);
+								handleVertMenuClose();
+							}}
+						>
+							<ListItemIcon>
+								<DeleteForever fontSize='small' />
+							</ListItemIcon>
+							<ListItemText>Delete</ListItemText>
+						</MenuItem>
+					</>
+				)}
 			</Menu>
 
-			<ItemUpdate item={itemEdit} onClose={() => setItemEdit(null)} />
+			<ItemUpdate
+				item={itemEdit}
+				onClose={() => {
+					navigate('#'); // close dialog
+					setItemEdit(null);
+				}}
+			/>
 		</>
 	);
 }
 
 interface ItemStatusProps {
 	item: MemberItemType;
+	claimError: string | undefined;
+	setClaimError(claimError: string | undefined): void;
 }
-function ItemStatus({ item }: ItemStatusProps) {
+function ItemStatus({ item, claimError, setClaimError }: ItemStatusProps) {
 	const theme = useTheme();
-
-	const { group: groupID, user: userID } = useParams();
-	const user_id = userID!.split('_')[0] ?? userID!;
-	const list_id = userID!.split('_')[1] ?? undefined;
 
 	const { enqueueSnackbar } = useSnackbar();
 	const { user } = useSupabase();
-	const updateItemStatus = useUpdateItemStatus(groupID!, user_id, list_id);
 
+	const { group: groupID, user: userID } = useParams();
+	const user_id = userID?.split('_')[0] ?? userID!;
+	const list_id = userID?.split('_')[1] ?? undefined;
+
+	const refreshItem = useRefreshItem(groupID!, user_id, list_id);
+	const updateItemStatus = useUpdateItemStatus(groupID!, user_id, list_id);
 	const handleUpdateItemStatus = async (status: ItemStatuses) => {
-		await updateItemStatus.mutateAsync({ item_id: item.id, user_id: user.id, status: status }).catch((err) => {
-			enqueueSnackbar(`Unable to update item status! ${err.message}`, { variant: 'error' });
+		await updateItemStatus.mutateAsync({ item_id: item.id, user_id: user.id, status: status }).catch(async (err) => {
+			switch (err.code) {
+				case '42501':
+					enqueueSnackbar(`This item was just claimed by someone else!`, { variant: 'error' });
+					setClaimError(`This item was just claimed by someone else!`);
+					await refreshItem.mutateAsync(item.id);
+					break;
+
+				default:
+					enqueueSnackbar(`Unable to update item status! ${err.message}`, { variant: 'error' });
+					break;
+			}
 		});
 	};
 	return (
 		<>
-			<LoadingButton
-				variant='outlined'
-				color={(() => {
+			<Tooltip
+				title={(() => {
 					switch (item.status?.status) {
 						default:
-							return 'success';
+							return 'Mark as Planned';
 						case ItemStatuses.planned:
-							return 'warning';
+							return 'Mark as Purchased';
 						case ItemStatuses.unavailable:
-							return 'error';
+							return 'Mark as Available';
 					}
 				})()}
-				size='small'
-				onClick={() => {
-					handleUpdateItemStatus(
-						(() => {
+				placement='right'
+			>
+				<LoadingButton
+					className={claimError && 'error-shake'}
+					variant='outlined'
+					color={(() => {
+						switch (item.status?.status) {
+							default:
+								return 'success';
+							case ItemStatuses.planned:
+								return 'warning';
+							case ItemStatuses.unavailable:
+								return 'error';
+						}
+					})()}
+					size='small'
+					onClick={() => {
+						handleUpdateItemStatus(
+							(() => {
+								switch (item.status?.status) {
+									default:
+										return ItemStatuses.planned;
+									case ItemStatuses.planned:
+										return ItemStatuses.unavailable;
+									case ItemStatuses.unavailable:
+										return ItemStatuses.available;
+								}
+							})()
+						);
+					}}
+					loading={updateItemStatus.isLoading}
+					disabled={item.status?.user_id !== undefined && item.status?.user_id !== user.id}
+					sx={
+						item.status?.user_id !== user.id && !claimError
+							? {
+									'&.Mui-disabled': {
+										// color: theme.palette.warning.main,
+										color: (() => {
+											switch (item.status?.status) {
+												default:
+													return theme.palette.success.main;
+												case ItemStatuses.planned:
+													return theme.palette.warning.main;
+												case ItemStatuses.unavailable:
+													return theme.palette.error.main;
+											}
+										})(),
+									},
+									pointer: 'not-allowed',
+									pointerEvents: 'all',
+							  }
+							: {}
+					}
+				>
+					<span style={claimError ? { textDecoration: 'line-through' } : {}}>
+						{(() => {
 							switch (item.status?.status) {
 								default:
-									return ItemStatuses.planned;
+									return 'Available';
 								case ItemStatuses.planned:
-									return ItemStatuses.unavailable;
+									return 'Planned';
 								case ItemStatuses.unavailable:
-									return ItemStatuses.available;
+									return 'Unavailable';
 							}
-						})()
-					);
-				}}
-				loading={updateItemStatus.isLoading}
-				disabled={item.status?.user_id !== undefined && item.status?.user_id !== user.id}
-				sx={
-					item.status?.user_id !== user.id
-						? {
-								'&.Mui-disabled': {
-									// color: theme.palette.warning.main,
-									color: (() => {
-										switch (item.status?.status) {
-											default:
-												return theme.palette.success.main;
-											case ItemStatuses.planned:
-												return theme.palette.warning.main;
-											case ItemStatuses.unavailable:
-												return theme.palette.error.main;
-										}
-									})(),
-								},
-						  }
-						: {}
-				}
-			>
-				{(() => {
-					switch (item.status?.status) {
-						default:
-							return 'Available';
-						case ItemStatuses.planned:
-							return 'Planned';
-						case ItemStatuses.unavailable:
-							return 'Unavailable';
-					}
-				})()}
-			</LoadingButton>
+						})()}
+					</span>
+				</LoadingButton>
+			</Tooltip>
 		</>
 	);
 }
@@ -249,6 +348,7 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 	const { data: profile } = useGetProfile();
 
 	const [expanded, setExpanded] = React.useState(false);
+	const [claimError, setClaimError] = React.useState<string | undefined>();
 
 	const handleExpand = (event: React.MouseEvent<HTMLElement>) => {
 		setExpanded(!expanded);
@@ -259,60 +359,69 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 			<Grid item xs={12}>
 				<Paper
 					sx={{
-						p: 2,
-						margin: 'auto',
-						flexGrow: 1,
-						display: { sm: 'flex', xs: 'none' },
+						display: { sm: 'block', xs: 'none' },
 					}}
 				>
-					<Grid container spacing={2}>
-						{item.image && (
-							<Grid item>
-								<ButtonBase>
-									<img alt={item.name} src={item.image} style={{ objectFit: 'cover', width: 150, height: 150, borderRadius: 4 }} />
-								</ButtonBase>
-							</Grid>
-						)}
+					<Box
+						sx={{
+							p: 2,
+							margin: 'auto',
+							flexGrow: 1,
+							display: 'flex',
+						}}
+					>
+						<Grid container spacing={2}>
+							{item.image && (
+								<Grid item>
+									<ButtonBase>
+										<img alt={item.name} src={item.image} style={{ objectFit: 'cover', width: 150, height: 150, borderRadius: 4 }} />
+									</ButtonBase>
+								</Grid>
+							)}
 
-						<Grid item xs={12} sm container>
-							<Grid item xs container direction='column' spacing={2}>
-								<Grid item xs>
-									<Typography component='div' variant='h6'>
-										{item.name}
-									</Typography>
-									<Typography variant='body1' gutterBottom>
-										{item.description}
-									</Typography>
-									{item.custom_fields?.map((c) => (
-										<Typography variant='body2' color='text.secondary'>
-											{c.name}: {c.value}
+							<Grid item xs={12} sm container>
+								<Grid item xs container direction='column' spacing={2}>
+									<Grid item xs>
+										<Typography component='div' variant='h6'>
+											{item.name}
 										</Typography>
-									))}
-									{profile?.enable_lists && (
-										<Stack direction='row' justifyContent='flex-start' spacing={1} sx={{ mt: 0.5 }}>
-											{item.lists?.map((l) => (
-												<Chip label={l.list.name} size='small' />
-											))}
-										</Stack>
+										<Typography variant='body1' gutterBottom>
+											{item.description}
+										</Typography>
+										{item.custom_fields?.map((c) => (
+											<Typography variant='body2' color='text.secondary'>
+												{c.name}: {c.value}
+											</Typography>
+										))}
+										{profile?.enable_lists && (
+											<Stack direction='row' justifyContent='flex-start' spacing={1} sx={{ mt: 0.5 }}>
+												{item.lists?.map((l) => (
+													<Chip label={l.list.name} size='small' />
+												))}
+											</Stack>
+										)}
+									</Grid>
+									{(!editable || (item.links && item.links.length > 0)) && (
+										<Grid item>
+											<Stack direction='row' justifyContent='flex-start' spacing={1} useFlexGap flexWrap='wrap'>
+												{!editable && item.user_id !== user.id && <ItemStatus item={item as MemberItemType} claimError={claimError} setClaimError={setClaimError} />}
+
+												{item.links?.map((link, i) => (
+													<Button key={i} href={link} target='_blank' color='info' size='small'>
+														{ExtractDomain(link)}
+													</Button>
+												))}
+											</Stack>
+										</Grid>
 									)}
 								</Grid>
-								{(!editable || (item.links && item.links.length > 0)) && (
-									<Grid item>
-										<Stack direction='row' justifyContent='flex-start' spacing={1} useFlexGap flexWrap='wrap'>
-											{!editable && item.user_id !== user.id && <ItemStatus item={item as MemberItemType} />}
-
-											{item.links?.map((link, i) => (
-												<Button key={i} href={link} target='_blank' color='info' size='small'>
-													{ExtractDomain(link)}
-												</Button>
-											))}
-										</Stack>
-									</Grid>
-								)}
+								<Grid item>{editable && <VertMenu item={item} />}</Grid>
 							</Grid>
-							<Grid item>{editable && <VertMenu item={item} />}</Grid>
 						</Grid>
-					</Grid>
+					</Box>
+
+					{editable && profile?.enable_lists && item.lists?.length === 0 && <ItemUnassignedAlert />}
+					<ItemAlert alert={claimError} setAlert={setClaimError} />
 				</Paper>
 
 				{/* Mobile card */}
@@ -347,7 +456,7 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 							{(!editable || (item.links && item.links.length > 0)) && (
 								<Grid item xs={12}>
 									<Stack direction='row' justifyContent='flex-start' spacing={1} useFlexGap flexWrap='wrap'>
-										{!editable && item.user_id !== user.id && <ItemStatus item={item as MemberItemType} />}
+										{!editable && item.user_id !== user.id && <ItemStatus item={item as MemberItemType} claimError={claimError} setClaimError={setClaimError} />}
 
 										{item.links?.map((link, i) => (
 											<Button key={i} href={link} target='_blank' color='info' size='small'>
@@ -361,8 +470,51 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 					</CardContent>
 
 					{item.custom_fields && item.custom_fields?.length !== 0 && <CustomFieldExpand handleExpand={handleExpand} expanded={expanded} item={item} />}
+
+					{profile?.enable_lists && item.lists?.length === 0 && <ItemUnassignedAlert />}
+					<ItemAlert alert={claimError} setAlert={setClaimError} />
 				</Card>
 			</Grid>
 		</>
+	);
+}
+
+interface ItemAlertProps {
+	alert: string | undefined;
+	setAlert(claimError: string | undefined): void;
+}
+function ItemAlert({ alert, setAlert }: ItemAlertProps) {
+	return (
+		<Box sx={{ width: '100%' }}>
+			<Collapse in={alert !== undefined}>
+				<Alert
+					severity='error'
+					action={
+						<IconButton
+							aria-label='close'
+							color='inherit'
+							size='small'
+							onClick={() => {
+								setAlert(undefined);
+							}}
+						>
+							<Close fontSize='inherit' />
+						</IconButton>
+					}
+				>
+					{alert}
+				</Alert>
+			</Collapse>
+		</Box>
+	);
+}
+
+function ItemUnassignedAlert() {
+	return (
+		<Box sx={{ width: '100%' }}>
+			<Collapse in={alert !== undefined}>
+				<Alert severity='warning'>This item is not assigned to a list!</Alert>
+			</Collapse>
+		</Box>
 	);
 }
