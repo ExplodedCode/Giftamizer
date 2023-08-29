@@ -6,13 +6,33 @@ export type SupabaseContextType = {
 	error?: string | null;
 };
 
-export type SelectArg =
-	| string
-	| {
-			str: string;
-			head?: boolean;
-			count?: null | 'exact' | 'planned' | 'estimated';
-	  };
+// export type SelectArg =
+// 	| string
+// 	| {
+// 			str: string;
+// 			head?: boolean;
+// 			count?: null | 'exact' | 'planned' | 'estimated';
+// 	  };
+
+export type SystemType = {
+	id?: string;
+	maintenance: boolean;
+	updated_at: Date;
+	user?: RoleProfileType;
+};
+
+export type UserRoleType = {
+	user_id: string;
+	roles: UserRole;
+	profile: RoleProfileType;
+};
+
+export type RoleProfileType = {
+	user_id: string;
+	email: string;
+	first_name: string;
+	last_name: string;
+};
 
 export type ProfileType = {
 	user_id: string;
@@ -22,9 +42,22 @@ export type ProfileType = {
 	image?: string;
 	bio: string;
 	enable_lists: boolean;
+	enable_archive: boolean;
+	enable_trash: boolean;
 	avatar_token: number | null;
 	created_at?: string;
+	roles?: UserRole;
 };
+
+export interface UserRole {
+	roles: UserRoles[];
+}
+
+export enum UserRoles {
+	user = 'user',
+	debug = 'debug',
+	admin = 'admin',
+}
 
 export interface MemberType {
 	owner: boolean;
@@ -39,16 +72,36 @@ export interface MemberType {
 export interface ItemType {
 	id: string;
 	user_id: string;
+	image?: string;
 	name: string;
 	description: string;
 	links?: string[];
 	custom_fields?: CustomField[];
+
+	archived: boolean;
+	deleted: boolean;
 
 	lists?: ItemListType[];
 	newLists?: ListType[];
 
 	created_at?: Date;
 	updated_at?: Date;
+}
+
+export interface MemberItemType extends ItemType {
+	status?: ItemStatus;
+}
+
+export interface ItemStatus {
+	item_id: string;
+	user_id: string;
+	status: ItemStatuses;
+}
+
+export enum ItemStatuses {
+	available = 'A',
+	planned = 'P',
+	unavailable = 'U',
 }
 
 export interface CustomField {
@@ -64,6 +117,7 @@ export interface ItemListType {
 
 export interface ItemListDetType {
 	name: string;
+	child_list: boolean;
 }
 
 export interface ListType {

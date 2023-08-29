@@ -1,15 +1,17 @@
 import React, { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
-import { DEFAULT_LIST_ID, useGetGroups, useSupabase, useUpdateLists } from '../lib/useSupabase/hooks';
+import { useGetGroups, useUpdateLists } from '../lib/useSupabase/hooks';
 import { GroupType, ListType } from '../lib/useSupabase/types';
 
 import { useSnackbar } from 'notistack';
 
-import { Dialog, DialogTitle, DialogContent, Button, TextField, DialogContentText, FormControl, FormControlLabel, Grid, Switch, Stack, useMediaQuery, useTheme } from '@mui/material';
-import { Add } from '@mui/icons-material';
+import { Dialog, DialogTitle, DialogContent, Button, TextField, DialogContentText, Grid, Stack, useMediaQuery, useTheme } from '@mui/material';
+import { Save } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
+
 import GroupSelector from './GroupSelector';
-import AvatarSelector from './AvatarSelector';
+import ImageCropper from './ImageCropper';
 
 type ListUpdateProps = {
 	list: ListType | null;
@@ -19,8 +21,10 @@ type ListUpdateProps = {
 export default function ListUpdate({ list, onClose }: ListUpdateProps) {
 	const theme = useTheme();
 	const { enqueueSnackbar } = useSnackbar();
+	const location = useLocation();
 
-	const { client } = useSupabase();
+	const open = location.hash === '#list-edit';
+
 	const { data: groups } = useGetGroups();
 
 	const [name, setName] = React.useState('');
@@ -54,7 +58,7 @@ export default function ListUpdate({ list, onClose }: ListUpdateProps) {
 	}, [list]);
 
 	return (
-		<Dialog open={list !== null} onClose={updateLists.isLoading ? undefined : onClose} maxWidth='sm' fullScreen={useMediaQuery(theme.breakpoints.down('md'))}>
+		<Dialog open={list !== null && open} onClose={updateLists.isLoading ? undefined : onClose} maxWidth='sm' fullScreen={useMediaQuery(theme.breakpoints.down('md'))}>
 			<DialogTitle>Edit List</DialogTitle>
 			<DialogContent>
 				<Grid container spacing={2}>
@@ -63,7 +67,7 @@ export default function ListUpdate({ list, onClose }: ListUpdateProps) {
 					</Grid>
 					{childList && (
 						<Grid item xs={12}>
-							<AvatarSelector value={image} onChange={setImage} />
+							<ImageCropper value={image} onChange={setImage} aspectRatio={1} />
 						</Grid>
 					)}
 					<Grid item xs={12}>
@@ -73,7 +77,7 @@ export default function ListUpdate({ list, onClose }: ListUpdateProps) {
 						<GroupSelector groups={groups as Omit<GroupType, 'image_token' | 'my_membership'>[]} value={selectedGroups} onChange={setSelectedGroups} disabled={updateLists.isLoading} />
 					</Grid>
 
-					{list?.id !== DEFAULT_LIST_ID && (
+					{/* {list?.id !== DEFAULT_LIST_ID && (
 						<Grid item xs={12}>
 							<FormControl component='fieldset' variant='standard'>
 								<FormControlLabel
@@ -82,7 +86,7 @@ export default function ListUpdate({ list, onClose }: ListUpdateProps) {
 								/>
 							</FormControl>
 						</Grid>
-					)}
+					)} */}
 					{childList && (
 						<Grid item xs={12}>
 							<TextField
@@ -106,7 +110,7 @@ export default function ListUpdate({ list, onClose }: ListUpdateProps) {
 								Cancel
 							</Button>
 
-							<LoadingButton onClick={handleSave} disabled={name.length === 0} endIcon={<Add />} loading={updateLists.isLoading} loadingPosition='end' variant='contained'>
+							<LoadingButton onClick={handleSave} disabled={name.length === 0} endIcon={<Save />} loading={updateLists.isLoading} loadingPosition='end' variant='contained'>
 								Save
 							</LoadingButton>
 						</Stack>

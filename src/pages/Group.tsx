@@ -1,35 +1,21 @@
 import React from 'react';
 
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useGetGroupMembers, useGetGroups, useSetGroupPin, useSupabase } from '../lib/useSupabase';
+import { useGetGroupMembers, useGetGroups, useSetGroupPin } from '../lib/useSupabase';
 
 import { Card, CardActionArea, CardContent, CardMedia, CircularProgress, Grid, Link as MUILink, Typography, Box, Breadcrumbs, AppBar, Toolbar, Checkbox, Grow } from '@mui/material';
 import { PushPinOutlined, PushPin, Person, EscalatorWarning } from '@mui/icons-material';
 
 import GroupSettingsDialog from '../components/GroupSettingsDialog';
 import NotFound from '../components/NotFound';
-import { RealtimeChannel } from '@supabase/realtime-js';
 
 export default function Group() {
 	const { group: groupID, user: userID } = useParams();
 
 	const navigate = useNavigate();
-	const { client, user } = useSupabase();
 	const { data: groups, isLoading: groupsLoading } = useGetGroups();
 	const { data: members, isLoading: membersLoading } = useGetGroupMembers(groupID!);
 	const setGroupPin = useSetGroupPin();
-
-	React.useEffect(() => {
-		// unsub from members realtime
-		return () => {
-			// var groupMembersChannel = client.getChannels().find((c) => c.topic === `realtime:public:group_members:group_id=eq.${groupID}`);
-			// if (groupMembersChannel) client.removeChannel(groupMembersChannel);
-			// var childListsChannel = client.getChannels().find((c) => c.topic === `realtime:public:lists_groups:group_id=eq.${groupID}`);
-			// if (childListsChannel) client.removeChannel(childListsChannel);
-			// var externalInvitesChannel = client.getChannels().find((c) => c.topic === `realtime:public:external_invites:group_id=eq.${groupID}`);
-			// if (externalInvitesChannel) client.removeChannel(externalInvitesChannel);
-		};
-	}, [client, groupID]);
 
 	return (
 		<>

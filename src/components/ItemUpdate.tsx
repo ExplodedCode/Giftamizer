@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
-
-import { DEFAULT_LIST_ID, useGetGroups, useGetProfile, useSupabase, useUpdateItems } from '../lib/useSupabase';
-import { CustomField, ItemType, ListType } from '../lib/useSupabase/types';
-
+import { useLocation } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
+
+import { useGetProfile, useSupabase, useUpdateItems } from '../lib/useSupabase';
+import { CustomField, ItemType, ListType } from '../lib/useSupabase/types';
 
 import {
 	Dialog,
@@ -22,11 +22,13 @@ import {
 	InputLabel,
 	OutlinedInput,
 	Tooltip,
+	LinearProgress,
 } from '@mui/material';
-import { Add, AddLink, Delete } from '@mui/icons-material';
+import { Add, AddLink, Delete, Save } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 
 import ListSelector from './ListSelector';
+import ImageCropper from './ImageCropper';
 
 type ItemUpdateProps = {
 	item: ItemType | null;
@@ -36,24 +38,28 @@ type ItemUpdateProps = {
 export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 	const theme = useTheme();
 	const { enqueueSnackbar } = useSnackbar();
+	const location = useLocation();
 
-	const { user } = useSupabase();
+	const open = location.hash === '#item-edit';
+
+	const { user, client } = useSupabase();
 	const { data: profile } = useGetProfile();
 
-	const updateItems = useUpdateItems();
-	const { data: groups } = useGetGroups();
-
+	const [image, setImage] = React.useState<string | undefined>();
 	const [name, setName] = React.useState('');
 	const [description, setDescription] = React.useState('');
 	const [links, setLinks] = React.useState<string[]>(['']);
 	const [customFields, setCustomFields] = React.useState<CustomField[]>([]);
 	const [lists, setLists] = React.useState<ListType[]>([]);
 
+	const updateItems = useUpdateItems();
 	const handleSave = async () => {
 		if (item) {
 			await updateItems
 				.mutateAsync({
+					user_id: user.id,
 					id: item.id,
+					image: image,
 					name: name,
 					description: description,
 					links: links.map((l) => l.trim()).filter((l) => l.trim().length !== 0),
@@ -72,6 +78,8 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 
 	useEffect(() => {
 		if (item) {
+			setImage(item.image);
+			setMetaImage(item.image);
 			setName(item.name);
 			setDescription(item.description);
 			setLinks(item?.links?.length === 0 ? [''] : item?.links ?? ['']);
@@ -82,16 +90,40 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 						id: l.list_id,
 						user_id: user.id,
 						name: l.list.name,
-						child_list: false,
+						child_list: l.list.child_list,
 						groups: [],
 					};
 				}) ?? []
 			);
 		}
-	}, [item]);
+	}, [item, user]);
+
+	const [metaImage, setMetaImage] = React.useState<string | undefined>();
+	const [metaLoading, setMetaloading] = React.useState(false);
+	const getUrlMetadata = async (url: string) => {
+		const { data, error } = await client.functions.invoke('url-metadata', {
+			body: {
+				url: url,
+			},
+		});
+
+		if (error) {
+			console.log(error);
+			enqueueSnackbar(`Unable to get metadata.`, {
+				variant: 'error',
+			});
+			setMetaloading(false);
+		} else {
+			if (data?.name) setName(data?.name);
+			if (data?.description) setDescription(data?.description);
+			if (data?.image) setImage(data?.image);
+			if (data?.image) setMetaImage(data?.image);
+			setMetaloading(false);
+		}
+	};
 
 	return (
-		<Dialog open={item !== null} onClose={updateItems.isLoading ? undefined : onClose} maxWidth='sm' fullScreen={useMediaQuery(theme.breakpoints.down('md'))}>
+		<Dialog open={item !== null && open} onClose={updateItems.isLoading ? undefined : onClose} maxWidth='sm' fullScreen={useMediaQuery(theme.breakpoints.down('md'))}>
 			<DialogTitle>Edit Item</DialogTitle>
 			<DialogContent>
 				<Grid container spacing={2}>
@@ -99,10 +131,13 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 						<DialogContentText>TODO: describe what items do...</DialogContentText>
 					</Grid>
 					<Grid item xs={12}>
-						<TextField fullWidth label='Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} autoFocus />
+						<ImageCropper value={image} onChange={setImage} square importedImage={metaImage} />
 					</Grid>
 					<Grid item xs={12}>
-						<TextField fullWidth label='Description' variant='outlined' value={description} onChange={(e) => setDescription(e.target.value)} />
+						<TextField fullWidth label='Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} autoFocus inputProps={{ maxLength: 100 }} />
+					</Grid>
+					<Grid item xs={12}>
+						<TextField fullWidth label='Description' variant='outlined' value={description} onChange={(e) => setDescription(e.target.value)} inputProps={{ maxLength: 250 }} />
 					</Grid>
 					{links.map((link, index) => (
 						<Grid key={index} item xs={12}>
@@ -112,6 +147,13 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 									value={link}
 									onChange={(e) => {
 										setLinks(links.map((l, i) => (i === index ? e.target.value : l)));
+									}}
+									onPaste={(e) => {
+										const urlQuery = e.clipboardData.getData('Text');
+										if (index === 0 && urlQuery.length > 0) {
+											setMetaloading(true);
+											getUrlMetadata(urlQuery);
+										}
 									}}
 									endAdornment={
 										<InputAdornment position='end'>
@@ -125,6 +167,7 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 														}
 													}}
 													edge='end'
+													disabled={links.length === 5 && index === 0}
 												>
 													{index === 0 ? <AddLink /> : <Delete />}
 												</IconButton>
@@ -132,8 +175,10 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 										</InputAdornment>
 									}
 									label='URL'
+									inputProps={{ maxLength: 2000 }}
 								/>
 							</FormControl>
+							{index === 0 && <LinearProgress style={{ display: metaLoading ? 'block' : 'none' }} />}
 						</Grid>
 					))}
 					{customFields.map((field, index) => (
@@ -148,6 +193,7 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 										onChange={(e) => {
 											setCustomFields(customFields.map((f, i) => (f.id === field.id ? { ...f, name: e.target.value } : f)));
 										}}
+										inputProps={{ maxLength: 25 }}
 									/>
 								</Grid>
 
@@ -174,6 +220,7 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 												</InputAdornment>
 											}
 											label='Value'
+											inputProps={{ maxLength: 50 }}
 										/>
 									</FormControl>
 								</Grid>
@@ -196,6 +243,7 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 										color='inherit'
 										startIcon={<Add />}
 										onClick={() => setCustomFields([...customFields, { id: customFields.length, name: '', value: '' }])}
+										disabled={customFields.length === 10}
 									>
 										Field
 									</Button>
@@ -207,7 +255,7 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 										Cancel
 									</Button>
 
-									<LoadingButton onClick={handleSave} disabled={name.length === 0} endIcon={<Add />} loading={updateItems.isLoading} loadingPosition='end' variant='contained'>
+									<LoadingButton onClick={handleSave} disabled={name.length === 0} endIcon={<Save />} loading={updateItems.isLoading} loadingPosition='end' variant='contained'>
 										Save
 									</LoadingButton>
 								</Stack>

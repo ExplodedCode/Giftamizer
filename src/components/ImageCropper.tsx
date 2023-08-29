@@ -13,13 +13,17 @@ export async function dataUrlToFile(dataUrl: string, fileName: string): Promise<
 	return new File([blob], fileName, { type: 'image/jpeg' });
 }
 
-export type AvatarSelectorProps = {
+type ImageCropperProps = {
 	value?: string | undefined;
 	onChange?: (value: string | undefined) => void;
 	disabled?: boolean;
+	aspectRatio?: number;
+	autoCropArea?: number;
+	square?: boolean;
+	importedImage?: string | undefined;
 };
 
-export default function AvatarSelector({ value, onChange, disabled }: AvatarSelectorProps) {
+export default function ImageCropper({ value, onChange, disabled, aspectRatio, autoCropArea, square, importedImage }: ImageCropperProps) {
 	const cropperRef = React.useRef(null);
 
 	const [open, setOpen] = React.useState(false);
@@ -65,10 +69,18 @@ export default function AvatarSelector({ value, onChange, disabled }: AvatarSele
 		setOpen(true);
 	};
 
+	// allow metadata image to be set
+	React.useEffect(() => {
+		if (typeof importedImage === 'string') {
+			setSelectedImage(importedImage);
+			setImageLoaded(true);
+		}
+	}, [importedImage]);
+
 	return (
 		<>
-			<IconButton onClick={handleOpen} disabled={disabled}>
-				<Avatar children={<AddPhotoAlternateOutlined sx={{ fontSize: 128 }} />} src={value} sx={{ height: 196, width: 196 }} />
+			<IconButton onClick={handleOpen} disabled={disabled} sx={{ borderRadius: square ? 2 : 'inherited' }}>
+				<Avatar children={<AddPhotoAlternateOutlined sx={{ fontSize: 128 }} />} src={value} sx={{ height: 196, width: 196, borderRadius: square ? 2 : 'inherited' }} />
 			</IconButton>
 
 			<Dialog open={open} onClose={handleClose} maxWidth='sm' fullWidth>
@@ -86,7 +98,17 @@ export default function AvatarSelector({ value, onChange, disabled }: AvatarSele
 								>
 									<Clear />
 								</IconButton>
-								<Cropper src={selectedimage} style={{ height: 400, width: '100%' }} guides={true} ref={cropperRef} aspectRatio={1} autoCropArea={0.9} />
+								<Cropper
+									className={square ? 'squared-crop' : 'rounded-crop'}
+									src={selectedimage}
+									style={{ height: 400, width: '100%' }}
+									guides={true}
+									ref={cropperRef}
+									aspectRatio={aspectRatio}
+									autoCropArea={autoCropArea ?? 1}
+									background={false}
+									viewMode={1}
+								/>
 							</>
 						) : (
 							<Paper

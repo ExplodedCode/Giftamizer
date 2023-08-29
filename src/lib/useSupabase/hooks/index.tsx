@@ -1,5 +1,6 @@
 export * from './useSupabase';
 export * from './useProfile';
+export * from './useSystem';
 export * from './useItems';
 export * from './useLists';
 export * from './useGroup';
@@ -18,4 +19,10 @@ export function ExtractDomain(url: string) {
 	domain = domain.split(':')[0];
 
 	return domain.replace('www.', '');
+}
+
+export function FakeDelay(time: number) {
+	return new Promise((resolve) => {
+		setTimeout(resolve, time);
+	});
 }
