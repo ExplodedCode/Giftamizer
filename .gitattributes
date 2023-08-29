@@ -1,0 +1,2 @@
+*.tsx linguist-language=TYPESCRIPT
+*.ts linguist-language=TYPESCRIPT
