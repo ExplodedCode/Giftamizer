@@ -25,7 +25,7 @@ export default function UserSearch(props: UserSearchProps) {
 			debounce(async (request: { input: string }, callback: (results?: readonly Profile[]) => void) => {
 				setLoading(true);
 
-				await FakeDelay(500); // fake delay
+				await FakeDelay(); // fake delay
 
 				const search = request.input.replaceAll(' ', '+') + ':*';
 				const excludeUsers = props.members

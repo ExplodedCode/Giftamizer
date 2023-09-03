@@ -478,7 +478,7 @@ export const useSetGroupPin = () => {
 
 	return useMutation(
 		async (pinUpdate: PinUpdate): Promise<PinUpdate> => {
-			await FakeDelay(500); // fake delay
+			await FakeDelay(); // fake delay
 
 			const { error } = await client.from('group_members').update({ pinned: pinUpdate.pinned }).eq('group_id', pinUpdate.id).eq('user_id', user.id);
 			if (error) throw error;

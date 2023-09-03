@@ -21,8 +21,9 @@ export function ExtractDomain(url: string) {
 	return domain.replace('www.', '');
 }
 
-export function FakeDelay(time: number) {
+export function FakeDelay(time?: number) {
 	return new Promise((resolve) => {
-		setTimeout(resolve, time);
+		const delay = time ?? Math.floor(Math.random() * (650 - 350 + 1)) + 350;
+		setTimeout(resolve, delay);
 	});
 }

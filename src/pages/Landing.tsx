@@ -6,6 +6,7 @@ import { AppBar, Toolbar, Typography, Button, Container, Grid, Card, CardHeader,
 import { green, red, blue, orange } from '@mui/material/colors';
 
 import Copyright from './Copyright';
+import { AutoAwesome, Checklist, ChildFriendly, EscalatorWarning, Groups, ListAlt, SettingsSuggest, ShoppingCart } from '@mui/icons-material';
 
 function Landing() {
 	return (
@@ -51,7 +52,7 @@ function Landing() {
 								<CardHeader
 									avatar={
 										<Avatar aria-label='recipe' style={{ backgroundColor: red[500] }}>
-											<i className='fas fa-users'></i>
+											<Groups />
 										</Avatar>
 									}
 									title='Groups'
@@ -64,7 +65,7 @@ function Landing() {
 								<CardHeader
 									avatar={
 										<Avatar aria-label='recipe' style={{ backgroundColor: blue[500] }}>
-											<i className='far fa-list-alt'></i>
+											<ListAlt />
 										</Avatar>
 									}
 									title='Lists'
@@ -77,7 +78,7 @@ function Landing() {
 								<CardHeader
 									avatar={
 										<Avatar aria-label='recipe' style={{ backgroundColor: orange[500] }}>
-											<i className='fas fa-shopping-cart'></i>
+											<ShoppingCart />
 										</Avatar>
 									}
 									title='Shopping List'
@@ -104,11 +105,11 @@ function Landing() {
 								<CardHeader
 									avatar={
 										<Avatar aria-label='recipe' style={{ backgroundColor: green[500] }}>
-											<i className='fas fa-cogs'></i>
+											<AutoAwesome />
 										</Avatar>
 									}
 									title='Easily Add Gifts'
-									subheader='Just copy-paste a url from Amazon or other populator retailers to automatically import the item details straight into Giftamizer.'
+									subheader='Just copy-paste a link to automatically import the item details straight into Giftamizer.'
 								/>
 							</Card>
 						</Grid>
@@ -117,11 +118,11 @@ function Landing() {
 								<CardHeader
 									avatar={
 										<Avatar aria-label='recipe' style={{ backgroundColor: blue[500] }}>
-											<i className='fas fa-check'></i>
+											<Checklist />
 										</Avatar>
 									}
 									title='Planning'
-									subheader='Your family and friends can mark gifts as reserved updated in real-time. No more duplicate gifts.'
+									subheader='Your family and friends can mark gifts as reserved. No more accidental duplicate gifts.'
 								/>
 							</Card>
 						</Grid>
@@ -130,11 +131,11 @@ function Landing() {
 								<CardHeader
 									avatar={
 										<Avatar aria-label='recipe' style={{ backgroundColor: orange[500] }}>
-											<i className='fas fa-baby-carriage'></i>
+											<EscalatorWarning />
 										</Avatar>
 									}
 									title='Do you have kids?'
-									subheader='Giftamizer allows you to create multiple lists. No need to create multiple accounts for your children. Manage them all directly from your account..'
+									subheader='No need to create multiple accounts for your children or pets. Manage them all directly from one account.'
 								/>
 							</Card>
 						</Grid>

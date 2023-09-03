@@ -150,7 +150,7 @@ export const useUpdateItemStatus = (group_id?: string, user_id?: string, list_id
 
 	return useMutation(
 		async (status: ItemStatus): Promise<ItemStatus> => {
-			await FakeDelay(500); // fake delay
+			await FakeDelay(); // fake delay
 
 			if (status.status === ItemStatuses.available) {
 				// delete row

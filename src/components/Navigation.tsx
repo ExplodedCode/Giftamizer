@@ -184,6 +184,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 								<Tooltip title='Get Realtime Channels'>
 									<IconButton
 										size='large'
+										color='inherit'
 										onClick={() => {
 											var channels = client.getChannels();
 											enqueueSnackbar(`${channels.length} Channels:`, {
