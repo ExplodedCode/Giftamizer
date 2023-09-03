@@ -96,19 +96,16 @@ CREATE POLICY "allow user select"
   AS PERMISSIVE
   FOR SELECT
   USING (((bucket_id = 'avatars'::text) AND (storage.filename(name) = (auth.uid())::text)));
-
 CREATE POLICY "allow user insert"
   ON storage.objects
   AS PERMISSIVE
   FOR INSERT
   WITH CHECK (((bucket_id = 'avatars'::text) AND (storage.filename(name) = (auth.uid())::text)));
-
 CREATE POLICY "allow user update"
   ON storage.objects
   AS PERMISSIVE
   FOR UPDATE
   USING (((bucket_id = 'avatars'::text) AND (storage.filename(name) = (auth.uid())::text)));
-
 CREATE POLICY "allow user delete"
   ON storage.objects
   AS PERMISSIVE

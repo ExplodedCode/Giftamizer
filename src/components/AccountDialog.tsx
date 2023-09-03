@@ -104,7 +104,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 		};
 
 		loadProfile();
-	}, [profile]);
+	}, [profile, open]);
 
 	const handleClickOpen = async () => {
 		if (props.handleCloseMenu) props.handleCloseMenu();

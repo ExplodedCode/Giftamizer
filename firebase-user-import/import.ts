@@ -35,14 +35,16 @@ interface IStringDictionary {
 		database: 'postgres',
 	});
 
-	if (false) {
+	let testing = true;
+
+	if (!testing) {
 		// Get Firebase Users
 		users.forEach((user: any) => {
 			userRows.push(createUser(user));
 		});
 
 		// Create SQL object for new Supabase Users
-		let userSql = createUserHeader() + userRows.join(',\n') + 'ON CONFLICT DO NOTHING;';
+		let userSql = createUserHeader() + userRows.join(',\n') + 'ON CONFLICT DO NOTHING RETURNING *;';
 
 		// Save copy of SQL script
 		// fs.writeFile('import.sql', sql, () => {});
@@ -73,7 +75,7 @@ interface IStringDictionary {
 	});
 
 	// Execute Group Creation SQL
-	let groupSql = createGroupHeader() + groupRows.join(',\n') + 'ON CONFLICT DO NOTHING;';
+	let groupSql = createGroupHeader() + groupRows.join(',\n') + 'ON CONFLICT DO NOTHING RETURNING *;';
 	let groupRes = null;
 	console.log(groupSql);
 	pool.query(groupSql, (err, res) => {
@@ -89,11 +91,11 @@ interface IStringDictionary {
 	});
 
 	// Import New Supabase ID with Mongo ID into temp table
-	if (false) {
+	if (!testing) {
 		// Import Group Members into group_members & set owner
 		groupMembers.forEach((groupMember: any) => {
 			// Import Group Members
-			let groupMemberSql = createGroupMemberHeader() + createGroupMember(groupMember) + 'ON CONFLICT DO NOTHING;';
+			let groupMemberSql = createGroupMemberHeader() + createGroupMember(groupMember) + 'ON CONFLICT DO NOTHING RETURNING *;';
 
 			pool.query(groupMemberSql, (err, res) => {
 				if (err) {
@@ -113,7 +115,7 @@ interface IStringDictionary {
 		});
 	}
 
-	if (false) {
+	if (!testing) {
 		// Get Lists from Mongo
 		lists.forEach((list: any) => {
 			listRows.push(createList(list));
@@ -127,6 +129,7 @@ interface IStringDictionary {
 			itemRows.push(createItem(item));
 		});
 		// Import Items into Supabase
+		// Clean URLs for items on import (ExtractURLFromTest and StandardizeURL)
 		// Import New Supabase ID with Mongo ID into temp table
 		// Import List into items_lists
 	}

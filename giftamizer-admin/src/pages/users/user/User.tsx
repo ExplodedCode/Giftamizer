@@ -5,6 +5,7 @@ import { AppBar, Toolbar, Grid, Typography, Box, Tab, Tabs, LinearProgress, Circ
 import { useGetUser } from '../../../lib/useSupabase';
 import Profile from './Profile';
 import Items from './Items';
+import Lists from './Lists';
 
 interface TabPanelProps {
 	children?: React.ReactNode;
@@ -50,6 +51,7 @@ export default function Users() {
 					<Tab value='items' label='Items' />
 					<Tab value='lists' label='Lists' />
 					<Tab value='groups' label='Groups' />
+					<Tab value='roles' label='Roles' />
 				</Tabs>
 			</AppBar>
 
@@ -67,10 +69,13 @@ export default function Users() {
 							<Items />
 						</CustomTabPanel>
 						<CustomTabPanel value={tab ?? ''} index='lists'>
-							Lists
+							<Lists />
 						</CustomTabPanel>
 						<CustomTabPanel value={tab ?? ''} index='groups'>
 							Groups
+						</CustomTabPanel>
+						<CustomTabPanel value={tab ?? ''} index='roles'>
+							roles
 						</CustomTabPanel>
 					</>
 				)}

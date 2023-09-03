@@ -36,7 +36,7 @@ import { LoadingButton } from '@mui/lab';
 
 import ItemUpdate from '../components/ItemUpdate';
 
-import { ExtractDomain, useArchiveItem, useDeleteItem, useGetProfile, useRefreshItem, useRestoreItem, useSupabase, useUpdateItemStatus } from '../lib/useSupabase';
+import { ExtractDomain, FakeDelay, StandardizeURL, useArchiveItem, useDeleteItem, useGetProfile, useRefreshItem, useRestoreItem, useSupabase, useUpdateItemStatus } from '../lib/useSupabase';
 import { ItemStatuses, ItemType, MemberItemType } from '../lib/useSupabase/types';
 
 interface VertMenuProps {
@@ -198,6 +198,7 @@ function ItemStatus({ item, claimError, setClaimError }: ItemStatusProps) {
 				case '42501':
 					enqueueSnackbar(`This item was just claimed by someone else!`, { variant: 'error' });
 					setClaimError(`This item was just claimed by someone else!`);
+					await FakeDelay(4000);
 					await refreshItem.mutateAsync(item.id);
 					break;
 
@@ -251,7 +252,7 @@ function ItemStatus({ item, claimError, setClaimError }: ItemStatusProps) {
 						);
 					}}
 					loading={updateItemStatus.isLoading}
-					disabled={item.status?.user_id !== undefined && item.status?.user_id !== user.id}
+					disabled={claimError !== undefined || (item.status?.user_id !== undefined && item.status?.user_id !== user.id)}
 					sx={
 						item.status?.user_id !== user.id && !claimError
 							? {
@@ -282,7 +283,7 @@ function ItemStatus({ item, claimError, setClaimError }: ItemStatusProps) {
 								case ItemStatuses.planned:
 									return 'Planned';
 								case ItemStatuses.unavailable:
-									return 'Unavailable';
+									return 'Purchased';
 							}
 						})()}
 					</span>
@@ -407,7 +408,7 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 												{!editable && item.user_id !== user.id && <ItemStatus item={item as MemberItemType} claimError={claimError} setClaimError={setClaimError} />}
 
 												{item.links?.map((link, i) => (
-													<Button key={i} href={link} target='_blank' color='info' size='small'>
+													<Button key={i} href={StandardizeURL(link)} target='_blank' color='info' size='small'>
 														{ExtractDomain(link)}
 													</Button>
 												))}
@@ -459,7 +460,7 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 										{!editable && item.user_id !== user.id && <ItemStatus item={item as MemberItemType} claimError={claimError} setClaimError={setClaimError} />}
 
 										{item.links?.map((link, i) => (
-											<Button key={i} href={link} target='_blank' color='info' size='small'>
+											<Button key={i} href={StandardizeURL(link)} target='_blank' color='info' size='small'>
 												{ExtractDomain(link)}
 											</Button>
 										))}

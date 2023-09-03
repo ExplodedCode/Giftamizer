@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS public.groups
   image_token numeric,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
-  fbid text null,
+  fbid text null
 );
 create trigger handle_updated_at before update on groups
   for each row execute procedure moddatetime (updated_at);
@@ -159,7 +159,7 @@ create policy "Owner can delete members or user can leave group"
 	  user_id = auth.uid()
 	  OR
 	  group_id IN (SELECT group_id FROM group_members WHERE group_members.group_id = group_id AND group_members.user_id = auth.uid() AND group_members.owner = true)
-  )
+  );
 
 -- Set up Storage
 insert into storage.buckets (id, name)

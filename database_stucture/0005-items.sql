@@ -3,17 +3,59 @@ CREATE TABLE items (
   user_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   description TEXT,
-  links array null,
+  links TEXT[] null,
   custom_fields jsonb null,
   archived boolean not null default false,
   deleted boolean not null default false,
   image_token numeric,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-  fbid text null,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  fbid text null
 );
 create trigger handle_updated_at before update on items
   for each row execute procedure moddatetime (updated_at);
+
+  -- Set up Storage
+insert into storage.buckets (id, name) values ('items', 'items');
+CREATE OR REPLACE FUNCTION is_item_owner(
+    _item_id UUID,
+    _user_id UUID
+) RETURNS BOOLEAN AS
+$$
+SELECT(
+  exists(
+   SELECT 1 FROM items WHERE items.id = _item_id and items.user_id = _user_id
+  )
+)
+$$ LANGUAGE SQL SECURITY DEFINER;
+CREATE POLICY "allow item image select"
+  ON storage.objects
+  AS PERMISSIVE
+  FOR SELECT
+  USING (
+    (bucket_id = 'items'::text)	AND is_item_owner(Cast(storage.filename(name) as uuid), auth.uid())
+  );
+CREATE POLICY "allow item image insert"
+  ON storage.objects
+  AS PERMISSIVE
+  FOR INSERT
+  WITH CHECK (
+    (bucket_id = 'items'::text)	AND is_item_owner(Cast(storage.filename(name) as uuid), auth.uid())
+  );
+CREATE POLICY "allow item image update"
+  ON storage.objects
+  AS PERMISSIVE
+  FOR UPDATE
+  USING (
+    (bucket_id = 'items'::text)	AND is_item_owner(Cast(storage.filename(name) as uuid), auth.uid())
+  );
+CREATE POLICY "allow item image delete"
+  ON storage.objects
+  AS PERMISSIVE
+  FOR DELETE
+  USING (
+    (bucket_id = 'items'::text)	AND is_item_owner(Cast(storage.filename(name) as uuid), auth.uid())
+  );
 
 CREATE TABLE lists (
   id TEXT DEFAULT uuid_generate_v4(),
@@ -28,6 +70,49 @@ CREATE TABLE lists (
   
   PRIMARY KEY (id, user_id)
 );
+
+-- Set up Storage
+insert into storage.buckets (id, name) values ('lists', 'lists');
+CREATE OR REPLACE FUNCTION is_list_owner(
+    _list_id TEXT,
+    _user_id UUID
+) RETURNS BOOLEAN AS
+$$
+SELECT(
+  exists(
+    SELECT 1 FROM lists WHERE lists.id = _list_id and lists.user_id = _user_id
+  )
+)
+$$ LANGUAGE SQL SECURITY DEFINER;
+CREATE POLICY "allow list image select"
+  ON storage.objects
+  AS PERMISSIVE
+  FOR SELECT
+  USING (
+    (bucket_id = 'lists'::text)	AND is_list_owner(Cast(storage.filename(name) as TEXT), auth.uid())
+  );
+CREATE POLICY "allow list image insert"
+  ON storage.objects
+  AS PERMISSIVE
+  FOR INSERT
+  WITH CHECK (
+    (bucket_id = 'lists'::text)	AND is_list_owner(Cast(storage.filename(name) as TEXT), auth.uid())
+  );
+CREATE POLICY "allow list image update"
+  ON storage.objects
+  AS PERMISSIVE
+  FOR UPDATE
+  USING (
+    (bucket_id = 'lists'::text)	AND is_list_owner(Cast(storage.filename(name) as TEXT), auth.uid())
+  );
+CREATE POLICY "allow list image delete"
+  ON storage.objects
+  AS PERMISSIVE
+  FOR DELETE
+  USING (
+    (bucket_id = 'lists'::text)	AND is_list_owner(Cast(storage.filename(name) as TEXT), auth.uid())
+  );
+
 CREATE TABLE items_lists (
   item_id UUID REFERENCES items(id) ON DELETE CASCADE,
   list_id TEXT,

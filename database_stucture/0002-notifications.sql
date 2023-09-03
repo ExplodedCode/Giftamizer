@@ -13,10 +13,10 @@ CREATE TABLE IF NOT EXISTS public.notifications
 	
 	
 	CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id)
-    REFERENCES public.profiles (user_id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE CASCADE
-)
+		REFERENCES public.profiles (user_id) MATCH SIMPLE
+		ON UPDATE NO ACTION
+		ON DELETE CASCADE
+);
 
 -- Set up Realtime
 alter publication supabase_realtime add table notifications;

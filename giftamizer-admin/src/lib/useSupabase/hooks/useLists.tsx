@@ -3,38 +3,38 @@ import { useQuery } from '@tanstack/react-query';
 import { useSupabase } from './useSupabase';
 import { FakeDelay } from '.';
 
-export type ItemData = {
-	items: Item[];
+export type ListData = {
+	lists: List[];
 	count: number;
 };
 
-type Item = {
+type List = {
 	id: string;
 	email: string;
 	full_name: string;
 	raw_app_meta_data: any;
 	created_at: string;
 	signed_in: string;
-	user: ItemProfile;
+	user: ListProfile;
 };
-type ItemProfile = {
+type ListProfile = {
 	user_id: string;
 	email: string;
 	first_name: string;
 	last_name: string;
 };
 
-export const useGetItems = (page: number, pageSize: number, sorting: { field: string | undefined; sort: string | undefined }, search: string, match?: any) => {
+export const useGetLists = (page: number, pageSize: number, sorting: { field: string | undefined; sort: string | undefined }, search: string, match?: any) => {
 	const { client } = useSupabase();
 
 	return useQuery({
-		queryKey: ['items', page, pageSize, JSON.stringify(sorting), search, JSON.stringify(match)],
-		queryFn: async (): Promise<ItemData> => {
+		queryKey: ['lists', page, pageSize, JSON.stringify(sorting), search, JSON.stringify(match)],
+		queryFn: async (): Promise<ListData> => {
 			await FakeDelay();
 
 			let res;
 			const query = client
-				.from('items')
+				.from('lists')
 				.select(
 					`*,
 						user:profiles!inner(
@@ -58,7 +58,7 @@ export const useGetItems = (page: number, pageSize: number, sorting: { field: st
 			if (res.error) throw res.error;
 
 			return {
-				items: res.data as unknown as Item[],
+				lists: res.data as unknown as List[],
 				count: res.count as number,
 			};
 		},

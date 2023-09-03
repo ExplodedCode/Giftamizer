@@ -2,7 +2,8 @@ import * as React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { DrawerProps, Drawer, List, ListItem, ListItemIcon, ListItemText, Box, ListItemButton, Divider } from '@mui/material';
-import { People, List as ListIcon, Dashboard, Groups } from '@mui/icons-material';
+import { People, List as ListIcon, Dashboard, Groups, ListAlt } from '@mui/icons-material';
+import { GiftIcon } from './SvgIcons';
 
 const item = {
 	py: '2px',
@@ -52,9 +53,17 @@ export default function Navigator(props: DrawerProps) {
 					<ListItem disablePadding>
 						<ListItemButton sx={item} component={Link} to='/items' selected={location.pathname.startsWith('/items')} onClick={closeMenu}>
 							<ListItemIcon>
-								<ListIcon />
+								<GiftIcon />
 							</ListItemIcon>
 							<ListItemText>Items</ListItemText>
+						</ListItemButton>
+					</ListItem>
+					<ListItem disablePadding>
+						<ListItemButton sx={item} component={Link} to='/lists' selected={location.pathname.startsWith('/lists')} onClick={closeMenu}>
+							<ListItemIcon>
+								<ListAlt />
+							</ListItemIcon>
+							<ListItemText>Lists</ListItemText>
 						</ListItemButton>
 					</ListItem>
 					<ListItem disablePadding>

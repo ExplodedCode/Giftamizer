@@ -7,6 +7,7 @@ import { green, red, blue, orange } from '@mui/material/colors';
 
 import Copyright from './Copyright';
 import { AutoAwesome, Checklist, ChildFriendly, EscalatorWarning, Groups, ListAlt, SettingsSuggest, ShoppingCart } from '@mui/icons-material';
+import { GiftIcon } from '../components/SvgIcons';
 
 function Landing() {
 	return (
@@ -39,7 +40,7 @@ function Landing() {
 								<CardHeader
 									avatar={
 										<Avatar aria-label='recipe' style={{ backgroundColor: green[500] }}>
-											<i className='fas fa-gift'></i>
+											<GiftIcon />
 										</Avatar>
 									}
 									title='Items'

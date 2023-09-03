@@ -9,6 +9,7 @@ import Users from './pages/users';
 import User from './pages/users/user';
 
 import Items from './pages/items';
+import Lists from './pages/lists';
 
 export default function AppRoutes() {
 	return (
@@ -19,6 +20,8 @@ export default function AppRoutes() {
 			<Route path='/users/:user_id/:tab?' element={<User />} />
 
 			<Route path='/items' element={<Items />} />
+
+			<Route path='/lists' element={<Lists />} />
 
 			<Route
 				path='*'

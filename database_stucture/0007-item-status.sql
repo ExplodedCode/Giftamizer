@@ -16,35 +16,6 @@ CREATE TABLE items_status (
 );
 ALTER TABLE items_status ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow insert if can claim item"
-  ON items_status FOR INSERT
-  WITH CHECK (can_claim_item(auth.uid(), item_id));
-
-CREATE POLICY "Allow update items_status row"
-  ON items_status FOR UPDATE
-  USING (user_id = auth.uid());
-  
-CREATE POLICY "Allow delete items_status row"
-  ON items_status FOR DELETE
-  USING (user_id = auth.uid() OR auth.uid() <> (SELECT user_id FROM items WHERE id = item_id));
-
-CREATE POLICY "Do not allow item owner to view items_status"
-  ON items_status FOR SELECT
-  USING (auth.uid() <> (
-    SELECT user_id 
-    FROM items
-    WHERE id = item_id
-  ) AND (EXISTS (
-      SELECT 1 
-      FROM group_members
-      JOIN lists_groups ON lists_groups.group_id = group_members.group_id
-      JOIN items_lists ON items_lists.list_id = lists_groups.list_id
-      WHERE 
-        group_members.user_id = auth.uid() 
-        AND items_lists.item_id = items_status.item_id
-    ))
-  );
-
 
 CREATE OR REPLACE FUNCTION can_claim_item (userid UUID, itemid UUID)
 RETURNS BOOL AS $$
@@ -82,6 +53,65 @@ BEGIN
   END IF;
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION can_view_item_status(itemid UUID)
+RETURNS BOOL AS $$
+DECLARE 
+  item_row record;
+  enable_lists boolean;
+BEGIN
+  SELECT * INTO item_row FROM items WHERE items.id = itemid;
+  SELECT profiles.enable_lists INTO enable_lists FROM profiles WHERE profiles.user_id = item_row.user_id;
+  
+  IF item_row IS NULL OR item_row.user_id = auth.uid() THEN
+    RETURN false;
+  END IF;
+
+  IF enable_lists = true THEN
+    RETURN EXISTS (
+      SELECT 1 
+      FROM group_members
+      JOIN lists_groups ON lists_groups.group_id = group_members.group_id
+      JOIN items_lists ON items_lists.list_id = lists_groups.list_id
+      WHERE 
+        group_members.user_id = auth.uid() 
+        AND items_lists.item_id = itemid
+    );
+  ELSE
+    RETURN EXISTS (
+      SELECT 1 
+      FROM group_members gm1
+      JOIN group_members gm2 ON gm1.group_id = gm2.group_id
+      WHERE 
+        gm1.user_id = auth.uid() 
+        AND gm2.user_id = (SELECT user_id FROM items WHERE id = itemid) AND gm2.invite = false
+    );
+  END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE POLICY "Allow insert if can claim item"
+  ON items_status FOR INSERT
+  WITH CHECK (can_claim_item(auth.uid(), item_id));
+
+CREATE POLICY "Allow update items_status row"
+  ON items_status FOR UPDATE
+  USING (user_id = auth.uid());
+  
+CREATE POLICY "Allow delete items_status row"
+  ON items_status FOR DELETE
+  USING (user_id = auth.uid() OR auth.uid() <> (SELECT user_id FROM items WHERE id = item_id));
+
+CREATE POLICY "Do not allow item owner to view items_status"
+  ON items_status FOR SELECT
+  USING (auth.uid() <> (
+    SELECT user_id 
+    FROM items
+    WHERE id = item_id
+  ) AND can_view_item_status(item_id)
+);
+
 
 -- update item updated_at
 CREATE OR REPLACE FUNCTION public.handle_items_status_change() 

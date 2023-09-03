@@ -21,7 +21,7 @@ export const useGetUsers = (page: number, pageSize: number, sorting: { field: st
 	const { client } = useSupabase();
 
 	return useQuery({
-		queryKey: ['users', page, pageSize, JSON.stringify(sorting), search],
+		queryKey: ['users', page, pageSize, JSON.stringify(sorting), search, JSON.stringify(match)],
 		queryFn: async (): Promise<UserData> => {
 			await FakeDelay();
 

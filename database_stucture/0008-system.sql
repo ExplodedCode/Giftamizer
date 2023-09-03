@@ -1,7 +1,7 @@
 -- User roles table DROP TABLE user_roles
 CREATE TABLE user_roles (
   user_id UUID NOT NULL,
-  role TEXT NOT NULL DEFAULT 'user',
+  roles TEXT[] NOT NULL,
   
   PRIMARY KEY (user_id),
     
@@ -46,17 +46,15 @@ FOR EACH ROW EXECUTE PROCEDURE public.handle_user_roles_change();
 
 -- System table DROP TABLE system
 CREATE TABLE system (
-  maintenance boolean NOT NULL DEFAULT false,
+  id uuid DEFAULT extensions.uuid_generate_v4() NOT NULL,
+  maintenance boolean DEFAULT false NOT NULL,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_by UUID,
+
+  PRIMARY KEY (id),
   
   FOREIGN KEY (updated_by) REFERENCES profiles(user_id)
 );
-ALTER TABLE system ENABLE ROW LEVEL SECURITY;
-alter publication supabase_realtime add table system;
-alter table system replica identity full;
-
-INSERT INTO system (maintenance) VALUES (false);
 
 create policy "Any one can view system"
   on system for select
