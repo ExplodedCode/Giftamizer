@@ -420,7 +420,7 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 						</Grid>
 					</Box>
 
-					{editable && profile?.enable_lists && item.lists?.length === 0 && <ItemUnassignedAlert />}
+					<ItemUnassignedAlert open={profile?.enable_lists && item.lists?.length === 0} />
 					<ItemAlert alert={claimError} setAlert={setClaimError} />
 				</Paper>
 
@@ -471,7 +471,7 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 
 					{item.custom_fields && item.custom_fields?.length !== 0 && <CustomFieldExpand handleExpand={handleExpand} expanded={expanded} item={item} />}
 
-					{profile?.enable_lists && item.lists?.length === 0 && <ItemUnassignedAlert />}
+					<ItemUnassignedAlert open={profile?.enable_lists && item.lists?.length === 0} />
 					<ItemAlert alert={claimError} setAlert={setClaimError} />
 				</Card>
 			</Grid>
@@ -509,11 +509,16 @@ function ItemAlert({ alert, setAlert }: ItemAlertProps) {
 	);
 }
 
-function ItemUnassignedAlert() {
+interface ItemUnassignedAlertProps {
+	open?: boolean;
+}
+function ItemUnassignedAlert({ open }: ItemUnassignedAlertProps) {
 	return (
 		<Box sx={{ width: '100%' }}>
-			<Collapse in={alert !== undefined}>
-				<Alert severity='warning'>This item is not assigned to a list!</Alert>
+			<Collapse in={open}>
+				<Collapse in={alert !== undefined}>
+					<Alert severity='warning'>This item is not assigned to a list!</Alert>
+				</Collapse>
 			</Collapse>
 		</Box>
 	);

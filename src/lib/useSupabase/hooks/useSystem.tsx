@@ -38,7 +38,7 @@ export const useSetMaintenance = () => {
 
 	return useMutation(
 		async (system: SystemType): Promise<SystemType> => {
-			await FakeDelay(500); // fake delay
+			await FakeDelay(); // fake delay
 
 			const { data, error } = await client
 				.from('system')

@@ -164,7 +164,7 @@ export default function SignIn() {
 								</Grid>
 								<Grid item>
 									<MUILink component={Link} to='/signup' variant='body2'>
-										{"Don't have an account? Create Account"}
+										Don't have an account? Create Account
 									</MUILink>
 								</Grid>
 							</Grid>
