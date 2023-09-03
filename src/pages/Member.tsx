@@ -3,7 +3,7 @@ import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useSupabase, useGetGroupMembers, useGetGroups, useGetMemberItems } from '../lib/useSupabase';
 
-import { CircularProgress, Grid, Link as MUILink, Typography, Box, Breadcrumbs, AppBar, Toolbar, Container, IconButton, Popover, FormControlLabel, FormGroup, Switch } from '@mui/material';
+import { CircularProgress, Grid, Link as MUILink, Typography, Box, Breadcrumbs, AppBar, Toolbar, Container, IconButton, Popover, FormControlLabel, FormGroup, Switch, Badge } from '@mui/material';
 import { FilterAlt } from '@mui/icons-material';
 
 import NotFound from '../components/NotFound';
@@ -21,7 +21,7 @@ export default function Member() {
 	const list_id = userID!.split('_')[1] ?? undefined;
 	const { data: items, isLoading: memberLoading } = useGetMemberItems(groupID!, user_id, list_id);
 
-	const [hideUnavailableItems, setHideUnavailableItems] = React.useState<boolean>(true);
+	const [showUnavailableItems, setShowUnavailableItems] = React.useState<boolean>(false);
 
 	const [filterAnchorEl, setFilterAnchorEl] = React.useState<HTMLButtonElement | null>(null);
 	const filterOpen = Boolean(filterAnchorEl);
@@ -37,7 +37,7 @@ export default function Member() {
 	const filterItems = (item: MemberItemType) => {
 		let show = true;
 
-		if (hideUnavailableItems) {
+		if (!showUnavailableItems) {
 			if (item.status !== undefined && item.status?.user_id !== user.id && (item.status?.status === ItemStatuses.unavailable || item.status?.status === ItemStatuses.planned)) {
 				show = false;
 			}
@@ -68,7 +68,14 @@ export default function Member() {
 									</Breadcrumbs>
 
 									<IconButton onClick={handleFilterOpen}>
-										<FilterAlt />
+										<Badge
+											color='secondary'
+											variant='dot'
+											overlap='circular'
+											invisible={!(!showUnavailableItems && items?.filter(filterItems).length !== items?.length && items?.length !== 0)}
+										>
+											<FilterAlt />
+										</Badge>
 									</IconButton>
 
 									<Popover
@@ -87,8 +94,8 @@ export default function Member() {
 										<Box sx={{ ml: 2, mr: 2, mt: 1, mb: 1 }}>
 											<FormGroup>
 												<FormControlLabel
-													control={<Switch checked={hideUnavailableItems} onChange={(e) => setHideUnavailableItems(e.target.checked)} />}
-													label='Hide Unavailable Items'
+													control={<Switch checked={showUnavailableItems} onChange={(e) => setShowUnavailableItems(e.target.checked)} />}
+													label='Show Claimed Items'
 												/>
 											</FormGroup>
 										</Box>

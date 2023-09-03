@@ -26,7 +26,7 @@ import { useTheme } from '@mui/material/styles';
 import LoadingButton from '@mui/lab/LoadingButton';
 import { Add, AddLink, Delete } from '@mui/icons-material';
 
-import { useSupabase, useCreateItem, useGetProfile } from '../lib/useSupabase';
+import { useSupabase, useCreateItem, useGetProfile, ExtractURLFromText } from '../lib/useSupabase';
 import { CustomField, ListType } from '../lib/useSupabase/types';
 
 import ListSelector from './ListSelector';
@@ -139,13 +139,13 @@ export default function ItemCreate({ defaultList }: ItemCreateProps) {
 									<OutlinedInput
 										value={link}
 										onChange={(e) => {
-											setLinks(links.map((l, i) => (i === index ? e.target.value : l)));
+											setLinks(links.map((l, i) => (i === index ? ExtractURLFromText(e.target.value) : l)));
 										}}
 										onPaste={(e) => {
 											const urlQuery = e.clipboardData.getData('Text');
 											if (index === 0 && urlQuery.length > 0) {
 												setMetaloading(true);
-												getUrlMetadata(urlQuery);
+												getUrlMetadata(ExtractURLFromText(urlQuery));
 											}
 										}}
 										endAdornment={
