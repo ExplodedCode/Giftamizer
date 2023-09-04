@@ -28,6 +28,7 @@ create trigger handle_updated_at before update on profiles
   for each row execute procedure moddatetime (updated_at);
 
 
+alter table profiles enable row level security;
 create policy "Any one can view profiles"
   on profiles for select
   using ( true );

@@ -242,7 +242,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 
 							<Grid container spacing={2}>
 								<Grid item xs={12}>
-									<ImageCropper value={image} onChange={setImage} aspectRatio={1} />
+									<ImageCropper value={image} onChange={setImage} aspectRatio={1} disabled={!owner} />
 								</Grid>
 								<Grid item xs={12}>
 									<TextField label='Group Name' variant='outlined' fullWidth value={name} onChange={(e) => setName(e.target.value)} disabled={!owner} />

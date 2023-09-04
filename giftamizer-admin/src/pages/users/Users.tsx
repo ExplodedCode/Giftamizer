@@ -4,13 +4,24 @@ import { useNavigate } from 'react-router-dom';
 import debounce from 'lodash/debounce';
 
 import { Email, Refresh, Search } from '@mui/icons-material';
-import { Paper, AppBar, Toolbar, Grid, TextField, Button, IconButton, Typography, Tooltip, Box, Tab, Tabs, useTheme, LinearProgress, Stack } from '@mui/material';
+import { Paper, AppBar, Toolbar, Grid, TextField, Button, IconButton, Typography, Tooltip, Box, Tab, Tabs, useTheme, LinearProgress, Stack, Avatar } from '@mui/material';
 import { DataGrid, GridColDef, GridSortModel } from '@mui/x-data-grid';
 
-import { useGetUsers } from '../../lib/useSupabase';
+import { SUPABASE_URL, useGetUsers } from '../../lib/useSupabase';
 import { FacebookIcon, GoogleIcon } from '../../components/SvgIcons';
 
 const columns: GridColDef[] = [
+	{
+		field: 'image',
+		headerName: '',
+		width: 50,
+		filterable: false,
+		sortable: false,
+		hideable: true,
+		renderCell: (params) => {
+			return <Avatar alt={params.row.full_name} sx={{ width: 28, height: 28 }} src={`${SUPABASE_URL}/storage/v1/object/public/avatars/${params.id}`} />;
+		},
+	},
 	{
 		field: 'email',
 		headerName: 'Email',

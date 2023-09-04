@@ -43,17 +43,6 @@
 		"url": ""
 	},
 	{
-		"_id": { "$oid": "5fd19843354c732e64f728ec" },
-		"name": "test",
-		"image": "",
-		"owner": "Br2YWWLyycPRZSpDrfcAFlwWL2C2",
-		"status": "available",
-		"url": "",
-		"takenBy": "",
-		"lists": ["5fd188115b1e680d1c0853b0"],
-		"description": "test"
-	},
-	{
 		"_id": { "$oid": "5fd19843354c732e64f728ee" },
 		"image": "",
 		"owner": "txok1UbqtZeMMEpWk3wy6D2Qr4y2",
@@ -146,7 +135,7 @@
 		"image": "https://donate.worldvision.org/wp-content/uploads/2017/08/Child_Protection-Hope_Exploited_Girls-2.jpg",
 		"owner": "txok1UbqtZeMMEpWk3wy6D2Qr4y2",
 		"lists": ["5fd188115b1e680d1c0853a7"],
-		"takenBy": ""
+		"takenBy": "5QaUiJeQtdRdALkBEbH4ab23c2L2"
 	},
 	{
 		"_id": { "$oid": "5fd19843354c732e64f72924" },
@@ -303,7 +292,6 @@
 		"lists": ["5fd188115b1e680d1c0853b7"],
 		"owner": "PgAs9NLIgyMxuOmqNSJ5Byt8C013"
 	},
-	{ "_id": { "$oid": "5fdaa6e2dacf79001256ac80" }, "name": "yeet", "description": "", "url": "", "image": "", "lists": ["5fd188115b1e680d1c0853b0"], "owner": "Br2YWWLyycPRZSpDrfcAFlwWL2C2" },
 	{
 		"_id": { "$oid": "60c4c2ad563dce0017e72a1f" },
 		"name": "The hundred dollars that isn't in my emergency fund anymore",
@@ -1187,10 +1175,10 @@
 	},
 	{
 		"_id": { "$oid": "62be578d149e9800113b99f4" },
-		"name": "Moonlander Mk. 1",
-		"description": "NOTE: Black color and blue switches.  An open-source keyboard for serious developers, gamers, and people who care deeply about their craft.",
+		"name": "Get Your Moonlander",
+		"description": "An open-source keyboard for serious developers, creative professionals, and people who care deeply about their craft.",
 		"url": "https://www.zsa.io/moonlander/buy/",
-		"image": "undefined/assets/social/default-sharing.jpg",
+		"image": "https://www.zsa.io/assets/social/default-sharing.jpg",
 		"lists": ["6456eef7f038730011fbe4d7"],
 		"owner": "9ke7mnGJtqVeWBGIhcF8tMcVGgY2"
 	},
@@ -1676,10 +1664,10 @@
 	},
 	{
 		"_id": { "$oid": "63498d758e566200183a3a71" },
-		"name": "Zima Board",
-		"description": "",
+		"name": "ZimaBoard - World's First Hackable Single Board Server",
+		"description": "ZimaBoard is world's first hackable single board server. It is a hybird of micro server and SBC (single board computer). It's designed for building a low cost NAS, media server, and software router as your home automatio…",
 		"url": "https://www.zimaboard.com/",
-		"image": "",
+		"image": "https://www.zimaboard.com/zimaboard.jpg",
 		"lists": ["6456f0cbf038730011fbe4d9"],
 		"owner": "9ke7mnGJtqVeWBGIhcF8tMcVGgY2"
 	},
@@ -2993,15 +2981,6 @@
 		"owner": "LVEoMC4mrvMdNhLZU4PF28d3lgj2"
 	},
 	{
-		"_id": { "$oid": "639124d06e906d00182efeee" },
-		"name": "Satin Pillowcases by KITSCH",
-		"description": "Color: Blush Size: Queen or King (not sure what would fit better) 1 or 2pc. The cats tore up my old pillowcases :(",
-		"url": "https://mykitsch.com/products/king-pillowcase-blush",
-		"image": "https://cdn.shopify.com/s/files/1/0104/6904/8384/products/king-pillowcase-blush-146256.jpg?v=1660310742",
-		"lists": ["63911cb76e906d00182efeeb"],
-		"owner": "LVEoMC4mrvMdNhLZU4PF28d3lgj2"
-	},
-	{
 		"_id": { "$oid": "639269216e906d00182efef1" },
 		"name": "LEGO® Sets for Adults | Adults Welcome ",
 		"description": "CHECK WITH KARA TO SEE WHAT SETS I ALREADY HAVE. Here are some of our most complex LEGO® sets designed exclusively for grown-ups. From sport to Star Wars™, vehicles to art, discover LEGO Sets for Adults",
@@ -3315,17 +3294,6 @@
 		"owner": "iBmdSh5eh0VnyqCv4btfl21MpNx2"
 	},
 	{
-		"_id": { "$oid": "63fd440df038730011fbe4c8" },
-		"name": "Huggable Fox Plush",
-		"description": "A soft fox in a big postal system.\nThis official TUNIC plush is about 10 inches tall and comes with sword and shield accessories that attach to its...",
-		"url": "https://www.fangamer.com/products/tunic-fox-plush",
-		"image": "https://cdn.shopify.com/s/files/1/0014/1962/products/product_tunic_fox_plush_designview_1024x1024.png?v=1665003442",
-		"lists": ["5fd188115b1e680d1c0853a3"],
-		"owner": "5QaUiJeQtdRdALkBEbH4ab23c2L2",
-		"status": "unavailable",
-		"takenBy": "txok1UbqtZeMMEpWk3wy6D2Qr4y2"
-	},
-	{
 		"_id": { "$oid": "64011f89f038730011fbe4c9" },
 		"name": "Fly fishing start kit",
 		"description": "",
@@ -3495,7 +3463,7 @@
 		"description": "",
 		"url": "https://www.in-win.com/en/ibuild-ishare/dubili",
 		"image": "",
-		"lists": [],
+		"lists": ["6456f0cbf038730011fbe4d9"],
 		"owner": "9ke7mnGJtqVeWBGIhcF8tMcVGgY2"
 	},
 	{
@@ -3663,5 +3631,90 @@
 		"image": "",
 		"lists": ["5fd188115b1e680d1c0853a7"],
 		"owner": "txok1UbqtZeMMEpWk3wy6D2Qr4y2"
+	},
+	{
+		"_id": { "$oid": "64e24a9720a1240011f5e511" },
+		"name": "Elder Scrolls Skyrim Quest Marker Tin Sign",
+		"description": "Well, that’s one way to get the Dragonborn to visit. What missions lie behind your door?",
+		"url": "https://gear.bethesda.net/products/elder-scrolls-skyrim-quest-marker-tin-sign",
+		"image": "https://gear.bethesda.net/cdn/shop/files/GRID-1_28_1200x1200.jpg?v=1690853954",
+		"lists": ["6456f18ff038730011fbe4db"],
+		"owner": "9ke7mnGJtqVeWBGIhcF8tMcVGgY2"
+	},
+	{
+		"_id": { "$oid": "64e92b6d20a1240011f5e513" },
+		"name": "Heat: Pedal to the Metal",
+		"description": "Manage your race car's speed to keep from overheating.",
+		"url": "https://boardgamegeek.com/boardgame/366013/heat-pedal-metal",
+		"image": "https://cf.geekdo-images.com/-vOrd4bOspibyohYExLqWg__opengraph/img/MVFAnKPe_CLYCz5pTanfu26NFrg=/0x0:1316x691/fit-in/1200x630/filters:strip_icc()/pic6940449.png",
+		"lists": ["63a600d5f038730011fbe4a8"],
+		"owner": "9ke7mnGJtqVeWBGIhcF8tMcVGgY2"
+	},
+	{
+		"_id": { "$oid": "64e94f2120a1240011f5e514" },
+		"name": "Card Sleeves for Board Games & More! – Sleeve Kings",
+		"description": "Sleeve Kings offers the best card sleeves for board games and card games! Check out our card sleeve bundles for games like Magic The Gathering and Pokemon.",
+		"url": "https://sleevekings.com/",
+		"image": "https://sleevekings.com/cdn/shop/t/4/assets/logo_small.png?v=134032279129188301631628655920",
+		"lists": ["63a600d5f038730011fbe4a8"],
+		"owner": "9ke7mnGJtqVeWBGIhcF8tMcVGgY2"
+	},
+	{
+		"_id": { "$oid": "64ef909720a1240011f5e515" },
+		"name": "Cute bag! - color beige ",
+		"description": "My bag is crusty so I’d love a new one! ",
+		"url": "https://a.co/d/8PlAtYg",
+		"image": "",
+		"lists": ["618b3a6ff880480011eb3cd0"],
+		"owner": "LVEoMC4mrvMdNhLZU4PF28d3lgj2"
+	},
+	{
+		"_id": { "$oid": "64f21f1120a1240011f5e516" },
+		"name": "SpinRite",
+		"description": "Hard drive data recovery software",
+		"url": "https://www.grc.com/sr/spinrite.htm",
+		"image": "",
+		"lists": ["6456f0b9f038730011fbe4d8"],
+		"owner": "9ke7mnGJtqVeWBGIhcF8tMcVGgY2"
+	},
+	{
+		"_id": { "$oid": "64f2877a20a1240011f5e517" },
+		"name": "Pyrex 13x9",
+		"description": "For Tessa",
+		"url": "",
+		"image": "",
+		"lists": ["6456f18ff038730011fbe4db"],
+		"owner": "9ke7mnGJtqVeWBGIhcF8tMcVGgY2"
+	},
+	{
+		"_id": { "$oid": "64f3b90d20a1240011f5e51b" },
+		"name": "C Programming Language, 2nd Edition",
+		"description": "The authors present the complete guide to ANSI standard C language programming. Written by the developers of C, this new version helps readers keep up with the finalized ANSI standard for C while showing how to take advantage of C's rich set of operators, economy of expression, improved control flow, and data structures. The 2/E has been completely rewritten with additional examples and problem sets to clarify the implementation of difficult language constructs. For years, C programmers have let K&R guide them to building well-structured and efficient programs. Now this same help is available to those working with ANSI compilers. Includes detailed coverage of the C language plus the official C language reference manual for at-a-glance help with syntax notation, declarations, ANSI changes, scope rules, and the list goes on and on.",
+		"url": "https://www.amazon.com/Programming-Language-2nd-Brian-Kernighan/dp/0131103628/ref=asc_df_0131103628/?tag=hyprod-20&linkCode=df0&hvadid=266029226349&hvpos=&hvnetw=g&hvrand=10406506890420794754&hvpone=&hvptwo=&hvqmt=&hvdev=c&hvdvcmdl=&hvlocint=&hvlocphy=9006798&hvtargid=pla-422923046090&psc=1",
+		"image": "",
+		"lists": ["64f3b8f820a1240011f5e51a", "64f3b91f20a1240011f5e51c"],
+		"owner": "n4jPMQbhrke6wG7mJwB6cWbIEmj1",
+		"status": "unavailable",
+		"takenBy": "lQmO9lYjaHgGsjQgvGBT30PaC943"
+	},
+	{
+		"_id": { "$oid": "64f3baaa20a1240011f5e520" },
+		"name": "Tech Deck Rare Ultra Rare Series Skateboard Company 96mm Single Fingerboard (Styles Vary)",
+		"description": "Product Dimensions\t6 x 6 x 1 inches Item Weight\t1.13 ounces ASIN\tB07PXG8C1T Item model number\t0 Best Sellers Rank\t#31,727 in Toys & Games (See Top 100 in Toys & Games) #26 in Finger Toy Skateboards Customer Reviews\t3.9 3.9 out of 5 stars    32 ratings 3.9 out of 5 stars Manufacturer\tSpin Master",
+		"url": "https://www.amazon.com/TECH-DECK-Skateboard-Company-Fingerboard/dp/B07PXG8C1T/ref=sr_1_9?crid=1ULVVD3L9BKCC&keywords=tech&qid=1693694558&sprefix=tech%2Caps%2C95&sr=8-9",
+		"image": "",
+		"lists": ["64f3ba4220a1240011f5e51f"],
+		"owner": "lQmO9lYjaHgGsjQgvGBT30PaC943",
+		"status": "planned",
+		"takenBy": "n4jPMQbhrke6wG7mJwB6cWbIEmj1"
+	},
+	{
+		"_id": { "$oid": "64f3badd20a1240011f5e521" },
+		"name": "Apple AirTag",
+		"description": "Keep track of and find your items alongside friends and devices in the Find My app Simple one-tap setup instantly connects AirTag with your iPhone or iPad Play a sound on the built-in speaker to help find your things, or just ask Siri for help Precision Finding with Ultra Wideband technology leads you right to your nearby AirTag (on select iPhone models) Find items further away with the help of hundreds of millions of Apple devices in the Find My network Put AirTag into Lost Mode to be automatically notified when it’s detected in the Find My network All communication with the Find My network is anonymous and encrypted for privacy, Location data and history are never stored on AirTag",
+		"url": "https://www.amazon.com/Apple-MX532AM-A-AirTag/dp/B0933BVK6T/ref=zg_bs_c_electronics_sccl_2/134-5361894-5856611?pd_rd_w=QKMfR&content-id=amzn1.sym.309d45c5-3eba-4f62-9bb2-0acdcf0662e7&pf_rd_p=309d45c5-3eba-4f62-9bb2-0acdcf0662e7&pf_rd_r=PE9RS0M8KAGA460VWMSB&pd_rd_wg=98Dup&pd_rd_r=ecadd407-1429-405c-a85b-e50166442345&pd_rd_i=B0933BVK6T&psc=1",
+		"image": "",
+		"lists": ["64f3ba3820a1240011f5e51e"],
+		"owner": "lQmO9lYjaHgGsjQgvGBT30PaC943"
 	}
 ]

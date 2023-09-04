@@ -12,11 +12,16 @@ import { Database } from './database.types';
 	});
 
 	// delete all users
-	const { data, error } = await supabase.auth.admin.listUsers();
-	data.users.forEach(async (user) => {
-		console.log(user.id);
-		await supabase.auth.admin.deleteUser(user.id);
+	const { data, error } = await supabase.from('profiles').select('*');
+	data?.forEach(async (user) => {
+		console.log(user.user_id);
+		await supabase.auth.admin.deleteUser(user.user_id);
 	});
+
+	await supabase.from('items').delete().not('user_id', 'is', null);
+	await supabase.from('groups').delete().not('name', 'is', null);
+	await supabase.from('group_members').delete().not('user_id', 'is', null);
+	await supabase.from('lists').delete().not('user_id', 'is', null);
 
 	console.log(data, error);
 })();
