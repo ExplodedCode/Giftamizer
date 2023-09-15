@@ -11,11 +11,11 @@ import PersonIcon from '@mui/icons-material/Person';
 
 import GroupCreate from '../components/GroupCreate';
 
-interface RenderListItemProps {
+interface RenderGroupProps {
 	group: GroupType;
 	navigate: NavigateFunction;
 }
-function RenderGroups({ group, navigate }: RenderListItemProps) {
+function RenderGroup({ group, navigate }: RenderGroupProps) {
 	return (
 		<Grid key={group.id} item xs sx={{ maxWidth: { xs: '100%', sm: 250 }, margin: 1 }}>
 			<Card sx={{ height: '100%' }}>
@@ -82,7 +82,7 @@ export default function Groups() {
 						?.filter((g) => !g.my_membership[0].invite)
 						.map((group, index) => (
 							<Grow key={group.id} style={{ transitionDelay: `${index * 25}ms` }}>
-								{RenderGroups({ group: group, navigate: navigate })}
+								{RenderGroup({ group: group, navigate: navigate })}
 							</Grow>
 						))}
 				</TransitionGroup>

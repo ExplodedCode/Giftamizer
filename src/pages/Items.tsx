@@ -27,7 +27,7 @@ export default function Items() {
 						?.filter((i) => !i.archived && !i.deleted)
 						.map((item, index) => (
 							// TODO: Change ItemCard to Renderer function to allow Grow transition/animation
-							<ItemCard item={item} editable />
+							<ItemCard key={item.id} item={item} editable />
 						))}
 
 					{items?.filter((i) => !i.archived && !i.deleted).length === 0 && (

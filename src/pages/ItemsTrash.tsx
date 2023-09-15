@@ -42,7 +42,7 @@ export default function ItemsTrash() {
 						?.filter((i) => i.deleted)
 						.map((item, index) => (
 							// TODO: Change ItemCard to Renderer function to allow Grow transition/animation
-							<ItemCard item={item} editable />
+							<ItemCard key={item.id} item={item} editable />
 						))}
 
 					{items?.filter((i) => i.deleted).length === 0 && (
