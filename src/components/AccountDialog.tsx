@@ -74,6 +74,9 @@ export default function AccountDialog(props: AccountDialogProps) {
 	const [enableArchive, setEnableArchive] = React.useState(false);
 	const [enableTrash, setEnableTrash] = React.useState(false);
 
+	const [emailPromotional, setEmailPromotional] = React.useState(false);
+	const [emailInvites, setEmailInvites] = React.useState(false);
+
 	const [groupsWithoutCoOwner, setGroupsWithoutCoOwner] = React.useState<GroupsWithoutCoOwner[] | undefined>();
 
 	const deleteOpen = location.hash === '#my-account-delete';
@@ -88,6 +91,8 @@ export default function AccountDialog(props: AccountDialogProps) {
 				setEnableLists(profile.enable_lists);
 				setEnableArchive(profile.enable_archive);
 				setEnableTrash(profile.enable_trash);
+				setEmailPromotional(profile.email_promotional);
+				setEmailInvites(profile.email_invites);
 			}
 
 			const { data, error } = await client.rpc('get_groups_without_coowner', { owner_id: user.id });
@@ -104,7 +109,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 		};
 
 		loadProfile();
-	}, [profile, open]);
+	}, [client, enqueueSnackbar, user, profile, open]);
 
 	const handleClickOpen = async () => {
 		if (props.handleCloseMenu) props.handleCloseMenu();
@@ -127,6 +132,8 @@ export default function AccountDialog(props: AccountDialogProps) {
 				enable_lists: enableLists,
 				enable_archive: enableArchive,
 				enable_trash: enableTrash,
+				email_promotional: emailPromotional,
+				email_invites: emailInvites,
 				avatar_token: profile?.avatar_token!,
 			})
 			.then(() => {
@@ -195,8 +202,6 @@ export default function AccountDialog(props: AccountDialogProps) {
 							<Typography variant='h6' gutterBottom>
 								Account Settings
 							</Typography>
-						</Grid>
-						<Grid item xs={6}>
 							<TextField fullWidth label='First Name' variant='outlined' value={firstName} onChange={(e) => setFirstName(e.target.value)} />
 						</Grid>
 						<Grid item xs={6}>
@@ -228,29 +233,31 @@ export default function AccountDialog(props: AccountDialogProps) {
 						</Grid>
 
 						<Grid item xs={12}>
+							<Typography variant='h6' gutterBottom>
+								Features
+							</Typography>
 							<FormControl component='fieldset' variant='standard'>
 								<FormGroup>
 									<FormControlLabel control={<Switch checked={enableLists} onChange={(e) => setEnableLists(e.target.checked)} />} label='Enable Lists' />
 									<FormHelperText>
-										Allows you to create item lists and assign them to groups. <i>Even create seperate managed lists for your kids or pets</i>.
+										Allows you to create item lists and assign them to groups. <i>Even create seperate managed lists for your kids or pets</i>
 									</FormHelperText>
 								</FormGroup>
 							</FormControl>
 						</Grid>
-
 						<Grid item xs={12}>
 							<FormControl component='fieldset' variant='standard'>
 								<FormGroup>
 									<FormControlLabel control={<Switch checked={enableTrash} onChange={(e) => setEnableTrash(e.target.checked)} />} label='Enable Trash Can' />
-									<FormHelperText>Recover deleted items.</FormHelperText>
+									<FormHelperText>Recover deleted items</FormHelperText>
 								</FormGroup>
 							</FormControl>
 						</Grid>
-
 						<Grid item xs={12}>
 							<FormControl component='fieldset' variant='standard'>
 								<FormGroup>
 									<FormControlLabel control={<Switch checked={enableArchive} onChange={(e) => setEnableArchive(e.target.checked)} />} label='Enable Item Archive' />
+									<FormHelperText>Hide items from groups without deleting them.</FormHelperText>
 								</FormGroup>
 							</FormControl>
 						</Grid>
@@ -261,6 +268,30 @@ export default function AccountDialog(props: AccountDialogProps) {
 
 						<Grid item xs={12}>
 							<Typography variant='h6' gutterBottom>
+								Email Settings
+							</Typography>
+							<FormControl component='fieldset' variant='standard'>
+								<FormGroup>
+									<FormControlLabel control={<Switch checked={emailPromotional} onChange={(e) => setEmailPromotional(e.target.checked)} />} label='Promotional' />
+									<FormHelperText>New products and feature updates, as well as occasional company announcements and maintenance downtimes</FormHelperText>
+								</FormGroup>
+							</FormControl>
+						</Grid>
+						<Grid item xs={12}>
+							<FormControl component='fieldset' variant='standard'>
+								<FormGroup>
+									<FormControlLabel control={<Switch checked={emailInvites} onChange={(e) => setEmailInvites(e.target.checked)} />} label='Invites' />
+									<FormHelperText>Get notified when someone invites you to a new group</FormHelperText>
+								</FormGroup>
+							</FormControl>
+						</Grid>
+
+						<Grid item xs={12}>
+							<Divider />
+						</Grid>
+
+						<Grid item xs={12}>
+							<Typography variant='h5' gutterBottom>
 								Danger Zone
 							</Typography>
 							<Alert severity='error'>
@@ -273,12 +304,12 @@ export default function AccountDialog(props: AccountDialogProps) {
 												<Typography variant='body1'>
 													Your account is currently an owner of {groupsWithoutCoOwner.length > 1 ? 'these groups' : 'this group'}:{' '}
 													{groupsWithoutCoOwner.map((g, i) => (
-														<>
+														<React.Fragment key={i}>
 															<MUILink component={Link} to={`/groups/${g.id}`} onClick={handleClose}>
 																{g.name}
 															</MUILink>
 															{i !== groupsWithoutCoOwner.length - 1 && ', '}
-														</>
+														</React.Fragment>
 													))}
 												</Typography>
 											</Grid>

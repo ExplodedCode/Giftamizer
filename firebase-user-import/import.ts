@@ -39,7 +39,8 @@ let itemLists: any[] = [];
 let itemStatus: any[] = [];
 
 // SQL Object
-let sql = '';
+let sql = `ALTER TABLE public.groups DISABLE TRIGGER on_publish_group_created;
+\n\n`;
 
 (async function () {
 	// Setup Supabase Connection
@@ -57,7 +58,7 @@ let sql = '';
 	let importLists = true;
 	let importItems = true;
 	let exportSQLFile = true;
-	let importImages = false;
+	let importImages = true;
 
 	if (importUsers) {
 		// Get Firebase Users
@@ -235,7 +236,9 @@ let sql = '';
 		}
 	}
 
-	sql += `\n\nupdate storage.buckets set public = true WHERE id = 'avatars' OR id = 'groups' OR id = 'lists' OR id = 'items';`;
+	sql += `\n\n
+	ALTER TABLE public.groups ENABLE TRIGGER on_publish_group_created;\n\n
+	update storage.buckets set public = true WHERE id = 'avatars' OR id = 'groups' OR id = 'lists' OR id = 'items';`;
 
 	// Save copy of SQL script
 	if (exportSQLFile) {

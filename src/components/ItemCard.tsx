@@ -29,7 +29,6 @@ import {
 	Tooltip,
 	Box,
 	Alert,
-	AlertTitle,
 } from '@mui/material';
 import { Archive, Close, Delete, DeleteForever, Edit, ExpandMore, MoreVert, Restore, Unarchive } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
@@ -390,14 +389,14 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 											{item.description}
 										</Typography>
 										{item.custom_fields?.map((c) => (
-											<Typography variant='body2' color='text.secondary'>
+											<Typography key={`${item.id}-field-${c.id}`} variant='body2' color='text.secondary'>
 												{c.name}: {c.value}
 											</Typography>
 										))}
 										{profile?.enable_lists && (
 											<Stack direction='row' justifyContent='flex-start' spacing={1} sx={{ mt: 0.5 }}>
 												{item.lists?.map((l) => (
-													<Chip label={l.list.name} size='small' />
+													<Chip key={`${item.id}-list-${l.list_id}`} label={l.list.name} size='small' />
 												))}
 											</Stack>
 										)}
@@ -408,7 +407,7 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 												{!editable && item.user_id !== user.id && <ItemStatus item={item as MemberItemType} claimError={claimError} setClaimError={setClaimError} />}
 
 												{item.links?.map((link, i) => (
-													<Button key={i} href={StandardizeURL(link)} target='_blank' color='info' size='small'>
+													<Button key={`${item.id + i}-link-${i}`} href={StandardizeURL(link)} target='_blank' color='info' size='small'>
 														{ExtractDomain(link)}
 													</Button>
 												))}
@@ -447,8 +446,8 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 							{profile?.enable_lists && editable && (
 								<Grid item xs={12}>
 									<Stack direction='row' justifyContent='flex-start' spacing={1}>
-										{item.lists?.map((l) => (
-											<Chip label={l.list.name} size='small' />
+										{item.lists?.map((l, i) => (
+											<Chip key={`${item.id + i}-list-${l.list_id}`} label={l.list.name} size='small' />
 										))}
 									</Stack>
 								</Grid>
@@ -460,7 +459,7 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 										{!editable && item.user_id !== user.id && <ItemStatus item={item as MemberItemType} claimError={claimError} setClaimError={setClaimError} />}
 
 										{item.links?.map((link, i) => (
-											<Button key={i} href={StandardizeURL(link)} target='_blank' color='info' size='small'>
+											<Button key={`${item.id + i}-link-${i}`} href={StandardizeURL(link)} target='_blank' color='info' size='small'>
 												{ExtractDomain(link)}
 											</Button>
 										))}

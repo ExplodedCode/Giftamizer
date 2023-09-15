@@ -6,7 +6,7 @@ import * as Firebase from './lib/Firebase';
 
 import * as SocialAvatar from './lib/SocialAvatar';
 
-import * as Groups from './lib/Groups';
+import * as Invite from './lib/Invite';
 
 import { DeleteAccount } from './lib/DeleteAccount';
 
@@ -32,15 +32,16 @@ api.use(bodyParser.json());
 		console.log('App now running on port', port);
 	});
 
-	api.post('/firebase/validateAuth', Firebase.validateAuth);
+	// api.post('/firebase-auth', Firebase.validateAuth);
 
-	api.post('/socialavatar/download', SocialAvatar.Download);
+	// api.post('/socialavatar/download', SocialAvatar.Download);
 
-	api.post('/groups/invite', Groups.Invite);
+	// api.post('/invite/internal', Invite.Internal);
+	// api.post('/invite/external', Invite.External);
 
 	api.post('/user/delete', DeleteAccount);
 
-	api.post('/url-metadata', URLMetadata);
+	// api.post('/url-metadata', URLMetadata);
 
 	// api.post('/hello', (req, res) => {
 	// 	console.log(req.body);

@@ -23,7 +23,7 @@ function Landing() {
 				</Toolbar>
 			</AppBar>
 
-			<Container sx={{ paddingTop: { xs: 2.5, md: 10 }, marginBottom: 96 }}>
+			<Container sx={{ paddingTop: { xs: 2.5, md: 10 }, mb: 6 }}>
 				<Grid container spacing={3}>
 					<Grid container item sm={12} md={6} spacing={3}>
 						<Grid item xs={12}>
@@ -89,7 +89,7 @@ function Landing() {
 						</Grid>
 					</Grid>
 				</Grid>
-				<Grid container item sm={12} spacing={3} justifyContent='center' style={{ marginTop: 128 }}>
+				<Grid container item sm={12} spacing={3} justifyContent='center' sx={{ mt: 16, mb: 8 }}>
 					<Grid item xs={12} sm={10} md={8}>
 						<Typography variant='h4' style={{ marginBottom: 24 }} align='center'>
 							Giving just got a whole lot better.
@@ -142,9 +142,6 @@ function Landing() {
 						</Grid>
 					</Grid>
 				</Grid>
-				<br />
-				<br />
-				<br />
 				<Copyright />
 			</Container>
 		</div>

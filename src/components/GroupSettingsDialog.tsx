@@ -154,7 +154,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 	const handleSave = async () => {
 		const mem = queryClient.getQueryData<Member[]>([...GROUPS_QUERY_KEY, groupID, 'members']);
 		updateGroup
-			.mutateAsync({ group: { ...group, name: name, image: image }, members: mem!.filter((m) => !m.user_id.includes('_')) })
+			.mutateAsync({ group: { ...group, name: name, image: image }, members: mem!.filter((m) => !m?.user_id?.includes('_')) })
 			.then(() => {
 				handleClose();
 			})
@@ -178,6 +178,11 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 		setImage(group.image);
 		navigate('#group-settings'); // open dialog
 	};
+
+	React.useEffect(() => {
+		setName(group.name);
+		setImage(group.image);
+	}, [group, open]);
 
 	const handleClose = async () => {
 		navigate('#'); // close dialog

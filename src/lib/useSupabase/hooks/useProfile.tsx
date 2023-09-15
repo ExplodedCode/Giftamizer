@@ -5,6 +5,8 @@ import { ProfileType } from '../types';
 import { dataUrlToFile } from '../../../components/ImageCropper';
 import { useGetItems } from './useItems';
 
+import { Buffer } from 'buffer';
+
 const QUERY_KEY = ['profile'];
 
 export const useGetProfile = () => {
@@ -30,24 +32,45 @@ export const useGetProfile = () => {
 			await client.auth.getSession().then(async ({ data: sessionData, error }) => {
 				if (!profile.avatar_token && profile.avatar_token !== -1) {
 					user.app_metadata.providers.every(async (provider: string) => {
+						let img;
 						if (provider === 'facebook') {
 							const url = `https://graph.facebook.com/me/picture?height=512&width=512&access_token=${sessionData.session?.provider_token}`;
-							const { error } = await client.functions.invoke('socialavatar/download', {
+							const { data, error } = await client.functions.invoke('social-avatar', {
 								body: {
 									user_id: user.id,
 									url: url,
 								},
 							});
 							if (error) console.log(error);
+							img = data;
 						} else if (provider === 'google') {
 							const url = `${user.identities?.find((i) => i.provider === 'google')?.identity_data.avatar_url.split('=')[0]}=s512`;
-							const { error } = await client.functions.invoke('socialavatar/download', {
+							const { data, error } = await client.functions.invoke('social-avatar', {
 								body: {
 									user_id: user.id,
 									url: url,
 								},
 							});
 							if (error) console.log(error);
+							img = data;
+						}
+
+						// upload image
+						if (img) {
+							const { error: imageError } = await client.storage.from('avatars').upload(`${user.id}`, await dataUrlToFile(img, 'avatar'), {
+								cacheControl: '3600',
+								upsert: true,
+							});
+							if (imageError) {
+								console.log(imageError);
+							} else {
+								await client
+									.from('profiles')
+									.update({
+										avatar_token: Date.now(),
+									})
+									.eq('user_id', user.id);
+							}
 						}
 					});
 				}

@@ -38,7 +38,7 @@ export default function SignIn() {
 	const [resetEmail, setResetEmail] = React.useState('');
 
 	const handleSubmit = async () => {
-		const { error: firebaseAuthError } = await client.functions.invoke('firebase/validateAuth', {
+		const { error: firebaseAuthError } = await client.functions.invoke('firebase-auth', {
 			body: {
 				email: email,
 				password: password,

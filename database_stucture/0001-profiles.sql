@@ -7,9 +7,14 @@ CREATE TABLE IF NOT EXISTS public.profiles
   first_name character varying(255) NOT NULL,
   last_name character varying(255) NOT NULL,
   bio text NOT NULL DEFAULT ''::text,
+
   enable_lists boolean NOT NULL DEFAULT false,
   enable_archive boolean NOT NULL DEFAULT false,
   enable_trash boolean NOT NULL DEFAULT false,
+
+  email_promotional boolean NOT NULL DEFAULT true,
+  email_invites boolean NOT NULL DEFAULT true,
+
   avatar_token numeric,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
@@ -28,7 +33,7 @@ create trigger handle_updated_at before update on profiles
   for each row execute procedure moddatetime (updated_at);
 
 
-alter table profiles enable row level security;
+alter table public.profiles enable row level security;
 create policy "Any one can view profiles"
   on profiles for select
   using ( true );
@@ -66,6 +71,12 @@ begin
 		  (select get_name_from_json(cast(new.raw_user_meta_data as json), cast('last_name' as text), cast('name' as text), 2)), 
 		  new.created_at);
   insert into public.lists (id, user_id, name) values ('default', new.id, 'Default');
+  
+  INSERT INTO group_members (group_id, user_id, owner, invite)
+    SELECT group_id, new.id as user_id, owner, false as invite FROM external_invites 
+    WHERE email = new.email;
+  DELETE FROM external_invites WHERE email = new.email;
+  
   return new;
 end;
 $$;
