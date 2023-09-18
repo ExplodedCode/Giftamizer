@@ -13,6 +13,7 @@
 		"axios": "^1.5.0",
 		"cheerio": "^1.0.0-rc.12",
 		"dotenv": "^16.0.3",
+		"download": "^8.0.0",
 		"fs": "^0.0.1-security",
 		"moment": "^2.29.4",
 		"node-fetch": "^3.3.2",
@@ -24,6 +25,7 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
+		"@types/download": "^8.0.2",
 		"@types/pg": "^8.6.6",
 		"@types/uuid": "^9.0.3"
 	}

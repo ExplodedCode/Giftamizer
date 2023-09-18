@@ -5,18 +5,17 @@ import { Pool } from 'pg';
 import { v5 as uuidv5 } from 'uuid';
 import { supabase } from './api';
 
+import download from 'download';
+import { OutgoingHttpHeaders } from 'node:http';
+
 const urlMetadata = require('./metadata');
+const fbUserExport = require('./fbUserExport');
 
 require('dotenv').config();
 const MY_NAMESPACE = '41b5d276-b876-4a17-9001-c3efb574814a';
 
 // Generate Firebase Export
 // https://firebase.google.com/docs/cli/auth#authexport
-const users = require('./users.json');
-const profiles = require('./profiles.json');
-const groups = require('./groups.json');
-const lists = require('./lists.json');
-const items = require('./items.json');
 
 // User Data Objects
 let userRows: any[] = [];
@@ -43,6 +42,25 @@ let sql = `ALTER TABLE public.groups DISABLE TRIGGER on_publish_group_created;
 \n\n`;
 
 (async function () {
+	for (let jsonToDownload of ['users', 'items', 'lists', 'groups']) {
+		fs.writeFileSync(
+			`${jsonToDownload}.json`,
+			await download(`https://mongodb.giftamizer.com/db/Giftamizer/expArr/${jsonToDownload}`, {
+				headers: {
+					Authorization: `Basic ${process.env.MONGO_HTTP_AUTH}`,
+				},
+			})
+		);
+	}
+
+	await fbUserExport();
+
+	const users = require('./users.json');
+	const profiles = require('./profiles.json');
+	const groups = require('./groups.json');
+	const lists = require('./lists.json');
+	const items = require('./items.json');
+
 	// Setup Supabase Connection
 	const pool = new Pool({
 		host: process.env.POSTGRES_HOST,

@@ -5,9 +5,7 @@ const moment = require('moment');
 
 const profiles = require('./profiles.json');
 
-start();
-
-async function start() {
+async function fbUserExport() {
 	const { stdout, stderr } = await exec('firebase auth:export users.json --format=json --project gift-group');
 
 	let users = JSON.parse(fs.readFileSync('./users.json')).users;
@@ -40,3 +38,4 @@ async function start() {
 	if (stdout) console.log('stdout:', stdout);
 	if (stderr) console.log('stdout:', stderr);
 }
+module.exports = fbUserExport;
