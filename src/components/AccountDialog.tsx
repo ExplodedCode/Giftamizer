@@ -151,7 +151,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 	};
 
 	const handleDelete = async () => {
-		const { data, error } = await client.functions.invoke('user/delete', {
+		const { data, error } = await client.functions.invoke('delete', {
 			body: {
 				user_id: user.id,
 			},
@@ -195,7 +195,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 						</IconButton>
 					</Toolbar>
 				</AppBar>
-				<Container maxWidth='md' sx={{ marginTop: 6 }}>
+				<Container maxWidth='md' sx={{ mt: 6, mb: 4 }}>
 					<Grid container spacing={2}>
 						<Grid item xs={12}>
 							<ImageCropper value={image} onChange={setImage} aspectRatio={1} />
@@ -333,6 +333,19 @@ export default function AccountDialog(props: AccountDialogProps) {
 									</Grid>
 								</Grid>
 							</Alert>
+						</Grid>
+
+						<Grid item xs={12}>
+							<Divider />
+						</Grid>
+
+						<Grid item xs={12}>
+							<Typography variant='h6' gutterBottom>
+								Support
+							</Typography>
+							<Typography variant='body1'>
+								If you're experiencing any issues or just have a question, please contact us at <MUILink href='mailto:support@giftamizer.com'>support@giftamizer.com</MUILink>.
+							</Typography>
 						</Grid>
 					</Grid>
 				</Container>
