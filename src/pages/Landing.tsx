@@ -6,7 +6,7 @@ import { AppBar, Toolbar, Typography, Button, Container, Grid, Card, CardHeader,
 import { green, red, blue, orange } from '@mui/material/colors';
 
 import Copyright from './Copyright';
-import { AutoAwesome, Checklist, ChildFriendly, EscalatorWarning, Groups, ListAlt, SettingsSuggest, ShoppingCart } from '@mui/icons-material';
+import { AutoAwesome, Checklist, EscalatorWarning, Groups, ListAlt, ShoppingCart } from '@mui/icons-material';
 import { GiftIcon } from '../components/SvgIcons';
 
 function Landing() {

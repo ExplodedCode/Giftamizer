@@ -5,8 +5,6 @@ import { ProfileType } from '../types';
 import { dataUrlToFile } from '../../../components/ImageCropper';
 import { useGetItems } from './useItems';
 
-import { Buffer } from 'buffer';
-
 const QUERY_KEY = ['profile'];
 
 export const useGetProfile = () => {
@@ -44,7 +42,7 @@ export const useGetProfile = () => {
 							if (error) console.log(error);
 							img = data;
 						} else if (provider === 'google') {
-							const url = `${user.identities?.find((i) => i.provider === 'google')?.identity_data.avatar_url.split('=')[0]}=s512`;
+							const url = `${user.identities?.find((i) => i.provider === 'google')?.identity_data?.avatar_url.split('=')[0]}=s512`;
 							const { data, error } = await client.functions.invoke('social-avatar', {
 								body: {
 									user_id: user.id,

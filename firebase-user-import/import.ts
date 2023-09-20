@@ -52,14 +52,19 @@ let sql = `ALTER TABLE public.groups DISABLE TRIGGER on_publish_group_created;
 			})
 		);
 	}
+	fs.copyFileSync('users.json', 'profiles.json');
 
+	const groups = JSON.parse(fs.readFileSync('./groups.json').toString());
+	const lists = JSON.parse(fs.readFileSync('./lists.json').toString());
+	const items = JSON.parse(fs.readFileSync('./items.json').toString());
+
+	await FakeDelay(500);
 	await fbUserExport();
+	await FakeDelay(500);
 
-	const users = require('./users.json');
-	const profiles = require('./profiles.json');
-	const groups = require('./groups.json');
-	const lists = require('./lists.json');
-	const items = require('./items.json');
+	const users = JSON.parse(fs.readFileSync('./users.json').toString());
+
+	const profiles = JSON.parse(fs.readFileSync('./profiles.json').toString());
 
 	// Setup Supabase Connection
 	const pool = new Pool({

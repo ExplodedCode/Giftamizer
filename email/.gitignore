@@ -21,5 +21,4 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
-SUPABASE_SERVICE_ROLE_KEY.json
+firebase-user-import/passwordHashParameters.json

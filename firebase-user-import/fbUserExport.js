@@ -3,12 +3,12 @@ const exec = util.promisify(require('child_process').exec);
 const fs = require('fs');
 const moment = require('moment');
 
-const profiles = require('./profiles.json');
-
 async function fbUserExport() {
-	const { stdout, stderr } = await exec('firebase auth:export users.json --format=json --project gift-group');
+	const profiles = JSON.parse(fs.readFileSync('./users.json'));
 
-	let users = JSON.parse(fs.readFileSync('./users.json')).users;
+	const { stdout, stderr } = await exec('firebase auth:export fbUsers.json --format=json --project gift-group');
+
+	let users = JSON.parse(fs.readFileSync('./fbUsers.json')).users;
 
 	users = users.map((user) => {
 		let profile = profiles.find((p) => p.uid === user.localId);
