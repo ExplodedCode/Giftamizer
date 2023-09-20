@@ -394,7 +394,7 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 											</Typography>
 										))}
 										{profile?.enable_lists && (
-											<Stack direction='row' justifyContent='flex-start' spacing={1} sx={{ mt: 0.5 }}>
+											<Stack direction='row' justifyContent='flex-start' useFlexGap flexWrap='wrap' spacing={1} sx={{ mt: 0.5 }}>
 												{item.lists?.map((l) => (
 													<Chip key={`${item.id}-list-${l.list_id}`} label={l.list.name} size='small' />
 												))}
@@ -437,6 +437,11 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 								<Typography gutterBottom variant='body2' color='text.secondary'>
 									{item.description}
 								</Typography>
+								{item.custom_fields?.map((c) => (
+									<Typography key={`${item.id}-field-${c.id}`} variant='body2' color='text.secondary'>
+										{c.name}: {c.value}
+									</Typography>
+								))}
 							</Grid>
 							{editable && (
 								<Grid item>
@@ -445,7 +450,7 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 							)}
 							{profile?.enable_lists && editable && (
 								<Grid item xs={12}>
-									<Stack direction='row' justifyContent='flex-start' spacing={1}>
+									<Stack direction='row' justifyContent='flex-start' useFlexGap flexWrap='wrap' spacing={1}>
 										{item.lists?.map((l, i) => (
 											<Chip key={`${item.id + i}-list-${l.list_id}`} label={l.list.name} size='small' />
 										))}
@@ -469,7 +474,7 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 						</Grid>
 					</CardContent>
 
-					{item.custom_fields && item.custom_fields?.length !== 0 && <CustomFieldExpand handleExpand={handleExpand} expanded={expanded} item={item} />}
+					{/* {item.custom_fields && item.custom_fields?.length !== 0 && <CustomFieldExpand handleExpand={handleExpand} expanded={expanded} item={item} />} */}
 
 					<ItemUnassignedAlert open={profile?.enable_lists && item.lists?.length === 0} />
 					<ItemAlert alert={claimError} setAlert={setClaimError} />
