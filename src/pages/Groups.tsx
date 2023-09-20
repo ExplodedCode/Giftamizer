@@ -36,16 +36,9 @@ function RenderGroup({ group, navigate }: RenderGroupProps) {
 					</CardMedia>
 
 					<CardContent>
-						<Grid container>
-							<Grid item xs>
-								<Typography variant='h5' component='h2'>
-									{group.name}
-								</Typography>
-							</Grid>
-							<Grid item>
-								<PersonIcon />
-							</Grid>
-						</Grid>
+						<Typography variant='h5' component='h2'>
+							{group.name}
+						</Typography>
 					</CardContent>
 				</CardActionArea>
 			</Card>

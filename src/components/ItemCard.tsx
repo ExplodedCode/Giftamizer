@@ -13,24 +13,18 @@ import {
 	Stack,
 	IconButton,
 	Chip,
-	CardActions,
 	Menu,
 	MenuItem,
 	ListItemIcon,
 	ListItemText,
 	Collapse,
-	TableContainer,
-	Table,
 	Paper,
-	TableRow,
-	TableBody,
-	TableCell,
 	ButtonBase,
 	Tooltip,
 	Box,
 	Alert,
 } from '@mui/material';
-import { Archive, Close, Delete, DeleteForever, Edit, ExpandMore, MoreVert, Restore, Unarchive } from '@mui/icons-material';
+import { Archive, Close, Delete, DeleteForever, Edit, MoreVert, Restore, Unarchive } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 
 import ItemUpdate from '../components/ItemUpdate';
@@ -292,53 +286,6 @@ function ItemStatus({ item, claimError, setClaimError }: ItemStatusProps) {
 	);
 }
 
-interface CustomFieldExpandProps {
-	handleExpand: (event: React.MouseEvent<HTMLElement>) => void;
-	expanded: boolean;
-	item: ItemType | MemberItemType;
-}
-function CustomFieldExpand({ handleExpand, expanded, item }: CustomFieldExpandProps) {
-	const theme = useTheme();
-
-	return (
-		<>
-			<CardActions disableSpacing>
-				<IconButton
-					onClick={handleExpand}
-					aria-label='show more'
-					style={{
-						marginLeft: 'auto',
-						transform: !expanded ? 'rotate(0deg)' : 'rotate(180deg)',
-						transition: theme.transitions.create('transform', {
-							duration: theme.transitions.duration.shortest,
-						}),
-					}}
-				>
-					<ExpandMore />
-				</IconButton>
-			</CardActions>
-			<Collapse in={expanded} timeout='auto' unmountOnExit sx={{ mr: 2, ml: 2, mb: 1 }}>
-				<TableContainer>
-					<Table size='small'>
-						<TableBody>
-							{item.custom_fields?.map((customfield, i) => (
-								<TableRow key={i} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-									<TableCell padding='checkbox' size='small' align='right'>
-										{customfield.name}:
-									</TableCell>
-									<TableCell size='small' align='left'>
-										{customfield.value}
-									</TableCell>
-								</TableRow>
-							))}
-						</TableBody>
-					</Table>
-				</TableContainer>
-			</Collapse>
-		</>
-	);
-}
-
 export type ItemCardProps = {
 	item: ItemType | MemberItemType;
 	editable?: boolean;
@@ -347,12 +294,7 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 	const { user } = useSupabase();
 	const { data: profile } = useGetProfile();
 
-	const [expanded, setExpanded] = React.useState(false);
 	const [claimError, setClaimError] = React.useState<string | undefined>();
-
-	const handleExpand = (event: React.MouseEvent<HTMLElement>) => {
-		setExpanded(!expanded);
-	};
 
 	return (
 		<>
