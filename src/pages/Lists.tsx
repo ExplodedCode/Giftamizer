@@ -125,7 +125,7 @@ function RenderListItem({ list, handleListEdit }: RenderListItemProps) {
 						list.groups.length === 0 ? (
 							<b>This list is not assigned any groups!</b>
 						) : (
-							<Stack direction='row' spacing={1}>
+							<Stack direction='row' spacing={1} useFlexGap flexWrap='wrap'>
 								{list.groups.map((g) => (
 									<Chip label={g.name} size='small' />
 								))}

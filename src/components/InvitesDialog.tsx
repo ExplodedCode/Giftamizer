@@ -82,7 +82,7 @@ const AlertDialog: React.ForwardRefRenderFunction<InvitesDialogRefs> = (props, f
 						{groups
 							?.filter((g) => g.my_membership[0].invite)
 							.map((group, i) => (
-								<>
+								<React.Fragment key={i}>
 									<ListItem
 										key={group.id}
 										secondaryAction={
@@ -104,7 +104,7 @@ const AlertDialog: React.ForwardRefRenderFunction<InvitesDialogRefs> = (props, f
 										<ListItemText primary={group.name} secondary={moment(group.my_membership[0].created_at).fromNow()} />
 									</ListItem>
 									{i !== (groups?.filter((g) => g.my_membership[0].invite).length || 0) - 1 && <Divider />}
-								</>
+								</React.Fragment>
 							))}
 
 						{groups?.filter((g) => g.my_membership[0].invite).length === 0 && (

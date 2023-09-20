@@ -4,6 +4,7 @@ import { useSupabase, SUPABASE_URL, validateEmail, FakeDelay } from '../lib/useS
 import { Member, Profile } from '../lib/useSupabase/types';
 
 import { Autocomplete, Avatar, Chip, CircularProgress, debounce, Grid, TextField, Typography } from '@mui/material';
+import { Mail } from '@mui/icons-material';
 
 type UserSearchProps = {
 	selectedInviteUsers: Profile[];
@@ -25,7 +26,7 @@ export default function UserSearch(props: UserSearchProps) {
 			debounce(async (request: { input: string }, callback: (results?: readonly Profile[]) => void) => {
 				setLoading(true);
 
-				await FakeDelay(500); // fake delay
+				await FakeDelay(); // fake delay
 
 				const search = request.input.replaceAll(' ', '+') + ':*';
 				const excludeUsers = props.members
@@ -109,7 +110,18 @@ export default function UserSearch(props: UserSearchProps) {
 						<li {...props}>
 							<Grid container alignItems='center'>
 								<Grid item>
-									<Avatar sizes='small' src={`${SUPABASE_URL}/storage/v1/object/public/avatars/${option?.user_id}`} sx={{ mr: 1 }} />
+									{option.user_id ? (
+										<Avatar
+											sizes='small'
+											src={`${SUPABASE_URL}/storage/v1/object/public/avatars/${option?.user_id}`}
+											alt={`${option.first_name} ${option.last_name}`}
+											sx={{ mr: 1, bgcolor: 'primary.main' }}
+										/>
+									) : (
+										<Avatar sizes='small' sx={{ mr: 1, bgcolor: 'primary.main' }}>
+											<Mail />
+										</Avatar>
+									)}
 								</Grid>
 								<Grid item xs>
 									<Typography variant='body2'>

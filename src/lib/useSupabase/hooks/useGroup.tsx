@@ -5,7 +5,7 @@ import { useSupabase } from './useSupabase';
 import { ExternalInvite, GroupType, ListType, Member, Profile } from '../types';
 import { dataUrlToFile } from '../../../components/ImageCropper';
 import { LISTS_QUERY_KEY } from './useLists';
-import { FakeDelay } from '.';
+import { FakeDelay, useGetProfile } from '.';
 
 export const GROUPS_QUERY_KEY = ['groups'];
 
@@ -478,7 +478,7 @@ export const useSetGroupPin = () => {
 
 	return useMutation(
 		async (pinUpdate: PinUpdate): Promise<PinUpdate> => {
-			await FakeDelay(500); // fake delay
+			await FakeDelay(); // fake delay
 
 			const { error } = await client.from('group_members').update({ pinned: pinUpdate.pinned }).eq('group_id', pinUpdate.id).eq('user_id', user.id);
 			if (error) throw error;
@@ -637,6 +637,7 @@ export const useUpdateGroup = () => {
 export const useInviteToGroup = () => {
 	const queryClient = useQueryClient();
 	const { client } = useSupabase();
+	const { data: profile } = useGetProfile();
 
 	interface GroupInvite {
 		group: Omit<GroupType, 'image_token'>;
@@ -678,22 +679,37 @@ export const useInviteToGroup = () => {
 			for (const inviteUser of update.invites) {
 				if (inviteUser.user_id) {
 					const { error } = await client.from('group_members').insert({ group_id: update.group.id, user_id: inviteUser.user_id, owner: update.inviteUsersOwner });
-					if (error) throw error;
-				} else {
-					const { error: inviteError } = await client.from('external_invites').insert({ group_id: update.group.id, email: inviteUser.email, owner: update.inviteUsersOwner });
-					if (inviteError) {
-						throw inviteError;
+					if (error) {
+						throw error;
 					} else {
-						const { error } = await client.functions.invoke('groups/invite', {
+						const { error } = await client.functions.invoke('invite/internal', {
 							body: {
 								group: {
 									name: update.group.name,
 									id: update.group.id,
 								},
 								user: inviteUser,
+								invited_by: `${profile?.first_name} ${profile?.last_name} `,
 							},
 						});
-						if (error) throw error;
+						if (error) console.error(error);
+					}
+				} else {
+					const { error: inviteError } = await client.from('external_invites').insert({ group_id: update.group.id, email: inviteUser.email, owner: update.inviteUsersOwner });
+					if (inviteError) {
+						throw inviteError;
+					} else {
+						const { error } = await client.functions.invoke('invite/external', {
+							body: {
+								group: {
+									name: update.group.name,
+									id: update.group.id,
+								},
+								user: inviteUser,
+								invited_by: `${profile?.first_name} ${profile?.last_name} `,
+							},
+						});
+						if (error) console.error(error);
 					}
 				}
 			}

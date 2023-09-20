@@ -13,30 +13,23 @@ import {
 	Stack,
 	IconButton,
 	Chip,
-	CardActions,
 	Menu,
 	MenuItem,
 	ListItemIcon,
 	ListItemText,
 	Collapse,
-	TableContainer,
-	Table,
 	Paper,
-	TableRow,
-	TableBody,
-	TableCell,
 	ButtonBase,
 	Tooltip,
 	Box,
 	Alert,
-	AlertTitle,
 } from '@mui/material';
-import { Archive, Close, Delete, DeleteForever, Edit, ExpandMore, MoreVert, Restore, Unarchive } from '@mui/icons-material';
+import { Archive, Close, Delete, DeleteForever, Edit, MoreVert, Restore, Unarchive } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 
 import ItemUpdate from '../components/ItemUpdate';
 
-import { ExtractDomain, useArchiveItem, useDeleteItem, useGetProfile, useRefreshItem, useRestoreItem, useSupabase, useUpdateItemStatus } from '../lib/useSupabase';
+import { ExtractDomain, FakeDelay, StandardizeURL, useArchiveItem, useDeleteItem, useGetProfile, useRefreshItem, useRestoreItem, useSupabase, useUpdateItemStatus } from '../lib/useSupabase';
 import { ItemStatuses, ItemType, MemberItemType } from '../lib/useSupabase/types';
 
 interface VertMenuProps {
@@ -198,6 +191,7 @@ function ItemStatus({ item, claimError, setClaimError }: ItemStatusProps) {
 				case '42501':
 					enqueueSnackbar(`This item was just claimed by someone else!`, { variant: 'error' });
 					setClaimError(`This item was just claimed by someone else!`);
+					await FakeDelay(4000);
 					await refreshItem.mutateAsync(item.id);
 					break;
 
@@ -251,7 +245,7 @@ function ItemStatus({ item, claimError, setClaimError }: ItemStatusProps) {
 						);
 					}}
 					loading={updateItemStatus.isLoading}
-					disabled={item.status?.user_id !== undefined && item.status?.user_id !== user.id}
+					disabled={claimError !== undefined || (item.status?.user_id !== undefined && item.status?.user_id !== user.id)}
 					sx={
 						item.status?.user_id !== user.id && !claimError
 							? {
@@ -282,59 +276,12 @@ function ItemStatus({ item, claimError, setClaimError }: ItemStatusProps) {
 								case ItemStatuses.planned:
 									return 'Planned';
 								case ItemStatuses.unavailable:
-									return 'Unavailable';
+									return 'Purchased';
 							}
 						})()}
 					</span>
 				</LoadingButton>
 			</Tooltip>
-		</>
-	);
-}
-
-interface CustomFieldExpandProps {
-	handleExpand: (event: React.MouseEvent<HTMLElement>) => void;
-	expanded: boolean;
-	item: ItemType | MemberItemType;
-}
-function CustomFieldExpand({ handleExpand, expanded, item }: CustomFieldExpandProps) {
-	const theme = useTheme();
-
-	return (
-		<>
-			<CardActions disableSpacing>
-				<IconButton
-					onClick={handleExpand}
-					aria-label='show more'
-					style={{
-						marginLeft: 'auto',
-						transform: !expanded ? 'rotate(0deg)' : 'rotate(180deg)',
-						transition: theme.transitions.create('transform', {
-							duration: theme.transitions.duration.shortest,
-						}),
-					}}
-				>
-					<ExpandMore />
-				</IconButton>
-			</CardActions>
-			<Collapse in={expanded} timeout='auto' unmountOnExit sx={{ mr: 2, ml: 2, mb: 1 }}>
-				<TableContainer>
-					<Table size='small'>
-						<TableBody>
-							{item.custom_fields?.map((customfield, i) => (
-								<TableRow key={i} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-									<TableCell padding='checkbox' size='small' align='right'>
-										{customfield.name}:
-									</TableCell>
-									<TableCell size='small' align='left'>
-										{customfield.value}
-									</TableCell>
-								</TableRow>
-							))}
-						</TableBody>
-					</Table>
-				</TableContainer>
-			</Collapse>
 		</>
 	);
 }
@@ -347,12 +294,7 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 	const { user } = useSupabase();
 	const { data: profile } = useGetProfile();
 
-	const [expanded, setExpanded] = React.useState(false);
 	const [claimError, setClaimError] = React.useState<string | undefined>();
-
-	const handleExpand = (event: React.MouseEvent<HTMLElement>) => {
-		setExpanded(!expanded);
-	};
 
 	return (
 		<>
@@ -389,14 +331,14 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 											{item.description}
 										</Typography>
 										{item.custom_fields?.map((c) => (
-											<Typography variant='body2' color='text.secondary'>
+											<Typography key={`${item.id}-field-${c.id}`} variant='body2' color='text.secondary'>
 												{c.name}: {c.value}
 											</Typography>
 										))}
 										{profile?.enable_lists && (
-											<Stack direction='row' justifyContent='flex-start' spacing={1} sx={{ mt: 0.5 }}>
+											<Stack direction='row' justifyContent='flex-start' useFlexGap flexWrap='wrap' spacing={1} sx={{ mt: 0.5 }}>
 												{item.lists?.map((l) => (
-													<Chip label={l.list.name} size='small' />
+													<Chip key={`${item.id}-list-${l.list_id}`} label={l.list.name} size='small' />
 												))}
 											</Stack>
 										)}
@@ -407,7 +349,7 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 												{!editable && item.user_id !== user.id && <ItemStatus item={item as MemberItemType} claimError={claimError} setClaimError={setClaimError} />}
 
 												{item.links?.map((link, i) => (
-													<Button key={i} href={link} target='_blank' color='info' size='small'>
+													<Button key={`${item.id + i}-link-${i}`} href={StandardizeURL(link)} target='_blank' color='info' size='small'>
 														{ExtractDomain(link)}
 													</Button>
 												))}
@@ -420,7 +362,7 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 						</Grid>
 					</Box>
 
-					{editable && profile?.enable_lists && item.lists?.length === 0 && <ItemUnassignedAlert />}
+					<ItemUnassignedAlert open={profile?.enable_lists && item.lists?.length === 0} />
 					<ItemAlert alert={claimError} setAlert={setClaimError} />
 				</Paper>
 
@@ -437,6 +379,11 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 								<Typography gutterBottom variant='body2' color='text.secondary'>
 									{item.description}
 								</Typography>
+								{item.custom_fields?.map((c) => (
+									<Typography key={`${item.id}-field-${c.id}`} variant='body2' color='text.secondary'>
+										{c.name}: {c.value}
+									</Typography>
+								))}
 							</Grid>
 							{editable && (
 								<Grid item>
@@ -445,9 +392,9 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 							)}
 							{profile?.enable_lists && editable && (
 								<Grid item xs={12}>
-									<Stack direction='row' justifyContent='flex-start' spacing={1}>
-										{item.lists?.map((l) => (
-											<Chip label={l.list.name} size='small' />
+									<Stack direction='row' justifyContent='flex-start' useFlexGap flexWrap='wrap' spacing={1}>
+										{item.lists?.map((l, i) => (
+											<Chip key={`${item.id + i}-list-${l.list_id}`} label={l.list.name} size='small' />
 										))}
 									</Stack>
 								</Grid>
@@ -459,7 +406,7 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 										{!editable && item.user_id !== user.id && <ItemStatus item={item as MemberItemType} claimError={claimError} setClaimError={setClaimError} />}
 
 										{item.links?.map((link, i) => (
-											<Button key={i} href={link} target='_blank' color='info' size='small'>
+											<Button key={`${item.id + i}-link-${i}`} href={StandardizeURL(link)} target='_blank' color='info' size='small'>
 												{ExtractDomain(link)}
 											</Button>
 										))}
@@ -469,9 +416,9 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 						</Grid>
 					</CardContent>
 
-					{item.custom_fields && item.custom_fields?.length !== 0 && <CustomFieldExpand handleExpand={handleExpand} expanded={expanded} item={item} />}
+					{/* {item.custom_fields && item.custom_fields?.length !== 0 && <CustomFieldExpand handleExpand={handleExpand} expanded={expanded} item={item} />} */}
 
-					{profile?.enable_lists && item.lists?.length === 0 && <ItemUnassignedAlert />}
+					<ItemUnassignedAlert open={profile?.enable_lists && item.lists?.length === 0} />
 					<ItemAlert alert={claimError} setAlert={setClaimError} />
 				</Card>
 			</Grid>
@@ -509,11 +456,16 @@ function ItemAlert({ alert, setAlert }: ItemAlertProps) {
 	);
 }
 
-function ItemUnassignedAlert() {
+interface ItemUnassignedAlertProps {
+	open?: boolean;
+}
+function ItemUnassignedAlert({ open }: ItemUnassignedAlertProps) {
 	return (
 		<Box sx={{ width: '100%' }}>
-			<Collapse in={alert !== undefined}>
-				<Alert severity='warning'>This item is not assigned to a list!</Alert>
+			<Collapse in={open}>
+				<Collapse in={alert !== undefined}>
+					<Alert severity='warning'>This item is not assigned to a list!</Alert>
+				</Collapse>
 			</Collapse>
 		</Box>
 	);
