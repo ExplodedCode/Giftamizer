@@ -7,6 +7,7 @@ export * from './useGroup';
 export * from './useMember';
 
 export function ExtractDomain(url: string) {
+	url = url.toLocaleLowerCase();
 	var domain;
 	//find & remove protocol (http, ftp, etc.) and get domain
 	if (url.indexOf('://') > -1) {
@@ -19,7 +20,7 @@ export function ExtractDomain(url: string) {
 	domain = domain.split(':')[0];
 
 	// amazon short links
-	if (domain === 'a.co') domain = 'amazon.com';
+	if (domain === 'a.co' || domain === 'amzn.to') domain = 'amazon.com';
 
 	return domain.replace('www.', '');
 }
