@@ -5,7 +5,6 @@ import { useClaimedItems } from '../lib/useSupabase';
 
 import { Container, Grid, Typography, Box, CircularProgress, AppBar, Breadcrumbs, Toolbar, FormGroup, FormControlLabel, Checkbox } from '@mui/material';
 
-import ItemCreate from '../components/ItemCreate';
 import ItemCard from '../components/ItemCard';
 import { ItemStatuses, MemberItemType } from '../lib/useSupabase/types';
 
@@ -52,7 +51,7 @@ export default function ShoppingList() {
 				<Grid container spacing={2}>
 					{items?.filter(filterItems).map((item, index) => (
 						// TODO: Change ItemCard to Renderer function to allow Grow transition/animation
-						<ItemCard item={item} />
+						<ItemCard key={item.id} item={item} />
 					))}
 
 					{items?.filter(filterItems).length === 0 && (

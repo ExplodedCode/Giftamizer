@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 
 import { signInWithFacebook, signInWithGoogle, useSupabase, validateEmail } from '../lib/useSupabase';
@@ -30,6 +30,10 @@ var randomImage = Math.floor(Math.random() * 10) + 1;
 export default function SignIn() {
 	const { client } = useSupabase();
 	const { enqueueSnackbar } = useSnackbar();
+	let [searchParams, setSearchParams] = useSearchParams();
+
+	const accessToken = searchParams.get('accessToken');
+	const refreshToken = searchParams.get('refreshToken');
 
 	const [email, setEmail] = React.useState('');
 	const [password, setPassword] = React.useState('');
@@ -37,8 +41,30 @@ export default function SignIn() {
 	const [forgotDialogOpen, setForgotDialogOpen] = React.useState(false);
 	const [resetEmail, setResetEmail] = React.useState('');
 
+	const loginWithTokens = async (accessToken: string, refreshToken: string) => {
+		console.log(accessToken, refreshToken);
+
+		const { data, error } = await client.auth.setSession({
+			access_token: accessToken,
+			refresh_token: refreshToken,
+		});
+
+		if (error) {
+			console.error('setSession Error', error);
+			enqueueSnackbar(String(error.message), {
+				variant: 'error',
+			});
+		}
+	};
+
+	React.useEffect(() => {
+		if (accessToken && refreshToken) {
+			loginWithTokens(accessToken, refreshToken);
+		}
+	}, [client, accessToken, refreshToken]);
+
 	const handleSubmit = async () => {
-		const { error: firebaseAuthError } = await client.functions.invoke('firebase/validateAuth', {
+		const { error: firebaseAuthError } = await client.functions.invoke('firebase-auth', {
 			body: {
 				email: email,
 				password: password,
@@ -164,7 +190,7 @@ export default function SignIn() {
 								</Grid>
 								<Grid item>
 									<MUILink component={Link} to='/signup' variant='body2'>
-										{"Don't have an account? Create Account"}
+										Don't have an account? Create Account
 									</MUILink>
 								</Grid>
 							</Grid>

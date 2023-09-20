@@ -25,4 +25,8 @@ yarn-debug.log*
 yarn-error.log*
 
 users.json
+items.json
+lists.json
+groups.json
+profiles.json
 *.sql

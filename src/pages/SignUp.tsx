@@ -207,7 +207,7 @@ export default function SignUp() {
 						<Grid container>
 							<Grid item>
 								<MUILink component={Link} to='/signin' variant='body2'>
-									{'Already have an account? Login'}
+									Already have an account? Login
 								</MUILink>
 							</Grid>
 						</Grid>
@@ -222,7 +222,8 @@ export default function SignUp() {
 							<MUILink component={Link} to='/policy' color='inherit'>
 								Privacy Policy
 							</MUILink>
-							. You also consent to receive marketing emails and/or emails relating to your account activity. If you choose not to consent disable notifications in your user profile.
+							. You also consent to receive marketing emails and/or emails relating to your account activity. If you choose not to consent disable email notifications in your user
+							profile.
 						</Typography>
 					</Box>
 				</Box>

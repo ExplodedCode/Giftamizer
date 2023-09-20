@@ -48,7 +48,17 @@ export const useGetMemberItems = (group_id: string, user_id: string, list_id?: s
 						.eq('items_lists.lists.child_list', false)
 						.eq('items_lists.lists.lists_groups.group_id', group_id);
 				} else {
-					res = await client.from('items').select(`*`).eq('user_id', user_id);
+					res = await client
+						.from('items')
+						.select(
+							`*,
+							status:items_status(
+								item_id,
+								user_id,
+								status
+							)`
+						)
+						.eq('user_id', user_id);
 				}
 				if (res.error) throw res.error;
 
@@ -150,7 +160,7 @@ export const useUpdateItemStatus = (group_id?: string, user_id?: string, list_id
 
 	return useMutation(
 		async (status: ItemStatus): Promise<ItemStatus> => {
-			await FakeDelay(500); // fake delay
+			await FakeDelay(); // fake delay
 
 			if (status.status === ItemStatuses.available) {
 				// delete row
@@ -220,7 +230,9 @@ export const useClaimedItems = () => {
 						status
 					)`
 				)
-				.eq('status.user_id', user.id);
+				.eq('status.user_id', user.id)
+				.eq('archived', false)
+				.eq('deleted', false);
 			if (error) throw error;
 
 			return data.map((i) => {

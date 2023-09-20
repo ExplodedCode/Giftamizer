@@ -44,6 +44,7 @@ import AccountDialog from './AccountDialog';
 import Notifications from './Notifications';
 
 import { useGetGroups } from '../lib/useSupabase/hooks/useGroup';
+import { GiftIcon } from './SvgIcons';
 
 const drawerWidth = 240;
 
@@ -184,6 +185,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 								<Tooltip title='Get Realtime Channels'>
 									<IconButton
 										size='large'
+										color='inherit'
 										onClick={() => {
 											var channels = client.getChannels();
 											enqueueSnackbar(`${channels.length} Channels:`, {
@@ -275,14 +277,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 						<ListItem disablePadding>
 							<ListItemButton component={Link} to='/' selected={location.pathname === '/'}>
 								<ListItemIcon>
-									<Box
-										className='fas fa-gift'
-										sx={{
-											fontSize: '1.19rem',
-											marginLeft: 0.35,
-											color: location.pathname === '/' ? 'primary.main' : undefined,
-										}}
-									/>
+									<GiftIcon />
 								</ListItemIcon>
 								<ListItemText primary='Items' />
 							</ListItemButton>
@@ -481,7 +476,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 						}
 					}}
 				>
-					<BottomNavigationAction label='Items' icon={<i className='fas fa-gift' style={{ fontSize: '1.19rem' }} />} />
+					<BottomNavigationAction label='Items' icon={<GiftIcon />} />
 					{profile?.enable_lists && <BottomNavigationAction label='Lists' icon={<ListAlt />} />}
 					<BottomNavigationAction label='Groups' icon={<Group />} />
 					<BottomNavigationAction label='Shopping' icon={<ShoppingCart />} />

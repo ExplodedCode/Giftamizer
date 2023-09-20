@@ -1,0 +1,20 @@
+{
+	"name": "email",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"start": "ts-node index.ts"
+	},
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"@types/nodemailer": "^6.4.7",
+		"axios": "^1.2.2",
+		"dotenv": "^16.3.1",
+		"fs": "^0.0.1-security",
+		"nodemailer": "^6.8.0",
+		"path": "^0.12.7",
+		"ts-node": "^10.9.1"
+	}
+}

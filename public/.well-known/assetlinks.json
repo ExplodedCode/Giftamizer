@@ -1,0 +1,10 @@
+[
+	{
+		"relation": ["delegate_permission/common.handle_all_urls"],
+		"target": {
+			"namespace": "android_app",
+			"package_name": "com.giftamizer.giftamizer",
+			"sha256_cert_fingerprints": ["6F:B3:AA:D6:4A:29:42:98:46:67:25:29:D3:CD:B1:CA:22:DD:B5:9C:C0:75:55:D3:FC:03:38:33:16:42:06:4D"]
+		}
+	}
+]

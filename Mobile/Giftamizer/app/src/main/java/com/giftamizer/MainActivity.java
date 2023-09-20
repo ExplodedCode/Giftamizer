@@ -3,23 +3,17 @@ package com.giftamizer;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.net.MailTo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Message;
 import android.provider.MediaStore;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -31,22 +25,30 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import androidx.webkit.WebSettingsCompat;
+import androidx.webkit.WebViewFeature;
+
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-
 public class MainActivity extends AppCompatActivity {
 
     /*-- CUSTOMIZE --*/
     /*-- you can customize these options for your convenience --*/
-    private static String webview_url   = "https://giftamizer.com";    // web address or local file location you want to open in webview
+    private static String webview_url   = "https://dev.giftamizer.com";    // web address or local file location you want to open in webview
     private static String file_type     = "image/*";    // file types to be allowed for upload
     private boolean multiple_files      = false;         // allowing multiple file upload
 
     /*-- MAIN VARIABLES --*/
     WebView webView;
+    SwipeRefreshLayout swipeRefreshLayout;
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
@@ -63,8 +65,8 @@ public class MainActivity extends AppCompatActivity {
             Uri[] results = null;
 
             /*-- if file request cancelled; exited camera. we need to send null value to make future attempts workable --*/
-            if (resultCode === Activity.RESULT_CANCELED) {
-                if (requestCode === file_req_code) {
+            if (resultCode == Activity.RESULT_CANCELED) {
+                if (requestCode == file_req_code) {
                     file_path.onReceiveValue(null);
                     return;
                 }
@@ -72,8 +74,8 @@ public class MainActivity extends AppCompatActivity {
 
             /*-- continue if response is positive --*/
             if(resultCode== Activity.RESULT_OK){
-                if(requestCode === file_req_code){
-                    if(null === file_path){
+                if(requestCode == file_req_code){
+                    if(null == file_path){
                         return;
                     }
 
@@ -87,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
                         stringData = null;
                     }
 
-                    if (clipData === null && stringData === null && cam_file_data != null) {
+                    if (clipData == null && stringData == null && cam_file_data != null) {
                         results = new Uri[]{Uri.parse(cam_file_data)};
                     }else{
                         if (clipData != null) { // checking if multiple files selected or not
@@ -105,9 +107,9 @@ public class MainActivity extends AppCompatActivity {
             file_path.onReceiveValue(results);
             file_path = null;
         }else{
-            if(requestCode === file_req_code){
-                if(null === file_data) return;
-                Uri result = intent === null || resultCode != RESULT_OK ? null : intent.getData();
+            if(requestCode == file_req_code){
+                if(null == file_data) return;
+                Uri result = intent == null || resultCode != RESULT_OK ? null : intent.getData();
                 file_data.onReceiveValue(result);
                 file_data = null;
             }
@@ -120,16 +122,23 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        webView = (WebView) findViewById(R.id.os_view);
+        webView = (WebView) findViewById(R.id.web);
+        swipeRefreshLayout = findViewById(R.id.swipe);
         assert webView != null;
         CookieManager.getInstance().setAcceptCookie(true);
         WebSettings webSettings = webView.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webSettings.setAllowFileAccess(true);
         webSettings.setDomStorageEnabled(true);
-        webSettings.setAppCacheEnabled(true);
+//        webSettings.setAppCacheEnabled(true);
         webSettings.setSupportZoom(false);
         webSettings.setJavaScriptCanOpenWindowsAutomatically(true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            WebSettingsCompat.setAlgorithmicDarkeningAllowed(webView.getSettings(), true);
+        }
+
+
+
 
         if(Build.VERSION.SDK_INT >= 21){
             webSettings.setMixedContentMode(0);
@@ -140,12 +149,21 @@ public class MainActivity extends AppCompatActivity {
         webView.setWebViewClient(new Callback());
         webView.loadUrl(webview_url);
 
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                swipeRefreshLayout.setRefreshing(true);
+                webView.reload();
+            }
+        });
+
         webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                swipeRefreshLayout.setRefreshing(false);
+            }
              public boolean shouldOverrideUrlLoading(WebView paramAnonymousWebView, String paramAnonymousString) {
-
-
-
-
                  StringBuilder localStringBuilder = new StringBuilder();
                  localStringBuilder.append(paramAnonymousString);
                  Log.v("browser", localStringBuilder.toString());
@@ -164,7 +182,6 @@ public class MainActivity extends AppCompatActivity {
          });
 
         webView.setWebChromeClient(new WebChromeClient() {
-
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
                 if(file_permission() && Build.VERSION.SDK_INT >= 21) {
                     file_path = filePathCallback;
@@ -194,7 +211,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
 
-                    if (fileChooserParams.getAcceptTypes().length === 0) {   //no `accept` parameter was specified, allow both photo and video
+                    if (fileChooserParams.getAcceptTypes().length == 0) {   //no `accept` parameter was specified, allow both photo and video
                         includePhoto = true;
                         includeVideo = true;
                     }
@@ -268,7 +285,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-
     /*-- callback reporting if error occurs --*/
     public class Callback extends WebViewClient{
         public void onReceivedError(WebView view, int errorCode, String description, String failingUrl){
@@ -306,8 +322,8 @@ public class MainActivity extends AppCompatActivity {
     /*-- back/down key handling --*/
     @Override
     public boolean onKeyDown(int keyCode, @NonNull KeyEvent event){
-        if(event.getAction() === KeyEvent.ACTION_DOWN){
-            if (keyCode === KeyEvent.KEYCODE_BACK) {
+        if(event.getAction() == KeyEvent.ACTION_DOWN){
+            if (keyCode == KeyEvent.KEYCODE_BACK) {
                 if (webView.canGoBack()) {
                     webView.goBack();
                 } else {

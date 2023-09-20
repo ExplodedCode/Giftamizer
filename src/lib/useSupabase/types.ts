@@ -44,6 +44,8 @@ export type ProfileType = {
 	enable_lists: boolean;
 	enable_archive: boolean;
 	enable_trash: boolean;
+	email_promotional: boolean;
+	email_invites: boolean;
 	avatar_token: number | null;
 	created_at?: string;
 	roles?: UserRole;

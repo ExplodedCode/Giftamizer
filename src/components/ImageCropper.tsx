@@ -49,7 +49,7 @@ export default function ImageCropper({ value, onChange, disabled, aspectRatio, a
 			const imageElement: any = cropperRef?.current;
 			const cropper: any = imageElement?.cropper;
 
-			if (onChange) onChange(cropper.getCroppedCanvas().toDataURL());
+			if (onChange) onChange(cropper.getCroppedCanvas({ maxWidth: 1024, maxHeight: 1024 }).toDataURL());
 		} else {
 			setSelectedImage('');
 			if (onChange) onChange(undefined);

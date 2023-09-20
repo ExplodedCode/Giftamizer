@@ -7,6 +7,7 @@ export * from './useGroup';
 export * from './useMember';
 
 export function ExtractDomain(url: string) {
+	url = url.toLocaleLowerCase();
 	var domain;
 	//find & remove protocol (http, ftp, etc.) and get domain
 	if (url.indexOf('://') > -1) {
@@ -18,11 +19,25 @@ export function ExtractDomain(url: string) {
 	//find & remove port number
 	domain = domain.split(':')[0];
 
+	// amazon short links
+	if (domain === 'a.co' || domain === 'amzn.to') domain = 'amazon.com';
+
 	return domain.replace('www.', '');
 }
 
-export function FakeDelay(time: number) {
+export function StandardizeURL(url: string) {
+	if (!url.startsWith('http')) return `http://${url}`;
+	return url;
+}
+
+export function ExtractURLFromText(text: string) {
+	const urlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/;
+	return text.match(urlRegex)?.[0] ?? text;
+}
+
+export function FakeDelay(time?: number) {
 	return new Promise((resolve) => {
-		setTimeout(resolve, time);
+		const delay = time ?? Math.floor(Math.random() * (650 - 350 + 1)) + 350;
+		setTimeout(resolve, delay);
 	});
 }

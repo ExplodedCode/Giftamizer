@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 
-import { useGetProfile, useSupabase, useUpdateItems } from '../lib/useSupabase';
+import { ExtractURLFromText, useGetProfile, useSupabase, useUpdateItems } from '../lib/useSupabase';
 import { CustomField, ItemType, ListType } from '../lib/useSupabase/types';
 
 import {
@@ -146,13 +146,13 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 								<OutlinedInput
 									value={link}
 									onChange={(e) => {
-										setLinks(links.map((l, i) => (i === index ? e.target.value : l)));
+										setLinks(links.map((l, i) => (i === index ? ExtractURLFromText(e.target.value) : l)));
 									}}
 									onPaste={(e) => {
 										const urlQuery = e.clipboardData.getData('Text');
 										if (index === 0 && urlQuery.length > 0) {
 											setMetaloading(true);
-											getUrlMetadata(urlQuery);
+											getUrlMetadata(ExtractURLFromText(urlQuery));
 										}
 									}}
 									endAdornment={

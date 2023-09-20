@@ -24,7 +24,7 @@ class _SignInPageState extends State<SignInPage> {
         _isLoading = true;
       });
       try {
-        await supabase.functions.invoke('firebase/validateAuth', body: {
+        await supabase.functions.invoke('firebase-auth', body: {
           'email': _emailController.text.trim(),
           'password': _passwordController.text.trim(),
         });
