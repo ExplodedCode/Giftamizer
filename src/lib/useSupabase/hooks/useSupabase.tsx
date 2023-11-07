@@ -21,5 +21,6 @@ export const useSupabase = () => {
 	return {
 		client: context.sb as SupabaseClient,
 		user: context.user as User,
+		setUser: context.setUser,
 	};
 };

@@ -8,9 +8,12 @@ import 'package:giftamizer/pages/splash_page.dart';
 
 Future<void> main() async {
   await Supabase.initialize(
-    url: 'https://api.dev.giftamizer.com',
+    url: 'https://giftamizer.com',
     anonKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICAgInJvbGUiOiAiYW5vbiIsCiAgICAiaXNzIjogInN1cGFiYXNlIiwKICAgICJpYXQiOiAxNjczMTU0MDAwLAogICAgImV4cCI6IDE4MzA5MjA0MDAKfQ.I4w9kivih-1NEOTXy4f4CJI2VebzCFp384yeZrFQSts',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNjk1MDIwNDAwLAogICJleHAiOiAxODUyODczMjAwCn0.iMJi-OrGmLKRQfxxXma-OnOXEstXpo9cZhj9zmtpr2w',
+    authCallbackUrlHostname: 'login-callback',
+    authFlowType: AuthFlowType.pkce,
+    debug: true,
   );
 
   runApp(

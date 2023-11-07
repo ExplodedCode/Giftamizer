@@ -54,7 +54,7 @@
 		<string>Editor</string>
 		<key>CFBundleURLSchemes</key>
 		<array>
-			<string>com.explodedcode.giftamizer</string>
+			<string>com.giftamizer.giftamizer</string>
 		</array>
 		</dict>
 	</array>

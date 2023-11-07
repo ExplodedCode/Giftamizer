@@ -7,7 +7,6 @@ import { useGetGroups } from '../lib/useSupabase';
 import { GroupType } from '../lib/useSupabase/types';
 
 import { Container, Card, CardActionArea, CardContent, CardMedia, Grid, Typography, AppBar, Breadcrumbs, Link as MUILink, Toolbar, Grow, Box, CircularProgress } from '@mui/material';
-import PersonIcon from '@mui/icons-material/Person';
 
 import GroupCreate from '../components/GroupCreate';
 
@@ -80,9 +79,14 @@ export default function Groups() {
 						))}
 				</TransitionGroup>
 				{groups?.filter((g) => !g.my_membership[0].invite)?.length === 0 && (
-					<Typography variant='h5' gutterBottom style={{ marginTop: 100, textAlign: 'center' }}>
-						You don't have any groups, create or join a group with your friends and family!
-					</Typography>
+					<Box style={{ marginTop: 100, textAlign: 'center', width: '100%' }}>
+						<Typography variant='h5' gutterBottom>
+							You don't have any groups!
+						</Typography>
+						<Typography variant='body1' gutterBottom>
+							Create or join a group with your friends and family.
+						</Typography>
+					</Box>
 				)}
 
 				{isLoading && (

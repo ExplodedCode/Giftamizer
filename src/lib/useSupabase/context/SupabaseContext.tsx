@@ -7,6 +7,7 @@ import { useQueryClient } from '@tanstack/react-query';
 export const SupabaseContext = React.createContext<SupabaseContextType>({
 	sb: null,
 	user: undefined,
+	setUser: undefined,
 });
 
 /**
@@ -34,10 +35,10 @@ export const SupabaseContextProvider: React.FC<{ client: SupabaseClient; childre
 				}
 			});
 
-			client.auth.onAuthStateChange(async (event, session) => {
-				if (event === 'SIGNED_IN') {
-					setUser(session?.user);
-				}
+			client.auth.getSession().then(({ data: { session } }) => {
+				setUser(session?.user ?? null);
+			});
+			client.auth.onAuthStateChange((event, _session) => {
 				if (event === 'SIGNED_OUT') {
 					client.removeAllChannels();
 					queryClient.removeQueries(); // invalidate cache
@@ -53,6 +54,7 @@ export const SupabaseContextProvider: React.FC<{ client: SupabaseClient; childre
 		<SupabaseContext.Provider
 			value={{
 				user,
+				setUser,
 				sb: client,
 			}}
 		>

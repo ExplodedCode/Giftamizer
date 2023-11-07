@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:giftamizer/app.dart';
@@ -66,6 +68,7 @@ class _GroupsListState extends State<GroupsList> {
 
     try {
       final userID = supabase.auth.currentUser!.id;
+
       groups = await supabase.from('groups').select('''id,
 					name,
 					image_token,
@@ -128,22 +131,50 @@ class GroupCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        color: Colors.grey.withOpacity(0.5),
-        height: 120,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
+    return Card(
+      child: Column(
+        children: [
+          if (group['image_token'] != null)
+            Center(
+              child: Stack(
+                children: <Widget>[
+                  Image.network(
+                    'https://giftamizer.com//storage/v1/object/public/groups/${group['id']}?${group['image_token']}',
+                    width: double.infinity,
+                    height: MediaQuery.of(context).size.width * 0.65,
+                    fit: BoxFit.cover,
+                  ),
+                ],
+              ),
+            )
+          else
             Container(
-              margin: const EdgeInsets.all(8),
-              height: 75,
-              width: 75,
-              color: Colors.grey,
+              width: double.infinity,
+              height: MediaQuery.of(context).size.width * 0.65,
+              color: Colors.green,
+              child: Center(
+                child: Text(
+                  group['name'].toString()[0],
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 225,
+                  ),
+                ),
+              ),
             ),
-            Text(group['name']),
-          ],
-        ));
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Container(
+                width: double.infinity,
+                child: Text(group['name'],
+                    style: const TextStyle(
+                      fontSize: 25,
+                    ),
+                    textAlign: TextAlign.left)),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -162,7 +193,7 @@ class _GroupPageState extends State<GroupPage> {
   var _loading = true;
   var members = [];
 
-  Future<void> _getGroups() async {
+  Future<void> _getGroupMembers() async {
     setState(() {
       _loading = true;
     });
@@ -181,6 +212,36 @@ class _GroupPageState extends State<GroupPage> {
 						)
 					)
 					''').neq('user_id', userID).eq('group_id', widget.group['id']);
+
+      var listMembers = await supabase
+          .from('lists')
+          .select('''*,
+					lists_groups!inner(
+						group_id
+					),
+					profile:profiles(
+						first_name,
+						last_name
+					)
+					''')
+          .eq('lists_groups.group_id', widget.group['id'])
+          .eq('child_list', true);
+
+      for (var l in listMembers) {
+        members.add({
+          'user_id': '${l.user_id}_${l.id}',
+          'owner': false,
+          'invite': false,
+          'profile': {
+            'first_name': l.name,
+            'last_name': '',
+            'email': '${l.profile.first_name} ${l.profile.last_name}',
+            'bio': l.bio,
+            'avatar_token': l.avatar_token,
+          },
+          'child_list': true,
+        });
+      }
     } on PostgrestException catch (error) {
       SnackBar(
         content: Text(error.message),
@@ -203,7 +264,7 @@ class _GroupPageState extends State<GroupPage> {
   @override
   void initState() {
     super.initState();
-    _getGroups();
+    _getGroupMembers();
     _addScrollListener();
   }
 
@@ -281,23 +342,51 @@ class MemberCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        color: Colors.grey.withOpacity(0.5),
-        height: 120,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
+    return Card(
+      child: Column(
+        children: [
+          if (member['profile']['avatar_token'] != null)
+            Center(
+              child: Stack(
+                children: <Widget>[
+                  Image.network(
+                    'https://giftamizer.com//storage/v1/object/public/avatars/${member['user_id']}?${member['profile']['avatar_token']}',
+                    width: double.infinity,
+                    height: MediaQuery.of(context).size.width * 0.65,
+                    fit: BoxFit.cover,
+                  ),
+                ],
+              ),
+            )
+          else
             Container(
-              margin: const EdgeInsets.all(8),
-              height: 75,
-              width: 75,
-              color: Colors.grey,
+              width: double.infinity,
+              height: MediaQuery.of(context).size.width * 0.65,
+              color: Colors.green,
+              child: Center(
+                child: Text(
+                  member['profile']['first_name'].toString()[0],
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 225,
+                  ),
+                ),
+              ),
             ),
-            Text(
-                '${member['profile']['first_name']} ${member['profile']['last_name']}'),
-          ],
-        ));
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Container(
+                width: double.infinity,
+                child: Text(
+                    '${member['profile']['first_name']} ${member['profile']['last_name']}',
+                    style: const TextStyle(
+                      fontSize: 25,
+                    ),
+                    textAlign: TextAlign.left)),
+          ),
+        ],
+      ),
+    );
   }
 }
 

@@ -76,9 +76,13 @@ function renderItem({ member, handleMemberEdit, owner }: RenderItemOptionsProps)
 			<ListItemSecondaryAction>
 				{member.child_list ? (
 					owner && (
-						<Button variant='outlined' color='error'>
-							Remove
-						</Button>
+						<>
+							{/* TODO: Add option to remove access to a child list
+							
+							<Button variant='outlined' color='error'>
+								Remove
+							</Button> */}
+						</>
 					)
 				) : (
 					<FormControl fullWidth>
@@ -243,7 +247,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 				<DialogContent>
 					<Grid container spacing={2}>
 						<Grid item xs={12}>
-							<DialogContentText>TODO: describe what groups do...</DialogContentText>
+							<DialogContentText>Share your gift lists with your friends and family.</DialogContentText>
 
 							<Grid container spacing={2}>
 								<Grid item xs={12}>
@@ -313,15 +317,19 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 						<Grid item xs={12}>
 							<Grid container spacing={2}>
 								<Grid item xs>
-									{owner ? (
-										<LoadingButton onClick={handleDeleteOpen} endIcon={<Delete />} loading={membersLoading} loadingPosition='end' variant='contained' color='error'>
-											Delete
-										</LoadingButton>
-									) : (
-										<LoadingButton onClick={handleLeaveOpen} endIcon={<Logout />} loading={leaveGroup.isLoading} loadingPosition='end' variant='contained' color='error'>
-											Leave Group
-										</LoadingButton>
-									)}
+									<Stack direction='row' spacing={1}>
+										{owner && (
+											<LoadingButton onClick={handleDeleteOpen} endIcon={<Delete />} loading={membersLoading} loadingPosition='end' variant='contained' color='error'>
+												Delete
+											</LoadingButton>
+										)}
+
+										{!changed && (members?.filter((m) => m.owner).length !== 0 || !owner) && (
+											<LoadingButton onClick={handleLeaveOpen} endIcon={<Logout />} loading={leaveGroup.isLoading} loadingPosition='end' variant='contained' color='error'>
+												Leave Group
+											</LoadingButton>
+										)}
+									</Stack>
 								</Grid>
 								<Grid item>
 									<Stack direction='row' justifyContent='flex-end' spacing={2}>
@@ -337,7 +345,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 														loading={membersLoading || updateGroup.isLoading}
 														loadingPosition='end'
 														variant='contained'
-														disabled={!changed}
+														disabled={!changed || name.length <= 0}
 													>
 														Save
 													</LoadingButton>

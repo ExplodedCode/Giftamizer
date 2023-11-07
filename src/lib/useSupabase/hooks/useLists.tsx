@@ -4,6 +4,7 @@ import { useSupabase } from './useSupabase';
 import { ItemType, ListType } from '../types';
 import { dataUrlToFile } from '../../../components/ImageCropper';
 import { ITEMS_QUERY_KEY } from './useItems';
+import { FakeDelay } from '.';
 
 export const DEFAULT_LIST_ID = 'default';
 
@@ -15,7 +16,7 @@ export const useGetLists = () => {
 	return useQuery({
 		queryKey: LISTS_QUERY_KEY,
 		queryFn: async (): Promise<ListType[]> => {
-			const { data, error } = await client.from('lists').select('*, groups( id, name )').eq('user_id', user.id);
+			const { data, error } = await client.from('lists').select('*, groups( id, name )').eq('user_id', user.id).order('name', { ascending: true });
 			if (error) throw error;
 
 			return data.map((l) => {
@@ -148,7 +149,7 @@ export const useUpdateLists = () => {
 				queryClient.setQueryData(LISTS_QUERY_KEY, (prevLists: ListType[] | undefined) => {
 					if (prevLists) {
 						const updatedLists = prevLists.map((list) => {
-							return list.id === list_updated.id ? list_updated : list;
+							return list.id === list_updated.id ? { ...list, ...list_updated } : list;
 						});
 						return updatedLists;
 					}
@@ -209,6 +210,45 @@ export const useDeleteList = () => {
 						return updatedItems;
 					}
 					return prevItems;
+				});
+			},
+		}
+	);
+};
+
+export const useSetListPin = () => {
+	const queryClient = useQueryClient();
+	const { client, user } = useSupabase();
+
+	interface PinUpdate {
+		id: string;
+		pinned: boolean;
+	}
+
+	return useMutation(
+		async (pinUpdate: PinUpdate): Promise<PinUpdate> => {
+			await FakeDelay(); // fake delay
+
+			const { error } = await client.from('lists').update({ pinned: pinUpdate.pinned }).eq('id', pinUpdate.id).eq('user_id', user.id);
+			if (error) throw error;
+
+			return pinUpdate;
+		},
+		{
+			onSuccess: (pinUpdate: PinUpdate) => {
+				queryClient.setQueryData(LISTS_QUERY_KEY, (prevLists: ListType[] | undefined) => {
+					if (prevLists) {
+						const updatedLists = prevLists.map((list) => {
+							return list.id === pinUpdate.id
+								? {
+										...list,
+										pinned: pinUpdate.pinned,
+								  }
+								: list;
+						});
+						return updatedLists;
+					}
+					return prevLists;
 				});
 			},
 		}

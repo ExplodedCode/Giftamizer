@@ -58,6 +58,33 @@ class _SignInPageState extends State<SignInPage> {
     }
   }
 
+  Future<void> _oauthSignIn(Provider auth) async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+      await supabase.auth.signInWithOAuth(auth,
+          redirectTo: 'com.giftamizer.giftamizer://login-callback',
+          queryParams: {'response_type': 'code'});
+    } on AuthException catch (error) {
+      SnackBar(
+        content: Text(error.message),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      );
+    } catch (error) {
+      SnackBar(
+        content: const Text('Unexpected error occurred'),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   void initState() {
     _authStateSubscription = supabase.auth.onAuthStateChange.listen((data) {
@@ -108,6 +135,17 @@ class _SignInPageState extends State<SignInPage> {
           ElevatedButton(
             onPressed: _isLoading ? null : _signIn,
             child: Text(_isLoading ? 'Loading' : 'Sign In'),
+          ),
+          const SizedBox(height: 8),
+          ElevatedButton(
+            onPressed: () => _isLoading ? null : _oauthSignIn(Provider.google),
+            child: Text(_isLoading ? 'Loading' : 'Google'),
+          ),
+          const SizedBox(height: 8),
+          ElevatedButton(
+            onPressed: () =>
+                _isLoading ? null : _oauthSignIn(Provider.facebook),
+            child: Text(_isLoading ? 'Loading' : 'Facebook'),
           ),
         ],
       ),

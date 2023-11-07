@@ -3,8 +3,8 @@ import { Link, useNavigate, useLocation, Location } from 'react-router-dom';
 import { SnackbarKey, useSnackbar } from 'notistack';
 import moment from 'moment';
 
-import { useSupabase, SUPABASE_URL, useGetProfile, useGetSystem, useSetMaintenance } from '../lib/useSupabase';
-import { GroupType, UserRoles } from '../lib/useSupabase/types';
+import { useSupabase, SUPABASE_URL, useGetProfile, useGetSystem, useSetMaintenance, useGetLists, DEFAULT_LIST_ID } from '../lib/useSupabase';
+import { GroupType, ListType, UserRoles } from '../lib/useSupabase/types';
 
 import { TransitionGroup } from 'react-transition-group';
 import { styled, Theme } from '@mui/material/styles';
@@ -45,6 +45,7 @@ import Notifications from './Notifications';
 
 import { useGetGroups } from '../lib/useSupabase/hooks/useGroup';
 import { GiftIcon } from './SvgIcons';
+import Snowfall from 'react-snowfall';
 
 const drawerWidth = 240;
 
@@ -84,11 +85,11 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop: string) => prop !==
 	}),
 }));
 
-interface RenderItemOptions {
+interface RenderGroupItemOptions {
 	group: GroupType;
 	location: Location;
 }
-function renderItem({ group, location }: RenderItemOptions) {
+function renderGroupItem({ group, location }: RenderGroupItemOptions) {
 	return (
 		<ListItemButton key={group.id} sx={{ pl: 4 }} component={Link} to={`/groups/${group.id}`} selected={location.pathname.startsWith(`/groups/${group.id}`)}>
 			<ListItemAvatar>
@@ -100,6 +101,23 @@ function renderItem({ group, location }: RenderItemOptions) {
 			</ListItemAvatar>
 
 			<ListItemText primary={group.name} />
+		</ListItemButton>
+	);
+}
+interface RenderListItemOptions {
+	list: ListType;
+	location: Location;
+}
+function renderListItem({ list, location }: RenderListItemOptions) {
+	return (
+		<ListItemButton key={list.id} sx={{ pl: 4 }} component={Link} to={`/lists/${list.id}`} selected={location.pathname.startsWith(`/lists/${list.id}`)}>
+			<ListItemAvatar>
+				<Avatar src={list.image} alt={list.name} sx={{ width: 32, height: 32, bgcolor: location.pathname.startsWith(`/lists/${list.id}`) ? 'primary.main' : undefined }}>
+					<ListAlt sx={{ width: 18, height: 18 }} />
+				</Avatar>
+			</ListItemAvatar>
+
+			<ListItemText primary={list.name} />
 		</ListItemButton>
 	);
 }
@@ -122,12 +140,21 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 			.subscribe();
 	}, [user, client, profile?.avatar_token, refetchProfile]);
 
+	// handle homepage redirect
+	React.useEffect(() => {
+		if (location.pathname === '/' && profile?.home !== '/') {
+			navigate(profile?.home!);
+		}
+	}, [location.pathname, profile, navigate]);
+
 	const { data: groups } = useGetGroups();
+	const { data: lists } = useGetLists();
 
 	const [drawerOpen, setDrawerOpen] = React.useState(true);
 	const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
 
 	const [groupsOpen, setGroupsOpen] = React.useState(true);
+	const [listsOpen, setListsOpen] = React.useState(true);
 
 	const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
 		setAnchorElUser(event.currentTarget);
@@ -159,6 +186,11 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 
 	return (
 		<Box sx={{ display: 'flex' }}>
+			{(new Date().getMonth() === 10 || new Date().getMonth() === 11 || new Date().getMonth() === 0) && profile?.enable_snowfall && (
+				<div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: '100%', zIndex: 5000, pointerEvents: 'none' }}>
+					<Snowfall snowflakeCount={window.innerWidth * 0.035} />
+				</div>
+			)}
 			<AppBar position='fixed' color='primary' enableColorOnDark sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
 				<Toolbar>
 					<IconButton color='inherit' aria-label='open drawer' onClick={toggleDrawer} edge='start' sx={{ mr: 2, display: { xs: 'none', sm: 'none', md: 'flex' } }}>
@@ -169,7 +201,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 						variant='h6'
 						noWrap
 						component={Link}
-						to='/'
+						to={profile?.home ?? '/'}
 						sx={{
 							flexGrow: 1,
 							color: 'inherit',
@@ -275,22 +307,63 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 				<Box>
 					<List>
 						<ListItem disablePadding>
-							<ListItemButton component={Link} to='/' selected={location.pathname === '/'}>
+							<ListItemButton component={Link} to='/items' selected={location.pathname === '/' || location.pathname === '/items'}>
 								<ListItemIcon>
-									<GiftIcon />
+									<GiftIcon color={location.pathname === '/' || location.pathname === '/items' ? 'primary' : undefined} />
 								</ListItemIcon>
 								<ListItemText primary='Items' />
 							</ListItemButton>
 						</ListItem>
-						{profile?.enable_lists && (
-							<ListItem disablePadding>
-								<ListItemButton component={Link} to='/lists' selected={location.pathname.startsWith('/lists')}>
-									<ListItemIcon>
-										<ListAlt color={location.pathname.startsWith('/lists') ? 'primary' : undefined} />
-									</ListItemIcon>
-									<ListItemText primary='Lists' />
-								</ListItemButton>
-							</ListItem>
+						{profile?.enable_lists && lists && (
+							<>
+								<ListItem disablePadding>
+									<ListItemButton
+										component={Link}
+										to='/lists'
+										selected={
+											location.pathname.startsWith('/lists') &&
+											!lists
+												?.filter((l) => l.pinned === true)
+												.map((l) => l.id)
+												.includes(location.pathname?.split('/lists/')?.[1]?.split('/')?.[0])
+										}
+									>
+										<ListItemIcon>
+											<ListAlt color={location.pathname === '/lists' ? 'primary' : undefined} />
+										</ListItemIcon>
+										<ListItemText primary='Lists' />
+									</ListItemButton>
+									{drawerOpen &&
+										lists &&
+										[...lists?.filter((l) => l.id === DEFAULT_LIST_ID)!, ...lists?.filter((l) => l.id !== DEFAULT_LIST_ID)!]?.filter((l) => l.pinned === true)?.length > 0 && (
+											<IconButton
+												onClick={(e) => {
+													e.preventDefault();
+													setListsOpen(!listsOpen);
+												}}
+												sx={{
+													borderRadius: 0,
+													height: 48,
+													width: 48,
+													backgroundColor: location.pathname === '/lists' || location.pathname === '/lists/' ? 'rgba(76, 175, 80, 0.16)' : undefined,
+												}}
+											>
+												{listsOpen ? <ExpandLess fontSize='small' /> : <ExpandMore fontSize='small' />}
+											</IconButton>
+										)}
+								</ListItem>
+								<Collapse in={listsOpen && drawerOpen} timeout='auto' unmountOnExit>
+									<List component='div' disablePadding>
+										<TransitionGroup>
+											{[...lists?.filter((l) => l.id === DEFAULT_LIST_ID)!, ...lists?.filter((l) => l.id !== DEFAULT_LIST_ID)!]
+												?.filter((l) => l.pinned === true)
+												.map((list, index) => (
+													<Collapse key={list.id}>{renderListItem({ list, location })}</Collapse>
+												))}
+										</TransitionGroup>
+									</List>
+								</Collapse>
+							</>
 						)}
 						<ListItem disablePadding>
 							<ListItemButton
@@ -332,7 +405,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 									{groups
 										?.filter((g) => g.my_membership[0].pinned === true)
 										.map((group, index) => (
-											<Collapse key={group.id}>{renderItem({ group, location })}</Collapse>
+											<Collapse key={group.id}>{renderGroupItem({ group, location })}</Collapse>
 										))}
 								</TransitionGroup>
 							</List>
@@ -446,7 +519,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 					showLabels
 					value={(() => {
 						switch (true) {
-							case location.pathname === '/':
+							case location.pathname === '/' || location.pathname === '/items':
 								return 0;
 							case location.pathname.startsWith('/list'):
 								return 1;
@@ -462,7 +535,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 						// setMobileNav(newValue);
 						switch (newValue) {
 							case 0:
-								navigate('/');
+								navigate('/items');
 								break;
 							case 1:
 								navigate('/lists');

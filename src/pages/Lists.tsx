@@ -92,19 +92,18 @@ function RenderListItem({ list, handleListEdit }: RenderListItemProps) {
 							</ListItemIcon>
 							<ListItemText>Edit</ListItemText>
 						</MenuItem>
-						{list.id !== DEFAULT_LIST_ID && (
-							<MenuItem
-								onClick={() => {
-									handleDelete(list.id);
-									handleClose();
-								}}
-							>
-								<ListItemIcon>
-									<Delete fontSize='small' />
-								</ListItemIcon>
-								<ListItemText>Delete</ListItemText>
-							</MenuItem>
-						)}
+						<MenuItem
+							onClick={() => {
+								handleDelete(list.id);
+								handleClose();
+							}}
+							disabled={list.id === DEFAULT_LIST_ID} // don't allow delete of default list
+						>
+							<ListItemIcon>
+								<Delete fontSize='small' />
+							</ListItemIcon>
+							<ListItemText>Delete</ListItemText>
+						</MenuItem>
 					</Menu>
 				</>
 			}
@@ -123,7 +122,9 @@ function RenderListItem({ list, handleListEdit }: RenderListItemProps) {
 					primary={list.name}
 					secondary={
 						list.groups.length === 0 ? (
-							<b>This list is not assigned any groups!</b>
+							<Box sx={{ color: 'warning.main' }}>
+								<b>This list is not assigned any groups!</b>
+							</Box>
 						) : (
 							<Stack direction='row' spacing={1} useFlexGap flexWrap='wrap'>
 								{list.groups.map((g) => (

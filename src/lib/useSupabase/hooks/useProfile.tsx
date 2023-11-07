@@ -100,9 +100,11 @@ export const useUpdateProfile = () => {
 					first_name: update.first_name,
 					last_name: update.last_name,
 					bio: update.bio,
+					home: update.home,
 					enable_lists: update.enable_lists,
 					enable_archive: update.enable_archive,
 					enable_trash: update.enable_trash,
+					enable_snowfall: update.enable_snowfall,
 					avatar_token: update.image ? Date.now() : -1,
 				})
 				.eq('user_id', user.id)

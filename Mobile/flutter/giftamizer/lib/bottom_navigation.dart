@@ -13,16 +13,16 @@ class BottomNavigation extends StatelessWidget {
       type: BottomNavigationBarType.fixed,
       items: const <BottomNavigationBarItem>[
         BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Home',
+          icon: Icon(Icons.card_giftcard),
+          label: 'Items',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.group),
           label: 'Groups',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: 'Me',
+          icon: Icon(Icons.shopping_cart),
+          label: 'Shopping',
         ),
       ],
       onTap: (index) => onSelectTab(

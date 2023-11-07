@@ -23,7 +23,10 @@ import {
 	Tooltip,
 	Box,
 	Alert,
+	Dialog,
+	Slide,
 } from '@mui/material';
+import { TransitionProps } from '@mui/material/transitions';
 import { Archive, Close, Delete, DeleteForever, Edit, MoreVert, Restore, Unarchive } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 
@@ -31,6 +34,15 @@ import ItemUpdate from '../components/ItemUpdate';
 
 import { ExtractDomain, FakeDelay, StandardizeURL, useArchiveItem, useDeleteItem, useGetProfile, useRefreshItem, useRestoreItem, useSupabase, useUpdateItemStatus } from '../lib/useSupabase';
 import { ItemStatuses, ItemType, MemberItemType } from '../lib/useSupabase/types';
+
+const Transition = React.forwardRef(function Transition(
+	props: TransitionProps & {
+		children: React.ReactElement<any, any>;
+	},
+	ref: React.Ref<unknown>
+) {
+	return <Slide direction='up' ref={ref} {...props} />;
+});
 
 interface VertMenuProps {
 	item: ItemType | MemberItemType;
@@ -294,6 +306,11 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 	const { user } = useSupabase();
 	const { data: profile } = useGetProfile();
 
+	const navigate = useNavigate();
+
+	const [dialogImage, setDialogImage] = React.useState<string | null>(null);
+	const [dialogPrevImage, setDialogPrevImage] = React.useState<string | null>(null);
+
 	const [claimError, setClaimError] = React.useState<string | undefined>();
 
 	return (
@@ -315,7 +332,7 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 						<Grid container spacing={2}>
 							{item.image && (
 								<Grid item>
-									<ButtonBase>
+									<ButtonBase onClick={() => setDialogImage(item.image ?? null)} sx={{ cursor: 'zoom-in' }}>
 										<img alt={item.name} src={item.image} style={{ objectFit: 'cover', width: 150, height: 150, borderRadius: 4 }} />
 									</ButtonBase>
 								</Grid>
@@ -332,13 +349,13 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 										</Typography>
 										{item.custom_fields?.map((c) => (
 											<Typography key={`${item.id}-field-${c.id}`} variant='body2' color='text.secondary'>
-												{c.name}: {c.value}
+												{c.name}: <b>{c.value}</b>
 											</Typography>
 										))}
 										{profile?.enable_lists && (
 											<Stack direction='row' justifyContent='flex-start' useFlexGap flexWrap='wrap' spacing={1} sx={{ mt: 0.5 }}>
 												{item.lists?.map((l) => (
-													<Chip key={`${item.id}-list-${l.list_id}`} label={l.list.name} size='small' />
+													<Chip key={`${item.id}-list-${l.list_id}`} label={l.list.name} size='small' clickable onClick={() => navigate(`/lists/${l.list_id}`)} />
 												))}
 											</Stack>
 										)}
@@ -350,7 +367,7 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 
 												{item.links?.map((link, i) => (
 													<Button key={`${item.id + i}-link-${i}`} href={StandardizeURL(link)} target='_blank' color='info' size='small'>
-														{ExtractDomain(link)}
+														{item.domains?.[i] ?? ExtractDomain(link)}
 													</Button>
 												))}
 											</Stack>
@@ -381,7 +398,7 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 								</Typography>
 								{item.custom_fields?.map((c) => (
 									<Typography key={`${item.id}-field-${c.id}`} variant='body2' color='text.secondary'>
-										{c.name}: {c.value}
+										{c.name}: <b>{c.value}</b>
 									</Typography>
 								))}
 							</Grid>
@@ -394,7 +411,7 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 								<Grid item xs={12}>
 									<Stack direction='row' justifyContent='flex-start' useFlexGap flexWrap='wrap' spacing={1}>
 										{item.lists?.map((l, i) => (
-											<Chip key={`${item.id + i}-list-${l.list_id}`} label={l.list.name} size='small' />
+											<Chip key={`${item.id + i}-list-${l.list_id}`} label={l.list.name} size='small' clickable onClick={() => navigate(`/lists/${l.list_id}`)} />
 										))}
 									</Stack>
 								</Grid>
@@ -407,7 +424,7 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 
 										{item.links?.map((link, i) => (
 											<Button key={`${item.id + i}-link-${i}`} href={StandardizeURL(link)} target='_blank' color='info' size='small'>
-												{ExtractDomain(link)}
+												{item.domains?.[i] ?? ExtractDomain(link)}
 											</Button>
 										))}
 									</Stack>
@@ -416,12 +433,33 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 						</Grid>
 					</CardContent>
 
-					{/* {item.custom_fields && item.custom_fields?.length !== 0 && <CustomFieldExpand handleExpand={handleExpand} expanded={expanded} item={item} />} */}
-
 					<ItemUnassignedAlert open={profile?.enable_lists && item.lists?.length === 0} />
 					<ItemAlert alert={claimError} setAlert={setClaimError} />
 				</Card>
 			</Grid>
+
+			<Dialog
+				maxWidth='md'
+				fullWidth
+				TransitionComponent={Transition}
+				onClose={() => {
+					setDialogPrevImage(dialogImage);
+					setDialogImage(null);
+				}}
+				open={dialogImage !== null}
+			>
+				<Tooltip title='Click to hide image' arrow placement='top'>
+					<img
+						src={dialogImage ?? dialogPrevImage ?? ''}
+						alt='dialog-img'
+						style={{ width: '100%', cursor: 'zoom-out' }}
+						onClick={() => {
+							setDialogPrevImage(dialogImage);
+							setDialogImage(null);
+						}}
+					/>
+				</Tooltip>
+			</Dialog>
 		</>
 	);
 }

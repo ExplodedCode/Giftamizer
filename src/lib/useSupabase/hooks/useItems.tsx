@@ -175,6 +175,9 @@ export const useUpdateItems = () => {
 				};
 			});
 
+			// restore domains from DB
+			item.domains = data.domains;
+
 			return item as ItemType;
 		},
 		{

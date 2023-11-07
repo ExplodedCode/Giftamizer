@@ -28,9 +28,9 @@ import { LockOutlined } from '@mui/icons-material';
 var randomImage = Math.floor(Math.random() * 10) + 1;
 
 export default function SignIn() {
-	const { client } = useSupabase();
+	const { client, setUser } = useSupabase();
 	const { enqueueSnackbar } = useSnackbar();
-	let [searchParams, setSearchParams] = useSearchParams();
+	let [searchParams] = useSearchParams();
 
 	const accessToken = searchParams.get('accessToken');
 	const refreshToken = searchParams.get('refreshToken');
@@ -41,46 +41,52 @@ export default function SignIn() {
 	const [forgotDialogOpen, setForgotDialogOpen] = React.useState(false);
 	const [resetEmail, setResetEmail] = React.useState('');
 
-	const loginWithTokens = async (accessToken: string, refreshToken: string) => {
-		console.log(accessToken, refreshToken);
-
-		const { data, error } = await client.auth.setSession({
-			access_token: accessToken,
-			refresh_token: refreshToken,
-		});
-
-		if (error) {
-			console.error('setSession Error', error);
-			enqueueSnackbar(String(error.message), {
-				variant: 'error',
-			});
-		}
-	};
-
 	React.useEffect(() => {
+		const loginWithTokens = async (accessToken: string, refreshToken: string) => {
+			console.log(accessToken, refreshToken);
+
+			const { error } = await client.auth.setSession({
+				access_token: accessToken,
+				refresh_token: refreshToken,
+			});
+
+			if (error) {
+				console.error('setSession Error', error);
+				enqueueSnackbar(String(error.message), {
+					variant: 'error',
+				});
+			}
+		};
+
 		if (accessToken && refreshToken) {
 			loginWithTokens(accessToken, refreshToken);
 		}
-	}, [client, accessToken, refreshToken]);
+	}, [enqueueSnackbar, client, accessToken, refreshToken]);
 
 	const handleSubmit = async () => {
-		const { error: firebaseAuthError } = await client.functions.invoke('firebase-auth', {
-			body: {
-				email: email,
-				password: password,
-			},
-		});
-		if (firebaseAuthError) {
-			console.log(firebaseAuthError);
-			enqueueSnackbar(String(firebaseAuthError.message), {
-				variant: 'error',
+		if (window.location.hostname.split('.').length === 2) {
+			const { error: firebaseAuthError } = await client.functions.invoke('firebase-auth', {
+				body: {
+					email: email,
+					password: password,
+				},
 			});
+			if (firebaseAuthError) {
+				console.log(firebaseAuthError);
+				enqueueSnackbar(String(firebaseAuthError.message), {
+					variant: 'error',
+				});
+			}
 		}
 
-		const { error } = await client.auth.signInWithPassword({
+		const { error, data } = await client.auth.signInWithPassword({
 			email: email,
 			password: password,
 		});
+
+		if (data.user && setUser) {
+			setUser(data.user);
+		}
 
 		if (error) {
 			enqueueSnackbar(error.message, {

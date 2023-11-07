@@ -3,6 +3,8 @@ import type { SupabaseClient, User } from '@supabase/supabase-js';
 export type SupabaseContextType = {
 	sb: SupabaseClient | null;
 	user: User | null | undefined;
+	setUser: React.Dispatch<React.SetStateAction<User | null | undefined>> | undefined;
+
 	error?: string | null;
 };
 
@@ -41,9 +43,11 @@ export type ProfileType = {
 	last_name: string;
 	image?: string;
 	bio: string;
+	home: string;
 	enable_lists: boolean;
 	enable_archive: boolean;
 	enable_trash: boolean;
+	enable_snowfall: boolean;
 	email_promotional: boolean;
 	email_invites: boolean;
 	avatar_token: number | null;
@@ -78,6 +82,7 @@ export interface ItemType {
 	name: string;
 	description: string;
 	links?: string[];
+	domains?: string[];
 	custom_fields?: CustomField[];
 
 	archived: boolean;
@@ -127,6 +132,7 @@ export interface ListType {
 	user_id: string;
 	name: string;
 	child_list: boolean;
+	pinned?: boolean;
 	image?: string;
 	bio?: string;
 

@@ -72,7 +72,7 @@ export default function Member() {
 											color='secondary'
 											variant='dot'
 											overlap='circular'
-											invisible={!(!showUnavailableItems && items?.filter(filterItems).length !== items?.length && items?.length !== 0)}
+											invisible={!(!showUnavailableItems && items?.filter((i) => !i.archived && !i.deleted)?.filter(filterItems).length !== items?.length && items?.length !== 0)}
 										>
 											<FilterAlt />
 										</Badge>
@@ -116,12 +116,15 @@ export default function Member() {
 
 							<Container sx={{ paddingTop: 2, paddingBottom: 12 }}>
 								<Grid container spacing={2}>
-									{items?.filter(filterItems).map((item, index) => (
-										// TODO: Change ItemCard to Renderer function to allow Grow transition/animation
-										<ItemCard key={item.id} item={item} />
-									))}
+									{items
+										?.filter((i) => !i.archived && !i.deleted)
+										?.filter(filterItems)
+										.map((item, index) => (
+											// TODO: Change ItemCard to Renderer function to allow Grow transition/animation
+											<ItemCard key={item.id} item={item} />
+										))}
 
-									{items?.filter(filterItems).length === 0 && (
+									{items?.filter((i) => !i.archived && !i.deleted)?.filter(filterItems).length === 0 && (
 										<Box style={{ marginTop: 100, textAlign: 'center', width: '100%' }}>
 											<Typography variant='h5' gutterBottom>
 												No {items?.length !== 0 ? 'available ' : ''}items are shared with this group.

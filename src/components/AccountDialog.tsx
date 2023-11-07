@@ -35,6 +35,7 @@ import { useGetProfile, useSupabase, useUpdateProfile } from '../lib/useSupabase
 import EmailEditor from './EmailEditor';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import ImageCropper from './ImageCropper';
+import HomeSelector from './HomeSelector';
 
 const Transition = React.forwardRef(function Transition(
 	props: TransitionProps & {
@@ -69,10 +70,13 @@ export default function AccountDialog(props: AccountDialogProps) {
 	const [lastName, setLastName] = React.useState('');
 	const [image, setImage] = React.useState<string | undefined>();
 	const [bio, setBio] = React.useState('');
+	const [home, setHome] = React.useState('/');
 
 	const [enableLists, setEnableLists] = React.useState(false);
 	const [enableArchive, setEnableArchive] = React.useState(false);
 	const [enableTrash, setEnableTrash] = React.useState(false);
+
+	const [enableSnowFall, setEnableSnowFall] = React.useState(false);
 
 	const [emailPromotional, setEmailPromotional] = React.useState(false);
 	const [emailInvites, setEmailInvites] = React.useState(false);
@@ -88,9 +92,14 @@ export default function AccountDialog(props: AccountDialogProps) {
 				setLastName(profile.last_name);
 				setImage(profile.image);
 				setBio(profile.bio);
+				setHome(profile.home);
+
 				setEnableLists(profile.enable_lists);
 				setEnableArchive(profile.enable_archive);
 				setEnableTrash(profile.enable_trash);
+
+				setEnableSnowFall(profile.enable_snowfall);
+
 				setEmailPromotional(profile.email_promotional);
 				setEmailInvites(profile.email_invites);
 			}
@@ -129,9 +138,11 @@ export default function AccountDialog(props: AccountDialogProps) {
 				last_name: lastName,
 				image: image,
 				bio: bio,
+				home: home,
 				enable_lists: enableLists,
 				enable_archive: enableArchive,
 				enable_trash: enableTrash,
+				enable_snowfall: enableSnowFall,
 				email_promotional: emailPromotional,
 				email_invites: emailInvites,
 				avatar_token: profile?.avatar_token!,
@@ -182,7 +193,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 			</MenuItem>
 
 			<Dialog onKeyDown={(e) => e.stopPropagation()} fullScreen open={open} onClose={handleClose} TransitionComponent={Transition}>
-				<AppBar sx={{ position: 'relative' }} enableColorOnDark>
+				<AppBar position='fixed' color='primary' enableColorOnDark sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
 					<Toolbar>
 						<IconButton edge='start' color='inherit' onClick={handleClose} aria-label='close'>
 							<Close />
@@ -195,6 +206,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 						</IconButton>
 					</Toolbar>
 				</AppBar>
+				<Toolbar />
 				<Container maxWidth='md' sx={{ mt: 6, mb: 4 }}>
 					<Grid container spacing={2}>
 						<Grid item xs={12}>
@@ -202,10 +214,14 @@ export default function AccountDialog(props: AccountDialogProps) {
 							<Typography variant='h6' gutterBottom>
 								Account Settings
 							</Typography>
-							<TextField fullWidth label='First Name' variant='outlined' value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-						</Grid>
-						<Grid item xs={6}>
-							<TextField fullWidth label='Last Name' variant='outlined' value={lastName} onChange={(e) => setLastName(e.target.value)} />
+							<Grid container spacing={2}>
+								<Grid item xs={12} sm={6}>
+									<TextField fullWidth label='First Name' variant='outlined' value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+								</Grid>
+								<Grid item xs={12} sm={6}>
+									<TextField fullWidth label='Last Name' variant='outlined' value={lastName} onChange={(e) => setLastName(e.target.value)} />
+								</Grid>
+							</Grid>
 						</Grid>
 						<Grid item xs={12}>
 							<TextField
@@ -238,7 +254,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 							</Typography>
 							<FormControl component='fieldset' variant='standard'>
 								<FormGroup>
-									<FormControlLabel control={<Switch checked={enableLists} onChange={(e) => setEnableLists(e.target.checked)} />} label='Enable Lists' />
+									<FormControlLabel control={<Switch checked={enableLists} onChange={(e) => setEnableLists(e.target.checked)} />} label='Lists' />
 									<FormHelperText>
 										Allows you to create item lists and assign them to groups. <i>Even create seperate managed lists for your kids or pets</i>
 									</FormHelperText>
@@ -248,7 +264,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 						<Grid item xs={12}>
 							<FormControl component='fieldset' variant='standard'>
 								<FormGroup>
-									<FormControlLabel control={<Switch checked={enableTrash} onChange={(e) => setEnableTrash(e.target.checked)} />} label='Enable Trash Can' />
+									<FormControlLabel control={<Switch checked={enableTrash} onChange={(e) => setEnableTrash(e.target.checked)} />} label='Trash Can' />
 									<FormHelperText>Recover deleted items</FormHelperText>
 								</FormGroup>
 							</FormControl>
@@ -256,11 +272,25 @@ export default function AccountDialog(props: AccountDialogProps) {
 						<Grid item xs={12}>
 							<FormControl component='fieldset' variant='standard'>
 								<FormGroup>
-									<FormControlLabel control={<Switch checked={enableArchive} onChange={(e) => setEnableArchive(e.target.checked)} />} label='Enable Item Archive' />
+									<FormControlLabel control={<Switch checked={enableArchive} onChange={(e) => setEnableArchive(e.target.checked)} />} label='Item Archive' />
 									<FormHelperText>Hide items from groups without deleting them.</FormHelperText>
 								</FormGroup>
 							</FormControl>
 						</Grid>
+						<Grid item xs={12}>
+							<HomeSelector value={home} onChange={setHome} />
+						</Grid>
+
+						{(new Date().getMonth() === 10 || new Date().getMonth() === 11 || new Date().getMonth() === 0) && (
+							<Grid item xs={12}>
+								<FormControl component='fieldset' variant='standard'>
+									<FormGroup>
+										<FormControlLabel control={<Switch checked={enableSnowFall} onChange={(e) => setEnableSnowFall(e.target.checked)} />} label='Snow Fall ❄️' />
+										<FormHelperText>Only available Nov-Jan.</FormHelperText>
+									</FormGroup>
+								</FormControl>
+							</Grid>
+						)}
 
 						<Grid item xs={12}>
 							<Divider />
@@ -305,7 +335,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 													Your account is currently an owner of {groupsWithoutCoOwner.length > 1 ? 'these groups' : 'this group'}:{' '}
 													{groupsWithoutCoOwner.map((g, i) => (
 														<React.Fragment key={i}>
-															<MUILink component={Link} to={`/groups/${g.id}`} onClick={handleClose}>
+															<MUILink component={Link} to={`/groups/${g.id}#group-settings`} onClick={handleClose}>
 																{g.name}
 															</MUILink>
 															{i !== groupsWithoutCoOwner.length - 1 && ', '}
