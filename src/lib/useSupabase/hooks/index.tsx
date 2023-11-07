@@ -16,8 +16,11 @@ export function ExtractDomain(url: string) {
 		domain = url.split('/')[0];
 	}
 
-	//find & remove port number
+	// find & remove port number
 	domain = domain.split(':')[0];
+
+	// find & other
+	domain = domain.split('?')[0];
 
 	// amazon short links
 	if (domain === 'a.co' || domain === 'amzn.to') domain = 'amazon.com';
@@ -31,8 +34,10 @@ export function StandardizeURL(url: string) {
 }
 
 export function ExtractURLFromText(text: string) {
-	const urlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/;
-	return text.match(urlRegex)?.[0] ?? text;
+	return text
+		.replace(/\n/g, ' ')
+		.split(' ')
+		.filter((u) => u.startsWith('http'));
 }
 
 export function FakeDelay(time?: number) {

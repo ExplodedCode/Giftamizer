@@ -67,7 +67,7 @@ export default function CreateList() {
 				<DialogContent>
 					<Grid container spacing={2}>
 						<Grid item xs={12}>
-							<DialogContentText>TODO: describe what lists do...</DialogContentText>
+							<DialogContentText>Organize your wishlist into categories, making it easier for others to find the perfect gift for you.</DialogContentText>
 						</Grid>
 						{childList && (
 							<Grid item xs={12}>

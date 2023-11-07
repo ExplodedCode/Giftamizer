@@ -14,7 +14,7 @@ var randomImage = Math.floor(Math.random() * 10) + 1;
 const steps = ['Account', 'Profile', 'Confirm'];
 
 export default function SignUp() {
-	const { client } = useSupabase();
+	const { client, setUser } = useSupabase();
 	const { enqueueSnackbar } = useSnackbar();
 
 	const [activeStep, setActiveStep] = React.useState(0);
@@ -26,7 +26,7 @@ export default function SignUp() {
 	const [password, setPassword] = React.useState('');
 
 	const handleSubmit = async () => {
-		const { error } = await client.auth.signUp({
+		const { error, data } = await client.auth.signUp({
 			email: email,
 			password: password,
 			options: {
@@ -37,6 +37,10 @@ export default function SignUp() {
 				},
 			},
 		});
+
+		if (data.user && setUser) {
+			setUser(data.user);
+		}
 
 		if (error) {
 			console.log(error);

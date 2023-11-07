@@ -21,7 +21,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsConditions from './pages/TermsConditions';
 import Member from './pages/Member';
 import ListItems from './pages/ListItems';
-import { UserRoles } from './lib/useSupabase/types';
+import { ProfileType, UserRoles } from './lib/useSupabase/types';
 import ShoppingList from './pages/ShoppingList';
 import ItemArchive from './pages/ItemArchive';
 import ItemsTrash from './pages/ItemsTrash';
@@ -30,7 +30,9 @@ export default function AppRoutes() {
 	const location = useLocation();
 	const { enqueueSnackbar } = useSnackbar();
 
-	const { user } = useSupabase();
+	const { user, client } = useSupabase();
+
+	const [home, setHome] = React.useState('/');
 
 	const [redirect, setRedirct] = React.useState<string>('/');
 
@@ -42,6 +44,19 @@ export default function AppRoutes() {
 			});
 		}
 	}, [enqueueSnackbar, location.hash]);
+
+	React.useEffect(() => {
+		const getHomePage = async () => {
+			const { data, error } = await client.from('profiles').select('home').eq('user_id', user.id).single();
+			if (error) throw error;
+			var profile = data as unknown as ProfileType;
+
+			setHome(profile.home);
+		};
+		if (user?.id) {
+			getHomePage();
+		}
+	}, [client, user]);
 
 	return (
 		<>
@@ -56,6 +71,23 @@ export default function AppRoutes() {
 							path='/'
 							element={
 								user ? (
+									home === '/' ? (
+										<ProtectedRoute setRedirct={setRedirct}>
+											<Items />
+										</ProtectedRoute>
+									) : (
+										<Navigate to={home} />
+									)
+								) : (
+									<Landing />
+								)
+							}
+						/>
+
+						<Route
+							path='/items'
+							element={
+								user ? (
 									<ProtectedRoute setRedirct={setRedirct}>
 										<Items />
 									</ProtectedRoute>
@@ -64,6 +96,7 @@ export default function AppRoutes() {
 								)
 							}
 						/>
+
 						<Route path='/policy' element={<PrivacyPolicy />} />
 						<Route path='/terms' element={<TermsConditions />} />
 
@@ -103,6 +136,15 @@ export default function AppRoutes() {
 						/>
 
 						<Route path='/gift' element={<Navigate to={redirect} />} />
+
+						<Route
+							path='/Items'
+							element={
+								<ProtectedRoute setRedirct={setRedirct}>
+									<Lists />
+								</ProtectedRoute>
+							}
+						/>
 
 						<Route
 							path='/lists'
@@ -274,7 +316,7 @@ export function getParamsFromUrl(url: string) {
 		let eachParamsArr = params[1].split('&');
 		let obj: any = {};
 		if (eachParamsArr && eachParamsArr.length) {
-			eachParamsArr.map((param) => {
+			eachParamsArr.forEach((param) => {
 				let keyValuePair = param.split('=');
 				let key = keyValuePair[0];
 				let value = keyValuePair[1];

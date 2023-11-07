@@ -45,7 +45,8 @@ export const useGetGroups = () => {
 					image_token,
 					my_membership:group_members!inner(*)`
 				)
-				.eq('my_membership.user_id', user.id);
+				.eq('my_membership.user_id', user.id)
+				.order('name', { ascending: true });
 			if (error) throw error;
 
 			return data.map((g) => {

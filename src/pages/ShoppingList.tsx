@@ -49,18 +49,21 @@ export default function ShoppingList() {
 
 			<Container sx={{ paddingTop: 2, paddingBottom: 12 }}>
 				<Grid container spacing={2}>
-					{items?.filter(filterItems).map((item, index) => (
-						// TODO: Change ItemCard to Renderer function to allow Grow transition/animation
-						<ItemCard key={item.id} item={item} />
-					))}
+					{items
+						?.filter((i) => !i.archived && !i.deleted)
+						?.filter(filterItems)
+						.map((item, index) => (
+							// TODO: Change ItemCard to Renderer function to allow Grow transition/animation
+							<ItemCard key={item.id} item={item} />
+						))}
 
-					{items?.filter(filterItems).length === 0 && (
+					{items?.filter((i) => !i.archived && !i.deleted)?.filter(filterItems).length === 0 && (
 						<Box style={{ marginTop: 100, textAlign: 'center', width: '100%' }}>
 							<Typography variant='h5' gutterBottom>
 								Your shopping list is empty!
 							</Typography>
 							<Typography variant='body1' gutterBottom>
-								Get some gifts for your friends and family!
+								Mark items as planned to keep track of what to get for your friends and family.
 							</Typography>
 						</Box>
 					)}

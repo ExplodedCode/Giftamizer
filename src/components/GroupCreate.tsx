@@ -50,7 +50,7 @@ export default function GroupCreate() {
 				<DialogContent>
 					<Grid container spacing={2}>
 						<Grid item xs={12}>
-							<DialogContentText>TODO: describe what groups do...</DialogContentText>
+							<DialogContentText>Share your gift lists with your friends and family.</DialogContentText>
 						</Grid>
 						<Grid item xs={12}>
 							<ImageCropper value={image} onChange={setImage} aspectRatio={1} />
@@ -64,7 +64,7 @@ export default function GroupCreate() {
 									Cancel
 								</Button>
 
-								<LoadingButton onClick={handleCreate} endIcon={<Add />} loading={createGroup.isLoading} loadingPosition='end' variant='contained'>
+								<LoadingButton onClick={handleCreate} endIcon={<Add />} loading={createGroup.isLoading} disabled={name.length <= 0} loadingPosition='end' variant='contained'>
 									Create
 								</LoadingButton>
 							</Stack>

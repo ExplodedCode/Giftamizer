@@ -109,8 +109,13 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 
 		if (error) {
 			console.log(error);
-			enqueueSnackbar(`Unable to get metadata.`, {
+			enqueueSnackbar(`Unable to get item information.`, {
 				variant: 'error',
+			});
+			setMetaloading(false);
+		} else if (data.name === '' && data.description === '' && data.image === null) {
+			enqueueSnackbar(`No item information found.`, {
+				variant: 'warning',
 			});
 			setMetaloading(false);
 		} else {
@@ -128,7 +133,7 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 			<DialogContent>
 				<Grid container spacing={2}>
 					<Grid item xs={12}>
-						<DialogContentText>TODO: describe what items do...</DialogContentText>
+						<DialogContentText>Add items you'd love to receive, whether it's your favorite products, experiences, or anything else you desire.</DialogContentText>
 					</Grid>
 					<Grid item xs={12}>
 						<ImageCropper value={image} onChange={setImage} square importedImage={metaImage} />
@@ -146,15 +151,32 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 								<OutlinedInput
 									value={link}
 									onChange={(e) => {
-										setLinks(links.map((l, i) => (i === index ? ExtractURLFromText(e.target.value) : l)));
-									}}
-									onPaste={(e) => {
-										const urlQuery = e.clipboardData.getData('Text');
-										if (index === 0 && urlQuery.length > 0) {
+										let value = e.target.value;
+										setLinks(links.map((l, i) => (i === index ? value : l)));
+
+										// @ts-ignore
+										if (e.nativeEvent.inputType === 'insertFromPaste' && index === 0 && value.startsWith('http')) {
 											setMetaloading(true);
-											getUrlMetadata(ExtractURLFromText(urlQuery));
+											getUrlMetadata(value);
 										}
 									}}
+									// onPaste={(e) => {
+									// 	const urlQuery = e.clipboardData.getData('Text');
+
+									// 	if (index === 0) {
+									// 		let urls = ExtractURLFromText(urlQuery)
+									// 			.concat(links)
+									// 			.filter((u) => u.trim().length > 0);
+
+									// 		if (links[0].length === 0) {
+									// 			setLinks(urls);
+									// 			if (index === 0 && urls[0].startsWith('http')) {
+									// 				setMetaloading(true);
+									// 				getUrlMetadata(urls[0]);
+									// 			}
+									// 		}
+									// 	}
+									// }}
 									endAdornment={
 										<InputAdornment position='end'>
 											<Tooltip title={index === 0 ? 'Add another URL' : 'Remove URL'} placement='left'>
