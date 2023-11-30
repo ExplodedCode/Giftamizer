@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { useSnackbar } from 'notistack';
 import { TransitionProps } from '@mui/material/transitions';
-import { Close, Person, Save } from '@mui/icons-material';
+import { Close, Save, Settings } from '@mui/icons-material';
 
 import {
 	Alert,
@@ -31,7 +31,8 @@ import {
 	FormHelperText,
 	Switch,
 } from '@mui/material';
-import { useGetProfile, useSupabase, useUpdateProfile } from '../lib/useSupabase';
+
+import { useGetProfile, useGetTour, useSupabase, useUpdateProfile, useUpdateTour } from '../lib/useSupabase';
 import EmailEditor from './EmailEditor';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import ImageCropper from './ImageCropper';
@@ -85,6 +86,11 @@ export default function AccountDialog(props: AccountDialogProps) {
 
 	const deleteOpen = location.hash === '#my-account-delete';
 
+	//
+	// User tour
+	const { data: tour } = useGetTour();
+	const updateTour = useUpdateTour();
+
 	React.useEffect(() => {
 		const loadProfile = async () => {
 			if (profile) {
@@ -132,6 +138,8 @@ export default function AccountDialog(props: AccountDialogProps) {
 
 	const updateProfile = useUpdateProfile();
 	const handleSave = async () => {
+		const listsOrig = profile?.enable_lists;
+
 		updateProfile
 			.mutateAsync({
 				first_name: firstName,
@@ -149,6 +157,17 @@ export default function AccountDialog(props: AccountDialogProps) {
 			})
 			.then(() => {
 				navigate('#'); // close dialog
+
+				if (listsOrig !== enableLists && enableLists) {
+					updateTour.mutateAsync({
+						list_tour_start: true,
+					});
+				}
+
+				// navigate away from lists if active page
+				if (!enableLists && location.pathname.startsWith('/lists')) {
+					navigate('/');
+				}
 			})
 			.catch((error) => {
 				enqueueSnackbar(`Unable to update your profile. ${error}`, {
@@ -187,9 +206,9 @@ export default function AccountDialog(props: AccountDialogProps) {
 		<>
 			<MenuItem onClick={handleClickOpen}>
 				<ListItemIcon>
-					<Person fontSize='small' />
+					<Settings fontSize='small' />
 				</ListItemIcon>
-				<Typography textAlign='center'>My Account</Typography>
+				<Typography textAlign='center'>User Settings</Typography>
 			</MenuItem>
 
 			<Dialog onKeyDown={(e) => e.stopPropagation()} fullScreen open={open} onClose={handleClose} TransitionComponent={Transition}>
@@ -238,6 +257,10 @@ export default function AccountDialog(props: AccountDialogProps) {
 							/>
 						</Grid>
 
+						<Grid item xs={12}>
+							<HomeSelector value={home} onChange={setHome} />
+						</Grid>
+
 						{user.app_metadata.provider === 'email' && (
 							<Grid item xs={12}>
 								<EmailEditor />
@@ -276,9 +299,6 @@ export default function AccountDialog(props: AccountDialogProps) {
 									<FormHelperText>Hide items from groups without deleting them.</FormHelperText>
 								</FormGroup>
 							</FormControl>
-						</Grid>
-						<Grid item xs={12}>
-							<HomeSelector value={home} onChange={setHome} />
 						</Grid>
 
 						{(new Date().getMonth() === 10 || new Date().getMonth() === 11 || new Date().getMonth() === 0) && (
@@ -376,6 +396,58 @@ export default function AccountDialog(props: AccountDialogProps) {
 							<Typography variant='body1'>
 								If you're experiencing any issues or just have a question, please contact us at <MUILink href='mailto:support@giftamizer.com'>support@giftamizer.com</MUILink>.
 							</Typography>
+						</Grid>
+
+						<Grid item xs={12}>
+							<MUILink
+								sx={{
+									cursor: 'pointer',
+								}}
+								onClick={() => {
+									updateTour.mutateAsync({
+										item_create_fab: false,
+										item_name: false,
+										item_url: false,
+										item_more_links: false,
+										item_custom_fields: false,
+										item_image: false,
+										item_create_btn: false,
+
+										group_invite_nav: false,
+										group_invite_button: false,
+
+										group_nav: false,
+										group_create_fab: false,
+										group_create_name: false,
+										group_create_image: false,
+										group_create: false,
+										group_card: false,
+										group_settings: false,
+										group_pin: false,
+										group_member_card: false,
+										group_member_item_status: false,
+										group_member_item_status_taken: false,
+										group_member_item_filter: false,
+
+										group_settings_add_people: false,
+										group_settings_permissions: false,
+
+										list_tour_start: false,
+										list_nav: false,
+										list_intro: false,
+										list_menu: false,
+										list_edit: false,
+										list_group_assign: false,
+
+										shopping_nav: false,
+										shopping_filter: false,
+									});
+
+									navigate('/');
+								}}
+							>
+								Reset User Tour
+							</MUILink>
 						</Grid>
 					</Grid>
 				</Container>

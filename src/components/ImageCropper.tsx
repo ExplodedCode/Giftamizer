@@ -16,14 +16,17 @@ export async function dataUrlToFile(dataUrl: string, fileName: string): Promise<
 type ImageCropperProps = {
 	value?: string | undefined;
 	onChange?: (value: string | undefined) => void;
+	onClick?: () => void;
+	onClose?: () => void;
 	disabled?: boolean;
 	aspectRatio?: number;
 	autoCropArea?: number;
 	square?: boolean;
 	importedImage?: string | undefined;
+	tour_element?: string;
 };
 
-export default function ImageCropper({ value, onChange, disabled, aspectRatio, autoCropArea, square, importedImage }: ImageCropperProps) {
+export default function ImageCropper({ value, onChange, onClick, onClose, disabled, aspectRatio, autoCropArea, square, importedImage, tour_element }: ImageCropperProps) {
 	const cropperRef = React.useRef(null);
 
 	const [open, setOpen] = React.useState(false);
@@ -59,10 +62,14 @@ export default function ImageCropper({ value, onChange, disabled, aspectRatio, a
 	};
 
 	const handleClose = async () => {
+		if (onClose) onClose();
+
 		setOpen(false);
 	};
 
 	const handleOpen = async () => {
+		if (onClick) onClick();
+
 		setSelectedImage(selectedimage ? selectedimage : typeof value === 'string' ? value : '');
 		setImageLoaded(selectedimage.length > 0);
 
@@ -79,7 +86,7 @@ export default function ImageCropper({ value, onChange, disabled, aspectRatio, a
 
 	return (
 		<>
-			<IconButton onClick={handleOpen} disabled={disabled} sx={{ borderRadius: square ? 2 : 'inherited' }}>
+			<IconButton tour-element={tour_element ?? undefined} onClick={handleOpen} disabled={disabled} sx={{ borderRadius: square ? 2 : 'inherited' }}>
 				<Avatar children={<AddPhotoAlternateOutlined sx={{ fontSize: 128 }} />} src={value} sx={{ height: 196, width: 196, borderRadius: square ? 2 : 'inherited' }} />
 			</IconButton>
 

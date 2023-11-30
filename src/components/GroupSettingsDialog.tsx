@@ -3,8 +3,21 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { useSupabase, SUPABASE_URL, useDeleteGroup, useGetGroupMembers, GROUPS_QUERY_KEY, useUpdateGroup, useInviteToGroup, useGetProfile, useLeaveGroup } from '../lib/useSupabase';
-import { GroupType, Member, Profile } from '../lib/useSupabase/types';
+import {
+	useSupabase,
+	SUPABASE_URL,
+	useDeleteGroup,
+	useGetGroupMembers,
+	GROUPS_QUERY_KEY,
+	useUpdateGroup,
+	useInviteToGroup,
+	useGetProfile,
+	useLeaveGroup,
+	useGetTour,
+	useUpdateTour,
+	groupSettingsTourProgress,
+} from '../lib/useSupabase';
+import { GroupType, Member, Profile, SecretSanta, SecretSantaStatus } from '../lib/useSupabase/types';
 import { TransitionGroup } from 'react-transition-group';
 
 import Collapse from '@mui/material/Collapse';
@@ -38,6 +51,7 @@ import { Delete, DeleteForever, Email, EscalatorWarning, Logout, Save, Send, Set
 
 import UserSearch from './UserSearch';
 import ImageCropper from './ImageCropper';
+import TourTooltip from './TourTooltip';
 
 interface RenderItemOptionsProps {
 	member: Member;
@@ -133,11 +147,14 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 	const [name, setName] = React.useState('');
 	const [image, setImage] = React.useState<string | undefined>();
 
+	const [secretSanta, setSecretSanta] = React.useState<SecretSanta>();
+
 	const [selectedInviteUsers, setSelectedInviteUsers] = React.useState<Profile[]>([]);
 	const [inviteUsersOwner, setInviteUsersOwner] = React.useState(false);
 
 	const confirmLeaveOpen = location.hash === '#group-settings-leave';
 	const confirmDeleteOpen = location.hash === '#group-settings-delete';
+	const confirmSecretSantaOpen = location.hash === '#group-settings-secret-santa';
 
 	const [stateUpdater, setStateUpdater] = React.useState('');
 
@@ -180,12 +197,28 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 	const handleOpen = async () => {
 		setName(group.name);
 		setImage(group.image);
+
+		setSecretSanta(group.secret_santa);
+
 		navigate('#group-settings'); // open dialog
+
+		if (!tour?.group_settings) {
+			updateTour.mutateAsync({
+				group_settings: true,
+			});
+		}
 	};
 
 	React.useEffect(() => {
 		setName(group.name);
 		setImage(group.image);
+
+		setSecretSanta(group.secret_santa);
+
+		if (!open) setTourStart(false);
+		setTimeout(() => {
+			if (open) setTourStart(true);
+		}, 250);
 	}, [group, open]);
 
 	const handleClose = async () => {
@@ -193,6 +226,14 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 
 		setSelectedInviteUsers([]);
 		if (changed) refetchMembers();
+
+		if (!tour?.group_settings || !tour?.group_settings_add_people || !tour?.group_settings_permissions) {
+			updateTour.mutateAsync({
+				group_settings: true,
+				group_settings_add_people: true,
+				group_settings_permissions: true,
+			});
+		}
 	};
 
 	const handleLeaveOpen = () => {
@@ -231,16 +272,67 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 			});
 	};
 
+	const handleSecretSantaOpen = () => {
+		navigate('#group-settings-secret-santa'); // open dialog
+	};
+	const handleSecretSantaClose = () => {
+		navigate('#group-settings'); // close dialog
+	};
+	const handleSecretSantaRemove = async () => {
+		await updateGroup
+			.mutateAsync({
+				group: {
+					...group,
+					secret_santa: {
+						status: SecretSantaStatus.Off,
+					},
+				},
+			})
+			.then(() => {
+				navigate('#'); // close dialog
+			})
+			.catch((err) => {
+				enqueueSnackbar(`Unable to update group! ${err.message}`, { variant: 'error' });
+			});
+	};
+
+	const handleSecretSantaEnable = async () => {
+		await updateGroup
+			.mutateAsync({
+				group: {
+					...group,
+					secret_santa: {
+						status: SecretSantaStatus.Init,
+					},
+				},
+			})
+			.then(() => {
+				navigate('#secret-santa');
+			})
+			.catch((err) => {
+				enqueueSnackbar(`Unable to update group! ${err.message}`, { variant: 'error' });
+			});
+	};
+
 	const changed = name !== group.name || image !== group.image || stateUpdater !== '';
+
+	//
+	// User tour
+	const { data: tour } = useGetTour();
+	const updateTour = useUpdateTour();
+	const [tourStart, setTourStart] = React.useState(false);
 
 	return (
 		<>
-			<Button variant='outlined' color='primary' size='small' sx={{ display: { xs: 'none', sm: 'flex' } }} onClick={handleOpen}>
-				Manage
-			</Button>
-			<IconButton sx={{ display: { xs: 'flex', sm: 'none' } }} onClick={handleOpen}>
-				<Settings />
-			</IconButton>
+			{useMediaQuery(theme.breakpoints.up('md')) ? (
+				<Button tour-element='group_settings' variant='outlined' color='primary' size='small' onClick={handleOpen}>
+					Manage
+				</Button>
+			) : (
+				<IconButton tour-element='group_settings' onClick={handleOpen}>
+					<Settings />
+				</IconButton>
+			)}
 
 			<Dialog open={open} onClose={handleClose} fullWidth maxWidth='sm' fullScreen={useMediaQuery(theme.breakpoints.down('md'))}>
 				<DialogTitle>Group Settings</DialogTitle>
@@ -262,13 +354,21 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 											<UserSearch selectedInviteUsers={selectedInviteUsers} setSelectedInviteUsers={setSelectedInviteUsers} members={members!} disabled={!owner} />
 										</Grid>
 										<Grid item>
-											<FormControl fullWidth>
+											<FormControl fullWidth tour-element='group_settings_permissions'>
 												<Select value={inviteUsersOwner ? 1 : 0} onChange={(e) => setInviteUsersOwner(e.target.value === 1 ? true : false)} disabled={!owner}>
 													<MenuItem value={0}>Member</MenuItem>
 													<MenuItem value={1}>Owner</MenuItem>
 												</Select>
 											</FormControl>
 										</Grid>
+
+										{secretSanta?.status === SecretSantaStatus.Off && (
+											<Grid item xs={12}>
+												<Button variant='contained' disabled={changed} onClick={handleSecretSantaEnable}>
+													Enable Secret Santa
+												</Button>
+											</Grid>
+										)}
 									</>
 								)}
 
@@ -317,7 +417,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 						<Grid item xs={12}>
 							<Grid container spacing={2}>
 								<Grid item xs>
-									<Stack direction='row' spacing={1}>
+									<Stack direction='row' spacing={1} useFlexGap flexWrap='wrap'>
 										{owner && (
 											<LoadingButton onClick={handleDeleteOpen} endIcon={<Delete />} loading={membersLoading} loadingPosition='end' variant='contained' color='error'>
 												Delete
@@ -328,6 +428,14 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 											<LoadingButton onClick={handleLeaveOpen} endIcon={<Logout />} loading={leaveGroup.isLoading} loadingPosition='end' variant='contained' color='error'>
 												Leave Group
 											</LoadingButton>
+										)}
+
+										{secretSanta?.status === SecretSantaStatus.On && owner && (
+											<Grid item xs={12}>
+												<Button onClick={handleSecretSantaOpen} variant='contained' color='error' endIcon={<Delete />} disabled={changed}>
+													Secret Santa
+												</Button>
+											</Grid>
 										)}
 									</Stack>
 								</Grid>
@@ -401,6 +509,91 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 					</LoadingButton>
 				</DialogActions>
 			</Dialog>
+
+			<Dialog open={confirmSecretSantaOpen} onClose={handleSecretSantaClose}>
+				<DialogTitle>Remove Secret Santa from the group?</DialogTitle>
+				<DialogContent>
+					<DialogContentText>
+						Are you sure you want to secret santa this group?
+						<br />
+						<br />
+						This effects to all group members.
+					</DialogContentText>
+				</DialogContent>
+				<DialogActions>
+					<Button color='inherit' onClick={handleSecretSantaClose}>
+						Cancel
+					</Button>
+					<LoadingButton onClick={() => handleSecretSantaRemove()} endIcon={<Delete />} color='error' loading={leaveGroup.isLoading} loadingPosition='end' variant='contained'>
+						Remove
+					</LoadingButton>
+				</DialogActions>
+			</Dialog>
+
+			{tour && tourStart && (
+				<>
+					<TourTooltip
+						open={groupSettingsTourProgress(tour) === 'group_settings_add_people'}
+						anchorEl={document.querySelector('[tour-element="group_settings_add_people"]')}
+						placement='top'
+						content={
+							<>
+								<DialogContent>
+									<Typography>Invite existing Giftamizer users or send anyone an invite via email.</Typography>
+								</DialogContent>
+								<DialogActions>
+									<LoadingButton
+										variant='outlined'
+										color='inherit'
+										onClick={() => {
+											updateTour.mutateAsync({
+												group_settings_add_people: true,
+											});
+										}}
+										loading={updateTour.isLoading}
+									>
+										Next
+									</LoadingButton>
+								</DialogActions>
+							</>
+						}
+						backgroundColor={theme.palette.primary.main}
+						color={theme.palette.primary.contrastText}
+						mask
+					/>
+
+					<TourTooltip
+						open={groupSettingsTourProgress(tour) === 'group_settings_permissions'}
+						anchorEl={document.querySelector('[tour-element="group_settings_permissions"]')}
+						placement='top'
+						content={
+							<>
+								<DialogContent sx={{ p: 1.5 }}>
+									<Typography gutterBottom>Members can only view other member and either items.</Typography>
+									<Typography>Owners can manage groups settings and members.</Typography>
+								</DialogContent>
+								<DialogActions>
+									<LoadingButton
+										variant='outlined'
+										color='inherit'
+										onClick={() => {
+											updateTour.mutateAsync({
+												group_settings_permissions: true,
+											});
+										}}
+										loading={updateTour.isLoading}
+									>
+										Got it
+									</LoadingButton>
+								</DialogActions>
+							</>
+						}
+						backgroundColor={theme.palette.primary.main}
+						color={theme.palette.primary.contrastText}
+						mask
+					/>
+				</>
+			)}
 		</>
 	);
 }

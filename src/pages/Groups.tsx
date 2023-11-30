@@ -1,24 +1,58 @@
 import React from 'react';
 
-import { Link, NavigateFunction, useNavigate, useParams } from 'react-router-dom';
+import { Link, NavigateFunction, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { UseMutationResult } from '@tanstack/react-query';
 import { TransitionGroup } from 'react-transition-group';
 
-import { useGetGroups } from '../lib/useSupabase';
-import { GroupType } from '../lib/useSupabase/types';
+import { groupTourProgress, useGetGroups, useGetTour, useUpdateTour } from '../lib/useSupabase';
+import { GroupType, TourSteps } from '../lib/useSupabase/types';
 
-import { Container, Card, CardActionArea, CardContent, CardMedia, Grid, Typography, AppBar, Breadcrumbs, Link as MUILink, Toolbar, Grow, Box, CircularProgress } from '@mui/material';
+import {
+	Container,
+	Card,
+	CardActionArea,
+	CardContent,
+	CardMedia,
+	Grid,
+	Typography,
+	AppBar,
+	Breadcrumbs,
+	Link as MUILink,
+	Toolbar,
+	Grow,
+	Box,
+	CircularProgress,
+	DialogActions,
+	DialogTitle,
+	useTheme,
+} from '@mui/material';
 
 import GroupCreate from '../components/GroupCreate';
+import TourTooltip from '../components/TourTooltip';
 
 interface RenderGroupProps {
+	index: number;
 	group: GroupType;
 	navigate: NavigateFunction;
+
+	tour: TourSteps | undefined;
+	updateTour: UseMutationResult<TourSteps, unknown, TourSteps, unknown>;
 }
-function RenderGroup({ group, navigate }: RenderGroupProps) {
+function RenderGroup({ index, group, navigate, tour, updateTour }: RenderGroupProps) {
 	return (
-		<Grid key={group.id} item xs sx={{ maxWidth: { xs: '100%', sm: 250 }, margin: 1 }}>
+		<Grid tour-element={index === 0 ? 'group_card' : undefined} key={group.id} item xs sx={{ maxWidth: { xs: '100%', sm: 250 }, margin: 1 }}>
 			<Card sx={{ height: '100%' }}>
-				<CardActionArea sx={{ height: '100%', display: 'grid', alignItems: 'start' }} onClick={() => navigate(`/groups/${group.id}`)}>
+				<CardActionArea
+					sx={{ height: '100%', display: 'grid', alignItems: 'start' }}
+					onClick={() => {
+						navigate(`/groups/${group.id}`);
+						if (!tour?.group_card) {
+							updateTour.mutateAsync({
+								group_card: true,
+							});
+						}
+					}}
+				>
 					<CardMedia
 						sx={{
 							height: 250,
@@ -46,13 +80,24 @@ function RenderGroup({ group, navigate }: RenderGroupProps) {
 }
 
 export default function Groups() {
-	const { group: groupID, user: userID } = useParams();
+	const theme = useTheme();
+
 	const navigate = useNavigate();
+	const location = useLocation();
+	const { group: groupID, user: userID } = useParams();
+
 	const { data: groups, isLoading } = useGetGroups();
+
+	//
+	// User tour
+	// const addGroupFab = React.useRef(null);
+	const [showTour, setShowTour] = React.useState<boolean>(false);
+	const { data: tour } = useGetTour();
+	const updateTour = useUpdateTour();
 
 	return (
 		<>
-			<AppBar position='static' sx={{ marginBottom: 2, bgcolor: 'background.paper' }}>
+			<AppBar position='static' sx={{ marginBottom: 2 }} color='default'>
 				<Toolbar variant='dense'>
 					<Breadcrumbs aria-label='breadcrumb' sx={{ flexGrow: 1 }}>
 						{!userID && !groupID && <Typography color='text.primary'>Groups</Typography>}
@@ -73,8 +118,16 @@ export default function Groups() {
 					{groups
 						?.filter((g) => !g.my_membership[0].invite)
 						.map((group, index) => (
-							<Grow key={group.id} style={{ transitionDelay: `${index * 25}ms` }}>
-								{RenderGroup({ group: group, navigate: navigate })}
+							<Grow
+								key={group.id}
+								style={{ transitionDelay: `${index * 25}ms` }}
+								addEndListener={() => {
+									setTimeout(() => {
+										setShowTour(true);
+									}, 400);
+								}}
+							>
+								{RenderGroup({ index: index, group: group, navigate: navigate, tour: tour, updateTour: updateTour })}
 							</Grow>
 						))}
 				</TransitionGroup>
@@ -97,6 +150,25 @@ export default function Groups() {
 			</Container>
 
 			<GroupCreate />
+
+			{groups && groups?.filter((g) => g.my_membership[0].invite).length === 0 && showTour && tour && location.hash === '' && (
+				<>
+					<TourTooltip
+						open={groupTourProgress(tour, false) === 'group_card'}
+						anchorEl={document.querySelector('[tour-element="group_card"]')}
+						placement='bottom'
+						content={
+							<>
+								<DialogTitle>Open the Group to view the members!</DialogTitle>
+							</>
+						}
+						backgroundColor={theme.palette.primary.main}
+						color={theme.palette.primary.contrastText}
+						mask
+						allowClick
+					/>
+				</>
+			)}
 		</>
 	);
 }

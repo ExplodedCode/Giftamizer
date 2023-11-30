@@ -4,8 +4,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 
 import {
+	Box,
 	Button,
 	Dialog,
+	DialogActions,
 	DialogContent,
 	DialogContentText,
 	DialogTitle,
@@ -20,17 +22,19 @@ import {
 	Stack,
 	TextField,
 	Tooltip,
+	Typography,
 	useMediaQuery,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import LoadingButton from '@mui/lab/LoadingButton';
 import { Add, AddLink, Delete } from '@mui/icons-material';
 
-import { useSupabase, useCreateItem, useGetProfile, ExtractURLFromText } from '../lib/useSupabase';
+import { useSupabase, useCreateItem, useGetProfile, ExtractURLFromText, useUpdateTour, itemTourProgress, useGetTour, useGetGroups, useGetItems } from '../lib/useSupabase';
 import { CustomField, ListType } from '../lib/useSupabase/types';
 
 import ListSelector from './ListSelector';
 import ImageCropper from './ImageCropper';
+import TourTooltip from './TourTooltip';
 
 interface ItemCreateProps {
 	defaultList?: ListType;
@@ -53,6 +57,7 @@ export default function ItemCreate({ defaultList }: ItemCreateProps) {
 
 	const { client } = useSupabase();
 	const { data: profile } = useGetProfile();
+	const { data: items } = useGetItems();
 	const createItem = useCreateItem();
 
 	const handleCreate = async () => {
@@ -84,6 +89,10 @@ export default function ItemCreate({ defaultList }: ItemCreateProps) {
 		setLists(defaultList ? [defaultList] : []);
 
 		navigate('#'); // close dialog
+
+		if (itemTourProgress(tour ?? {}) !== null) {
+			skipTour();
+		}
 	};
 
 	const [metaImage, setMetaImage] = React.useState<string | undefined>();
@@ -110,9 +119,58 @@ export default function ItemCreate({ defaultList }: ItemCreateProps) {
 		}
 	};
 
+	//
+	// User tour
+	const addItemFab = React.useRef(null);
+	const [fabLoaded, setFabLoaded] = React.useState<boolean>(false);
+	const [dialogOpenedTour, setDialogOpenedTour] = React.useState<boolean>(false);
+	const [imageDialogOpen, setImageDialogOpen] = React.useState<boolean>(false);
+	const { data: tour } = useGetTour();
+	const updateTour = useUpdateTour();
+
+	const skipTour = async () => {
+		updateTour.mutateAsync({
+			item_create_fab: true,
+			item_name: true,
+			item_url: true,
+			item_more_links: true,
+			item_custom_fields: true,
+			item_image: true,
+			item_create_btn: true,
+		});
+	};
+
+	React.useEffect(() => {
+		if (addItemFab.current) setFabLoaded(true);
+	}, [addItemFab]);
+
+	React.useEffect(() => {
+		if (open) {
+			setTimeout(() => {
+				setDialogOpenedTour(true);
+			}, 250);
+		} else {
+			setDialogOpenedTour(false);
+		}
+	}, [open]);
+
 	return (
 		<>
-			<Fab color='primary' aria-label='add' onClick={() => navigate('#create-item')} sx={{ position: 'fixed', bottom: { xs: 64, md: 16 }, right: { xs: 8, md: 16 } }}>
+			<Fab
+				tour-element='item_create_fab'
+				ref={addItemFab}
+				color='primary'
+				aria-label='add'
+				onClick={() => {
+					navigate('#create-item');
+					if (!tour?.item_create_fab) {
+						updateTour.mutateAsync({
+							item_create_fab: true,
+						});
+					}
+				}}
+				sx={{ position: 'fixed', bottom: { xs: 64, md: 16 }, right: { xs: 8, md: 16 } }}
+			>
 				<Add />
 			</Fab>
 
@@ -124,10 +182,36 @@ export default function ItemCreate({ defaultList }: ItemCreateProps) {
 							<DialogContentText>Add items you'd love to receive, whether it's your favorite products, experiences, or anything else you desire.</DialogContentText>
 						</Grid>
 						<Grid item xs={12}>
-							<ImageCropper value={image} onChange={setImage} square importedImage={metaImage} />
+							<ImageCropper
+								onClick={() => {
+									setImageDialogOpen(true);
+									if (!tour?.item_image) {
+										updateTour.mutateAsync({
+											item_image: true,
+										});
+									}
+								}}
+								onClose={() => {
+									setImageDialogOpen(false);
+								}}
+								tour_element='item_image'
+								value={image}
+								onChange={setImage}
+								square
+								importedImage={metaImage}
+							/>
 						</Grid>
 						<Grid item xs={12}>
-							<TextField fullWidth label='Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} autoFocus inputProps={{ maxLength: 100 }} />
+							<TextField
+								tour-element='item_name'
+								fullWidth
+								label='Name'
+								variant='outlined'
+								required
+								value={name}
+								onChange={(e) => setName(e.target.value)}
+								inputProps={{ maxLength: 100 }}
+							/>
 						</Grid>
 						<Grid item xs={12}>
 							<TextField fullWidth label='Description' variant='outlined' value={description} onChange={(e) => setDescription(e.target.value)} inputProps={{ maxLength: 250 }} />
@@ -137,39 +221,36 @@ export default function ItemCreate({ defaultList }: ItemCreateProps) {
 								<FormControl fullWidth variant='outlined'>
 									<InputLabel>URL</InputLabel>
 									<OutlinedInput
+										tour-element='item_url'
 										value={link}
 										onChange={(e) => {
 											let value = e.target.value;
+											let extractedUrl = ExtractURLFromText(value)[0];
+
 											setLinks(links.map((l, i) => (i === index ? value : l)));
 
 											// @ts-ignore
-											if (e.nativeEvent.inputType === 'insertFromPaste' && index === 0 && value.startsWith('http')) {
+											if (e.nativeEvent.inputType === 'insertFromPaste' && index === 0 && extractedUrl.startsWith('http')) {
+												setLinks(links.map((l, i) => (i === index ? extractedUrl : l)));
+
 												setMetaloading(true);
-												getUrlMetadata(value);
+												getUrlMetadata(extractedUrl);
 											}
 										}}
-										// onPaste={(e) => {
-										// 	const urlQuery = e.clipboardData.getData('Text');
-
-										// 	let urls = ExtractURLFromText(urlQuery)
-										// 		.concat(links)
-										// 		.filter((u) => u.trim().length > 0);
-
-										// 	if (links[0].length === 0) {
-										// 		setLinks(urls);
-										// 		if (index === 0 && urls[0].startsWith('http')) {
-										// 			setMetaloading(true);
-										// 			getUrlMetadata(urls[0]);
-										// 		}
-										// 	}
-										// }}
 										endAdornment={
 											<InputAdornment position='end'>
 												<Tooltip title={index === 0 ? 'Add another URL' : 'Remove URL'} placement='left'>
 													<IconButton
+														tour-element='item_more_links'
 														onClick={() => {
 															if (index === 0) {
 																setLinks([...links, '']);
+
+																if (!tour?.item_more_links) {
+																	updateTour.mutateAsync({
+																		item_more_links: true,
+																	});
+																}
 															} else {
 																setLinks(links.filter((l, i) => i !== index));
 															}
@@ -246,11 +327,20 @@ export default function ItemCreate({ defaultList }: ItemCreateProps) {
 								<Grid item xs>
 									<Stack direction='row' justifyContent='flex-start' spacing={2}>
 										<Button
+											tour-element='item_custom_fields'
 											variant='outlined'
 											size='small'
 											color='inherit'
 											startIcon={<Add />}
-											onClick={() => setCustomFields([...customFields, { id: customFields.length, name: '', value: '' }])}
+											onClick={() => {
+												setCustomFields([...customFields, { id: customFields.length, name: '', value: '' }]);
+
+												if (!tour?.item_custom_fields) {
+													updateTour.mutateAsync({
+														item_custom_fields: true,
+													});
+												}
+											}}
 											disabled={customFields.length === 10}
 										>
 											Field
@@ -263,7 +353,15 @@ export default function ItemCreate({ defaultList }: ItemCreateProps) {
 											Cancel
 										</Button>
 
-										<LoadingButton onClick={handleCreate} disabled={name.length === 0} endIcon={<Add />} loading={createItem.isLoading} loadingPosition='end' variant='contained'>
+										<LoadingButton
+											tour-element='item_create_btn'
+											onClick={handleCreate}
+											disabled={name.length === 0}
+											endIcon={<Add />}
+											loading={createItem.isLoading}
+											loadingPosition='end'
+											variant='contained'
+										>
 											Create
 										</LoadingButton>
 									</Stack>
@@ -273,6 +371,244 @@ export default function ItemCreate({ defaultList }: ItemCreateProps) {
 					</Grid>
 				</DialogContent>
 			</Dialog>
+
+			{fabLoaded && !imageDialogOpen && tour && (
+				<>
+					<TourTooltip
+						open={itemTourProgress(tour) === 'item_create_fab' && location.hash === ''}
+						anchorEl={document.querySelector('[tour-element="item_create_fab"]')}
+						placement='top-end'
+						content={
+							<>
+								<DialogTitle>Welcome to Giftamizer!</DialogTitle>
+								<DialogContent>
+									<Typography gutterBottom>{items?.length === 0 && `Let's create your first item! `}By default items are shared to all of your groups.</Typography>
+									{!profile?.enable_lists && (
+										<>
+											<Typography gutterBottom color='grayText'>
+												For more control over who can see specific items, enable lists in the settings.
+											</Typography>
+											<Typography color='grayText'>You can even create separate managed lists for your kids or pets.</Typography>
+										</>
+									)}
+								</DialogContent>
+								<DialogActions sx={{ justifyContent: 'left' }}>
+									<LoadingButton variant='outlined' color='inherit' onClick={skipTour} loading={updateTour.isLoading}>
+										Skip Item Tour
+									</LoadingButton>
+								</DialogActions>
+							</>
+						}
+						mask
+						allowClick
+					/>
+				</>
+			)}
+
+			{fabLoaded && dialogOpenedTour && !imageDialogOpen && tour && (
+				<>
+					<TourTooltip
+						open={itemTourProgress(tour) === 'item_create_fab' && location.hash === ''}
+						anchorEl={document.querySelector('[tour-element="item_create_fab"]')}
+						placement='top-end'
+						content={
+							<>
+								<DialogTitle>Welcome to Giftamizer!</DialogTitle>
+								<DialogContent>
+									<Typography gutterBottom>{items?.length === 0 && `Let's create your first item! `}By default items are shared to all of your groups.</Typography>
+									{!profile?.enable_lists && (
+										<>
+											<Typography gutterBottom color='grayText'>
+												For more control over who can see specific items, enable lists in the settings.
+											</Typography>
+											<Typography color='grayText'>You can even create separate managed lists for your kids or pets.</Typography>
+										</>
+									)}
+								</DialogContent>
+								<DialogActions sx={{ justifyContent: 'left' }}>
+									<LoadingButton variant='outlined' color='inherit' onClick={skipTour} loading={updateTour.isLoading}>
+										Skip Item Tour
+									</LoadingButton>
+								</DialogActions>
+							</>
+						}
+						mask
+						allowClick
+					/>
+					<TourTooltip
+						open={itemTourProgress(tour) === 'item_name' && location.hash === '#create-item'}
+						anchorEl={document.querySelector('[tour-element="item_name"]')}
+						placement='bottom'
+						content={
+							<>
+								<DialogContent>
+									<Typography>Give your item a name.</Typography>
+								</DialogContent>
+								<DialogActions>
+									<LoadingButton
+										variant='outlined'
+										color='inherit'
+										onClick={() => {
+											updateTour.mutateAsync({
+												item_name: true,
+											});
+										}}
+										loading={updateTour.isLoading}
+									>
+										Next
+									</LoadingButton>
+								</DialogActions>
+							</>
+						}
+						backgroundColor={theme.palette.primary.main}
+						color={theme.palette.primary.contrastText}
+						allowClick
+						mask
+					/>
+					<TourTooltip
+						open={itemTourProgress(tour) === 'item_image' && location.hash === '#create-item'}
+						anchorEl={document.querySelector('[tour-element="item_image"]')}
+						placement='bottom'
+						content={
+							<>
+								<DialogContent>
+									<Typography>A picture is worth a thousand words! Add images to your items so your friends know exactly what you want.</Typography>
+								</DialogContent>
+								<DialogActions>
+									<LoadingButton
+										variant='outlined'
+										color='inherit'
+										onClick={() => {
+											updateTour.mutateAsync({
+												item_image: true,
+											});
+										}}
+										loading={updateTour.isLoading}
+									>
+										Next
+									</LoadingButton>
+								</DialogActions>
+							</>
+						}
+						backgroundColor={theme.palette.primary.main}
+						color={theme.palette.primary.contrastText}
+					/>
+					<TourTooltip
+						open={itemTourProgress(tour) === 'item_url' && location.hash === '#create-item'}
+						anchorEl={document.querySelector('[tour-element="item_url"]')}
+						placement='top'
+						content={
+							<>
+								<DialogTitle>Add links to you items!</DialogTitle>
+								<DialogContent>
+									<Typography>If the URL is supported, Giftamizer will automatically fill in the item details.</Typography>
+								</DialogContent>
+								<DialogActions>
+									<LoadingButton
+										variant='outlined'
+										color='inherit'
+										onClick={() => {
+											updateTour.mutateAsync({
+												item_url: true,
+											});
+										}}
+										loading={updateTour.isLoading}
+									>
+										Next
+									</LoadingButton>
+								</DialogActions>
+							</>
+						}
+						backgroundColor={theme.palette.primary.main}
+						color={theme.palette.primary.contrastText}
+					/>
+					<TourTooltip
+						open={itemTourProgress(tour) === 'item_more_links' && location.hash === '#create-item'}
+						anchorEl={document.querySelector('[tour-element="item_more_links"]')}
+						placement='top'
+						content={
+							<>
+								<DialogContent>
+									<Typography>You can even add multiple links!</Typography>
+								</DialogContent>
+								<DialogActions>
+									<LoadingButton
+										variant='outlined'
+										color='inherit'
+										onClick={() => {
+											updateTour.mutateAsync({
+												item_more_links: true,
+											});
+										}}
+										loading={updateTour.isLoading}
+									>
+										Next
+									</LoadingButton>
+								</DialogActions>
+							</>
+						}
+						backgroundColor={theme.palette.primary.main}
+						color={theme.palette.primary.contrastText}
+					/>
+					<TourTooltip
+						open={itemTourProgress(tour) === 'item_custom_fields' && location.hash === '#create-item'}
+						anchorEl={document.querySelector('[tour-element="item_custom_fields"]')}
+						placement='top'
+						content={
+							<>
+								<DialogTitle>Custom Fields</DialogTitle>
+								<DialogContent>
+									<Typography>Provide more information about a specific product.</Typography>
+								</DialogContent>
+								<DialogActions>
+									<LoadingButton
+										variant='outlined'
+										color='inherit'
+										onClick={() => {
+											updateTour.mutateAsync({
+												item_custom_fields: true,
+											});
+										}}
+										loading={updateTour.isLoading}
+									>
+										Next
+									</LoadingButton>
+								</DialogActions>
+							</>
+						}
+						backgroundColor={theme.palette.primary.main}
+						color={theme.palette.primary.contrastText}
+					/>
+					<TourTooltip
+						open={itemTourProgress(tour) === 'item_create_btn' && location.hash === '#create-item'}
+						anchorEl={document.querySelector('[tour-element="item_create_btn"]')}
+						placement='top'
+						content={
+							<>
+								<DialogContent>
+									<Typography>When you have everything ready, click Create to add the item.</Typography>
+								</DialogContent>
+								<DialogActions>
+									<LoadingButton
+										variant='outlined'
+										color='inherit'
+										onClick={() => {
+											updateTour.mutateAsync({
+												item_create_btn: true,
+											});
+										}}
+										loading={updateTour.isLoading}
+									>
+										Got it
+									</LoadingButton>
+								</DialogActions>
+							</>
+						}
+						backgroundColor={theme.palette.primary.main}
+						color={theme.palette.primary.contrastText}
+					/>
+				</>
+			)}
 		</>
 	);
 }

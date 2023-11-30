@@ -7,6 +7,7 @@ import { Container, Grid, Typography, Box, CircularProgress } from '@mui/materia
 
 import ItemCreate from '../components/ItemCreate';
 import ItemCard from '../components/ItemCard';
+import TourTooltip from '../components/TourTooltip';
 
 export default function Items() {
 	const { enqueueSnackbar } = useSnackbar();
@@ -27,7 +28,7 @@ export default function Items() {
 						?.filter((i) => !i.archived && !i.deleted)
 						.map((item, index) => (
 							// TODO: Change ItemCard to Renderer function to allow Grow transition/animation
-							<ItemCard key={item.id} item={item} editable />
+							<ItemCard index={index} key={item.id} item={item} editable />
 						))}
 
 					{items?.filter((i) => !i.archived && !i.deleted).length === 0 && (

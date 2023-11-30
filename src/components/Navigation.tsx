@@ -3,7 +3,20 @@ import { Link, useNavigate, useLocation, Location } from 'react-router-dom';
 import { SnackbarKey, useSnackbar } from 'notistack';
 import moment from 'moment';
 
-import { useSupabase, SUPABASE_URL, useGetProfile, useGetSystem, useSetMaintenance, useGetLists, DEFAULT_LIST_ID } from '../lib/useSupabase';
+import {
+	useSupabase,
+	SUPABASE_URL,
+	useGetProfile,
+	useGetSystem,
+	useSetMaintenance,
+	useGetLists,
+	DEFAULT_LIST_ID,
+	useGetTour,
+	useUpdateTour,
+	groupTourProgress,
+	listTourProgress,
+	shoppingTourProgress,
+} from '../lib/useSupabase';
 import { GroupType, ListType, UserRoles } from '../lib/useSupabase/types';
 
 import { TransitionGroup } from 'react-transition-group';
@@ -37,6 +50,9 @@ import {
 	FormControlLabel,
 	Switch,
 	Link as MUILink,
+	DialogContent,
+	DialogTitle,
+	Button,
 } from '@mui/material';
 import { ExpandLess, ExpandMore, Archive, Delete, Group, ListAlt, Logout, ShoppingCart, Menu as MenuIcon, Podcasts, Close, Build } from '@mui/icons-material';
 
@@ -46,6 +62,7 @@ import Notifications from './Notifications';
 import { useGetGroups } from '../lib/useSupabase/hooks/useGroup';
 import { GiftIcon } from './SvgIcons';
 import Snowfall from 'react-snowfall';
+import HtmlTooltip from './HtmlTooltip';
 
 const drawerWidth = 240;
 
@@ -131,6 +148,58 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 	const { data: profile, isLoading, refetch: refetchProfile } = useGetProfile();
 	const { data: system, isLoading: systemLoading } = useGetSystem();
 
+	const { data: groups } = useGetGroups();
+	const { data: lists } = useGetLists();
+
+	//
+	// user tour
+	const { data: tour } = useGetTour();
+	const updateTour = useUpdateTour();
+	const [tourStart, setTourStart] = React.useState<boolean>(false);
+
+	React.useEffect(() => {
+		setTimeout(() => {
+			setTourStart(true);
+		}, 1500);
+	}, []);
+
+	const tourGroupNav = () => {
+		return (
+			<>
+				{groups?.filter((g) => !g.my_membership[0].invite).length !== 0 ? <DialogTitle>Let's explore groups!</DialogTitle> : <DialogTitle>Let's create a group!</DialogTitle>}
+
+				<DialogContent>
+					<Typography>Share your items with your friends and family.</Typography>
+				</DialogContent>
+			</>
+		);
+	};
+
+	const tourListNav = () => {
+		return (
+			<>
+				<DialogTitle>Let's explore lists!</DialogTitle>
+
+				<DialogContent>
+					<Typography gutterBottom>Lists give you more control over who can see specific items.</Typography>
+					<Typography>Even create separate managed lists for your kids or pets.</Typography>
+				</DialogContent>
+			</>
+		);
+	};
+
+	const tourShoppingNav = () => {
+		return (
+			<>
+				<DialogTitle>Let's explore shopping!</DialogTitle>
+
+				<DialogContent>
+					<Typography>When you mark an item as planned or purchased, it will show up in shopping for easy access when you're out buying gifts!</Typography>
+				</DialogContent>
+			</>
+		);
+	};
+
 	React.useEffect(() => {
 		client
 			.channel(`public:profiles:user_id=eq.${user.id}`)
@@ -143,12 +212,9 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 	// handle homepage redirect
 	React.useEffect(() => {
 		if (location.pathname === '/' && profile?.home !== '/') {
-			navigate(profile?.home!);
+			navigate(profile?.home ?? '' + location.hash);
 		}
-	}, [location.pathname, profile, navigate]);
-
-	const { data: groups } = useGetGroups();
-	const { data: lists } = useGetLists();
+	}, [location.pathname, location.hash, profile, navigate]);
 
 	const [drawerOpen, setDrawerOpen] = React.useState(true);
 	const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
@@ -245,11 +311,9 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 							)}
 
 							<Notifications />
-							<Tooltip title='Open settings'>
-								<IconButton onClick={isLoading ? undefined : handleOpenUserMenu} sx={{ p: 0 }} className='profile-icon'>
-									{isLoading ? <CircularProgress color='inherit' /> : <Avatar alt={profile?.first_name} src={profile?.image || '/defaultAvatar.png'} />}
-								</IconButton>
-							</Tooltip>
+							<IconButton onClick={isLoading ? undefined : handleOpenUserMenu} sx={{ p: 0 }} className='profile-icon'>
+								{isLoading ? <CircularProgress color='inherit' /> : <Avatar alt={profile?.first_name} src={profile?.image || '/defaultAvatar.png'} />}
+							</IconButton>
 						</Stack>
 						<Menu
 							sx={{ mt: '45px' }}
@@ -317,22 +381,37 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 						{profile?.enable_lists && lists && (
 							<>
 								<ListItem disablePadding>
-									<ListItemButton
-										component={Link}
-										to='/lists'
-										selected={
-											location.pathname.startsWith('/lists') &&
-											!lists
-												?.filter((l) => l.pinned === true)
-												.map((l) => l.id)
-												.includes(location.pathname?.split('/lists/')?.[1]?.split('/')?.[0])
-										}
+									<HtmlTooltip
+										sx={{ display: { xs: 'none', md: 'flex' } }}
+										title={tourListNav()}
+										arrow
+										open={tourStart && listTourProgress(tour ?? {}) === 'list_tour_start' && location.hash === ''}
+										placement='right-start'
 									>
-										<ListItemIcon>
-											<ListAlt color={location.pathname === '/lists' ? 'primary' : undefined} />
-										</ListItemIcon>
-										<ListItemText primary='Lists' />
-									</ListItemButton>
+										<ListItemButton
+											component={Link}
+											to='/lists'
+											selected={
+												location.pathname.startsWith('/lists') &&
+												!lists
+													?.filter((l) => l.pinned === true)
+													.map((l) => l.id)
+													.includes(location.pathname?.split('/lists/')?.[1]?.split('/')?.[0])
+											}
+											onClick={() => {
+												if (!tour?.list_nav) {
+													updateTour.mutateAsync({
+														list_nav: true,
+													});
+												}
+											}}
+										>
+											<ListItemIcon>
+												<ListAlt color={location.pathname === '/lists' ? 'primary' : undefined} />
+											</ListItemIcon>
+											<ListItemText primary='Lists' />
+										</ListItemButton>
+									</HtmlTooltip>
 									{drawerOpen &&
 										lists &&
 										[...lists?.filter((l) => l.id === DEFAULT_LIST_ID)!, ...lists?.filter((l) => l.id !== DEFAULT_LIST_ID)!]?.filter((l) => l.pinned === true)?.length > 0 && (
@@ -366,22 +445,37 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 							</>
 						)}
 						<ListItem disablePadding>
-							<ListItemButton
-								component={Link}
-								to='/groups'
-								selected={
-									location.pathname.startsWith('/groups') &&
-									!groups
-										?.filter((g) => g.my_membership[0].pinned === true)
-										.map((g) => g.id)
-										.includes(location.pathname?.split('/groups/')?.[1]?.split('/')?.[0])
-								}
+							<HtmlTooltip
+								sx={{ display: { xs: 'none', md: 'flex' } }}
+								title={tourGroupNav()}
+								arrow
+								open={tourStart && groupTourProgress(tour ?? {}, false) === 'group_nav' && groups?.filter((g) => g.my_membership[0].invite).length === 0 && location.hash === ''}
+								placement='right-start'
 							>
-								<ListItemIcon>
-									<Group color={location.pathname === '/groups' ? 'primary' : undefined} />
-								</ListItemIcon>
-								<ListItemText primary='Groups' />
-							</ListItemButton>
+								<ListItemButton
+									component={Link}
+									to='/groups'
+									selected={
+										location.pathname.startsWith('/groups') &&
+										!groups
+											?.filter((g) => g.my_membership[0].pinned === true)
+											.map((g) => g.id)
+											.includes(location.pathname?.split('/groups/')?.[1]?.split('/')?.[0])
+									}
+									onClick={() => {
+										if (!tour?.group_nav) {
+											updateTour.mutateAsync({
+												group_nav: true,
+											});
+										}
+									}}
+								>
+									<ListItemIcon>
+										<Group color={location.pathname === '/groups' ? 'primary' : undefined} />
+									</ListItemIcon>
+									<ListItemText primary='Groups' />
+								</ListItemButton>
+							</HtmlTooltip>
 							{drawerOpen && groups && groups?.filter((g) => g.my_membership[0].pinned === true)?.length > 0 && (
 								<IconButton
 									onClick={(e) => {
@@ -414,12 +508,31 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 					<Divider />
 					<List>
 						<ListItem disablePadding>
-							<ListItemButton component={Link} to='/shopping' selected={location.pathname === '/shopping'}>
-								<ListItemIcon>
-									<ShoppingCart color={location.pathname === '/shopping' ? 'primary' : undefined} />
-								</ListItemIcon>
-								<ListItemText primary='Shopping List' />
-							</ListItemButton>
+							<HtmlTooltip
+								sx={{ display: { xs: 'none', md: 'flex' } }}
+								title={tourShoppingNav()}
+								arrow
+								open={tourStart && shoppingTourProgress(tour ?? {}) === 'shopping_nav' && location.hash === ''}
+								placement='right-start'
+							>
+								<ListItemButton
+									component={Link}
+									to='/shopping'
+									selected={location.pathname === '/shopping'}
+									onClick={() => {
+										if (!tour?.shopping_nav) {
+											updateTour.mutateAsync({
+												shopping_nav: true,
+											});
+										}
+									}}
+								>
+									<ListItemIcon>
+										<ShoppingCart color={location.pathname === '/shopping' ? 'primary' : undefined} />
+									</ListItemIcon>
+									<ListItemText primary='Shopping List' />
+								</ListItemButton>
+							</HtmlTooltip>
 						</ListItem>
 					</List>
 					{(profile?.enable_archive || profile?.enable_trash) && (
@@ -550,9 +663,67 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 					}}
 				>
 					<BottomNavigationAction label='Items' icon={<GiftIcon />} />
-					{profile?.enable_lists && <BottomNavigationAction label='Lists' icon={<ListAlt />} />}
-					<BottomNavigationAction label='Groups' icon={<Group />} />
-					<BottomNavigationAction label='Shopping' icon={<ShoppingCart />} />
+					{profile?.enable_lists && (
+						<HtmlTooltip
+							sx={{ display: { xs: 'block', md: 'none' } }}
+							title={tourListNav()}
+							arrow
+							open={tourStart && listTourProgress(tour ?? {}) === 'list_tour_start' && location.hash === ''}
+							placement='top'
+						>
+							<BottomNavigationAction
+								label='Lists'
+								icon={<ListAlt />}
+								onClick={() => {
+									if (!tour?.list_nav) {
+										updateTour.mutateAsync({
+											list_nav: true,
+										});
+									}
+								}}
+							/>
+						</HtmlTooltip>
+					)}
+
+					<HtmlTooltip
+						sx={{ display: { xs: 'block', md: 'none' } }}
+						title={tourGroupNav()}
+						arrow
+						open={tourStart && groupTourProgress(tour ?? {}, false) === 'group_nav' && groups?.filter((g) => g.my_membership[0].invite).length === 0 && location.hash === ''}
+						placement='top'
+					>
+						<BottomNavigationAction
+							label='Groups'
+							icon={<Group />}
+							onClick={() => {
+								if (!tour?.group_nav) {
+									updateTour.mutateAsync({
+										group_nav: true,
+									});
+								}
+							}}
+						/>
+					</HtmlTooltip>
+
+					<HtmlTooltip
+						sx={{ display: { xs: 'block', md: 'none' } }}
+						title={tourShoppingNav()}
+						arrow
+						open={tourStart && shoppingTourProgress(tour ?? {}) === 'shopping_nav' && location.hash === ''}
+						placement='top'
+					>
+						<BottomNavigationAction
+							label='Shopping'
+							icon={<ShoppingCart />}
+							onClick={() => {
+								if (!tour?.shopping_nav) {
+									updateTour.mutateAsync({
+										shopping_nav: true,
+									});
+								}
+							}}
+						/>
+					</HtmlTooltip>
 				</BottomNavigation>
 			</Paper>
 		</Box>

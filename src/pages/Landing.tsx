@@ -95,8 +95,8 @@ function Landing() {
 							Giving just got a whole lot better.
 						</Typography>
 						<Typography variant='body1' align='center'>
-							Want to receive gifts that you know you will love? Giftamizer is the perfect answer. It’s your very own personal gift registry. Whether you’re online or in-store, you can
-							add anything you’d like to receive – from your favourite bottle of wine or perfect pair of shoes to a new mountain bike or weekend away. Share with your friends or family
+							Want to receive gifts that you know you will love? Giftamizer is the perfect answer. It's your very own personal gift registry. Whether you're online or in-store, you can
+							add anything you'd like to receive - from your favourite bottle of wine or perfect pair of shoes to a new mountain bike or weekend away. Share with your friends or family
 							and invite them to share with you!
 						</Typography>
 					</Grid>

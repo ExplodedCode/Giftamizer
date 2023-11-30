@@ -139,7 +139,7 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 						<ImageCropper value={image} onChange={setImage} square importedImage={metaImage} />
 					</Grid>
 					<Grid item xs={12}>
-						<TextField fullWidth label='Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} autoFocus inputProps={{ maxLength: 100 }} />
+						<TextField fullWidth label='Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} inputProps={{ maxLength: 100 }} />
 					</Grid>
 					<Grid item xs={12}>
 						<TextField fullWidth label='Description' variant='outlined' value={description} onChange={(e) => setDescription(e.target.value)} inputProps={{ maxLength: 250 }} />
@@ -152,31 +152,18 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 									value={link}
 									onChange={(e) => {
 										let value = e.target.value;
+										let extractedUrl = ExtractURLFromText(value)[0];
+
 										setLinks(links.map((l, i) => (i === index ? value : l)));
 
 										// @ts-ignore
-										if (e.nativeEvent.inputType === 'insertFromPaste' && index === 0 && value.startsWith('http')) {
+										if (e.nativeEvent.inputType === 'insertFromPaste' && index === 0 && extractedUrl.startsWith('http')) {
+											setLinks(links.map((l, i) => (i === index ? extractedUrl : l)));
+
 											setMetaloading(true);
-											getUrlMetadata(value);
+											getUrlMetadata(extractedUrl);
 										}
 									}}
-									// onPaste={(e) => {
-									// 	const urlQuery = e.clipboardData.getData('Text');
-
-									// 	if (index === 0) {
-									// 		let urls = ExtractURLFromText(urlQuery)
-									// 			.concat(links)
-									// 			.filter((u) => u.trim().length > 0);
-
-									// 		if (links[0].length === 0) {
-									// 			setLinks(urls);
-									// 			if (index === 0 && urls[0].startsWith('http')) {
-									// 				setMetaloading(true);
-									// 				getUrlMetadata(urls[0]);
-									// 			}
-									// 		}
-									// 	}
-									// }}
 									endAdornment={
 										<InputAdornment position='end'>
 											<Tooltip title={index === 0 ? 'Add another URL' : 'Remove URL'} placement='left'>

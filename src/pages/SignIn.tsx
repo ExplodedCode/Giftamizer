@@ -24,6 +24,7 @@ import {
 	Link as MUILink,
 } from '@mui/material';
 import { LockOutlined } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 
 var randomImage = Math.floor(Math.random() * 10) + 1;
 
@@ -39,6 +40,7 @@ export default function SignIn() {
 	const [password, setPassword] = React.useState('');
 
 	const [forgotDialogOpen, setForgotDialogOpen] = React.useState(false);
+	const [passwordResetLoading, setPasswordResetLoading] = React.useState(false);
 	const [resetEmail, setResetEmail] = React.useState('');
 
 	React.useEffect(() => {
@@ -96,6 +98,7 @@ export default function SignIn() {
 	};
 
 	const handlePasswordReset = async () => {
+		setPasswordResetLoading(true);
 		const { error } = await client.auth.resetPasswordForEmail(resetEmail, {
 			redirectTo: window.location.origin + '/recover',
 		});
@@ -104,12 +107,14 @@ export default function SignIn() {
 			enqueueSnackbar(error.message, {
 				variant: 'error',
 			});
+			setPasswordResetLoading(false);
 		} else {
 			enqueueSnackbar(`Reset link sent to: ${resetEmail}`, {
 				variant: 'success',
 			});
 
 			setForgotDialogOpen(false);
+			setPasswordResetLoading(false);
 		}
 
 		setResetEmail('');
@@ -227,14 +232,15 @@ export default function SignIn() {
 					>
 						Cancel
 					</Button>
-					<Button
+					<LoadingButton
 						onClick={() => {
 							handlePasswordReset();
 						}}
 						disabled={!validateEmail(resetEmail)}
+						loading={passwordResetLoading}
 					>
 						Send Reset
-					</Button>
+					</LoadingButton>
 				</DialogActions>
 			</Dialog>
 		</>

@@ -69,6 +69,7 @@ export default function UserSearch(props: UserSearchProps) {
 	return (
 		<>
 			<Autocomplete
+				tour-element='group_settings_add_people'
 				disabled={props.disabled}
 				fullWidth
 				multiple

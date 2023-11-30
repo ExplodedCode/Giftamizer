@@ -5,6 +5,7 @@ export * from './useItems';
 export * from './useLists';
 export * from './useGroup';
 export * from './useMember';
+export * from './useTour';
 
 export function ExtractDomain(url: string) {
 	url = url.toLocaleLowerCase();
@@ -42,7 +43,7 @@ export function ExtractURLFromText(text: string) {
 
 export function FakeDelay(time?: number) {
 	return new Promise((resolve) => {
-		const delay = time ?? Math.floor(Math.random() * (650 - 350 + 1)) + 350;
+		const delay = time ?? Math.floor(Math.random() * (500 - 250 + 1)) + 250;
 		setTimeout(resolve, delay);
 	});
 }

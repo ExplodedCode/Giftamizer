@@ -2,7 +2,7 @@ import * as React from 'react';
 import { SnackbarKey, useSnackbar } from 'notistack';
 import moment from 'moment';
 
-import { useGetGroups, useSupabase } from '../lib/useSupabase';
+import { groupInviteTourProgress, itemTourProgress, useGetGroups, useGetTour, useSupabase, useUpdateTour } from '../lib/useSupabase';
 import { NotificationType } from '../lib/useSupabase/types';
 
 import { TransitionGroup } from 'react-transition-group';
@@ -24,11 +24,18 @@ import {
 	Toolbar,
 	styled,
 	BadgeProps,
+	DialogContent,
+	DialogTitle,
+	useTheme,
 } from '@mui/material';
 import { Close, Notifications as NotificationsIcon } from '@mui/icons-material';
 import * as muiIcons from '@mui/icons-material';
 
 import InvitesDialog, { InvitesDialogRefs } from './InvitesDialog';
+import TourTooltip from './TourTooltip';
+import HtmlTooltip from './HtmlTooltip';
+import { NavigateFunction, useLocation, useNavigate } from 'react-router-dom';
+import { GiftIcon } from './SvgIcons';
 
 type IconLookupProps = {
 	icon: string | undefined | null;
@@ -56,8 +63,9 @@ interface RenderItemOptions {
 	invitesDialogRef: React.RefObject<InvitesDialogRefs>;
 	dismissNotification: (id: string) => void;
 	handleClose: () => void;
+	navigate: NavigateFunction;
 }
-function renderItem({ notification, invitesDialogRef, dismissNotification, handleClose }: RenderItemOptions) {
+function renderItem({ notification, invitesDialogRef, dismissNotification, handleClose, navigate }: RenderItemOptions) {
 	return (
 		<ListItem
 			key={notification.id}
@@ -72,20 +80,28 @@ function renderItem({ notification, invitesDialogRef, dismissNotification, handl
 		>
 			<ListItemButton
 				onClick={() => {
-					switch (notification.action) {
-						case 'openInvite':
-							invitesDialogRef.current?.handleClickOpen();
-							break;
-						default:
-							break;
+					if (notification.action === 'openInvite') {
+						invitesDialogRef.current?.handleClickOpen();
 					}
+
+					if (notification.action?.startsWith('openGroup_')) {
+						navigate('/groups/' + notification.action!.split('_')[1]);
+					}
+
 					dismissNotification(notification.id);
 					handleClose();
 				}}
 			>
 				<ListItemAvatar>
 					<Avatar sx={{ bgcolor: 'primary.main' }}>
-						<IconLookup icon={notification.icon} />
+						{(() => {
+							switch (notification.icon) {
+								default:
+									return <IconLookup icon={notification.icon} />;
+								case 'gift':
+									return <GiftIcon />;
+							}
+						})()}
 					</Avatar>
 				</ListItemAvatar>
 				<ListItemText
@@ -115,10 +131,14 @@ const StyledBadge = styled(Badge)<BadgeProps>(({ theme }) => ({
 }));
 
 export default function Notifications() {
+	const theme = useTheme();
+	const location = useLocation();
+	const navigate = useNavigate();
+
 	const { client, user } = useSupabase();
 	const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
-	const { data: groups } = useGetGroups();
+	const { data: groups, isLoading: groupsLoading } = useGetGroups();
 
 	const notificationBtnRef = React.useRef<HTMLButtonElement>(null); // invite dialog ref
 	const invitesDialogRef = React.useRef<React.ElementRef<typeof InvitesDialog>>(null); // invite dialog ref
@@ -127,6 +147,11 @@ export default function Notifications() {
 	const [open, setOpen] = React.useState(false);
 
 	const [notifications, setNotifications] = React.useState<NotificationType[] | undefined>(undefined);
+
+	//
+	// user tour
+	const { data: tour } = useGetTour();
+	const updateTour = useUpdateTour();
 
 	React.useEffect(() => {
 		const getNotifications = async () => {
@@ -174,6 +199,12 @@ export default function Notifications() {
 	}, [client, closeSnackbar, enqueueSnackbar, user]);
 
 	const handleOpen = async (event: React.MouseEvent<HTMLButtonElement>) => {
+		if (!tour?.group_invite_nav) {
+			updateTour.mutateAsync({
+				group_invite_nav: true,
+			});
+		}
+
 		setAnchorEl(event.currentTarget);
 		setOpen(!open);
 
@@ -187,6 +218,12 @@ export default function Notifications() {
 	const handleClose = () => {
 		setAnchorEl(null);
 		setOpen(!open);
+
+		if (!tour?.group_invite_button) {
+			updateTour.mutateAsync({
+				group_invite_nav: false,
+			});
+		}
 	};
 
 	const dismissAllNotifications = async () => {
@@ -203,7 +240,7 @@ export default function Notifications() {
 
 	return (
 		<>
-			<IconButton size='large' ref={notificationBtnRef} color='inherit' onClick={handleOpen}>
+			<IconButton tour-element='group_invite_nav' size='large' ref={notificationBtnRef} color='inherit' onClick={handleOpen}>
 				<Badge badgeContent={(notifications?.filter((n) => !n.seen).length || 0) + (groups?.filter((g) => g.my_membership[0].invite)?.length || 0)} color='error'>
 					<NotificationsIcon />
 				</Badge>
@@ -234,24 +271,41 @@ export default function Notifications() {
 									}}
 									color='primary'
 								>
-									<Button
-										variant='outlined'
-										size='small'
-										color='primary'
-										onClick={() => {
-											handleClose();
-											invitesDialogRef.current?.handleClickOpen();
-										}}
+									<HtmlTooltip
+										title={
+											<>
+												<Typography>Open Group Invites</Typography>
+											</>
+										}
+										arrow
+										open={groupInviteTourProgress(tour ?? {}) === 'group_invite_button' && open}
+										placement='bottom-end'
 									>
-										Group Invites
-									</Button>
+										<Button
+											variant='outlined'
+											size='small'
+											color='primary'
+											onClick={() => {
+												if (!tour?.group_invite_button) {
+													updateTour.mutateAsync({
+														group_invite_button: true,
+													});
+												}
+
+												handleClose();
+												invitesDialogRef.current?.handleClickOpen();
+											}}
+										>
+											Group Invites
+										</Button>
+									</HtmlTooltip>
 								</StyledBadge>
 							</Stack>
 						</Toolbar>
 					</AppBar>
 					<TransitionGroup>
 						{notifications?.map((notification) => (
-							<Collapse key={notification.id}>{renderItem({ notification, invitesDialogRef, dismissNotification, handleClose })}</Collapse>
+							<Collapse key={notification.id}>{renderItem({ notification, invitesDialogRef, dismissNotification, handleClose, navigate })}</Collapse>
 						))}
 					</TransitionGroup>
 					{notifications?.length === 0 ? (
@@ -269,6 +323,28 @@ export default function Notifications() {
 			</Popover>
 
 			<InvitesDialog ref={invitesDialogRef} />
+
+			{!groupsLoading && tour && itemTourProgress(tour) === null && location.hash === '' && groups?.filter((g) => g.my_membership[0].invite).length !== 0 && (
+				<>
+					<TourTooltip
+						open={groupInviteTourProgress(tour) === 'group_invite_nav'}
+						anchorEl={document.querySelector('[tour-element="group_invite_nav"]')}
+						placement='bottom'
+						content={
+							<>
+								<DialogTitle>You've been invited to a group!</DialogTitle>
+								<DialogContent>
+									<Typography>Accept or decline group invites in the notification menu.</Typography>
+								</DialogContent>
+							</>
+						}
+						backgroundColor={theme.palette.primary.main}
+						color={theme.palette.primary.contrastText}
+						mask
+						allowClick
+					/>
+				</>
+			)}
 		</>
 	);
 }

@@ -1,15 +1,16 @@
 import React from 'react';
+import { Link, useParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 
 import { useGetItems, useGetLists, useSetListPin } from '../lib/useSupabase';
 
 import { Container, Grid, Typography, Box, CircularProgress, Link as MUILink, AppBar, Breadcrumbs, Toolbar, Checkbox, Tooltip } from '@mui/material';
+import { PushPin, PushPinOutlined } from '@mui/icons-material';
 
 import ItemCreate from '../components/ItemCreate';
+import ListItemEditor from '../components/ListItemEditor';
 import ItemCard from '../components/ItemCard';
-import { Link, useParams } from 'react-router-dom';
 import NotFound from '../components/NotFound';
-import { PushPin, PushPinOutlined } from '@mui/icons-material';
 
 export default function ListItems() {
 	const { list: listID } = useParams();
@@ -35,7 +36,7 @@ export default function ListItems() {
 				<>
 					{lists?.find((l) => l.id === listID) ? (
 						<>
-							<AppBar position='static' sx={{ marginBottom: 2, bgcolor: 'background.paper' }}>
+							<AppBar position='static' sx={{ marginBottom: 2 }} color='default'>
 								<Toolbar variant='dense'>
 									<Breadcrumbs aria-label='breadcrumb' sx={{ flexGrow: 1 }}>
 										<MUILink underline='hover' color='inherit' component={Link} to='/lists'>
@@ -58,6 +59,8 @@ export default function ListItems() {
 											disabled={setListPin.isLoading}
 										/>
 									</Tooltip>
+
+									{/* <ListItemEditor /> */}
 								</Toolbar>
 							</AppBar>
 
@@ -68,7 +71,7 @@ export default function ListItems() {
 										?.filter((i) => !i.archived && !i.deleted)
 										.map((item, index) => (
 											// TODO: Change ItemCard to Renderer function to allow Grow transition/animation
-											<ItemCard item={item} editable />
+											<ItemCard index={index} key={item.id} item={item} editable />
 										))}
 
 									{items?.filter((i) => i.lists?.find((l) => l.list_id === listID)).length === 0 && (
