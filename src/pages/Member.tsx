@@ -1,16 +1,42 @@
 import React from 'react';
 
-import { useParams, Link } from 'react-router-dom';
-import { useSupabase, useGetGroupMembers, useGetGroups, useGetMemberItems } from '../lib/useSupabase';
+import { useParams, Link, useLocation } from 'react-router-dom';
+import { useSupabase, useGetGroupMembers, useGetGroups, useGetMemberItems, groupTourProgress, useGetTour, useUpdateTour } from '../lib/useSupabase';
 
-import { CircularProgress, Grid, Link as MUILink, Typography, Box, Breadcrumbs, AppBar, Toolbar, Container, IconButton, Popover, FormControlLabel, FormGroup, Switch, Badge } from '@mui/material';
+import {
+	CircularProgress,
+	Grid,
+	Link as MUILink,
+	Typography,
+	Box,
+	Breadcrumbs,
+	AppBar,
+	Toolbar,
+	Container,
+	IconButton,
+	Popover,
+	FormControlLabel,
+	FormGroup,
+	Switch,
+	Badge,
+	DialogActions,
+	DialogTitle,
+	useTheme,
+	DialogContent,
+	useMediaQuery,
+} from '@mui/material';
 import { FilterAlt } from '@mui/icons-material';
 
 import NotFound from '../components/NotFound';
 import ItemCard from '../components/ItemCard';
 import { ItemStatuses, MemberItemType } from '../lib/useSupabase/types';
+import TourTooltip from '../components/TourTooltip';
+import { LoadingButton } from '@mui/lab';
 
 export default function Member() {
+	const theme = useTheme();
+
+	const location = useLocation();
 	const { group: groupID, user: userID } = useParams();
 
 	const { user } = useSupabase();
@@ -46,6 +72,18 @@ export default function Member() {
 		return show;
 	};
 
+	//
+	// User tour
+	const filterButton = React.useRef(null);
+	const [filterButtonLoaded, setFilterButtonLoaded] = React.useState<boolean>(false);
+	const { data: tour } = useGetTour();
+	const updateTour = useUpdateTour();
+	const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+	React.useEffect(() => {
+		if (filterButton.current) setFilterButtonLoaded(true);
+	}, [filterButton]);
+
 	return (
 		<>
 			{groupsLoading || membersLoading || memberLoading ? (
@@ -56,7 +94,7 @@ export default function Member() {
 				<>
 					{userID && groups?.find((g) => g.id === groupID && !g.my_membership[0].invite) && members?.find((m) => m.user_id === userID && !m.invite) ? (
 						<>
-							<AppBar position='static' sx={{ marginBottom: 2, bgcolor: 'background.paper' }}>
+							<AppBar position='static' sx={{ marginBottom: 2 }} color='default'>
 								<Toolbar variant='dense'>
 									<Breadcrumbs aria-label='breadcrumb' sx={{ flexGrow: 1 }}>
 										<MUILink underline='hover' color='inherit' component={Link} to={`/groups/${groups?.find((g) => g.id === groupID)?.id}`}>
@@ -67,7 +105,7 @@ export default function Member() {
 										</Typography>
 									</Breadcrumbs>
 
-									<IconButton onClick={handleFilterOpen}>
+									<IconButton onClick={handleFilterOpen} tour-element='group_member_item_filter'>
 										<Badge
 											color='secondary'
 											variant='dot'
@@ -108,7 +146,7 @@ export default function Member() {
 									<Typography variant='h4' gutterBottom sx={{ mt: 4, textAlign: 'center' }}>
 										{members?.find((m) => m.user_id === userID)?.profile.first_name} {members?.find((m) => m.user_id === userID)?.profile.last_name}
 									</Typography>
-									<Typography variant='body1' gutterBottom sx={{ textAlign: 'center' }}>
+									<Typography variant='body1' gutterBottom sx={{ textAlign: 'center', whiteSpace: 'pre-wrap' }}>
 										{members?.find((m) => m.user_id === userID)?.profile.bio}
 									</Typography>
 								</Grid>
@@ -121,7 +159,7 @@ export default function Member() {
 										?.filter(filterItems)
 										.map((item, index) => (
 											// TODO: Change ItemCard to Renderer function to allow Grow transition/animation
-											<ItemCard key={item.id} item={item} />
+											<ItemCard index={index} key={item.id} item={item} />
 										))}
 
 									{items?.filter((i) => !i.archived && !i.deleted)?.filter(filterItems).length === 0 && (
@@ -139,6 +177,44 @@ export default function Member() {
 									</Box>
 								)}
 							</Container>
+
+							{!groupsLoading && !membersLoading && !memberLoading && !showUnavailableItems && items?.length !== 0 && tour && (
+								<>
+									<TourTooltip
+										open={groupTourProgress(tour, isMobile) === 'group_member_item_filter' && location.hash === ''}
+										anchorEl={document.querySelector('[tour-element="group_member_item_filter"]')}
+										placement='bottom'
+										content={
+											<>
+												<DialogTitle>Item Filter</DialogTitle>
+												<DialogContent>
+													<Typography>Some items may not be shown if they've been claimed by someone else.</Typography>
+												</DialogContent>
+												<DialogActions>
+													<LoadingButton
+														variant='outlined'
+														color='inherit'
+														onClick={() => {
+															if (!tour?.group_member_item_filter) {
+																updateTour.mutateAsync({
+																	group_member_item_filter: true,
+																});
+															}
+														}}
+														loading={updateTour.isLoading}
+													>
+														Got it
+													</LoadingButton>
+												</DialogActions>
+											</>
+										}
+										backgroundColor={theme.palette.primary.main}
+										color={theme.palette.primary.contrastText}
+										mask
+										allowClick
+									/>
+								</>
+							)}
 						</>
 					) : (
 						<NotFound />

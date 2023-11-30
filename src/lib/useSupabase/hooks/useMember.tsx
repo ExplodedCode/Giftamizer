@@ -228,6 +228,12 @@ export const useClaimedItems = () => {
 						item_id,
 						user_id,
 						status
+					),
+					profile:profiles!inner(
+						user_id,
+						first_name,
+						last_name,
+						avatar_token
 					)`
 				)
 				.eq('status.user_id', user.id)
@@ -236,8 +242,17 @@ export const useClaimedItems = () => {
 			if (error) throw error;
 
 			return data.map((i) => {
-				// @ts-ignore
-				return { ...i, image: i.image_token && `${client.supabaseUrl}/storage/v1/object/public/items/${i.id}?${i.image_token}` };
+				return {
+					...i,
+					// @ts-ignore
+					image: i.image_token && `${client.supabaseUrl}/storage/v1/object/public/items/${i.id}?${i.image_token}`,
+
+					profile: {
+						...i.profile,
+						// @ts-ignore
+						image: i.profile.avatar_token && `${client.supabaseUrl}/storage/v1/object/public/avatars/${i.profile.user_id}?${i.profile.avatar_token}`,
+					},
+				};
 			}) as MemberItemType[];
 		},
 	});

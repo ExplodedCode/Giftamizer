@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 
 import { useTheme } from '@mui/material/styles';
@@ -25,6 +25,11 @@ import {
 	Alert,
 	Dialog,
 	Slide,
+	useMediaQuery,
+	DialogActions,
+	ListItemAvatar,
+	Avatar,
+	ListItem,
 } from '@mui/material';
 import { TransitionProps } from '@mui/material/transitions';
 import { Archive, Close, Delete, DeleteForever, Edit, MoreVert, Restore, Unarchive } from '@mui/icons-material';
@@ -32,8 +37,23 @@ import { LoadingButton } from '@mui/lab';
 
 import ItemUpdate from '../components/ItemUpdate';
 
-import { ExtractDomain, FakeDelay, StandardizeURL, useArchiveItem, useDeleteItem, useGetProfile, useRefreshItem, useRestoreItem, useSupabase, useUpdateItemStatus } from '../lib/useSupabase';
+import {
+	ExtractDomain,
+	FakeDelay,
+	StandardizeURL,
+	groupTourProgress,
+	useArchiveItem,
+	useDeleteItem,
+	useGetProfile,
+	useGetTour,
+	useRefreshItem,
+	useRestoreItem,
+	useSupabase,
+	useUpdateItemStatus,
+	useUpdateTour,
+} from '../lib/useSupabase';
 import { ItemStatuses, ItemType, MemberItemType } from '../lib/useSupabase/types';
+import HtmlTooltip from './HtmlTooltip';
 
 const Transition = React.forwardRef(function Transition(
 	props: TransitionProps & {
@@ -181,12 +201,14 @@ function VertMenu({ item }: VertMenuProps) {
 }
 
 interface ItemStatusProps {
+	index: number;
 	item: MemberItemType;
 	claimError: string | undefined;
 	setClaimError(claimError: string | undefined): void;
 }
-function ItemStatus({ item, claimError, setClaimError }: ItemStatusProps) {
+function ItemStatus({ index, item, claimError, setClaimError }: ItemStatusProps) {
 	const theme = useTheme();
+	const location = useLocation();
 
 	const { enqueueSnackbar } = useSnackbar();
 	const { user } = useSupabase();
@@ -213,96 +235,284 @@ function ItemStatus({ item, claimError, setClaimError }: ItemStatusProps) {
 			}
 		});
 	};
-	return (
-		<>
-			<Tooltip
-				title={(() => {
+
+	// user tour
+	const { data: tour } = useGetTour();
+	const updateTour = useUpdateTour();
+	const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+	const claimButton = () => {
+		return (
+			<LoadingButton
+				className={claimError && 'error-shake'}
+				variant='outlined'
+				color={(() => {
 					switch (item.status?.status) {
 						default:
-							return 'Mark as Planned';
+							return 'success';
 						case ItemStatuses.planned:
-							return 'Mark as Purchased';
+							return 'warning';
 						case ItemStatuses.unavailable:
-							return 'Mark as Available';
+							return 'error';
 					}
 				})()}
-				placement='right'
-			>
-				<LoadingButton
-					className={claimError && 'error-shake'}
-					variant='outlined'
-					color={(() => {
-						switch (item.status?.status) {
-							default:
-								return 'success';
-							case ItemStatuses.planned:
-								return 'warning';
-							case ItemStatuses.unavailable:
-								return 'error';
-						}
-					})()}
-					size='small'
-					onClick={() => {
-						handleUpdateItemStatus(
-							(() => {
-								switch (item.status?.status) {
-									default:
-										return ItemStatuses.planned;
-									case ItemStatuses.planned:
-										return ItemStatuses.unavailable;
-									case ItemStatuses.unavailable:
-										return ItemStatuses.available;
-								}
-							})()
-						);
-					}}
-					loading={updateItemStatus.isLoading}
-					disabled={claimError !== undefined || (item.status?.user_id !== undefined && item.status?.user_id !== user.id)}
-					sx={
-						item.status?.user_id !== user.id && !claimError
-							? {
-									'&.Mui-disabled': {
-										// color: theme.palette.warning.main,
-										color: (() => {
-											switch (item.status?.status) {
-												default:
-													return theme.palette.success.main;
-												case ItemStatuses.planned:
-													return theme.palette.warning.main;
-												case ItemStatuses.unavailable:
-													return theme.palette.error.main;
-											}
-										})(),
-									},
-									pointer: 'not-allowed',
-									pointerEvents: 'all',
-							  }
-							: {}
-					}
-				>
-					<span style={claimError ? { textDecoration: 'line-through' } : {}}>
-						{(() => {
+				size='small'
+				onClick={() => {
+					handleUpdateItemStatus(
+						(() => {
 							switch (item.status?.status) {
 								default:
-									return 'Available';
+									return ItemStatuses.planned;
 								case ItemStatuses.planned:
-									return 'Planned';
+									return ItemStatuses.unavailable;
 								case ItemStatuses.unavailable:
-									return 'Purchased';
+									return ItemStatuses.available;
 							}
-						})()}
-					</span>
-				</LoadingButton>
-			</Tooltip>
+						})()
+					);
+				}}
+				loading={updateItemStatus.isLoading}
+				disabled={claimError !== undefined || (item.status?.user_id !== undefined && item.status?.user_id !== user.id)}
+				sx={
+					item.status?.user_id !== user.id && !claimError
+						? {
+								'&.Mui-disabled': {
+									color: (() => {
+										switch (item.status?.status) {
+											default:
+												return theme.palette.success.main + 80;
+											case ItemStatuses.planned:
+												return theme.palette.warning.main + 80;
+											case ItemStatuses.unavailable:
+												return theme.palette.error.main + 80;
+										}
+									})(),
+									border: (() => {
+										switch (item.status?.status) {
+											default:
+												return `1px solid ${theme.palette.success.main}80`;
+											case ItemStatuses.planned:
+												return `1px solid ${theme.palette.warning.main}80`;
+											case ItemStatuses.unavailable:
+												return `1px solid ${theme.palette.error.main}80`;
+										}
+									})(),
+								},
+								pointer: 'not-allowed',
+								pointerEvents: 'all',
+						  }
+						: {}
+				}
+			>
+				<span style={claimError ? { textDecoration: 'line-through' } : {}}>
+					{(() => {
+						switch (item.status?.status) {
+							default:
+								return 'Available';
+							case ItemStatuses.planned:
+								return 'Planned';
+							case ItemStatuses.unavailable:
+								return 'Purchased';
+						}
+					})()}
+				</span>
+			</LoadingButton>
+		);
+	};
+
+	return (
+		<>
+			{index === 0 &&
+			location.hash === '' &&
+			location.pathname.startsWith('/groups/') &&
+			(groupTourProgress(tour ?? {}, isMobile) === 'group_member_item_status' || groupTourProgress(tour ?? {}, isMobile) === 'group_member_item_status_taken') ? (
+				<HtmlTooltip
+					title={
+						<>
+							{groupTourProgress(tour ?? {}, isMobile) === 'group_member_item_status' && (
+								<>
+									<Typography variant='h6' gutterBottom>
+										Item Claim Status:
+									</Typography>
+
+									<Paper elevation={6} sx={{ p: 1 }}>
+										<Grid>
+											<Grid item xs={12} sx={{ mb: 1 }}>
+												<Button
+													size='small'
+													variant='outlined'
+													color='success'
+													sx={{
+														'&.Mui-disabled': {
+															border: `1px solid ${theme.palette.success.main}80`,
+															color: theme.palette.success.main,
+														},
+														pointer: 'not-allowed',
+														pointerEvents: 'all',
+													}}
+													disabled
+												>
+													Available
+												</Button>
+												<Typography sx={{ ml: 0.5, mt: 0.5, display: 'inline' }}> - Available for purchase</Typography>
+											</Grid>
+											<Grid item xs={12} sx={{ mb: 1 }}>
+												<Button
+													size='small'
+													variant='outlined'
+													color='warning'
+													disabled
+													sx={{
+														'&.Mui-disabled': {
+															border: `1px solid ${theme.palette.warning.main}80`,
+															color: theme.palette.warning.main,
+														},
+													}}
+												>
+													Planned
+												</Button>
+												<Typography sx={{ ml: 0.5, mt: 0.5, display: 'inline' }}> - Planned for purchase</Typography>
+											</Grid>
+											<Grid
+												item
+												xs={12}
+												//  sx={{ mb: 1 }}
+											>
+												<Button
+													size='small'
+													variant='outlined'
+													color='error'
+													disabled
+													sx={{
+														'&.Mui-disabled': {
+															border: `1px solid ${theme.palette.error.main}80`,
+															color: theme.palette.error.main,
+														},
+													}}
+												>
+													Purchased
+												</Button>
+												<Typography sx={{ ml: 0.5, mt: 0.5, display: 'inline' }}> - Purchased</Typography>
+											</Grid>
+										</Grid>
+									</Paper>
+									<DialogActions>
+										<LoadingButton
+											variant='outlined'
+											color='inherit'
+											onClick={() => {
+												if (!tour?.group_member_item_status) {
+													updateTour.mutateAsync({
+														group_member_item_status: true,
+													});
+												}
+											}}
+											loading={updateTour.isLoading}
+										>
+											Next
+										</LoadingButton>
+									</DialogActions>
+								</>
+							)}
+
+							{groupTourProgress(tour ?? {}, isMobile) === 'group_member_item_status_taken' && (
+								<>
+									<Typography variant='body1' gutterBottom>
+										Disabled Buttons will indicate that the item has been claimed by someone else.
+									</Typography>
+
+									<Paper elevation={6} sx={{ p: 1 }}>
+										<Grid>
+											<Grid item xs={12} sx={{ mb: 1 }}>
+												<Button
+													size='small'
+													variant='outlined'
+													color='warning'
+													disabled
+													sx={{
+														'&.Mui-disabled': {
+															color: theme.palette.warning.main + 80,
+														},
+													}}
+												>
+													Planned
+												</Button>
+												<Typography sx={{ ml: 0.5, mt: 0.5, display: 'inline' }}> - Planned by someone else</Typography>
+											</Grid>
+											<Grid item xs={12}>
+												<Button
+													size='small'
+													variant='outlined'
+													color='error'
+													disabled
+													sx={{
+														'&.Mui-disabled': {
+															color: theme.palette.error.main + 80,
+														},
+													}}
+												>
+													Purchased
+												</Button>
+												<Typography sx={{ ml: 0.5, mt: 0.5, display: 'inline' }}> - Purchased by someone else</Typography>
+											</Grid>
+										</Grid>
+									</Paper>
+									<DialogActions>
+										<LoadingButton
+											variant='outlined'
+											color='inherit'
+											onClick={() => {
+												if (!tour?.group_member_item_status_taken) {
+													updateTour.mutateAsync({
+														group_member_item_status_taken: true,
+													});
+												}
+											}}
+											loading={updateTour.isLoading}
+										>
+											Got it
+										</LoadingButton>
+									</DialogActions>
+								</>
+							)}
+						</>
+					}
+					placement='bottom-start'
+					arrow
+					open
+				>
+					{claimButton()}
+				</HtmlTooltip>
+			) : (
+				<Tooltip
+					title={(() => {
+						switch (item.status?.status) {
+							default:
+								return 'Mark as Planned';
+							case ItemStatuses.planned:
+								return 'Mark as Purchased';
+							case ItemStatuses.unavailable:
+								return 'Mark as Available';
+						}
+					})()}
+					placement='right'
+					arrow
+				>
+					{claimButton()}
+				</Tooltip>
+			)}
 		</>
 	);
 }
 
 export type ItemCardProps = {
+	index: number;
 	item: ItemType | MemberItemType;
 	editable?: boolean;
 };
-export default function ItemCard({ item, editable }: ItemCardProps) {
+export default function ItemCard({ index, item, editable }: ItemCardProps) {
+	const theme = useTheme();
+
 	const { user } = useSupabase();
 	const { data: profile } = useGetProfile();
 
@@ -313,131 +523,152 @@ export default function ItemCard({ item, editable }: ItemCardProps) {
 
 	const [claimError, setClaimError] = React.useState<string | undefined>();
 
+	const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
 	return (
 		<>
 			<Grid item xs={12}>
-				<Paper
-					sx={{
-						display: { sm: 'block', xs: 'none' },
-					}}
-				>
-					<Box
-						sx={{
-							p: 2,
-							margin: 'auto',
-							flexGrow: 1,
-							display: 'flex',
-						}}
-					>
-						<Grid container spacing={2}>
-							{item.image && (
-								<Grid item>
-									<ButtonBase onClick={() => setDialogImage(item.image ?? null)} sx={{ cursor: 'zoom-in' }}>
-										<img alt={item.name} src={item.image} style={{ objectFit: 'cover', width: 150, height: 150, borderRadius: 4 }} />
-									</ButtonBase>
-								</Grid>
-							)}
+				{!isMobile ? (
+					<Paper>
+						<Box
+							sx={{
+								p: 2,
+								margin: 'auto',
+								flexGrow: 1,
+								display: 'flex',
+							}}
+						>
+							<Grid container spacing={2}>
+								{item.image && (
+									<Grid item>
+										<ButtonBase onClick={() => setDialogImage(item.image ?? null)} sx={{ cursor: 'zoom-in' }}>
+											<img alt={item.name} src={item.image} style={{ objectFit: 'cover', width: 150, height: 150, borderRadius: 4 }} />
+										</ButtonBase>
+									</Grid>
+								)}
+								<Grid item xs={12} sm container>
+									<Grid item xs container direction='column' spacing={2}>
+										<Grid item xs>
+											{'profile' in item && (
+												<ListItem sx={{ p: 0 }}>
+													{item.profile?.image && (
+														<ListItemAvatar>
+															<Avatar src={item.profile?.image} />
+														</ListItemAvatar>
+													)}
 
-							<Grid item xs={12} sm container>
-								<Grid item xs container direction='column' spacing={2}>
-									<Grid item xs>
-										<Typography component='div' variant='h6'>
-											{item.name}
-										</Typography>
-										<Typography variant='body1' gutterBottom>
-											{item.description}
-										</Typography>
-										{item.custom_fields?.map((c) => (
-											<Typography key={`${item.id}-field-${c.id}`} variant='body2' color='text.secondary'>
-												{c.name}: <b>{c.value}</b>
+													<ListItemText primary={`${item.profile?.first_name} ${item.profile?.last_name}`} />
+												</ListItem>
+											)}
+
+											<Typography component='div' variant='h6'>
+												{item.name}
 											</Typography>
-										))}
-										{profile?.enable_lists && (
-											<Stack direction='row' justifyContent='flex-start' useFlexGap flexWrap='wrap' spacing={1} sx={{ mt: 0.5 }}>
-												{item.lists?.map((l) => (
-													<Chip key={`${item.id}-list-${l.list_id}`} label={l.list.name} size='small' clickable onClick={() => navigate(`/lists/${l.list_id}`)} />
-												))}
-											</Stack>
+											<Typography variant='body1' gutterBottom>
+												{item.description}
+											</Typography>
+											{item.custom_fields?.map((c) => (
+												<Typography key={`${item.id}-field-${c.id}`} variant='body2' color='text.secondary'>
+													{c.name}: <b>{c.value}</b>
+												</Typography>
+											))}
+											{profile?.enable_lists && (
+												<Stack direction='row' justifyContent='flex-start' useFlexGap flexWrap='wrap' spacing={1} sx={{ mt: 0.5 }}>
+													{item.lists?.map((l) => (
+														<Chip key={`${item.id}-list-${l.list_id}`} label={l.list.name} size='small' clickable onClick={() => navigate(`/lists/${l.list_id}`)} />
+													))}
+												</Stack>
+											)}
+										</Grid>
+										{(!editable || (item.links && item.links.length > 0)) && (
+											<Grid item>
+												<Stack direction='row' justifyContent='flex-start' spacing={1} useFlexGap flexWrap='wrap'>
+													{!editable && item.user_id !== user.id && (
+														<ItemStatus index={index} item={item as MemberItemType} claimError={claimError} setClaimError={setClaimError} />
+													)}
+
+													{item.links?.map((link, i) => (
+														<Button key={`${item.id + i}-link-${i}`} href={StandardizeURL(link)} target='_blank' color='info' size='small'>
+															{item.domains?.[i] ?? ExtractDomain(link)}
+														</Button>
+													))}
+												</Stack>
+											</Grid>
 										)}
 									</Grid>
-									{(!editable || (item.links && item.links.length > 0)) && (
-										<Grid item>
-											<Stack direction='row' justifyContent='flex-start' spacing={1} useFlexGap flexWrap='wrap'>
-												{!editable && item.user_id !== user.id && <ItemStatus item={item as MemberItemType} claimError={claimError} setClaimError={setClaimError} />}
-
-												{item.links?.map((link, i) => (
-													<Button key={`${item.id + i}-link-${i}`} href={StandardizeURL(link)} target='_blank' color='info' size='small'>
-														{item.domains?.[i] ?? ExtractDomain(link)}
-													</Button>
-												))}
-											</Stack>
-										</Grid>
-									)}
+									<Grid item>{editable && <VertMenu item={item} />}</Grid>
 								</Grid>
-								<Grid item>{editable && <VertMenu item={item} />}</Grid>
 							</Grid>
-						</Grid>
-					</Box>
+						</Box>
 
-					<ItemUnassignedAlert open={profile?.enable_lists && item.lists?.length === 0} />
-					<ItemAlert alert={claimError} setAlert={setClaimError} />
-				</Paper>
+						<ItemUnassignedAlert open={profile?.enable_lists && item.lists?.length === 0} />
+						<ItemAlert alert={claimError} setAlert={setClaimError} />
+					</Paper>
+				) : (
+					<Card>
+						{'profile' in item && (
+							<ListItem sx={{ p: 1 }}>
+								{item.profile?.image && (
+									<ListItemAvatar>
+										<Avatar src={item.profile?.image} />
+									</ListItemAvatar>
+								)}
 
-				{/* Mobile card */}
-				<Card sx={{ display: { sm: 'none', xs: 'block' } }}>
-					{item.image && <CardMedia component='img' alt={item.name} sx={{ height: 240 }} image={item.image} />}
+								<ListItemText primary={`${item.profile?.first_name} ${item.profile?.last_name}`} />
+							</ListItem>
+						)}
 
-					<CardContent>
-						<Grid container justifyContent='flex-start' spacing={2}>
-							<Grid item xs>
-								<Typography variant='h5' component='div'>
-									{item.name}
-								</Typography>
-								<Typography gutterBottom variant='body2' color='text.secondary'>
-									{item.description}
-								</Typography>
-								{item.custom_fields?.map((c) => (
-									<Typography key={`${item.id}-field-${c.id}`} variant='body2' color='text.secondary'>
-										{c.name}: <b>{c.value}</b>
+						{item.image && <CardMedia component='img' alt={item.name} sx={{ height: 240 }} image={item.image} />}
+						<CardContent>
+							<Grid container justifyContent='flex-start' spacing={2}>
+								<Grid item xs>
+									<Typography variant='h5' component='div'>
+										{item.name}
 									</Typography>
-								))}
+									<Typography gutterBottom variant='body2' color='text.secondary'>
+										{item.description}
+									</Typography>
+									{item.custom_fields?.map((c) => (
+										<Typography key={`${item.id}-field-${c.id}`} variant='body2' color='text.secondary'>
+											{c.name}: <b>{c.value}</b>
+										</Typography>
+									))}
+								</Grid>
+								{editable && (
+									<Grid item>
+										<VertMenu item={item} />
+									</Grid>
+								)}
+								{profile?.enable_lists && editable && (
+									<Grid item xs={12}>
+										<Stack direction='row' justifyContent='flex-start' useFlexGap flexWrap='wrap' spacing={1}>
+											{item.lists?.map((l, i) => (
+												<Chip key={`${item.id + i}-list-${l.list_id}`} label={l.list.name} size='small' clickable onClick={() => navigate(`/lists/${l.list_id}`)} />
+											))}
+										</Stack>
+									</Grid>
+								)}
+
+								{(!editable || (item.links && item.links.length > 0)) && (
+									<Grid item xs={12}>
+										<Stack direction='row' justifyContent='flex-start' spacing={1} useFlexGap flexWrap='wrap'>
+											{!editable && item.user_id !== user.id && <ItemStatus index={index} item={item as MemberItemType} claimError={claimError} setClaimError={setClaimError} />}
+
+											{item.links?.map((link, i) => (
+												<Button key={`${item.id + i}-link-${i}`} href={StandardizeURL(link)} target='_blank' color='info' size='small'>
+													{item.domains?.[i] ?? ExtractDomain(link)}
+												</Button>
+											))}
+										</Stack>
+									</Grid>
+								)}
 							</Grid>
-							{editable && (
-								<Grid item>
-									<VertMenu item={item} />
-								</Grid>
-							)}
-							{profile?.enable_lists && editable && (
-								<Grid item xs={12}>
-									<Stack direction='row' justifyContent='flex-start' useFlexGap flexWrap='wrap' spacing={1}>
-										{item.lists?.map((l, i) => (
-											<Chip key={`${item.id + i}-list-${l.list_id}`} label={l.list.name} size='small' clickable onClick={() => navigate(`/lists/${l.list_id}`)} />
-										))}
-									</Stack>
-								</Grid>
-							)}
-
-							{(!editable || (item.links && item.links.length > 0)) && (
-								<Grid item xs={12}>
-									<Stack direction='row' justifyContent='flex-start' spacing={1} useFlexGap flexWrap='wrap'>
-										{!editable && item.user_id !== user.id && <ItemStatus item={item as MemberItemType} claimError={claimError} setClaimError={setClaimError} />}
-
-										{item.links?.map((link, i) => (
-											<Button key={`${item.id + i}-link-${i}`} href={StandardizeURL(link)} target='_blank' color='info' size='small'>
-												{item.domains?.[i] ?? ExtractDomain(link)}
-											</Button>
-										))}
-									</Stack>
-								</Grid>
-							)}
-						</Grid>
-					</CardContent>
-
-					<ItemUnassignedAlert open={profile?.enable_lists && item.lists?.length === 0} />
-					<ItemAlert alert={claimError} setAlert={setClaimError} />
-				</Card>
+						</CardContent>
+						<ItemUnassignedAlert open={profile?.enable_lists && item.lists?.length === 0} />
+						<ItemAlert alert={claimError} setAlert={setClaimError} />
+					</Card>
+				)}
 			</Grid>
-
 			<Dialog
 				maxWidth='md'
 				fullWidth

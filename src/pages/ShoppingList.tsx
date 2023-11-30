@@ -1,15 +1,21 @@
 import React from 'react';
 import { useSnackbar } from 'notistack';
 
-import { useClaimedItems } from '../lib/useSupabase';
+import { shoppingTourProgress, useClaimedItems, useGetTour, useUpdateTour } from '../lib/useSupabase';
 
-import { Container, Grid, Typography, Box, CircularProgress, AppBar, Breadcrumbs, Toolbar, FormGroup, FormControlLabel, Checkbox } from '@mui/material';
+import { Container, Grid, Typography, Box, CircularProgress, AppBar, Breadcrumbs, Toolbar, FormGroup, FormControlLabel, Checkbox, DialogActions, DialogContent, useTheme } from '@mui/material';
 
 import ItemCard from '../components/ItemCard';
 import { ItemStatuses, MemberItemType } from '../lib/useSupabase/types';
+import TourTooltip from '../components/TourTooltip';
+import { LoadingButton } from '@mui/lab';
+import { useLocation } from 'react-router-dom';
 
 export default function ShoppingList() {
+	const theme = useTheme();
+
 	const { enqueueSnackbar } = useSnackbar();
+	const location = useLocation();
 
 	const { data: items, isLoading, isError, error } = useClaimedItems();
 
@@ -33,16 +39,26 @@ export default function ShoppingList() {
 		return show;
 	};
 
+	//
+	// user tour
+	const { data: tour } = useGetTour();
+	const updateTour = useUpdateTour();
+
 	return (
 		<>
-			<AppBar position='static' sx={{ marginBottom: 2, bgcolor: 'background.paper' }}>
+			<AppBar position='static' sx={{ marginBottom: 2 }} color='default'>
 				<Toolbar variant='dense'>
 					<Breadcrumbs aria-label='breadcrumb' sx={{ flexGrow: 1 }}>
 						<Typography color='text.primary'>Claimed Items</Typography>
 					</Breadcrumbs>
 
 					<FormGroup>
-						<FormControlLabel control={<Checkbox checked={hidePurchased} onChange={(e) => setHidePurchased(e.target.checked)} />} label='Show Purchased' />
+						<FormControlLabel
+							tour-element='shopping_filter'
+							control={<Checkbox checked={hidePurchased} onChange={(e) => setHidePurchased(e.target.checked)} />}
+							label='Show Purchased'
+							color='inherit'
+						/>
 					</FormGroup>
 				</Toolbar>
 			</AppBar>
@@ -54,7 +70,7 @@ export default function ShoppingList() {
 						?.filter(filterItems)
 						.map((item, index) => (
 							// TODO: Change ItemCard to Renderer function to allow Grow transition/animation
-							<ItemCard key={item.id} item={item} />
+							<ItemCard index={index} key={item.id} item={item} />
 						))}
 
 					{items?.filter((i) => !i.archived && !i.deleted)?.filter(filterItems).length === 0 && (
@@ -73,6 +89,40 @@ export default function ShoppingList() {
 					<Box sx={{ display: 'flex', justifyContent: 'center', mt: 16 }}>
 						<CircularProgress />
 					</Box>
+				)}
+
+				{tour && (
+					<>
+						<TourTooltip
+							open={shoppingTourProgress(tour) === 'shopping_filter' && location.hash === ''}
+							anchorEl={document.querySelector('[tour-element="shopping_filter"]')}
+							placement='bottom'
+							content={
+								<>
+									<DialogContent>
+										<Typography>Purchased items are filtered out here.</Typography>
+									</DialogContent>
+									<DialogActions>
+										<LoadingButton
+											variant='outlined'
+											color='inherit'
+											onClick={() => {
+												updateTour.mutateAsync({
+													shopping_filter: true,
+												});
+											}}
+											loading={updateTour.isLoading}
+										>
+											Got it
+										</LoadingButton>
+									</DialogActions>
+								</>
+							}
+							backgroundColor={theme.palette.primary.main}
+							color={theme.palette.primary.contrastText}
+							mask
+						/>
+					</>
 				)}
 			</Container>
 		</>

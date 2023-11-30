@@ -24,8 +24,9 @@ import {
 } from '@mui/material';
 import { Check, Clear } from '@mui/icons-material';
 
-import { SUPABASE_URL, useGetGroups, useAcceptGroupInvite, useDeclineGroupInvite } from '../lib/useSupabase';
+import { SUPABASE_URL, useGetGroups, useAcceptGroupInvite, useDeclineGroupInvite, groupInviteTourProgress, useGetTour, useUpdateTour } from '../lib/useSupabase';
 import { GroupType } from '../lib/useSupabase/types';
+import TourTooltip from './TourTooltip';
 
 export type InvitesDialogRefs = {
 	handleClickOpen: () => void;
@@ -38,6 +39,10 @@ const AlertDialog: React.ForwardRefRenderFunction<InvitesDialogRefs> = (props, f
 	const { enqueueSnackbar } = useSnackbar();
 
 	const { data: groups } = useGetGroups();
+
+	//
+	// user tour
+	const { data: tour } = useGetTour();
 
 	const open = location.hash === '#group-invitations';
 
@@ -59,7 +64,9 @@ const AlertDialog: React.ForwardRefRenderFunction<InvitesDialogRefs> = (props, f
 			.mutateAsync(group)
 			.then(() => {
 				handleClose();
-				navigate(`/groups/${group.id}`);
+				if (tour?.group_nav) {
+					navigate(`/groups/${group.id}`);
+				}
 			})
 			.catch((err) => {
 				enqueueSnackbar(`Unable to accept group invite! ${err.message}`, { variant: 'error' });

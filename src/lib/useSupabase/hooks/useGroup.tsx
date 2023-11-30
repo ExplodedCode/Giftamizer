@@ -42,6 +42,7 @@ export const useGetGroups = () => {
 				.select(
 					`id,
 					name,
+					secret_santa,
 					image_token,
 					my_membership:group_members!inner(*)`
 				)
@@ -68,6 +69,7 @@ export const useRefreshGroup = () => {
 				.select(
 					`id,
 					name,
+					secret_santa,
 					image_token,
 					my_membership:group_members!inner(*)`
 				)
@@ -104,7 +106,7 @@ export const useCreateGroup = () => {
 	const { client, user } = useSupabase();
 
 	return useMutation(
-		async (group: Omit<GroupType, 'id' | 'image_token' | 'my_membership'>): Promise<GroupType> => {
+		async (group: Omit<GroupType, 'id' | 'secret_santa' | 'image_token' | 'my_membership'>): Promise<GroupType> => {
 			var { data, error } = await client
 				.from('groups')
 				.insert({
@@ -144,7 +146,7 @@ export const useCreateGroup = () => {
 		},
 		{
 			onSuccess: (group: GroupType) => {
-				queryClient.setQueryData(GROUPS_QUERY_KEY, (prevGroups: GroupType[] | undefined) => (prevGroups ? [...prevGroups, group] : [group]));
+				queryClient.setQueryData(GROUPS_QUERY_KEY, (prevGroups: GroupType[] | undefined) => (prevGroups ? [group, ...prevGroups] : [group]));
 			},
 		}
 	);
@@ -518,7 +520,7 @@ export const useUpdateGroup = () => {
 
 	interface GroupUpdate {
 		group: Omit<GroupType, 'image_token'>;
-		members: Member[];
+		members?: Member[];
 	}
 
 	return useMutation(
@@ -527,6 +529,7 @@ export const useUpdateGroup = () => {
 				.from('groups')
 				.update({
 					name: update.group.name,
+					secret_santa: update.group.secret_santa,
 					image_token: update.group.image ? Date.now() : null,
 				})
 				.eq('id', update.group.id)
@@ -551,46 +554,48 @@ export const useUpdateGroup = () => {
 				update.group.image = undefined;
 			}
 
-			// Update Members
-			const { error: memberError } = await client.from('group_members').upsert(
-				update.members
-					?.filter((m) => !m.deleted && !m.external)
-					.map((m) => {
-						return {
-							group_id: update.group.id,
-							user_id: m.user_id,
-							owner: m.owner,
-						};
-					})
-			);
-			if (memberError) throw memberError;
+			if (update.members) {
+				// Update Members
+				const { error: memberError } = await client.from('group_members').upsert(
+					update.members
+						?.filter((m) => !m.deleted && !m.external)
+						.map((m) => {
+							return {
+								group_id: update.group.id,
+								user_id: m.user_id,
+								owner: m.owner,
+							};
+						})
+				);
+				if (memberError) throw memberError;
 
-			// Update External Invites
-			const { error: inviteError } = await client.from('external_invites').upsert(
-				update.members
-					?.filter((m) => !m.deleted && m.external)
-					.map((m) => {
-						return {
-							group_id: update.group.id,
-							email: m.profile.email,
-							// invite_id: m.user_id,
-							owner: m.owner,
-						};
-					}) as ExternalInvite[]
-			);
-			if (inviteError) throw inviteError;
+				// Update External Invites
+				const { error: inviteError } = await client.from('external_invites').upsert(
+					update.members
+						?.filter((m) => !m.deleted && m.external)
+						.map((m) => {
+							return {
+								group_id: update.group.id,
+								email: m.profile.email,
+								// invite_id: m.user_id,
+								owner: m.owner,
+							};
+						}) as ExternalInvite[]
+				);
+				if (inviteError) throw inviteError;
 
-			update.members
-				.filter((m) => m.deleted)
-				.forEach(async (deletedUser) => {
-					if (!deletedUser.external) {
-						const { error } = await client.from('group_members').delete().eq('group_id', update.group.id).eq('user_id', deletedUser.user_id);
-						if (error) throw error;
-					} else {
-						const { error } = await client.from('external_invites').delete().eq('group_id', update.group.id).eq('email', deletedUser.profile.email);
-						if (error) throw error;
-					}
-				});
+				update.members
+					.filter((m) => m.deleted)
+					.forEach(async (deletedUser) => {
+						if (!deletedUser.external) {
+							const { error } = await client.from('group_members').delete().eq('group_id', update.group.id).eq('user_id', deletedUser.user_id);
+							if (error) throw error;
+						} else {
+							const { error } = await client.from('external_invites').delete().eq('group_id', update.group.id).eq('email', deletedUser.profile.email);
+							if (error) throw error;
+						}
+					});
+			}
 
 			return update;
 		},
@@ -604,6 +609,7 @@ export const useUpdateGroup = () => {
 										...group,
 										name: update.group.name,
 										image: update.group.image,
+										secret_santa: update.group.secret_santa,
 								  }
 								: group;
 						});

@@ -75,7 +75,7 @@ export default function CreateList() {
 							</Grid>
 						)}
 						<Grid item xs={12}>
-							<TextField fullWidth label='Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} autoFocus disabled={createList.isLoading} />
+							<TextField fullWidth label='Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} disabled={createList.isLoading} />
 						</Grid>
 						<Grid item xs={12}>
 							<GroupSelector groups={groups as Omit<GroupType, 'image_token' | 'my_membership'>[]} value={selectedGroups} onChange={setSelectedGroups} disabled={createList.isLoading} />
@@ -86,7 +86,7 @@ export default function CreateList() {
 									control={<Switch checked={childList} onChange={(e) => setChildList(e.target.checked)} disabled={createList.isLoading} />}
 									label='Display Separately in Groups'
 								/>
-								<FormHelperText>This can only be set when creating a new list.</FormHelperText>
+								<FormHelperText sx={{ color: 'warning.main' }}>This can only be set when creating a new list.</FormHelperText>
 							</FormControl>
 						</Grid>
 						{childList && (

@@ -11,6 +11,7 @@ type GroupSelectorProps = {
 export default function GroupSelector({ groups, value, onChange, disabled }: GroupSelectorProps) {
 	return (
 		<Autocomplete
+			tour-element='list_group_assign'
 			value={value as Omit<GroupType, 'image_token' | 'my_membership'>[]}
 			onChange={(event: any, value: Omit<GroupType, 'image_token' | 'my_membership'>[]) => {
 				if (onChange) onChange(value);

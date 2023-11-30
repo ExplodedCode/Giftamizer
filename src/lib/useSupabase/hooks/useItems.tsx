@@ -99,7 +99,7 @@ export const useCreateItem = () => {
 		},
 		{
 			onSuccess: (item: ItemType) => {
-				queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => (prevItems ? [...prevItems, item] : [item]));
+				queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => (prevItems ? [item, ...prevItems] : [item]));
 			},
 		}
 	);
