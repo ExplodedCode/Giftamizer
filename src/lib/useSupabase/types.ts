@@ -87,6 +87,7 @@ export interface ItemType {
 
 	archived: boolean;
 	deleted: boolean;
+	shopping_item: string | null;
 
 	lists?: ItemListType[];
 	newLists?: ListType[];
@@ -98,6 +99,8 @@ export interface ItemType {
 export interface MemberItemType extends ItemType {
 	status?: ItemStatus;
 	profile?: Profile;
+
+	items_lists?: any[];
 }
 
 export interface ItemStatus {
@@ -262,4 +265,5 @@ export interface TourSteps {
 
 	shopping_nav?: boolean;
 	shopping_filter?: boolean;
+	shopping_item?: boolean;
 }

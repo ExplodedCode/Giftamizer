@@ -4,7 +4,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 
 import {
-	Box,
 	Button,
 	Dialog,
 	DialogActions,
@@ -27,19 +26,21 @@ import {
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import LoadingButton from '@mui/lab/LoadingButton';
-import { Add, AddLink, Delete } from '@mui/icons-material';
+import { Add, AddLink, AddShoppingCart, Delete } from '@mui/icons-material';
 
-import { useSupabase, useCreateItem, useGetProfile, ExtractURLFromText, useUpdateTour, itemTourProgress, useGetTour, useGetGroups, useGetItems } from '../lib/useSupabase';
-import { CustomField, ListType } from '../lib/useSupabase/types';
+import { useSupabase, useCreateItem, useGetProfile, ExtractURLFromText, useUpdateTour, itemTourProgress, useGetTour, useGetItems } from '../lib/useSupabase';
+import { CustomField, ListType, Profile } from '../lib/useSupabase/types';
 
 import ListSelector from './ListSelector';
 import ImageCropper from './ImageCropper';
 import TourTooltip from './TourTooltip';
+import UserSearchSingle from './UserSearchSingle';
 
 interface ItemCreateProps {
 	defaultList?: ListType;
+	shoppingItem?: boolean;
 }
-export default function ItemCreate({ defaultList }: ItemCreateProps) {
+export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProps) {
 	const theme = useTheme();
 	const { enqueueSnackbar } = useSnackbar();
 	const navigate = useNavigate();
@@ -55,6 +56,8 @@ export default function ItemCreate({ defaultList }: ItemCreateProps) {
 	const [customFields, setCustomFields] = React.useState<CustomField[]>([]);
 	const [lists, setLists] = React.useState<ListType[]>(defaultList ? [defaultList] : []);
 
+	const [selectedUser, setSelectedUser] = React.useState<Profile>();
+
 	const { client } = useSupabase();
 	const { data: profile } = useGetProfile();
 	const { data: items } = useGetItems();
@@ -69,6 +72,7 @@ export default function ItemCreate({ defaultList }: ItemCreateProps) {
 				links: links.map((l) => l.trim()).filter((l) => l.trim().length !== 0),
 				custom_fields: customFields,
 				newLists: profile?.enable_lists ? lists : [],
+				shopping_item: selectedUser?.user_id ?? null,
 			})
 			.then(() => {
 				handleClose();
@@ -87,6 +91,8 @@ export default function ItemCreate({ defaultList }: ItemCreateProps) {
 		setLinks(['']);
 		setCustomFields([]);
 		setLists(defaultList ? [defaultList] : []);
+
+		setSelectedUser(undefined);
 
 		navigate('#'); // close dialog
 
@@ -157,7 +163,7 @@ export default function ItemCreate({ defaultList }: ItemCreateProps) {
 	return (
 		<>
 			<Fab
-				tour-element='item_create_fab'
+				tour-element={shoppingItem ? 'shopping_item_create_fab' : 'item_create_fab'}
 				ref={addItemFab}
 				color='primary'
 				aria-label='add'
@@ -171,7 +177,7 @@ export default function ItemCreate({ defaultList }: ItemCreateProps) {
 				}}
 				sx={{ position: 'fixed', bottom: { xs: 64, md: 16 }, right: { xs: 8, md: 16 } }}
 			>
-				<Add />
+				{shoppingItem ? <AddShoppingCart /> : <Add />}
 			</Fab>
 
 			<Dialog open={open} onClose={handleClose} maxWidth='sm' fullScreen={useMediaQuery(theme.breakpoints.down('md'))}>
@@ -179,7 +185,11 @@ export default function ItemCreate({ defaultList }: ItemCreateProps) {
 				<DialogContent>
 					<Grid container spacing={2}>
 						<Grid item xs={12}>
-							<DialogContentText>Add items you'd love to receive, whether it's your favorite products, experiences, or anything else you desire.</DialogContentText>
+							{shoppingItem ? (
+								<DialogContentText>Add items you plan on getting for other people even if they don't have it on their list.</DialogContentText>
+							) : (
+								<DialogContentText>Add items you'd love to receive, whether it's your favorite products, experiences, or anything else you desire.</DialogContentText>
+							)}
 						</Grid>
 						<Grid item xs={12}>
 							<ImageCropper
@@ -201,6 +211,13 @@ export default function ItemCreate({ defaultList }: ItemCreateProps) {
 								importedImage={metaImage}
 							/>
 						</Grid>
+
+						{shoppingItem && (
+							<Grid item xs>
+								<UserSearchSingle selectedUser={selectedUser} setSelectedUser={setSelectedUser} label='Gift For' required />
+							</Grid>
+						)}
+
 						<Grid item xs={12}>
 							<TextField
 								tour-element='item_name'
@@ -317,11 +334,12 @@ export default function ItemCreate({ defaultList }: ItemCreateProps) {
 							</Grid>
 						))}
 
-						{profile?.enable_lists && (
+						{profile?.enable_lists && !shoppingItem && (
 							<Grid item xs={12}>
 								<ListSelector value={lists} onChange={(v) => setLists(v)} />
 							</Grid>
 						)}
+
 						<Grid item xs={12}>
 							<Grid container justifyContent='flex-start' spacing={2}>
 								<Grid item xs>
@@ -356,7 +374,7 @@ export default function ItemCreate({ defaultList }: ItemCreateProps) {
 										<LoadingButton
 											tour-element='item_create_btn'
 											onClick={handleCreate}
-											disabled={name.length === 0}
+											disabled={name.length === 0 || (shoppingItem && !selectedUser)}
 											endIcon={<Add />}
 											loading={createItem.isLoading}
 											loadingPosition='end'

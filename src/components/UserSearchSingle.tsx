@@ -1,16 +1,17 @@
 import * as React from 'react';
 
-import { useSupabase, SUPABASE_URL, validateEmail, FakeDelay } from '../lib/useSupabase';
-import { Member, Profile } from '../lib/useSupabase/types';
+import { useSupabase, SUPABASE_URL, FakeDelay } from '../lib/useSupabase';
+import { Profile } from '../lib/useSupabase/types';
 
-import { Autocomplete, Avatar, Chip, CircularProgress, debounce, Grid, TextField, Typography } from '@mui/material';
+import { Autocomplete, Avatar, CircularProgress, debounce, Grid, TextField, Typography } from '@mui/material';
 import { Mail } from '@mui/icons-material';
 
 type UserSearchProps = {
-	selectedInviteUsers: Profile[];
-	setSelectedInviteUsers(inviteUsers: Profile[]): void;
-	members: Member[];
+	selectedUser: Profile | undefined;
+	setSelectedUser(inviteUser: Profile | undefined): void;
+	label?: string;
 	disabled?: boolean;
+	required?: boolean;
 };
 
 export default function UserSearch(props: UserSearchProps) {
@@ -29,19 +30,15 @@ export default function UserSearch(props: UserSearchProps) {
 				await FakeDelay(); // fake delay
 
 				const search = request.input.replaceAll(' ', '+') + ':*';
-				const excludeUsers = props.members
-					.filter((m) => !m.external && !m.user_id.includes('_'))
-					.map((m) => m.user_id)
-					.concat(props.selectedInviteUsers?.filter((u) => u?.user_id).map((m) => m.user_id) as any);
 
-				const { data, error } = await client.rpc('search_profiles', { user_search: search }).limit(8).neq('user_id', user.id).not('user_id', 'in', `(${excludeUsers.join()})`);
+				const { data, error } = await client.rpc('search_profiles', { user_search: search }).limit(8).neq('user_id', user.id);
 				if (error) console.log(error);
 
 				callback(data as Profile[]);
 
 				setLoading(false);
 			}, 400),
-		[props.members, props.selectedInviteUsers, client, user.id]
+		[client, user.id]
 	);
 
 	React.useEffect(() => {
@@ -64,7 +61,7 @@ export default function UserSearch(props: UserSearchProps) {
 		return () => {
 			active = false;
 		};
-	}, [props.selectedInviteUsers, inputValue, fetch]);
+	}, [props.selectedUser, inputValue, fetch]);
 
 	return (
 		<>
@@ -72,40 +69,14 @@ export default function UserSearch(props: UserSearchProps) {
 				tour-element='group_settings_add_people'
 				disabled={props.disabled}
 				fullWidth
-				multiple
-				freeSolo
-				filterOptions={(options, params) => {
-					const filtered = options;
-
-					var { inputValue } = params;
-					const isExisting = options.some((option) => inputValue === option.email) && options.some((option) => inputValue === option.email);
-
-					if (
-						inputValue !== '' &&
-						!isExisting &&
-						filtered.length === 0 &&
-						validateEmail(inputValue) &&
-						inputValue !== user.email &&
-						!props.selectedInviteUsers?.find((u) => u.email === inputValue)
-					) {
-						filtered.push({
-							first_name: inputValue,
-							last_name: '',
-							email: inputValue,
-							bio: '',
-							avatar_token: null,
-							enable_lists: true,
-						});
-					}
-					return filtered;
-				}}
 				getOptionLabel={(option) => (typeof option === 'string' ? option : `${option.first_name} ${option.last_name}`)}
 				options={options}
 				autoComplete
 				includeInputInList
 				filterSelectedOptions
-				value={props.selectedInviteUsers}
-				noOptionsText='Search users...'
+				value={props.selectedUser}
+				noOptionsText='Search for a user...'
+				isOptionEqualToValue={(option, value) => option.user_id === value.user_id}
 				renderOption={(props, option: Profile) => {
 					return (
 						<li {...props}>
@@ -133,18 +104,8 @@ export default function UserSearch(props: UserSearchProps) {
 						</li>
 					);
 				}}
-				renderTags={(value: readonly Profile[], getTagProps) =>
-					value.map((option: Profile, index: number) => (
-						<Chip
-							avatar={<Avatar alt={option.first_name} src={`${SUPABASE_URL}/storage/v1/object/public/avatars/${option.user_id}`} />}
-							variant='outlined'
-							label={`${option.first_name} ${option.last_name}`}
-							{...getTagProps({ index })}
-						/>
-					))
-				}
 				onChange={(_event, newValue) => {
-					props.setSelectedInviteUsers(newValue as Profile[]);
+					props.setSelectedUser(newValue as unknown as Profile);
 				}}
 				onInputChange={(_event, newInputValue) => {
 					setInputValue(newInputValue);
@@ -152,7 +113,8 @@ export default function UserSearch(props: UserSearchProps) {
 				renderInput={(params) => (
 					<TextField
 						{...params}
-						label='Add people'
+						label={props.label ?? 'Select User'}
+						required={props.required}
 						InputProps={{
 							...params.InputProps,
 							endAdornment: (

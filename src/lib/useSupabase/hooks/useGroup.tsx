@@ -548,9 +548,6 @@ export const useUpdateGroup = () => {
 				// @ts-ignore
 				update.group.image = `${client.supabaseUrl}/storage/v1/object/public/groups/${data.id}?${data.image_token}`;
 			} else if (data.image_token === null) {
-				const { error: imageDelError } = await client.storage.from('groups').remove([`${update.group.id}`]);
-				if (imageDelError) throw imageDelError;
-
 				update.group.image = undefined;
 			}
 
@@ -677,9 +674,6 @@ export const useInviteToGroup = () => {
 				// @ts-ignore
 				update.group.image = `${client.supabaseUrl}/storage/v1/object/public/groups/${data.id}?${data.image_token}`;
 			} else if (data.image_token === null) {
-				const { error: imageDelError } = await client.storage.from('groups').remove([`${update.group.id}`]);
-				if (imageDelError) throw imageDelError;
-
 				update.group.image = undefined;
 			}
 
@@ -859,9 +853,6 @@ export const useDeleteGroup = () => {
 
 	return useMutation(
 		async (id: string): Promise<string> => {
-			const { error: avatarError } = await client.storage.from('groups').remove([`${id}`]);
-			if (avatarError) console.log(`Unable to delete group avater.`, avatarError);
-
 			const { error } = await client.from('groups').delete().eq('id', id);
 			if (error) throw error;
 

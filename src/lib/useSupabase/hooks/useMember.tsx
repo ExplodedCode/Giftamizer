@@ -6,7 +6,7 @@ import { ItemStatus, ItemStatuses, MemberItemType } from '../types';
 import { FakeDelay } from '.';
 
 const MEMBER_ITEMS_QUERY_KEY = ['items'];
-const CLAIMED_ITEMS_QUERY_KEY = ['claimed_items'];
+export const CLAIMED_ITEMS_QUERY_KEY = ['claimed_items'];
 
 export const useGetMemberItems = (group_id: string, user_id: string, list_id?: string) => {
 	const { client } = useSupabase();
@@ -44,6 +44,7 @@ export const useGetMemberItems = (group_id: string, user_id: string, list_id?: s
 						.eq('user_id', user_id)
 						.eq('archived', false)
 						.eq('deleted', false)
+						.is('shopping_item', null)
 						.eq('user_id', user_id)
 						.eq('items_lists.lists.child_list', false)
 						.eq('items_lists.lists.lists_groups.group_id', group_id);
@@ -58,7 +59,8 @@ export const useGetMemberItems = (group_id: string, user_id: string, list_id?: s
 								status
 							)`
 						)
-						.eq('user_id', user_id);
+						.eq('user_id', user_id)
+						.is('shopping_item', null);
 				}
 				if (res.error) throw res.error;
 
@@ -87,6 +89,7 @@ export const useGetMemberItems = (group_id: string, user_id: string, list_id?: s
 					.eq('user_id', user_id)
 					.eq('archived', false)
 					.eq('deleted', false)
+					.is('shopping_item', null)
 					.eq('items_lists.lists.id', list_id)
 					.eq('items_lists.lists.lists_groups.group_id', group_id);
 				if (res.error) throw res.error;
@@ -126,6 +129,7 @@ export const useRefreshItem = (group_id: string, user_id: string, list_id?: stri
 				.eq('id', item_id)
 				.eq('archived', false)
 				.eq('deleted', false)
+				.is('shopping_item', null)
 				.eq('items_lists.lists.id', list_id)
 				.eq('items_lists.lists.lists_groups.group_id', group_id)
 				.single();
@@ -154,7 +158,7 @@ export const useRefreshItem = (group_id: string, user_id: string, list_id?: stri
 	);
 };
 
-export const useUpdateItemStatus = (group_id?: string, user_id?: string, list_id?: string) => {
+export const useUpdateItemStatus = (group_id?: string, user_id?: string, list_id?: string, shoppingItem?: boolean) => {
 	const queryClient = useQueryClient();
 	const { client } = useSupabase();
 
@@ -162,12 +166,16 @@ export const useUpdateItemStatus = (group_id?: string, user_id?: string, list_id
 		async (status: ItemStatus): Promise<ItemStatus> => {
 			await FakeDelay(); // fake delay
 
-			if (status.status === ItemStatuses.available) {
+			if (status.status === ItemStatuses.available && !shoppingItem) {
 				// delete row
 				const { error } = await client.from('items_status').delete().eq('item_id', status.item_id);
 				if (error) throw error;
 			} else {
 				// upsert
+
+				// override to planned is shopping Item
+				if (status.status === ItemStatuses.available && shoppingItem) status.status = ItemStatuses.planned;
+
 				const { error } = await client.from('items_status').upsert({ item_id: status.item_id, user_id: status.user_id, status: status.status }).select();
 				if (error) throw error;
 			}
@@ -219,6 +227,10 @@ export const useClaimedItems = () => {
 					`*,
 					items_lists( 
 						lists(
+							id,
+							name,
+							child_list,
+							avatar_token,
 							lists_groups(
 								group_id
 							)
@@ -229,7 +241,7 @@ export const useClaimedItems = () => {
 						user_id,
 						status
 					),
-					profile:profiles!inner(
+					profile:profiles!items_user_id_fkey(
 						user_id,
 						first_name,
 						last_name,
@@ -238,10 +250,31 @@ export const useClaimedItems = () => {
 				)
 				.eq('status.user_id', user.id)
 				.eq('archived', false)
-				.eq('deleted', false);
+				.eq('deleted', false)
+				.is('shopping_item', null);
 			if (error) throw error;
 
-			return data.map((i) => {
+			const { data: ShoppingItemData, error: ShoppingItemError } = await client
+				.from('items')
+				.select(
+					`*,
+					status:items_status(
+						item_id,
+						user_id,
+						status
+					),
+					profile:profiles!items_shopping_item_fkey(
+						user_id,
+						first_name,
+						last_name,
+						avatar_token
+					)`
+				)
+				.eq('user_id', user.id)
+				.not('shopping_item', 'is', null);
+			if (ShoppingItemError) throw ShoppingItemError;
+
+			return [...data, ...ShoppingItemData].map((i) => {
 				return {
 					...i,
 					// @ts-ignore

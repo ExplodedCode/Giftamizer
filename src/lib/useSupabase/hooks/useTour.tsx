@@ -120,6 +120,7 @@ export function shoppingTourProgress(tour: TourSteps) {
 	if (!tour.group_member_item_filter) return 'group_member_item_filter';
 	if (!tour.shopping_nav) return 'shopping_nav';
 	if (!tour.shopping_filter) return 'shopping_filter';
+	if (!tour.shopping_item) return 'shopping_item';
 
 	return null;
 }

@@ -13,7 +13,6 @@ import { LoadingButton } from '@mui/lab';
 import GroupSelector from './GroupSelector';
 import ImageCropper from './ImageCropper';
 import TourTooltip from './TourTooltip';
-import { profile } from 'console';
 
 type ListUpdateProps = {
 	list: ListType | null;
@@ -93,7 +92,12 @@ export default function ListUpdate({ list, onClose }: ListUpdateProps) {
 							<TextField fullWidth label='Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} disabled={updateLists.isLoading} />
 						</Grid>
 						<Grid item xs={12}>
-							<GroupSelector groups={groups as Omit<GroupType, 'image_token' | 'my_membership'>[]} value={selectedGroups} onChange={setSelectedGroups} disabled={updateLists.isLoading} />
+							<GroupSelector
+								groups={groups?.filter((g) => g.my_membership[0].invite === false) as Omit<GroupType, 'image_token' | 'my_membership'>[]}
+								value={selectedGroups}
+								onChange={setSelectedGroups}
+								disabled={updateLists.isLoading}
+							/>
 						</Grid>
 
 						{childList && (

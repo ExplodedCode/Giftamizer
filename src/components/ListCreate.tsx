@@ -78,7 +78,12 @@ export default function CreateList() {
 							<TextField fullWidth label='Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} disabled={createList.isLoading} />
 						</Grid>
 						<Grid item xs={12}>
-							<GroupSelector groups={groups as Omit<GroupType, 'image_token' | 'my_membership'>[]} value={selectedGroups} onChange={setSelectedGroups} disabled={createList.isLoading} />
+							<GroupSelector
+								groups={groups?.filter((g) => g.my_membership[0].invite === false) as Omit<GroupType, 'image_token' | 'my_membership'>[]}
+								value={selectedGroups}
+								onChange={setSelectedGroups}
+								disabled={createList.isLoading}
+							/>
 						</Grid>
 						<Grid item xs={12}>
 							<FormControl component='fieldset' variant='standard'>
