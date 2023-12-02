@@ -7,7 +7,6 @@ import { Container, Grid, Typography, Box, CircularProgress } from '@mui/materia
 
 import ItemCreate from '../components/ItemCreate';
 import ItemCard from '../components/ItemCard';
-import TourTooltip from '../components/TourTooltip';
 
 export default function Items() {
 	const { enqueueSnackbar } = useSnackbar();

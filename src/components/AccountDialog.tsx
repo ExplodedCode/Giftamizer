@@ -441,6 +441,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 
 										shopping_nav: false,
 										shopping_filter: false,
+										shopping_item: false,
 									});
 
 									navigate('/');

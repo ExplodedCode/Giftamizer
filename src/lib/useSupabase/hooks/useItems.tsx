@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useSupabase } from './useSupabase';
-import { ItemType } from '../types';
+import { ItemStatuses, ItemType, MemberItemType } from '../types';
 import { dataUrlToFile } from '../../../components/ImageCropper';
 import { useGetProfile } from './useProfile';
+import { CLAIMED_ITEMS_QUERY_KEY } from './useMember';
 
 export const ITEMS_QUERY_KEY = ['items'];
 
@@ -25,7 +26,8 @@ export const useGetItems = () => {
 						)
 					)`
 				)
-				.eq('user_id', user.id);
+				.eq('user_id', user.id)
+				.is('shopping_item', null);
 			if (error) throw error;
 
 			return data.map((i) => {
@@ -42,6 +44,16 @@ export const useCreateItem = () => {
 
 	return useMutation(
 		async (item: Omit<ItemType, 'id' | 'user_id' | 'archived' | 'deleted' | 'created_at' | 'updated_at'>): Promise<ItemType> => {
+			console.log({
+				user_id: user.id,
+				name: item.name,
+				description: item.description,
+				links: item.links,
+				custom_fields: item.custom_fields,
+				image_token: item.image ? Date.now() : null,
+				shopping_item: item.shopping_item,
+			});
+
 			const { data, error } = await client
 				.from('items')
 				.insert({
@@ -51,6 +63,7 @@ export const useCreateItem = () => {
 					links: item.links,
 					custom_fields: item.custom_fields,
 					image_token: item.image ? Date.now() : null,
+					shopping_item: item.shopping_item,
 				})
 				.select('*')
 				.single();
@@ -98,8 +111,24 @@ export const useCreateItem = () => {
 			return newItem as ItemType;
 		},
 		{
-			onSuccess: (item: ItemType) => {
-				queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => (prevItems ? [item, ...prevItems] : [item]));
+			onSuccess: async (item: ItemType) => {
+				if (item.shopping_item) {
+					const { data: profile } = await client.from('profiles').select(`*`).eq('user_id', item.shopping_item).single();
+					const { data: itemStatus } = await client.from('items_status').upsert({ item_id: item.id, user_id: user.id, status: ItemStatuses.planned }).select().single();
+
+					let shoppingItem: MemberItemType = {
+						...item,
+						status: itemStatus,
+						profile: {
+							...profile,
+							// @ts-ignore
+							image: profile.avatar_token && `${client.supabaseUrl}/storage/v1/object/public/avatars/${profile.user_id}?${profile.avatar_token}`,
+						},
+					};
+					queryClient.setQueryData(CLAIMED_ITEMS_QUERY_KEY, (prevItems: MemberItemType[] | undefined) => (prevItems ? [shoppingItem, ...prevItems] : [shoppingItem]));
+				} else {
+					queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => (prevItems ? [item, ...prevItems] : [item]));
+				}
 			},
 		}
 	);
@@ -120,6 +149,7 @@ export const useUpdateItems = () => {
 					links: item.links,
 					custom_fields: item.custom_fields,
 					image_token: item.image ? Date.now() : null,
+					shopping_item: item.shopping_item,
 				})
 				.eq('id', item.id)
 				.select()
@@ -137,9 +167,6 @@ export const useUpdateItems = () => {
 				// @ts-ignore
 				item.image = `${client.supabaseUrl}/storage/v1/object/public/items/${data.id}?${data.image_token}`;
 			} else if (data.image_token === null) {
-				const { error: imageDelError } = await client.storage.from('items').remove([`${item.id}`]);
-				if (imageDelError) throw imageDelError;
-
 				item.image = undefined;
 			}
 
@@ -181,16 +208,39 @@ export const useUpdateItems = () => {
 			return item as ItemType;
 		},
 		{
-			onSuccess: (item_updated: ItemType) => {
-				queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => {
-					if (prevItems) {
-						const updatedItems = prevItems.map((item) => {
-							return item.id === item_updated.id ? item_updated : item;
-						});
-						return updatedItems;
-					}
-					return prevItems;
-				});
+			onSuccess: async (item_updated: ItemType) => {
+				if (item_updated.shopping_item) {
+					const { data: profile } = await client.from('profiles').select(`*`).eq('user_id', item_updated.shopping_item).single();
+
+					let shoppingItem: MemberItemType = {
+						...item_updated,
+						profile: {
+							...profile,
+							// @ts-ignore
+							image: profile.avatar_token && `${client.supabaseUrl}/storage/v1/object/public/avatars/${profile.user_id}?${profile.avatar_token}`,
+						},
+					};
+
+					queryClient.setQueryData(CLAIMED_ITEMS_QUERY_KEY, (prevItems: MemberItemType[] | undefined) => {
+						if (prevItems) {
+							const updatedItems = prevItems.map((item) => {
+								return item.id === item_updated.id ? shoppingItem : item;
+							});
+							return updatedItems;
+						}
+						return prevItems;
+					});
+				} else {
+					queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => {
+						if (prevItems) {
+							const updatedItems = prevItems.map((item) => {
+								return item.id === item_updated.id ? item_updated : item;
+							});
+							return updatedItems;
+						}
+						return prevItems;
+					});
+				}
 			},
 		}
 	);
@@ -242,11 +292,12 @@ export const useDeleteItem = () => {
 	interface DeleteItem {
 		id: string;
 		deleted: boolean;
+		shopping_item: boolean;
 	}
 
 	return useMutation(
 		async (d: DeleteItem): Promise<DeleteItem> => {
-			if (profile?.enable_trash && !d.deleted) {
+			if (profile?.enable_trash && !d.deleted && !d.shopping_item) {
 				const { error } = await client
 					.from('items')
 					.update({
@@ -256,9 +307,6 @@ export const useDeleteItem = () => {
 					.eq('id', d.id);
 				if (error) throw error;
 			} else {
-				const { error: avatarError } = await client.storage.from('items').remove([`${d.id}`]);
-				if (avatarError) console.log(`Unable to delete image.`, avatarError);
-
 				const { error } = await client.from('items').delete().eq('id', d.id);
 				if (error) throw error;
 			}
@@ -267,18 +315,22 @@ export const useDeleteItem = () => {
 		},
 		{
 			onSuccess: (d) => {
-				if (profile?.enable_trash && !d.deleted) {
-					queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => {
-						if (prevItems) {
-							const updatedItems = prevItems.map((item) => {
-								return item.id === d.id ? { ...item, deleted: true, archived: false } : item;
-							});
-							return updatedItems;
-						}
-						return prevItems;
-					});
+				if (d.shopping_item) {
+					queryClient.setQueryData(CLAIMED_ITEMS_QUERY_KEY, (prevItems: MemberItemType[] | undefined) => (prevItems ? prevItems.filter((item) => item.id !== d.id) : prevItems));
 				} else {
-					queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => (prevItems ? prevItems.filter((item) => item.id !== d.id) : prevItems));
+					if (profile?.enable_trash && !d.deleted) {
+						queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => {
+							if (prevItems) {
+								const updatedItems = prevItems.map((item) => {
+									return item.id === d.id ? { ...item, deleted: true, archived: false } : item;
+								});
+								return updatedItems;
+							}
+							return prevItems;
+						});
+					} else {
+						queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => (prevItems ? prevItems.filter((item) => item.id !== d.id) : prevItems));
+					}
 				}
 			},
 		}
@@ -324,9 +376,6 @@ export const useEmptyTrash = () => {
 	return useMutation(
 		async (items: string[]): Promise<string[]> => {
 			for (let item of items) {
-				const { error: avatarError } = await client.storage.from('items').remove([`${item}`]);
-				if (avatarError) console.log(`Unable to delete image.`, avatarError);
-
 				const { error } = await client.from('items').delete().eq('id', item);
 				if (error) throw error;
 			}

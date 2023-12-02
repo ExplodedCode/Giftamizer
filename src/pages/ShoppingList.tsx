@@ -10,6 +10,7 @@ import { ItemStatuses, MemberItemType } from '../lib/useSupabase/types';
 import TourTooltip from '../components/TourTooltip';
 import { LoadingButton } from '@mui/lab';
 import { useLocation } from 'react-router-dom';
+import ItemCreate from '../components/ItemCreate';
 
 export default function ShoppingList() {
 	const theme = useTheme();
@@ -70,7 +71,7 @@ export default function ShoppingList() {
 						?.filter(filterItems)
 						.map((item, index) => (
 							// TODO: Change ItemCard to Renderer function to allow Grow transition/animation
-							<ItemCard index={index} key={item.id} item={item} />
+							<ItemCard index={index} key={item.id} item={item} editable={item.shopping_item !== null} />
 						))}
 
 					{items?.filter((i) => !i.archived && !i.deleted)?.filter(filterItems).length === 0 && (
@@ -90,6 +91,8 @@ export default function ShoppingList() {
 						<CircularProgress />
 					</Box>
 				)}
+
+				<ItemCreate shoppingItem />
 
 				{tour && (
 					<>
@@ -120,7 +123,35 @@ export default function ShoppingList() {
 							}
 							backgroundColor={theme.palette.primary.main}
 							color={theme.palette.primary.contrastText}
-							mask
+						/>
+
+						<TourTooltip
+							open={shoppingTourProgress(tour) === 'shopping_item' && location.hash === ''}
+							anchorEl={document.querySelector('[tour-element="shopping_item_create_fab"]')}
+							placement='bottom'
+							content={
+								<>
+									<DialogContent>
+										<Typography>Add items you plan on getting for other people even if they don't have it on their list.</Typography>
+									</DialogContent>
+									<DialogActions>
+										<LoadingButton
+											variant='outlined'
+											color='inherit'
+											onClick={() => {
+												updateTour.mutateAsync({
+													shopping_item: true,
+												});
+											}}
+											loading={updateTour.isLoading}
+										>
+											Got it
+										</LoadingButton>
+									</DialogActions>
+								</>
+							}
+							backgroundColor={theme.palette.primary.main}
+							color={theme.palette.primary.contrastText}
 						/>
 					</>
 				)}

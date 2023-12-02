@@ -115,9 +115,6 @@ export const useUpdateLists = () => {
 				// @ts-ignore
 				list.image = `${client.supabaseUrl}/storage/v1/object/public/lists/${data.id}?${data.avatar_token}`;
 			} else if (data.avatar_token === null) {
-				const { error: imageDelError } = await client.storage.from('lists').remove([`${list.id}`]);
-				if (imageDelError) throw imageDelError;
-
 				list.image = undefined;
 			}
 
@@ -188,9 +185,6 @@ export const useDeleteList = () => {
 
 	return useMutation(
 		async (id: string): Promise<string> => {
-			const { error: avatarError } = await client.storage.from('lists').remove([`${id}`]);
-			if (avatarError) console.log(`Unable to delete image.`, avatarError);
-
 			const { error } = await client.from('lists').delete().eq('id', id);
 			if (error) throw error;
 

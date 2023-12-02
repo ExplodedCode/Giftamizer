@@ -128,9 +128,6 @@ export const useUpdateProfile = () => {
 
 				profile.image = update.image;
 			} else if (profile.avatar_token === null || profile.avatar_token === -1) {
-				const { error: imageDelError } = await client.storage.from('avatars').remove([`${user.id}`]);
-				if (imageDelError) throw imageDelError;
-
 				profile.image = undefined;
 			} else {
 				profile.image = update.image;

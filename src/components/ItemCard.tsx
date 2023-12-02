@@ -40,6 +40,7 @@ import ItemUpdate from '../components/ItemUpdate';
 import {
 	ExtractDomain,
 	FakeDelay,
+	SUPABASE_URL,
 	StandardizeURL,
 	groupTourProgress,
 	useArchiveItem,
@@ -94,7 +95,7 @@ function VertMenu({ item }: VertMenuProps) {
 
 	const deleteItem = useDeleteItem();
 	const handleDelete = async (id: string, deleted: boolean) => {
-		await deleteItem.mutateAsync({ id: id, deleted: deleted }).catch((err) => {
+		await deleteItem.mutateAsync({ id: id, deleted: deleted, shopping_item: item.shopping_item !== null }).catch((err) => {
 			enqueueSnackbar(`Unable to delete item! ${err.message}`, { variant: 'error' });
 		});
 	};
@@ -140,7 +141,7 @@ function VertMenu({ item }: VertMenuProps) {
 					</MenuItem>
 				)}
 
-				{profile?.enable_archive && !item.deleted && (
+				{profile?.enable_archive && !item.deleted && !item.shopping_item && (
 					<MenuItem
 						onClick={() => {
 							handleArchive(item.id, !item.archived);
@@ -158,8 +159,8 @@ function VertMenu({ item }: VertMenuProps) {
 							handleVertMenuClose();
 						}}
 					>
-						<ListItemIcon>{profile?.enable_trash ? <Delete fontSize='small' /> : <DeleteForever fontSize='small' />}</ListItemIcon>
-						<ListItemText>{profile?.enable_trash ? 'Trash' : 'Delete'}</ListItemText>
+						<ListItemIcon>{profile?.enable_trash && !item.shopping_item ? <Delete fontSize='small' /> : <DeleteForever fontSize='small' />}</ListItemIcon>
+						<ListItemText>{profile?.enable_trash && !item.shopping_item ? 'Trash' : 'Delete'}</ListItemText>
 					</MenuItem>
 				) : (
 					<>
@@ -189,13 +190,16 @@ function VertMenu({ item }: VertMenuProps) {
 				)}
 			</Menu>
 
-			<ItemUpdate
-				item={itemEdit}
-				onClose={() => {
-					navigate('#'); // close dialog
-					setItemEdit(null);
-				}}
-			/>
+			{itemEdit && (
+				<ItemUpdate
+					item={itemEdit}
+					onClose={() => {
+						navigate('#'); // close dialog
+						setItemEdit(null);
+					}}
+					shoppingItem={item.shopping_item !== null}
+				/>
+			)}
 		</>
 	);
 }
@@ -218,7 +222,7 @@ function ItemStatus({ index, item, claimError, setClaimError }: ItemStatusProps)
 	const list_id = userID?.split('_')[1] ?? undefined;
 
 	const refreshItem = useRefreshItem(groupID!, user_id, list_id);
-	const updateItemStatus = useUpdateItemStatus(groupID!, user_id, list_id);
+	const updateItemStatus = useUpdateItemStatus(groupID!, user_id, list_id, item.shopping_item !== null);
 	const handleUpdateItemStatus = async (status: ItemStatuses) => {
 		await updateItemStatus.mutateAsync({ item_id: item.id, user_id: user.id, status: status }).catch(async (err) => {
 			switch (err.code) {
@@ -551,13 +555,26 @@ export default function ItemCard({ index, item, editable }: ItemCardProps) {
 										<Grid item xs>
 											{'profile' in item && (
 												<ListItem sx={{ p: 0 }}>
-													{item.profile?.image && (
+													{item.profile && (
 														<ListItemAvatar>
-															<Avatar src={item.profile?.image} />
+															<Avatar
+																alt={item.items_lists?.[0]?.lists.child_list ? item.items_lists?.[0]?.lists.name : item.profile.first_name}
+																src={
+																	item.items_lists?.[0]?.lists.child_list
+																		? item.items_lists?.[0]?.lists.avatar_token
+																			? `${SUPABASE_URL}/storage/v1/object/public/lists/${item.items_lists?.[0]?.lists.id}?${item.items_lists?.[0]?.lists.avatar_token}`
+																			: '/defaultAvatar.png'
+																		: item.profile.avatar_token && item.profile.avatar_token !== -1
+																		? `${SUPABASE_URL}/storage/v1/object/public/avatars/${item.profile.user_id}?${item.profile.avatar_token}`
+																		: '/defaultAvatar.png'
+																}
+															/>
 														</ListItemAvatar>
 													)}
 
-													<ListItemText primary={`${item.profile?.first_name} ${item.profile?.last_name}`} />
+													<ListItemText
+														primary={item.items_lists?.[0]?.lists.child_list ? item.items_lists?.[0]?.lists.name : `${item.profile?.first_name} ${item.profile?.last_name}`}
+													/>
 												</ListItem>
 											)}
 
@@ -580,10 +597,10 @@ export default function ItemCard({ index, item, editable }: ItemCardProps) {
 												</Stack>
 											)}
 										</Grid>
-										{(!editable || (item.links && item.links.length > 0)) && (
+										{(!editable || item.shopping_item || (item.links && item.links.length > 0)) && (
 											<Grid item>
 												<Stack direction='row' justifyContent='flex-start' spacing={1} useFlexGap flexWrap='wrap'>
-													{!editable && item.user_id !== user.id && (
+													{((!editable && item.user_id !== user.id) || item.shopping_item) && (
 														<ItemStatus index={index} item={item as MemberItemType} claimError={claimError} setClaimError={setClaimError} />
 													)}
 
@@ -601,7 +618,7 @@ export default function ItemCard({ index, item, editable }: ItemCardProps) {
 							</Grid>
 						</Box>
 
-						<ItemUnassignedAlert open={profile?.enable_lists && item.lists?.length === 0} />
+						<ItemUnassignedAlert open={profile?.enable_lists && item.lists?.length === 0 && !item.shopping_item} />
 						<ItemAlert alert={claimError} setAlert={setClaimError} />
 					</Paper>
 				) : (
@@ -649,10 +666,12 @@ export default function ItemCard({ index, item, editable }: ItemCardProps) {
 									</Grid>
 								)}
 
-								{(!editable || (item.links && item.links.length > 0)) && (
+								{(!editable || item.shopping_item || (item.links && item.links.length > 0)) && (
 									<Grid item xs={12}>
 										<Stack direction='row' justifyContent='flex-start' spacing={1} useFlexGap flexWrap='wrap'>
-											{!editable && item.user_id !== user.id && <ItemStatus index={index} item={item as MemberItemType} claimError={claimError} setClaimError={setClaimError} />}
+											{((!editable && item.user_id !== user.id) || item.shopping_item) && (
+												<ItemStatus index={index} item={item as MemberItemType} claimError={claimError} setClaimError={setClaimError} />
+											)}
 
 											{item.links?.map((link, i) => (
 												<Button key={`${item.id + i}-link-${i}`} href={StandardizeURL(link)} target='_blank' color='info' size='small'>
@@ -664,7 +683,7 @@ export default function ItemCard({ index, item, editable }: ItemCardProps) {
 								)}
 							</Grid>
 						</CardContent>
-						<ItemUnassignedAlert open={profile?.enable_lists && item.lists?.length === 0} />
+						<ItemUnassignedAlert open={profile?.enable_lists && item.lists?.length === 0 && !item.shopping_item} />
 						<ItemAlert alert={claimError} setAlert={setClaimError} />
 					</Card>
 				)}

@@ -1,22 +1,8 @@
 import * as React from 'react';
 import { Link, useNavigate, useLocation, Location } from 'react-router-dom';
 import { SnackbarKey, useSnackbar } from 'notistack';
-import moment from 'moment';
 
-import {
-	useSupabase,
-	SUPABASE_URL,
-	useGetProfile,
-	useGetSystem,
-	useSetMaintenance,
-	useGetLists,
-	DEFAULT_LIST_ID,
-	useGetTour,
-	useUpdateTour,
-	groupTourProgress,
-	listTourProgress,
-	shoppingTourProgress,
-} from '../lib/useSupabase';
+import { useSupabase, SUPABASE_URL, useGetProfile, useGetLists, DEFAULT_LIST_ID, useGetTour, useUpdateTour, groupTourProgress, listTourProgress, shoppingTourProgress } from '../lib/useSupabase';
 import { GroupType, ListType, UserRoles } from '../lib/useSupabase/types';
 
 import { TransitionGroup } from 'react-transition-group';
@@ -46,15 +32,11 @@ import {
 	Typography,
 	CircularProgress,
 	ListItemAvatar,
-	ListSubheader,
-	FormControlLabel,
-	Switch,
-	Link as MUILink,
 	DialogContent,
 	DialogTitle,
-	Button,
+	useTheme,
 } from '@mui/material';
-import { ExpandLess, ExpandMore, Archive, Delete, Group, ListAlt, Logout, ShoppingCart, Menu as MenuIcon, Podcasts, Close, Build } from '@mui/icons-material';
+import { ExpandLess, ExpandMore, Archive, Delete, Group, ListAlt, Logout, ShoppingCart, Menu as MenuIcon, Podcasts, Close } from '@mui/icons-material';
 
 import AccountDialog from './AccountDialog';
 import Notifications from './Notifications';
@@ -141,12 +123,12 @@ function renderListItem({ list, location }: RenderListItemOptions) {
 
 const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 	const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+	const theme = useTheme();
 	const navigate = useNavigate();
 	const location = useLocation();
 
 	const { client, user } = useSupabase();
 	const { data: profile, isLoading, refetch: refetchProfile } = useGetProfile();
-	const { data: system, isLoading: systemLoading } = useGetSystem();
 
 	const { data: groups } = useGetGroups();
 	const { data: lists } = useGetLists();
@@ -234,26 +216,10 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 		setDrawerOpen(!drawerOpen);
 	};
 
-	const setMaintenance = useSetMaintenance();
-	const handleMaintenance = async (maintenance: boolean) => {
-		await setMaintenance
-			.mutateAsync({ ...system!, maintenance })
-			.then(() => {
-				if (maintenance) {
-					enqueueSnackbar(`Maintenance mode enabled!`, { variant: 'info' });
-				} else {
-					enqueueSnackbar(`Maintenance mode disabled!`, { variant: 'info' });
-				}
-			})
-			.catch((err) => {
-				enqueueSnackbar(`Unable to set maintenance! ${err.message}`, { variant: 'error' });
-			});
-	};
-
 	return (
 		<Box sx={{ display: 'flex' }}>
 			{(new Date().getMonth() === 10 || new Date().getMonth() === 11 || new Date().getMonth() === 0) && profile?.enable_snowfall && (
-				<div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: '100%', zIndex: 5000, pointerEvents: 'none' }}>
+				<div style={{ position: 'fixed', top: 0, left: 0, height: '100%', width: '100%', zIndex: 5000, pointerEvents: 'none' }}>
 					<Snowfall snowflakeCount={window.innerWidth * 0.035} />
 				</div>
 			)}
@@ -424,7 +390,8 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 													borderRadius: 0,
 													height: 48,
 													width: 48,
-													backgroundColor: location.pathname === '/lists' || location.pathname === '/lists/' ? 'rgba(76, 175, 80, 0.16)' : undefined,
+													backgroundColor: location.pathname === '/lists' || location.pathname === '/lists/' ? theme.palette.primary.main : undefined,
+													opacity: 0.16,
 												}}
 											>
 												{listsOpen ? <ExpandLess fontSize='small' /> : <ExpandMore fontSize='small' />}
@@ -486,7 +453,8 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 										borderRadius: 0,
 										height: 48,
 										width: 48,
-										backgroundColor: location.pathname === '/groups' || location.pathname === '/groups/' ? 'rgba(76, 175, 80, 0.16)' : undefined,
+										backgroundColor: location.pathname === '/groups' || location.pathname === '/groups/' ? theme.palette.primary.main : undefined,
+										opacity: 0.16,
 									}}
 								>
 									{groupsOpen ? <ExpandLess fontSize='small' /> : <ExpandMore fontSize='small' />}
@@ -559,65 +527,6 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 										</ListItemButton>
 									</ListItem>
 								)}
-							</List>
-						</>
-					)}
-
-					{profile?.roles?.roles.includes(UserRoles.admin) && !systemLoading && (
-						<>
-							<Divider />
-							<ListSubheader inset sx={{ lineHeight: 1, position: 'relative', top: 12 }}>
-								System
-							</ListSubheader>
-							<List>
-								<ListItem>
-									<ListItemIcon>
-										<Build />
-									</ListItemIcon>
-									<ListItemText
-										primary={
-											<FormControlLabel
-												control={
-													setMaintenance.isLoading ? (
-														<CircularProgress size={20} sx={{ ml: 2.5, mr: 2.25, mb: 1.1, mt: 1.1 }} />
-													) : (
-														<Switch
-															checked={system?.maintenance}
-															onChange={(e) => {
-																handleMaintenance(e.target.checked);
-															}}
-															color='primary'
-														/>
-													)
-												}
-												label='Maintenance'
-											/>
-										}
-										secondary={
-											system?.user && (
-												<Tooltip
-													title={
-														<>
-															<Typography variant='body2'>
-																{system.user.first_name} {system.user.last_name}
-															</Typography>
-															<Typography variant='body2' color='text.secondary'>
-																{system.user.email}
-															</Typography>
-															<Typography variant='caption' color='text.secondary'>
-																{moment(system.updated_at).format('L LTS')}
-															</Typography>
-														</>
-													}
-												>
-													<MUILink color='inherit' sx={{ cursor: 'pointer' }}>
-														Last Modified
-													</MUILink>
-												</Tooltip>
-											)
-										}
-									/>
-								</ListItem>
 							</List>
 						</>
 					)}
