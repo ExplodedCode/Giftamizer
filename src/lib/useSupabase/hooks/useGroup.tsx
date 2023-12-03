@@ -525,6 +525,8 @@ export const useUpdateGroup = () => {
 
 	return useMutation(
 		async (update: GroupUpdate): Promise<GroupUpdate> => {
+			console.log(update);
+
 			const { data, error: groupError } = await client
 				.from('groups')
 				.update({
@@ -555,7 +557,7 @@ export const useUpdateGroup = () => {
 				// Update Members
 				const { error: memberError } = await client.from('group_members').upsert(
 					update.members
-						?.filter((m) => !m.deleted && !m.external)
+						?.filter((m) => !m.deleted && !m.external && !m?.user_id?.includes('_'))
 						.map((m) => {
 							return {
 								group_id: update.group.id,
@@ -569,7 +571,7 @@ export const useUpdateGroup = () => {
 				// Update External Invites
 				const { error: inviteError } = await client.from('external_invites').upsert(
 					update.members
-						?.filter((m) => !m.deleted && m.external)
+						?.filter((m) => !m.deleted && m.external && !m?.user_id?.includes('_'))
 						.map((m) => {
 							return {
 								group_id: update.group.id,
@@ -584,11 +586,19 @@ export const useUpdateGroup = () => {
 				update.members
 					.filter((m) => m.deleted)
 					.forEach(async (deletedUser) => {
-						if (!deletedUser.external) {
-							const { error } = await client.from('group_members').delete().eq('group_id', update.group.id).eq('user_id', deletedUser.user_id);
+						if (deletedUser.external) {
+							const { error } = await client.from('external_invites').delete().eq('group_id', update.group.id).eq('email', deletedUser.profile.email);
+							if (error) throw error;
+						} else if (deletedUser.child_list) {
+							const { error, data } = await client
+								.from('lists_groups')
+								.delete()
+								.eq('group_id', update.group.id)
+								.eq('user_id', deletedUser.user_id.split('_')[0])
+								.eq('list_id', deletedUser.user_id.split('_')[1]);
 							if (error) throw error;
 						} else {
-							const { error } = await client.from('external_invites').delete().eq('group_id', update.group.id).eq('email', deletedUser.profile.email);
+							const { error } = await client.from('group_members').delete().eq('group_id', update.group.id).eq('user_id', deletedUser.user_id);
 							if (error) throw error;
 						}
 					});
