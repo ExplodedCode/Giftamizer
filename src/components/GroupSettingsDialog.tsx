@@ -91,11 +91,9 @@ function renderItem({ member, handleMemberEdit, owner }: RenderItemOptionsProps)
 				{member.child_list ? (
 					owner && (
 						<>
-							{/* TODO: Add option to remove access to a child list
-							
-							<Button variant='outlined' color='error'>
+							<Button variant='outlined' color='error' onClick={() => handleMemberEdit({ ...member, deleted: true })}>
 								Remove
-							</Button> */}
+							</Button>
 						</>
 					)
 				) : (
@@ -175,11 +173,12 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 	const handleSave = async () => {
 		const mem = queryClient.getQueryData<Member[]>([...GROUPS_QUERY_KEY, groupID, 'members']);
 		updateGroup
-			.mutateAsync({ group: { ...group, name: name, image: image }, members: mem!.filter((m) => !m?.user_id?.includes('_')) })
+			.mutateAsync({ group: { ...group, name: name, image: image }, members: mem! })
 			.then(() => {
 				handleClose();
 			})
 			.catch((err) => {
+				console.log(err);
 				enqueueSnackbar(`Unable to update group! ${err.message}`, { variant: 'error' });
 			});
 	};
