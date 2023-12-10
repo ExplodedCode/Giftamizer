@@ -24,7 +24,6 @@ import {
 	Divider,
 	TextField,
 	InputAdornment,
-	Grid,
 } from '@mui/material';
 import { CheckBox, CheckBoxOutlineBlank, Search, Settings } from '@mui/icons-material';
 import { ItemType, ListType } from '../lib/useSupabase/types';
@@ -40,7 +39,6 @@ function ListItemComponent({ item }: ListItemComponentProps) {
 
 	const { client, user } = useSupabase();
 
-	const { data: items } = useGetItems();
 	const [loading, setLoading] = React.useState<boolean>(false);
 
 	const handleToggle = (item: ItemType) => async () => {

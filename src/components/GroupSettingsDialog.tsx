@@ -24,6 +24,7 @@ import Collapse from '@mui/material/Collapse';
 import { useTheme } from '@mui/material/styles';
 import {
 	Avatar,
+	Box,
 	Button,
 	Dialog,
 	DialogActions,
@@ -32,6 +33,7 @@ import {
 	DialogTitle,
 	Divider,
 	FormControl,
+	FormControlLabel,
 	Grid,
 	IconButton,
 	List,
@@ -42,12 +44,14 @@ import {
 	MenuItem,
 	Select,
 	Stack,
+	Switch,
 	TextField,
+	Tooltip,
 	Typography,
 	useMediaQuery,
 } from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
-import { Delete, DeleteForever, Email, EscalatorWarning, Logout, Save, Send, Settings } from '@mui/icons-material';
+import { Share, Delete, DeleteForever, Email, EscalatorWarning, Logout, Save, Send, Settings } from '@mui/icons-material';
 
 import UserSearch from './UserSearch';
 import ImageCropper from './ImageCropper';
@@ -143,6 +147,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 	const open = location.hash.startsWith('#group-settings');
 
 	const [name, setName] = React.useState('');
+	const [inviteLink, setInviteLink] = React.useState<boolean>(true);
 	const [image, setImage] = React.useState<string | undefined>();
 
 	const [secretSanta, setSecretSanta] = React.useState<SecretSanta>();
@@ -160,7 +165,12 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 	const handleInvite = async () => {
 		const mem = queryClient.getQueryData<Member[]>([...GROUPS_QUERY_KEY, groupID, 'members']);
 		inviteToGroup
-			.mutateAsync({ group: { ...group, name: name, image: image }, members: mem!.filter((m) => !m.user_id.includes('_')), invites: selectedInviteUsers, inviteUsersOwner: inviteUsersOwner })
+			.mutateAsync({
+				group: { ...group, name: name, invite_link: inviteLink, image: image },
+				members: mem!.filter((m) => !m.user_id.includes('_')),
+				invites: selectedInviteUsers,
+				inviteUsersOwner: inviteUsersOwner,
+			})
 			.then(() => {
 				handleClose();
 			})
@@ -173,7 +183,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 	const handleSave = async () => {
 		const mem = queryClient.getQueryData<Member[]>([...GROUPS_QUERY_KEY, groupID, 'members']);
 		updateGroup
-			.mutateAsync({ group: { ...group, name: name, image: image }, members: mem! })
+			.mutateAsync({ group: { ...group, name: name, invite_link: inviteLink, image: image }, members: mem! })
 			.then(() => {
 				handleClose();
 			})
@@ -195,6 +205,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 
 	const handleOpen = async () => {
 		setName(group.name);
+		setInviteLink(group.invite_link);
 		setImage(group.image);
 
 		setSecretSanta(group.secret_santa);
@@ -210,6 +221,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 
 	React.useEffect(() => {
 		setName(group.name);
+		setInviteLink(group.invite_link);
 		setImage(group.image);
 
 		setSecretSanta(group.secret_santa);
@@ -313,13 +325,32 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 			});
 	};
 
-	const changed = name !== group.name || image !== group.image || stateUpdater !== '';
+	const changed = name !== group.name || inviteLink !== group.invite_link || image !== group.image || stateUpdater !== '';
 
 	//
 	// User tour
 	const { data: tour } = useGetTour();
 	const updateTour = useUpdateTour();
 	const [tourStart, setTourStart] = React.useState(false);
+
+	//
+	// link invite
+	const inviteURL = `https://${window.location.host}/group-invite/${group.id}`;
+	const handleSharing = async () => {
+		if (navigator.share) {
+			try {
+				await navigator.share({
+					url: inviteURL,
+					text: `Join Giftamizer! An online gift registry and shopping platform. Giftamizer makes it easy for friends and family to find the perfect gifts for your special occasions.`,
+				});
+			} catch (error) {
+				if (String(error).includes('Share canceled')) return;
+				enqueueSnackbar(`Oops! I couldn't share to the world because: ${error}`, { variant: 'error' });
+			}
+		} else {
+			enqueueSnackbar(`Web share is currently not supported on this browser. `, { variant: 'error' });
+		}
+	};
 
 	return (
 		<>
@@ -360,15 +391,46 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 												</Select>
 											</FormControl>
 										</Grid>
-
-										{secretSanta?.status === SecretSantaStatus.Off && (
-											<Grid item xs={12}>
-												<Button variant='contained' disabled={changed} onClick={handleSecretSantaEnable}>
-													Enable Secret Santa
-												</Button>
-											</Grid>
-										)}
 									</>
+								)}
+
+								<Grid item xs={12}>
+									<FormControlLabel
+										control={<Switch checked={inviteLink} onChange={(e) => setInviteLink(e.target.checked)} />}
+										label='Join by Link'
+										disabled={!owner}
+										sx={{ mb: 1 }}
+									/>
+
+									<Collapse in={inviteLink}>
+										<Box sx={{ display: 'flex', alignItems: 'flex-end' }}>
+											<TextField
+												label='Invitation Link'
+												variant='outlined'
+												size='small'
+												fullWidth
+												InputLabelProps={{
+													shrink: true,
+												}}
+												disabled
+												value={inviteURL.replace('https://', '')}
+											/>
+
+											<Tooltip title='Share Invitation' placement='bottom-end' arrow enterDelay={500}>
+												<IconButton aria-label='delete' sx={{ ml: 0.5 }} onClick={() => handleSharing()}>
+													<Share />
+												</IconButton>
+											</Tooltip>
+										</Box>
+									</Collapse>
+								</Grid>
+
+								{owner && secretSanta?.status === SecretSantaStatus.Off && (
+									<Grid item xs={12}>
+										<Button variant='contained' disabled={changed} onClick={handleSecretSantaEnable}>
+											Enable Secret Santa
+										</Button>
+									</Grid>
 								)}
 
 								{selectedInviteUsers.length === 0 && (

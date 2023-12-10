@@ -2,7 +2,7 @@ import * as React from 'react';
 import moment from 'moment';
 import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
 
-import { Box, Button, Checkbox, Grid, Grow, List, ListItem, ListItemIcon, Paper, Slider, Stack, Step, StepContent, StepLabel, Stepper, TextField, Typography } from '@mui/material';
+import { Box, Button, Checkbox, Grid, Grow, List, ListItem, ListItemIcon, Paper, Stack, Step, StepContent, StepLabel, Stepper, TextField, Typography } from '@mui/material';
 import { LocalizationProvider, MobileDatePicker } from '@mui/x-date-pickers';
 
 import { Member, SecretSantaDrawings } from '../lib/useSupabase/types';
@@ -29,8 +29,6 @@ interface SecretSantaProps {
 
 export default function SecretSantaSetup({ members, setAllowCreate, eventName, setEventName, eventDate, setEventDate, setDrawing }: SecretSantaProps) {
 	const [event, setEvent] = React.useState<string>('');
-
-	const [giftCount, setGiftCount] = React.useState<number>(1);
 
 	const [excludedMembers, setExcludedMembers] = React.useState<Member[]>([]);
 	const [exclusions, setExclusions] = React.useState<SecretSantaExclusions[]>([]);
@@ -88,7 +86,7 @@ export default function SecretSantaSetup({ members, setAllowCreate, eventName, s
 		};
 
 		try {
-			setDrawing(secretSantaMatch(generateRules(), giftCount));
+			setDrawing(secretSantaMatch(generateRules(), 1));
 			setAllowCreate(true && eventName.length > 0 && event.length > 0);
 			setTooManyExclusions(null);
 		} catch (error) {
@@ -96,7 +94,7 @@ export default function SecretSantaSetup({ members, setAllowCreate, eventName, s
 			setAllowCreate(false);
 			setTooManyExclusions(String(error).split(' -- ')?.[1] ?? null);
 		}
-	}, [activeStep, giftCount, exclusions, excludedMembers, members, setAllowCreate, setDrawing, eventName.length, event.length]);
+	}, [activeStep, exclusions, excludedMembers, members, setAllowCreate, setDrawing, eventName.length, event.length]);
 
 	const events = ['Secret Santa', 'Christmas', 'Hanukkah', 'Thanksgiving', "New Year's Eve", 'Other'];
 	const steps = [

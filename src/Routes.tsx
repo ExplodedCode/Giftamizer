@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Link, Navigate, Route, Routes, useLocation, useSearchParams } from 'react-router-dom';
 import { LastLocationProvider } from 'react-router-dom-last-location';
 import { useSnackbar } from 'notistack';
 
@@ -10,6 +10,7 @@ import { Backdrop, Box, CircularProgress, Link as MUILink, Typography } from '@m
 import Landing from './pages/Landing';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
+import GroupInvite from './pages/GroupInvite';
 import UpdatePassword from './pages/UpdatePassword';
 import Navigation from './components/Navigation';
 
@@ -30,11 +31,12 @@ export default function AppRoutes() {
 	const location = useLocation();
 	const { enqueueSnackbar } = useSnackbar();
 
+	let [searchParams] = useSearchParams();
+	const redirectTo = searchParams.get('redirectTo');
+
 	const { user, client } = useSupabase();
 
 	const [home, setHome] = React.useState('/');
-
-	const [redirect, setRedirct] = React.useState<string>('/');
 
 	React.useEffect(() => {
 		if (location.hash.startsWith('#message=')) {
@@ -72,7 +74,7 @@ export default function AppRoutes() {
 							element={
 								user ? (
 									home === '/' ? (
-										<ProtectedRoute setRedirct={setRedirct}>
+										<ProtectedRoute>
 											<Items />
 										</ProtectedRoute>
 									) : (
@@ -88,7 +90,7 @@ export default function AppRoutes() {
 							path='/items'
 							element={
 								user ? (
-									<ProtectedRoute setRedirct={setRedirct}>
+									<ProtectedRoute>
 										<Items />
 									</ProtectedRoute>
 								) : (
@@ -104,7 +106,7 @@ export default function AppRoutes() {
 							path='/signin'
 							element={
 								user ? (
-									<Navigate to={redirect} />
+									<Navigate to={redirectTo ?? '/'} />
 								) : (
 									<MaintenanceProvider>
 										<SignIn />
@@ -116,7 +118,7 @@ export default function AppRoutes() {
 							path='/signup'
 							element={
 								user ? (
-									<Navigate to={redirect} />
+									<Navigate to={redirectTo ?? '/'} />
 								) : (
 									<MaintenanceProvider>
 										<SignUp />
@@ -135,12 +137,12 @@ export default function AppRoutes() {
 							}
 						/>
 
-						<Route path='/gift' element={<Navigate to={redirect} />} />
+						<Route path='/gift' element={<Navigate to={redirectTo ?? '/'} />} />
 
 						<Route
 							path='/Items'
 							element={
-								<ProtectedRoute setRedirct={setRedirct}>
+								<ProtectedRoute>
 									<Lists />
 								</ProtectedRoute>
 							}
@@ -149,7 +151,7 @@ export default function AppRoutes() {
 						<Route
 							path='/lists'
 							element={
-								<ProtectedRoute setRedirct={setRedirct}>
+								<ProtectedRoute>
 									<Lists />
 								</ProtectedRoute>
 							}
@@ -158,7 +160,7 @@ export default function AppRoutes() {
 						<Route
 							path={`/lists/:list`}
 							element={
-								<ProtectedRoute setRedirct={setRedirct}>
+								<ProtectedRoute>
 									<ListItems />
 								</ProtectedRoute>
 							}
@@ -167,7 +169,7 @@ export default function AppRoutes() {
 						<Route
 							path='/groups'
 							element={
-								<ProtectedRoute setRedirct={setRedirct}>
+								<ProtectedRoute>
 									<Groups />
 								</ProtectedRoute>
 							}
@@ -175,7 +177,7 @@ export default function AppRoutes() {
 						<Route
 							path={`/groups/:group`}
 							element={
-								<ProtectedRoute setRedirct={setRedirct}>
+								<ProtectedRoute>
 									<Group />
 								</ProtectedRoute>
 							}
@@ -183,16 +185,24 @@ export default function AppRoutes() {
 						<Route
 							path={`/groups/:group/:user`}
 							element={
-								<ProtectedRoute setRedirct={setRedirct}>
+								<ProtectedRoute>
 									<Member />
 								</ProtectedRoute>
+							}
+						/>
+						<Route
+							path={`/group-invite/:group`}
+							element={
+								<MaintenanceProvider>
+									<GroupInvite />
+								</MaintenanceProvider>
 							}
 						/>
 
 						<Route
 							path='/shopping'
 							element={
-								<ProtectedRoute setRedirct={setRedirct}>
+								<ProtectedRoute>
 									<ShoppingList />
 								</ProtectedRoute>
 							}
@@ -200,7 +210,7 @@ export default function AppRoutes() {
 						<Route
 							path='/archive'
 							element={
-								<ProtectedRoute setRedirct={setRedirct}>
+								<ProtectedRoute>
 									<ItemArchive />
 								</ProtectedRoute>
 							}
@@ -208,7 +218,7 @@ export default function AppRoutes() {
 						<Route
 							path='/trash'
 							element={
-								<ProtectedRoute setRedirct={setRedirct}>
+								<ProtectedRoute>
 									<ItemsTrash />
 								</ProtectedRoute>
 							}
@@ -218,7 +228,7 @@ export default function AppRoutes() {
 							path='*'
 							element={
 								user ? (
-									<ProtectedRoute setRedirct={setRedirct}>
+									<ProtectedRoute>
 										<Typography variant='h5' gutterBottom style={{ marginTop: 100, textAlign: 'center' }}>
 											Page not found!
 										</Typography>
@@ -245,8 +255,7 @@ export default function AppRoutes() {
 	);
 }
 
-const ProtectedRoute: React.FC<{ children: JSX.Element; setRedirct(redirect: string): void }> = ({ children, setRedirct }) => {
-	const location = useLocation();
+const ProtectedRoute: React.FC<{ children: JSX.Element }> = ({ children }) => {
 	const { user, client } = useSupabase();
 
 	const { data: profile } = useGetProfile();
@@ -263,8 +272,10 @@ const ProtectedRoute: React.FC<{ children: JSX.Element; setRedirct(redirect: str
 
 	if (!user) {
 		// user is not authenticated
-		setRedirct(location.pathname + location.hash);
-		return <Navigate to={`/signin`} />;
+
+		console.log(window.location.pathname);
+
+		return <Navigate to={`/signin?redirectTo=${window.location.pathname}${window.location.search}${window.location.hash}`} />;
 	}
 
 	return system?.maintenance && !profile?.roles?.roles.includes(UserRoles.admin) ? (

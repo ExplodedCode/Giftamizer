@@ -18,7 +18,7 @@ export default function GroupCreate() {
 	const navigate = useNavigate();
 	const location = useLocation();
 
-	const { data: groups, isLoading } = useGetGroups();
+	const { data: groups } = useGetGroups();
 
 	const open = location.hash === '#new-group';
 
@@ -28,7 +28,7 @@ export default function GroupCreate() {
 	const createGroup = useCreateGroup();
 	const handleCreate = async () => {
 		createGroup
-			.mutateAsync({ name: name, image: image })
+			.mutateAsync({ name: name, invite_link: true, image: image })
 			.then(() => {
 				handleClose();
 			})

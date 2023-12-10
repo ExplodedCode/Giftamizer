@@ -24,9 +24,8 @@ import {
 } from '@mui/material';
 import { Check, Clear } from '@mui/icons-material';
 
-import { SUPABASE_URL, useGetGroups, useAcceptGroupInvite, useDeclineGroupInvite, groupInviteTourProgress, useGetTour, useUpdateTour } from '../lib/useSupabase';
+import { SUPABASE_URL, useGetGroups, useAcceptGroupInvite, useDeclineGroupInvite, useGetTour } from '../lib/useSupabase';
 import { GroupType } from '../lib/useSupabase/types';
-import TourTooltip from './TourTooltip';
 
 export type InvitesDialogRefs = {
 	handleClickOpen: () => void;

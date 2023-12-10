@@ -149,6 +149,7 @@ export interface ListType {
 export interface GroupType {
 	id: string;
 	name: string;
+	invite_link: boolean;
 	secret_santa: SecretSanta;
 	image?: string;
 	image_token: number | null;

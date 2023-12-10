@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 import { signInWithFacebook, signInWithGoogle, useSupabase, validateEmail } from '../lib/useSupabase';
 import { useSnackbar } from 'notistack';
@@ -16,6 +16,9 @@ const steps = ['Account', 'Profile', 'Confirm'];
 export default function SignUp() {
 	const { client, setUser } = useSupabase();
 	const { enqueueSnackbar } = useSnackbar();
+	let [searchParams] = useSearchParams();
+
+	const redirectTo = searchParams.get('redirectTo');
 
 	const [activeStep, setActiveStep] = React.useState(0);
 	const [canProceed, setCanProceed] = React.useState(false);
@@ -112,11 +115,11 @@ export default function SignUp() {
 							}}
 						>
 							<Stack spacing={2} direction='row'>
-								<IconButton onClick={signInWithGoogle}>
+								<IconButton onClick={() => signInWithGoogle(redirectTo ?? '/')}>
 									<GoogleIcon />
 								</IconButton>
-								<IconButton onClick={signInWithFacebook}>
-									<FacebookIcon />
+								<IconButton onClick={() => signInWithFacebook(redirectTo ?? '/')} disabled={window.location.host !== 'giftamizer.com'}>
+									<FacebookIcon sx={window.location.host !== 'giftamizer.com' ? { opacity: 0.15 } : undefined} />
 								</IconButton>
 							</Stack>
 						</Box>
@@ -211,7 +214,7 @@ export default function SignUp() {
 
 						<Grid container>
 							<Grid item>
-								<MUILink component={Link} to='/signin' variant='body2'>
+								<MUILink component={Link} to={`/signin${window.location.search}${window.location.hash}`} variant='body2'>
 									Already have an account? Login
 								</MUILink>
 							</Grid>
