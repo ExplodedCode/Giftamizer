@@ -33,6 +33,7 @@ export default function SignIn() {
 	const { enqueueSnackbar } = useSnackbar();
 	let [searchParams] = useSearchParams();
 
+	const redirectTo = searchParams.get('redirectTo');
 	const accessToken = searchParams.get('accessToken');
 	const refreshToken = searchParams.get('refreshToken');
 
@@ -140,11 +141,12 @@ export default function SignIn() {
 				<Grid item xs={12} sm={8} md={5} component={Paper} elevation={6} square>
 					<Box
 						sx={{
-							my: 8,
-							mx: 4,
+							py: 8,
+							px: 4,
 							display: 'flex',
 							flexDirection: 'column',
 							alignItems: 'center',
+							height: '100%',
 						}}
 					>
 						<Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
@@ -163,11 +165,11 @@ export default function SignIn() {
 								}}
 							>
 								<Stack spacing={2} direction='row'>
-									<IconButton onClick={signInWithGoogle}>
+									<IconButton onClick={() => signInWithGoogle(redirectTo ?? '/')}>
 										<GoogleIcon />
 									</IconButton>
-									<IconButton onClick={signInWithFacebook}>
-										<FacebookIcon />
+									<IconButton onClick={() => signInWithFacebook(redirectTo ?? '/')} disabled={window.location.host !== 'giftamizer.com'}>
+										<FacebookIcon sx={window.location.host !== 'giftamizer.com' ? { opacity: 0.15 } : undefined} />
 									</IconButton>
 								</Stack>
 							</Box>
@@ -199,8 +201,9 @@ export default function SignIn() {
 										Forgot password?
 									</MUILink>
 								</Grid>
+
 								<Grid item>
-									<MUILink component={Link} to='/signup' variant='body2'>
+									<MUILink component={Link} to={`/signup${window.location.search}${window.location.hash}`} variant='body2'>
 										Don't have an account? Create Account
 									</MUILink>
 								</Grid>

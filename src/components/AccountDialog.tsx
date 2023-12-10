@@ -32,7 +32,7 @@ import {
 	Switch,
 } from '@mui/material';
 
-import { useGetProfile, useGetTour, useSupabase, useUpdateProfile, useUpdateTour } from '../lib/useSupabase';
+import { useGetProfile, useSupabase, useUpdateProfile, useUpdateTour } from '../lib/useSupabase';
 import EmailEditor from './EmailEditor';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import ImageCropper from './ImageCropper';
@@ -88,7 +88,6 @@ export default function AccountDialog(props: AccountDialogProps) {
 
 	//
 	// User tour
-	const { data: tour } = useGetTour();
 	const updateTour = useUpdateTour();
 
 	React.useEffect(() => {
@@ -196,6 +195,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 
 		if (data === 'ok') {
 			client.auth.signOut();
+			navigate('/');
 			enqueueSnackbar(`Your Giftamizer account and users data has been deleted.`, {
 				variant: 'success',
 			});

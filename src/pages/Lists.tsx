@@ -55,8 +55,6 @@ interface RenderListItemProps {
 	updateTour: UseMutationResult<TourSteps, unknown, TourSteps, unknown>;
 }
 function RenderListItem({ index, list, handleListEdit, tour, updateTour }: RenderListItemProps) {
-	const theme = useTheme();
-
 	const { enqueueSnackbar } = useSnackbar();
 	const navigate = useNavigate();
 	const location = useLocation();

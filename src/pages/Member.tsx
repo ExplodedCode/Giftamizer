@@ -74,15 +74,9 @@ export default function Member() {
 
 	//
 	// User tour
-	const filterButton = React.useRef(null);
-	const [filterButtonLoaded, setFilterButtonLoaded] = React.useState<boolean>(false);
 	const { data: tour } = useGetTour();
 	const updateTour = useUpdateTour();
 	const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-
-	React.useEffect(() => {
-		if (filterButton.current) setFilterButtonLoaded(true);
-	}, [filterButton]);
 
 	return (
 		<>

@@ -42,6 +42,7 @@ export const useGetGroups = () => {
 				.select(
 					`id,
 					name,
+					invite_link,
 					secret_santa,
 					image_token,
 					my_membership:group_members!inner(*)`
@@ -69,6 +70,7 @@ export const useRefreshGroup = () => {
 				.select(
 					`id,
 					name,
+					invite_link,
 					secret_santa,
 					image_token,
 					my_membership:group_members!inner(*)`
@@ -531,6 +533,7 @@ export const useUpdateGroup = () => {
 				.from('groups')
 				.update({
 					name: update.group.name,
+					invite_link: update.group.invite_link,
 					secret_santa: update.group.secret_santa,
 					image_token: update.group.image ? Date.now() : null,
 				})
@@ -590,7 +593,7 @@ export const useUpdateGroup = () => {
 							const { error } = await client.from('external_invites').delete().eq('group_id', update.group.id).eq('email', deletedUser.profile.email);
 							if (error) throw error;
 						} else if (deletedUser.child_list) {
-							const { error, data } = await client
+							const { error } = await client
 								.from('lists_groups')
 								.delete()
 								.eq('group_id', update.group.id)
@@ -666,6 +669,7 @@ export const useInviteToGroup = () => {
 				.from('groups')
 				.update({
 					name: update.group.name,
+					invite_link: update.group.invite_link,
 					image_token: update.group.image ? Date.now() : null,
 				})
 				.eq('id', update.group.id)
