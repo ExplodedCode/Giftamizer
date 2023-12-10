@@ -42,10 +42,13 @@ export const useGetGroups = () => {
 				.select(
 					`id,
 					name,
+					invite_link,
+					secret_santa,
 					image_token,
 					my_membership:group_members!inner(*)`
 				)
-				.eq('my_membership.user_id', user.id);
+				.eq('my_membership.user_id', user.id)
+				.order('name', { ascending: true });
 			if (error) throw error;
 
 			return data.map((g) => {
@@ -67,6 +70,8 @@ export const useRefreshGroup = () => {
 				.select(
 					`id,
 					name,
+					invite_link,
+					secret_santa,
 					image_token,
 					my_membership:group_members!inner(*)`
 				)
@@ -103,7 +108,7 @@ export const useCreateGroup = () => {
 	const { client, user } = useSupabase();
 
 	return useMutation(
-		async (group: Omit<GroupType, 'id' | 'image_token' | 'my_membership'>): Promise<GroupType> => {
+		async (group: Omit<GroupType, 'id' | 'secret_santa' | 'image_token' | 'my_membership'>): Promise<GroupType> => {
 			var { data, error } = await client
 				.from('groups')
 				.insert({
@@ -143,7 +148,7 @@ export const useCreateGroup = () => {
 		},
 		{
 			onSuccess: (group: GroupType) => {
-				queryClient.setQueryData(GROUPS_QUERY_KEY, (prevGroups: GroupType[] | undefined) => (prevGroups ? [...prevGroups, group] : [group]));
+				queryClient.setQueryData(GROUPS_QUERY_KEY, (prevGroups: GroupType[] | undefined) => (prevGroups ? [group, ...prevGroups] : [group]));
 			},
 		}
 	);
@@ -517,15 +522,19 @@ export const useUpdateGroup = () => {
 
 	interface GroupUpdate {
 		group: Omit<GroupType, 'image_token'>;
-		members: Member[];
+		members?: Member[];
 	}
 
 	return useMutation(
 		async (update: GroupUpdate): Promise<GroupUpdate> => {
+			console.log(update);
+
 			const { data, error: groupError } = await client
 				.from('groups')
 				.update({
 					name: update.group.name,
+					invite_link: update.group.invite_link,
+					secret_santa: update.group.secret_santa,
 					image_token: update.group.image ? Date.now() : null,
 				})
 				.eq('id', update.group.id)
@@ -544,52 +553,59 @@ export const useUpdateGroup = () => {
 				// @ts-ignore
 				update.group.image = `${client.supabaseUrl}/storage/v1/object/public/groups/${data.id}?${data.image_token}`;
 			} else if (data.image_token === null) {
-				const { error: imageDelError } = await client.storage.from('groups').remove([`${update.group.id}`]);
-				if (imageDelError) throw imageDelError;
-
 				update.group.image = undefined;
 			}
 
-			// Update Members
-			const { error: memberError } = await client.from('group_members').upsert(
-				update.members
-					?.filter((m) => !m.deleted && !m.external)
-					.map((m) => {
-						return {
-							group_id: update.group.id,
-							user_id: m.user_id,
-							owner: m.owner,
-						};
-					})
-			);
-			if (memberError) throw memberError;
+			if (update.members) {
+				// Update Members
+				const { error: memberError } = await client.from('group_members').upsert(
+					update.members
+						?.filter((m) => !m.deleted && !m.external && !m?.user_id?.includes('_'))
+						.map((m) => {
+							return {
+								group_id: update.group.id,
+								user_id: m.user_id,
+								owner: m.owner,
+							};
+						})
+				);
+				if (memberError) throw memberError;
 
-			// Update External Invites
-			const { error: inviteError } = await client.from('external_invites').upsert(
-				update.members
-					?.filter((m) => !m.deleted && m.external)
-					.map((m) => {
-						return {
-							group_id: update.group.id,
-							email: m.profile.email,
-							// invite_id: m.user_id,
-							owner: m.owner,
-						};
-					}) as ExternalInvite[]
-			);
-			if (inviteError) throw inviteError;
+				// Update External Invites
+				const { error: inviteError } = await client.from('external_invites').upsert(
+					update.members
+						?.filter((m) => !m.deleted && m.external && !m?.user_id?.includes('_'))
+						.map((m) => {
+							return {
+								group_id: update.group.id,
+								email: m.profile.email,
+								// invite_id: m.user_id,
+								owner: m.owner,
+							};
+						}) as ExternalInvite[]
+				);
+				if (inviteError) throw inviteError;
 
-			update.members
-				.filter((m) => m.deleted)
-				.forEach(async (deletedUser) => {
-					if (!deletedUser.external) {
-						const { error } = await client.from('group_members').delete().eq('group_id', update.group.id).eq('user_id', deletedUser.user_id);
-						if (error) throw error;
-					} else {
-						const { error } = await client.from('external_invites').delete().eq('group_id', update.group.id).eq('email', deletedUser.profile.email);
-						if (error) throw error;
-					}
-				});
+				update.members
+					.filter((m) => m.deleted)
+					.forEach(async (deletedUser) => {
+						if (deletedUser.external) {
+							const { error } = await client.from('external_invites').delete().eq('group_id', update.group.id).eq('email', deletedUser.profile.email);
+							if (error) throw error;
+						} else if (deletedUser.child_list) {
+							const { error } = await client
+								.from('lists_groups')
+								.delete()
+								.eq('group_id', update.group.id)
+								.eq('user_id', deletedUser.user_id.split('_')[0])
+								.eq('list_id', deletedUser.user_id.split('_')[1]);
+							if (error) throw error;
+						} else {
+							const { error } = await client.from('group_members').delete().eq('group_id', update.group.id).eq('user_id', deletedUser.user_id);
+							if (error) throw error;
+						}
+					});
+			}
 
 			return update;
 		},
@@ -603,6 +619,7 @@ export const useUpdateGroup = () => {
 										...group,
 										name: update.group.name,
 										image: update.group.image,
+										secret_santa: update.group.secret_santa,
 								  }
 								: group;
 						});
@@ -652,6 +669,7 @@ export const useInviteToGroup = () => {
 				.from('groups')
 				.update({
 					name: update.group.name,
+					invite_link: update.group.invite_link,
 					image_token: update.group.image ? Date.now() : null,
 				})
 				.eq('id', update.group.id)
@@ -670,9 +688,6 @@ export const useInviteToGroup = () => {
 				// @ts-ignore
 				update.group.image = `${client.supabaseUrl}/storage/v1/object/public/groups/${data.id}?${data.image_token}`;
 			} else if (data.image_token === null) {
-				const { error: imageDelError } = await client.storage.from('groups').remove([`${update.group.id}`]);
-				if (imageDelError) throw imageDelError;
-
 				update.group.image = undefined;
 			}
 
@@ -852,9 +867,6 @@ export const useDeleteGroup = () => {
 
 	return useMutation(
 		async (id: string): Promise<string> => {
-			const { error: avatarError } = await client.storage.from('groups').remove([`${id}`]);
-			if (avatarError) console.log(`Unable to delete group avater.`, avatarError);
-
 			const { error } = await client.from('groups').delete().eq('id', id);
 			if (error) throw error;
 

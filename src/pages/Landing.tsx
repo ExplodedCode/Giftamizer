@@ -2,11 +2,11 @@ import React from 'react';
 
 import { Link } from 'react-router-dom';
 
-import { AppBar, Toolbar, Typography, Button, Container, Grid, Card, CardHeader, Avatar } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Container, Grid, Card, CardHeader, Avatar, Divider } from '@mui/material';
 import { green, red, blue, orange } from '@mui/material/colors';
 
 import Copyright from './Copyright';
-import { AutoAwesome, Checklist, EscalatorWarning, Groups, ListAlt, ShoppingCart } from '@mui/icons-material';
+import { AutoAwesome, Checklist, EscalatorWarning, Groups, ListAlt, ShoppingCart, Shuffle } from '@mui/icons-material';
 import { GiftIcon } from '../components/SvgIcons';
 
 function Landing() {
@@ -95,13 +95,21 @@ function Landing() {
 							Giving just got a whole lot better.
 						</Typography>
 						<Typography variant='body1' align='center'>
-							Want to receive gifts that you know you will love? Giftamizer is the perfect answer. It’s your very own personal gift registry. Whether you’re online or in-store, you can
-							add anything you’d like to receive – from your favourite bottle of wine or perfect pair of shoes to a new mountain bike or weekend away. Share with your friends or family
+							Want to receive gifts that you know you will love? Giftamizer is the perfect answer. It's your very own personal gift registry. Whether you're online or in-store, you can
+							add anything you'd like to receive - from your favourite bottle of wine or perfect pair of shoes to a new mountain bike or weekend away. Share with your friends or family
 							and invite them to share with you!
 						</Typography>
 					</Grid>
 					<Grid container item sm={12} spacing={3} direction='row' style={{ marginTop: 32 }}>
-						<Grid item xs={12} sm={4}>
+						<Grid item xs={12}>
+							<Typography variant='h5' align='center'>
+								Features
+							</Typography>
+						</Grid>
+						<Grid item xs={12}>
+							<Divider />
+						</Grid>
+						<Grid item sm={12} md={6}>
 							<Card>
 								<CardHeader
 									avatar={
@@ -114,7 +122,20 @@ function Landing() {
 								/>
 							</Card>
 						</Grid>
-						<Grid item xs={12} sm={4}>
+						<Grid item sm={12} md={6}>
+							<Card>
+								<CardHeader
+									avatar={
+										<Avatar aria-label='recipe' style={{ backgroundColor: red[500] }}>
+											<Shuffle />
+										</Avatar>
+									}
+									title='Secret Santa'
+									subheader={`Draw names for your Secret Santa gift exchange! Even add exlusions for who shouldn't draw whom.`}
+								/>
+							</Card>
+						</Grid>
+						<Grid item sm={12} md={6}>
 							<Card>
 								<CardHeader
 									avatar={
@@ -127,7 +148,7 @@ function Landing() {
 								/>
 							</Card>
 						</Grid>
-						<Grid item xs={12} sm={4}>
+						<Grid item sm={12} md={6}>
 							<Card>
 								<CardHeader
 									avatar={

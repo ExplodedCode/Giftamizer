@@ -32,9 +32,31 @@ export default function Theme() {
 		[prefersDarkMode]
 	);
 
+	const devTheme = React.useMemo(
+		() =>
+			createTheme({
+				palette: {
+					mode: prefersDarkMode ? 'dark' : 'light',
+					primary: {
+						light: '#8561c5',
+						main: '#673ab7',
+						dark: '#482880',
+						contrastText: '#fff',
+					},
+					secondary: {
+						light: '#f6685e',
+						main: '#f44336',
+						dark: '#aa2e25',
+						contrastText: '#fff',
+					},
+				},
+			}),
+		[prefersDarkMode]
+	);
+
 	return (
 		<Router>
-			<ThemeProvider theme={theme}>
+			<ThemeProvider theme={window.location.host === 'giftamizer.com' ? theme : devTheme}>
 				<CssBaseline />
 				<Routes />
 			</ThemeProvider>

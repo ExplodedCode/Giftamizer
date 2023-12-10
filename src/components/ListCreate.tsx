@@ -67,7 +67,7 @@ export default function CreateList() {
 				<DialogContent>
 					<Grid container spacing={2}>
 						<Grid item xs={12}>
-							<DialogContentText>TODO: describe what lists do...</DialogContentText>
+							<DialogContentText>Organize your wishlist into categories, making it easier for others to find the perfect gift for you.</DialogContentText>
 						</Grid>
 						{childList && (
 							<Grid item xs={12}>
@@ -75,10 +75,15 @@ export default function CreateList() {
 							</Grid>
 						)}
 						<Grid item xs={12}>
-							<TextField fullWidth label='Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} autoFocus disabled={createList.isLoading} />
+							<TextField fullWidth label='Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} disabled={createList.isLoading} />
 						</Grid>
 						<Grid item xs={12}>
-							<GroupSelector groups={groups as Omit<GroupType, 'image_token' | 'my_membership'>[]} value={selectedGroups} onChange={setSelectedGroups} disabled={createList.isLoading} />
+							<GroupSelector
+								groups={groups?.filter((g) => g.my_membership[0].invite === false) as Omit<GroupType, 'image_token' | 'my_membership'>[]}
+								value={selectedGroups}
+								onChange={setSelectedGroups}
+								disabled={createList.isLoading}
+							/>
 						</Grid>
 						<Grid item xs={12}>
 							<FormControl component='fieldset' variant='standard'>
@@ -86,7 +91,7 @@ export default function CreateList() {
 									control={<Switch checked={childList} onChange={(e) => setChildList(e.target.checked)} disabled={createList.isLoading} />}
 									label='Display Separately in Groups'
 								/>
-								<FormHelperText>This can only be set when creating a new list.</FormHelperText>
+								<FormHelperText sx={{ color: 'warning.main' }}>This can only be set when creating a new list.</FormHelperText>
 							</FormControl>
 						</Grid>
 						{childList && (

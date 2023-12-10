@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 
 import { ExtractURLFromText, useGetProfile, useSupabase, useUpdateItems } from '../lib/useSupabase';
-import { CustomField, ItemType, ListType } from '../lib/useSupabase/types';
+import { CustomField, ItemType, ListType, MemberItemType, Profile } from '../lib/useSupabase/types';
 
 import {
 	Dialog,
@@ -11,7 +11,6 @@ import {
 	DialogContent,
 	Button,
 	TextField,
-	DialogContentText,
 	Grid,
 	Stack,
 	useMediaQuery,
@@ -29,13 +28,15 @@ import { LoadingButton } from '@mui/lab';
 
 import ListSelector from './ListSelector';
 import ImageCropper from './ImageCropper';
+import UserSearchSingle from './UserSearchSingle';
 
 type ItemUpdateProps = {
-	item: ItemType | null;
+	item: ItemType | MemberItemType;
 	onClose: () => void;
+	shoppingItem?: boolean;
 };
 
-export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
+export default function ItemUpdate({ item, onClose, shoppingItem }: ItemUpdateProps) {
 	const theme = useTheme();
 	const { enqueueSnackbar } = useSnackbar();
 	const location = useLocation();
@@ -52,6 +53,9 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 	const [customFields, setCustomFields] = React.useState<CustomField[]>([]);
 	const [lists, setLists] = React.useState<ListType[]>([]);
 
+	// @ts-ignore
+	const [selectedUser, setSelectedUser] = React.useState<Profile | undefined>(item?.profile);
+
 	const updateItems = useUpdateItems();
 	const handleSave = async () => {
 		if (item) {
@@ -66,6 +70,7 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 					custom_fields: customFields,
 					lists: item.lists,
 					newLists: profile?.enable_lists ? lists : [],
+					shopping_item: selectedUser?.user_id ?? null,
 				})
 				.then(() => {
 					onClose();
@@ -96,7 +101,7 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 				}) ?? []
 			);
 		}
-	}, [item, user]);
+	}, [item, user, open]);
 
 	const [metaImage, setMetaImage] = React.useState<string | undefined>();
 	const [metaLoading, setMetaloading] = React.useState(false);
@@ -109,8 +114,13 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 
 		if (error) {
 			console.log(error);
-			enqueueSnackbar(`Unable to get metadata.`, {
+			enqueueSnackbar(`Unable to get item information.`, {
 				variant: 'error',
+			});
+			setMetaloading(false);
+		} else if (data.name === '' && data.description === '' && data.image === null) {
+			enqueueSnackbar(`No item information found.`, {
+				variant: 'warning',
 			});
 			setMetaloading(false);
 		} else {
@@ -128,13 +138,17 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 			<DialogContent>
 				<Grid container spacing={2}>
 					<Grid item xs={12}>
-						<DialogContentText>TODO: describe what items do...</DialogContentText>
-					</Grid>
-					<Grid item xs={12}>
 						<ImageCropper value={image} onChange={setImage} square importedImage={metaImage} />
 					</Grid>
+
+					{shoppingItem && item && (
+						<Grid item xs>
+							<UserSearchSingle selectedUser={selectedUser!} setSelectedUser={setSelectedUser} label='Gift For' required />
+						</Grid>
+					)}
+
 					<Grid item xs={12}>
-						<TextField fullWidth label='Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} autoFocus inputProps={{ maxLength: 100 }} />
+						<TextField fullWidth label='Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} inputProps={{ maxLength: 100 }} />
 					</Grid>
 					<Grid item xs={12}>
 						<TextField fullWidth label='Description' variant='outlined' value={description} onChange={(e) => setDescription(e.target.value)} inputProps={{ maxLength: 250 }} />
@@ -146,13 +160,17 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 								<OutlinedInput
 									value={link}
 									onChange={(e) => {
-										setLinks(links.map((l, i) => (i === index ? ExtractURLFromText(e.target.value) : l)));
-									}}
-									onPaste={(e) => {
-										const urlQuery = e.clipboardData.getData('Text');
-										if (index === 0 && urlQuery.length > 0) {
+										let value = e.target.value;
+										let extractedUrl = ExtractURLFromText(value)[0];
+
+										setLinks(links.map((l, i) => (i === index ? value : l)));
+
+										// @ts-ignore
+										if (e.nativeEvent.inputType === 'insertFromPaste' && index === 0 && extractedUrl.startsWith('http')) {
+											setLinks(links.map((l, i) => (i === index ? extractedUrl : l)));
+
 											setMetaloading(true);
-											getUrlMetadata(ExtractURLFromText(urlQuery));
+											getUrlMetadata(extractedUrl);
 										}
 									}}
 									endAdornment={
@@ -228,7 +246,7 @@ export default function ItemUpdate({ item, onClose }: ItemUpdateProps) {
 						</Grid>
 					))}
 
-					{profile?.enable_lists && (
+					{profile?.enable_lists && !shoppingItem && (
 						<Grid item xs={12}>
 							<ListSelector value={lists} onChange={(v) => setLists(v)} />
 						</Grid>

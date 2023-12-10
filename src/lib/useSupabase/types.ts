@@ -3,6 +3,8 @@ import type { SupabaseClient, User } from '@supabase/supabase-js';
 export type SupabaseContextType = {
 	sb: SupabaseClient | null;
 	user: User | null | undefined;
+	setUser: React.Dispatch<React.SetStateAction<User | null | undefined>> | undefined;
+
 	error?: string | null;
 };
 
@@ -41,9 +43,11 @@ export type ProfileType = {
 	last_name: string;
 	image?: string;
 	bio: string;
+	home: string;
 	enable_lists: boolean;
 	enable_archive: boolean;
 	enable_trash: boolean;
+	enable_snowfall: boolean;
 	email_promotional: boolean;
 	email_invites: boolean;
 	avatar_token: number | null;
@@ -78,10 +82,12 @@ export interface ItemType {
 	name: string;
 	description: string;
 	links?: string[];
+	domains?: string[];
 	custom_fields?: CustomField[];
 
 	archived: boolean;
 	deleted: boolean;
+	shopping_item: string | null;
 
 	lists?: ItemListType[];
 	newLists?: ListType[];
@@ -92,6 +98,9 @@ export interface ItemType {
 
 export interface MemberItemType extends ItemType {
 	status?: ItemStatus;
+	profile?: Profile;
+
+	items_lists?: any[];
 }
 
 export interface ItemStatus {
@@ -127,6 +136,7 @@ export interface ListType {
 	user_id: string;
 	name: string;
 	child_list: boolean;
+	pinned?: boolean;
 	image?: string;
 	bio?: string;
 
@@ -139,12 +149,31 @@ export interface ListType {
 export interface GroupType {
 	id: string;
 	name: string;
+	invite_link: boolean;
+	secret_santa: SecretSanta;
 	image?: string;
 	image_token: number | null;
 	my_membership: MyMembership[];
 
 	created_at?: Date;
 	updated_at?: Date;
+}
+
+export interface SecretSanta {
+	status: SecretSantaStatus;
+	name?: string;
+	date?: string;
+	drawing?: SecretSantaDrawings;
+}
+
+export enum SecretSantaStatus {
+	Init = 'init',
+	On = 'on',
+	Off = 'off',
+}
+
+export interface SecretSantaDrawings {
+	[user_id: string]: string[];
 }
 
 export interface Member {
@@ -198,4 +227,44 @@ export interface NotificationType {
 	icon?: string;
 	action?: string;
 	created_at?: Date;
+}
+
+export interface TourSteps {
+	item_create_fab?: boolean;
+	item_name?: boolean;
+	item_url?: boolean;
+	item_more_links?: boolean;
+	item_custom_fields?: boolean;
+	item_image?: boolean;
+	item_create_btn?: boolean;
+
+	group_invite_nav?: boolean;
+	group_invite_button?: boolean;
+
+	group_nav?: boolean;
+	group_create_fab?: boolean;
+	group_create_name?: boolean;
+	group_create_image?: boolean;
+	group_create?: boolean;
+	group_card?: boolean;
+	group_settings?: boolean;
+	group_pin?: boolean;
+	group_member_card?: boolean;
+	group_member_item_status?: boolean;
+	group_member_item_status_taken?: boolean;
+	group_member_item_filter?: boolean;
+
+	group_settings_add_people?: boolean;
+	group_settings_permissions?: boolean;
+
+	list_tour_start?: boolean;
+	list_nav?: boolean;
+	list_intro?: boolean;
+	list_menu?: boolean;
+	list_edit?: boolean;
+	list_group_assign?: boolean;
+
+	shopping_nav?: boolean;
+	shopping_filter?: boolean;
+	shopping_item?: boolean;
 }

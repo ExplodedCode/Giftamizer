@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { useSnackbar } from 'notistack';
 import { TransitionProps } from '@mui/material/transitions';
-import { Close, Person, Save } from '@mui/icons-material';
+import { Close, Save, Settings } from '@mui/icons-material';
 
 import {
 	Alert,
@@ -31,10 +31,12 @@ import {
 	FormHelperText,
 	Switch,
 } from '@mui/material';
-import { useGetProfile, useSupabase, useUpdateProfile } from '../lib/useSupabase';
+
+import { useGetProfile, useSupabase, useUpdateProfile, useUpdateTour } from '../lib/useSupabase';
 import EmailEditor from './EmailEditor';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import ImageCropper from './ImageCropper';
+import HomeSelector from './HomeSelector';
 
 const Transition = React.forwardRef(function Transition(
 	props: TransitionProps & {
@@ -69,10 +71,13 @@ export default function AccountDialog(props: AccountDialogProps) {
 	const [lastName, setLastName] = React.useState('');
 	const [image, setImage] = React.useState<string | undefined>();
 	const [bio, setBio] = React.useState('');
+	const [home, setHome] = React.useState('/');
 
 	const [enableLists, setEnableLists] = React.useState(false);
 	const [enableArchive, setEnableArchive] = React.useState(false);
 	const [enableTrash, setEnableTrash] = React.useState(false);
+
+	const [enableSnowFall, setEnableSnowFall] = React.useState(false);
 
 	const [emailPromotional, setEmailPromotional] = React.useState(false);
 	const [emailInvites, setEmailInvites] = React.useState(false);
@@ -81,6 +86,10 @@ export default function AccountDialog(props: AccountDialogProps) {
 
 	const deleteOpen = location.hash === '#my-account-delete';
 
+	//
+	// User tour
+	const updateTour = useUpdateTour();
+
 	React.useEffect(() => {
 		const loadProfile = async () => {
 			if (profile) {
@@ -88,9 +97,14 @@ export default function AccountDialog(props: AccountDialogProps) {
 				setLastName(profile.last_name);
 				setImage(profile.image);
 				setBio(profile.bio);
+				setHome(profile.home);
+
 				setEnableLists(profile.enable_lists);
 				setEnableArchive(profile.enable_archive);
 				setEnableTrash(profile.enable_trash);
+
+				setEnableSnowFall(profile.enable_snowfall);
+
 				setEmailPromotional(profile.email_promotional);
 				setEmailInvites(profile.email_invites);
 			}
@@ -123,21 +137,36 @@ export default function AccountDialog(props: AccountDialogProps) {
 
 	const updateProfile = useUpdateProfile();
 	const handleSave = async () => {
+		const listsOrig = profile?.enable_lists;
+
 		updateProfile
 			.mutateAsync({
 				first_name: firstName,
 				last_name: lastName,
 				image: image,
 				bio: bio,
+				home: home,
 				enable_lists: enableLists,
 				enable_archive: enableArchive,
 				enable_trash: enableTrash,
+				enable_snowfall: enableSnowFall,
 				email_promotional: emailPromotional,
 				email_invites: emailInvites,
 				avatar_token: profile?.avatar_token!,
 			})
 			.then(() => {
 				navigate('#'); // close dialog
+
+				if (listsOrig !== enableLists && enableLists) {
+					updateTour.mutateAsync({
+						list_tour_start: true,
+					});
+				}
+
+				// navigate away from lists if active page
+				if (!enableLists && location.pathname.startsWith('/lists')) {
+					navigate('/');
+				}
 			})
 			.catch((error) => {
 				enqueueSnackbar(`Unable to update your profile. ${error}`, {
@@ -166,6 +195,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 
 		if (data === 'ok') {
 			client.auth.signOut();
+			navigate('/');
 			enqueueSnackbar(`Your Giftamizer account and users data has been deleted.`, {
 				variant: 'success',
 			});
@@ -176,13 +206,13 @@ export default function AccountDialog(props: AccountDialogProps) {
 		<>
 			<MenuItem onClick={handleClickOpen}>
 				<ListItemIcon>
-					<Person fontSize='small' />
+					<Settings fontSize='small' />
 				</ListItemIcon>
-				<Typography textAlign='center'>My Account</Typography>
+				<Typography textAlign='center'>User Settings</Typography>
 			</MenuItem>
 
 			<Dialog onKeyDown={(e) => e.stopPropagation()} fullScreen open={open} onClose={handleClose} TransitionComponent={Transition}>
-				<AppBar sx={{ position: 'relative' }} enableColorOnDark>
+				<AppBar position='fixed' color='primary' enableColorOnDark sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
 					<Toolbar>
 						<IconButton edge='start' color='inherit' onClick={handleClose} aria-label='close'>
 							<Close />
@@ -195,6 +225,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 						</IconButton>
 					</Toolbar>
 				</AppBar>
+				<Toolbar />
 				<Container maxWidth='md' sx={{ mt: 6, mb: 4 }}>
 					<Grid container spacing={2}>
 						<Grid item xs={12}>
@@ -202,10 +233,14 @@ export default function AccountDialog(props: AccountDialogProps) {
 							<Typography variant='h6' gutterBottom>
 								Account Settings
 							</Typography>
-							<TextField fullWidth label='First Name' variant='outlined' value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-						</Grid>
-						<Grid item xs={6}>
-							<TextField fullWidth label='Last Name' variant='outlined' value={lastName} onChange={(e) => setLastName(e.target.value)} />
+							<Grid container spacing={2}>
+								<Grid item xs={12} sm={6}>
+									<TextField fullWidth label='First Name' variant='outlined' value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+								</Grid>
+								<Grid item xs={12} sm={6}>
+									<TextField fullWidth label='Last Name' variant='outlined' value={lastName} onChange={(e) => setLastName(e.target.value)} />
+								</Grid>
+							</Grid>
 						</Grid>
 						<Grid item xs={12}>
 							<TextField
@@ -220,6 +255,10 @@ export default function AccountDialog(props: AccountDialogProps) {
 								onChange={(e) => setBio(e.target.value)}
 								helperText={`${bio.length} / 250`}
 							/>
+						</Grid>
+
+						<Grid item xs={12}>
+							<HomeSelector value={home} onChange={setHome} />
 						</Grid>
 
 						{user.app_metadata.provider === 'email' && (
@@ -238,7 +277,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 							</Typography>
 							<FormControl component='fieldset' variant='standard'>
 								<FormGroup>
-									<FormControlLabel control={<Switch checked={enableLists} onChange={(e) => setEnableLists(e.target.checked)} />} label='Enable Lists' />
+									<FormControlLabel control={<Switch checked={enableLists} onChange={(e) => setEnableLists(e.target.checked)} />} label='Lists' />
 									<FormHelperText>
 										Allows you to create item lists and assign them to groups. <i>Even create seperate managed lists for your kids or pets</i>
 									</FormHelperText>
@@ -248,7 +287,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 						<Grid item xs={12}>
 							<FormControl component='fieldset' variant='standard'>
 								<FormGroup>
-									<FormControlLabel control={<Switch checked={enableTrash} onChange={(e) => setEnableTrash(e.target.checked)} />} label='Enable Trash Can' />
+									<FormControlLabel control={<Switch checked={enableTrash} onChange={(e) => setEnableTrash(e.target.checked)} />} label='Trash Can' />
 									<FormHelperText>Recover deleted items</FormHelperText>
 								</FormGroup>
 							</FormControl>
@@ -256,11 +295,22 @@ export default function AccountDialog(props: AccountDialogProps) {
 						<Grid item xs={12}>
 							<FormControl component='fieldset' variant='standard'>
 								<FormGroup>
-									<FormControlLabel control={<Switch checked={enableArchive} onChange={(e) => setEnableArchive(e.target.checked)} />} label='Enable Item Archive' />
+									<FormControlLabel control={<Switch checked={enableArchive} onChange={(e) => setEnableArchive(e.target.checked)} />} label='Item Archive' />
 									<FormHelperText>Hide items from groups without deleting them.</FormHelperText>
 								</FormGroup>
 							</FormControl>
 						</Grid>
+
+						{(new Date().getMonth() === 10 || new Date().getMonth() === 11 || new Date().getMonth() === 0) && (
+							<Grid item xs={12}>
+								<FormControl component='fieldset' variant='standard'>
+									<FormGroup>
+										<FormControlLabel control={<Switch checked={enableSnowFall} onChange={(e) => setEnableSnowFall(e.target.checked)} />} label='Snow Fall ❄️' />
+										<FormHelperText>Only available Nov-Jan.</FormHelperText>
+									</FormGroup>
+								</FormControl>
+							</Grid>
+						)}
 
 						<Grid item xs={12}>
 							<Divider />
@@ -305,7 +355,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 													Your account is currently an owner of {groupsWithoutCoOwner.length > 1 ? 'these groups' : 'this group'}:{' '}
 													{groupsWithoutCoOwner.map((g, i) => (
 														<React.Fragment key={i}>
-															<MUILink component={Link} to={`/groups/${g.id}`} onClick={handleClose}>
+															<MUILink component={Link} to={`/groups/${g.id}#group-settings`} onClick={handleClose}>
 																{g.name}
 															</MUILink>
 															{i !== groupsWithoutCoOwner.length - 1 && ', '}
@@ -346,6 +396,59 @@ export default function AccountDialog(props: AccountDialogProps) {
 							<Typography variant='body1'>
 								If you're experiencing any issues or just have a question, please contact us at <MUILink href='mailto:support@giftamizer.com'>support@giftamizer.com</MUILink>.
 							</Typography>
+						</Grid>
+
+						<Grid item xs={12}>
+							<MUILink
+								sx={{
+									cursor: 'pointer',
+								}}
+								onClick={() => {
+									updateTour.mutateAsync({
+										item_create_fab: false,
+										item_name: false,
+										item_url: false,
+										item_more_links: false,
+										item_custom_fields: false,
+										item_image: false,
+										item_create_btn: false,
+
+										group_invite_nav: false,
+										group_invite_button: false,
+
+										group_nav: false,
+										group_create_fab: false,
+										group_create_name: false,
+										group_create_image: false,
+										group_create: false,
+										group_card: false,
+										group_settings: false,
+										group_pin: false,
+										group_member_card: false,
+										group_member_item_status: false,
+										group_member_item_status_taken: false,
+										group_member_item_filter: false,
+
+										group_settings_add_people: false,
+										group_settings_permissions: false,
+
+										list_tour_start: false,
+										list_nav: false,
+										list_intro: false,
+										list_menu: false,
+										list_edit: false,
+										list_group_assign: false,
+
+										shopping_nav: false,
+										shopping_filter: false,
+										shopping_item: false,
+									});
+
+									navigate('/');
+								}}
+							>
+								Reset User Tour
+							</MUILink>
 						</Grid>
 					</Grid>
 				</Container>

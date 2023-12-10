@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Link, Navigate, Route, Routes, useLocation, useSearchParams } from 'react-router-dom';
 import { LastLocationProvider } from 'react-router-dom-last-location';
 import { useSnackbar } from 'notistack';
 
@@ -10,6 +10,7 @@ import { Backdrop, Box, CircularProgress, Link as MUILink, Typography } from '@m
 import Landing from './pages/Landing';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
+import GroupInvite from './pages/GroupInvite';
 import UpdatePassword from './pages/UpdatePassword';
 import Navigation from './components/Navigation';
 
@@ -21,7 +22,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsConditions from './pages/TermsConditions';
 import Member from './pages/Member';
 import ListItems from './pages/ListItems';
-import { UserRoles } from './lib/useSupabase/types';
+import { ProfileType, UserRoles } from './lib/useSupabase/types';
 import ShoppingList from './pages/ShoppingList';
 import ItemArchive from './pages/ItemArchive';
 import ItemsTrash from './pages/ItemsTrash';
@@ -30,9 +31,12 @@ export default function AppRoutes() {
 	const location = useLocation();
 	const { enqueueSnackbar } = useSnackbar();
 
-	const { user } = useSupabase();
+	let [searchParams] = useSearchParams();
+	const redirectTo = searchParams.get('redirectTo');
 
-	const [redirect, setRedirct] = React.useState<string>('/');
+	const { user, client } = useSupabase();
+
+	const [home, setHome] = React.useState('/');
 
 	React.useEffect(() => {
 		if (location.hash.startsWith('#message=')) {
@@ -42,6 +46,19 @@ export default function AppRoutes() {
 			});
 		}
 	}, [enqueueSnackbar, location.hash]);
+
+	React.useEffect(() => {
+		const getHomePage = async () => {
+			const { data, error } = await client.from('profiles').select('home').eq('user_id', user.id).single();
+			if (error) throw error;
+			var profile = data as unknown as ProfileType;
+
+			setHome(profile.home);
+		};
+		if (user?.id) {
+			getHomePage();
+		}
+	}, [client, user]);
 
 	return (
 		<>
@@ -56,7 +73,24 @@ export default function AppRoutes() {
 							path='/'
 							element={
 								user ? (
-									<ProtectedRoute setRedirct={setRedirct}>
+									home === '/' ? (
+										<ProtectedRoute>
+											<Items />
+										</ProtectedRoute>
+									) : (
+										<Navigate to={home} />
+									)
+								) : (
+									<Landing />
+								)
+							}
+						/>
+
+						<Route
+							path='/items'
+							element={
+								user ? (
+									<ProtectedRoute>
 										<Items />
 									</ProtectedRoute>
 								) : (
@@ -64,6 +98,7 @@ export default function AppRoutes() {
 								)
 							}
 						/>
+
 						<Route path='/policy' element={<PrivacyPolicy />} />
 						<Route path='/terms' element={<TermsConditions />} />
 
@@ -71,7 +106,7 @@ export default function AppRoutes() {
 							path='/signin'
 							element={
 								user ? (
-									<Navigate to={redirect} />
+									<Navigate to={redirectTo ?? '/'} />
 								) : (
 									<MaintenanceProvider>
 										<SignIn />
@@ -83,7 +118,7 @@ export default function AppRoutes() {
 							path='/signup'
 							element={
 								user ? (
-									<Navigate to={redirect} />
+									<Navigate to={redirectTo ?? '/'} />
 								) : (
 									<MaintenanceProvider>
 										<SignUp />
@@ -102,12 +137,21 @@ export default function AppRoutes() {
 							}
 						/>
 
-						<Route path='/gift' element={<Navigate to={redirect} />} />
+						<Route path='/gift' element={<Navigate to={redirectTo ?? '/'} />} />
+
+						<Route
+							path='/Items'
+							element={
+								<ProtectedRoute>
+									<Lists />
+								</ProtectedRoute>
+							}
+						/>
 
 						<Route
 							path='/lists'
 							element={
-								<ProtectedRoute setRedirct={setRedirct}>
+								<ProtectedRoute>
 									<Lists />
 								</ProtectedRoute>
 							}
@@ -116,7 +160,7 @@ export default function AppRoutes() {
 						<Route
 							path={`/lists/:list`}
 							element={
-								<ProtectedRoute setRedirct={setRedirct}>
+								<ProtectedRoute>
 									<ListItems />
 								</ProtectedRoute>
 							}
@@ -125,7 +169,7 @@ export default function AppRoutes() {
 						<Route
 							path='/groups'
 							element={
-								<ProtectedRoute setRedirct={setRedirct}>
+								<ProtectedRoute>
 									<Groups />
 								</ProtectedRoute>
 							}
@@ -133,7 +177,7 @@ export default function AppRoutes() {
 						<Route
 							path={`/groups/:group`}
 							element={
-								<ProtectedRoute setRedirct={setRedirct}>
+								<ProtectedRoute>
 									<Group />
 								</ProtectedRoute>
 							}
@@ -141,16 +185,24 @@ export default function AppRoutes() {
 						<Route
 							path={`/groups/:group/:user`}
 							element={
-								<ProtectedRoute setRedirct={setRedirct}>
+								<ProtectedRoute>
 									<Member />
 								</ProtectedRoute>
+							}
+						/>
+						<Route
+							path={`/group-invite/:group`}
+							element={
+								<MaintenanceProvider>
+									<GroupInvite />
+								</MaintenanceProvider>
 							}
 						/>
 
 						<Route
 							path='/shopping'
 							element={
-								<ProtectedRoute setRedirct={setRedirct}>
+								<ProtectedRoute>
 									<ShoppingList />
 								</ProtectedRoute>
 							}
@@ -158,7 +210,7 @@ export default function AppRoutes() {
 						<Route
 							path='/archive'
 							element={
-								<ProtectedRoute setRedirct={setRedirct}>
+								<ProtectedRoute>
 									<ItemArchive />
 								</ProtectedRoute>
 							}
@@ -166,7 +218,7 @@ export default function AppRoutes() {
 						<Route
 							path='/trash'
 							element={
-								<ProtectedRoute setRedirct={setRedirct}>
+								<ProtectedRoute>
 									<ItemsTrash />
 								</ProtectedRoute>
 							}
@@ -176,7 +228,7 @@ export default function AppRoutes() {
 							path='*'
 							element={
 								user ? (
-									<ProtectedRoute setRedirct={setRedirct}>
+									<ProtectedRoute>
 										<Typography variant='h5' gutterBottom style={{ marginTop: 100, textAlign: 'center' }}>
 											Page not found!
 										</Typography>
@@ -203,8 +255,7 @@ export default function AppRoutes() {
 	);
 }
 
-const ProtectedRoute: React.FC<{ children: JSX.Element; setRedirct(redirect: string): void }> = ({ children, setRedirct }) => {
-	const location = useLocation();
+const ProtectedRoute: React.FC<{ children: JSX.Element }> = ({ children }) => {
 	const { user, client } = useSupabase();
 
 	const { data: profile } = useGetProfile();
@@ -221,8 +272,10 @@ const ProtectedRoute: React.FC<{ children: JSX.Element; setRedirct(redirect: str
 
 	if (!user) {
 		// user is not authenticated
-		setRedirct(location.pathname + location.hash);
-		return <Navigate to={`/signin`} />;
+
+		console.log(window.location.pathname);
+
+		return <Navigate to={`/signin?redirectTo=${window.location.pathname}${window.location.search}${window.location.hash}`} />;
 	}
 
 	return system?.maintenance && !profile?.roles?.roles.includes(UserRoles.admin) ? (
@@ -274,7 +327,7 @@ export function getParamsFromUrl(url: string) {
 		let eachParamsArr = params[1].split('&');
 		let obj: any = {};
 		if (eachParamsArr && eachParamsArr.length) {
-			eachParamsArr.map((param) => {
+			eachParamsArr.forEach((param) => {
 				let keyValuePair = param.split('=');
 				let key = keyValuePair[0];
 				let value = keyValuePair[1];

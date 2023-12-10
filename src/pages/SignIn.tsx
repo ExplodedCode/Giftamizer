@@ -24,14 +24,16 @@ import {
 	Link as MUILink,
 } from '@mui/material';
 import { LockOutlined } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 
 var randomImage = Math.floor(Math.random() * 10) + 1;
 
 export default function SignIn() {
-	const { client } = useSupabase();
+	const { client, setUser } = useSupabase();
 	const { enqueueSnackbar } = useSnackbar();
-	let [searchParams, setSearchParams] = useSearchParams();
+	let [searchParams] = useSearchParams();
 
+	const redirectTo = searchParams.get('redirectTo');
 	const accessToken = searchParams.get('accessToken');
 	const refreshToken = searchParams.get('refreshToken');
 
@@ -39,48 +41,55 @@ export default function SignIn() {
 	const [password, setPassword] = React.useState('');
 
 	const [forgotDialogOpen, setForgotDialogOpen] = React.useState(false);
+	const [passwordResetLoading, setPasswordResetLoading] = React.useState(false);
 	const [resetEmail, setResetEmail] = React.useState('');
 
-	const loginWithTokens = async (accessToken: string, refreshToken: string) => {
-		console.log(accessToken, refreshToken);
-
-		const { data, error } = await client.auth.setSession({
-			access_token: accessToken,
-			refresh_token: refreshToken,
-		});
-
-		if (error) {
-			console.error('setSession Error', error);
-			enqueueSnackbar(String(error.message), {
-				variant: 'error',
-			});
-		}
-	};
-
 	React.useEffect(() => {
+		const loginWithTokens = async (accessToken: string, refreshToken: string) => {
+			console.log(accessToken, refreshToken);
+
+			const { error } = await client.auth.setSession({
+				access_token: accessToken,
+				refresh_token: refreshToken,
+			});
+
+			if (error) {
+				console.error('setSession Error', error);
+				enqueueSnackbar(String(error.message), {
+					variant: 'error',
+				});
+			}
+		};
+
 		if (accessToken && refreshToken) {
 			loginWithTokens(accessToken, refreshToken);
 		}
-	}, [client, accessToken, refreshToken]);
+	}, [enqueueSnackbar, client, accessToken, refreshToken]);
 
 	const handleSubmit = async () => {
-		const { error: firebaseAuthError } = await client.functions.invoke('firebase-auth', {
-			body: {
-				email: email,
-				password: password,
-			},
-		});
-		if (firebaseAuthError) {
-			console.log(firebaseAuthError);
-			enqueueSnackbar(String(firebaseAuthError.message), {
-				variant: 'error',
+		if (window.location.hostname.split('.').length === 2) {
+			const { error: firebaseAuthError } = await client.functions.invoke('firebase-auth', {
+				body: {
+					email: email,
+					password: password,
+				},
 			});
+			if (firebaseAuthError) {
+				console.log(firebaseAuthError);
+				enqueueSnackbar(String(firebaseAuthError.message), {
+					variant: 'error',
+				});
+			}
 		}
 
-		const { error } = await client.auth.signInWithPassword({
+		const { error, data } = await client.auth.signInWithPassword({
 			email: email,
 			password: password,
 		});
+
+		if (data.user && setUser) {
+			setUser(data.user);
+		}
 
 		if (error) {
 			enqueueSnackbar(error.message, {
@@ -90,6 +99,7 @@ export default function SignIn() {
 	};
 
 	const handlePasswordReset = async () => {
+		setPasswordResetLoading(true);
 		const { error } = await client.auth.resetPasswordForEmail(resetEmail, {
 			redirectTo: window.location.origin + '/recover',
 		});
@@ -98,12 +108,14 @@ export default function SignIn() {
 			enqueueSnackbar(error.message, {
 				variant: 'error',
 			});
+			setPasswordResetLoading(false);
 		} else {
 			enqueueSnackbar(`Reset link sent to: ${resetEmail}`, {
 				variant: 'success',
 			});
 
 			setForgotDialogOpen(false);
+			setPasswordResetLoading(false);
 		}
 
 		setResetEmail('');
@@ -129,11 +141,12 @@ export default function SignIn() {
 				<Grid item xs={12} sm={8} md={5} component={Paper} elevation={6} square>
 					<Box
 						sx={{
-							my: 8,
-							mx: 4,
+							py: 8,
+							px: 4,
 							display: 'flex',
 							flexDirection: 'column',
 							alignItems: 'center',
+							height: '100%',
 						}}
 					>
 						<Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
@@ -152,11 +165,11 @@ export default function SignIn() {
 								}}
 							>
 								<Stack spacing={2} direction='row'>
-									<IconButton onClick={signInWithGoogle}>
+									<IconButton onClick={() => signInWithGoogle(redirectTo ?? '/')}>
 										<GoogleIcon />
 									</IconButton>
-									<IconButton onClick={signInWithFacebook}>
-										<FacebookIcon />
+									<IconButton onClick={() => signInWithFacebook(redirectTo ?? '/')} disabled={window.location.host !== 'giftamizer.com'}>
+										<FacebookIcon sx={window.location.host !== 'giftamizer.com' ? { opacity: 0.15 } : undefined} />
 									</IconButton>
 								</Stack>
 							</Box>
@@ -188,8 +201,9 @@ export default function SignIn() {
 										Forgot password?
 									</MUILink>
 								</Grid>
+
 								<Grid item>
-									<MUILink component={Link} to='/signup' variant='body2'>
+									<MUILink component={Link} to={`/signup${window.location.search}${window.location.hash}`} variant='body2'>
 										Don't have an account? Create Account
 									</MUILink>
 								</Grid>
@@ -221,14 +235,15 @@ export default function SignIn() {
 					>
 						Cancel
 					</Button>
-					<Button
+					<LoadingButton
 						onClick={() => {
 							handlePasswordReset();
 						}}
 						disabled={!validateEmail(resetEmail)}
+						loading={passwordResetLoading}
 					>
 						Send Reset
-					</Button>
+					</LoadingButton>
 				</DialogActions>
 			</Dialog>
 		</>

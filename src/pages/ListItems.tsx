@@ -1,13 +1,15 @@
 import React from 'react';
+import { Link, useParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 
-import { useGetItems, useGetLists } from '../lib/useSupabase';
+import { useGetItems, useGetLists, useSetListPin } from '../lib/useSupabase';
 
-import { Container, Grid, Typography, Box, CircularProgress, Link as MUILink, AppBar, Breadcrumbs, Toolbar } from '@mui/material';
+import { Container, Grid, Typography, Box, CircularProgress, Link as MUILink, AppBar, Breadcrumbs, Toolbar, Checkbox, Tooltip } from '@mui/material';
+import { PushPin, PushPinOutlined } from '@mui/icons-material';
 
 import ItemCreate from '../components/ItemCreate';
+import ListItemEditor from '../components/ListItemEditor';
 import ItemCard from '../components/ItemCard';
-import { Link, useParams } from 'react-router-dom';
 import NotFound from '../components/NotFound';
 
 export default function ListItems() {
@@ -16,6 +18,7 @@ export default function ListItems() {
 
 	const { data: lists, isLoading: loadingLists } = useGetLists();
 	const { data: items, isLoading, isError, error } = useGetItems();
+	const setListPin = useSetListPin();
 
 	React.useEffect(() => {
 		if (isError) {
@@ -33,7 +36,7 @@ export default function ListItems() {
 				<>
 					{lists?.find((l) => l.id === listID) ? (
 						<>
-							<AppBar position='static' sx={{ marginBottom: 2, bgcolor: 'background.paper' }}>
+							<AppBar position='static' sx={{ marginBottom: 2 }} color='default'>
 								<Toolbar variant='dense'>
 									<Breadcrumbs aria-label='breadcrumb' sx={{ flexGrow: 1 }}>
 										<MUILink underline='hover' color='inherit' component={Link} to='/lists'>
@@ -42,6 +45,22 @@ export default function ListItems() {
 
 										{listID && <Typography color='text.primary'>{lists?.find((l) => l.id === listID)?.name}</Typography>}
 									</Breadcrumbs>
+
+									<Tooltip title={lists?.find((l) => l.id === listID)?.pinned ? 'Unpin' : 'Pin'} arrow>
+										<Checkbox
+											size='small'
+											icon={setListPin.isLoading ? <CircularProgress size={20} /> : <PushPinOutlined />}
+											checkedIcon={setListPin.isLoading ? <CircularProgress size={20} /> : <PushPin />}
+											sx={{ mr: 1, display: { xs: 'none', sm: 'none', md: 'flex' } }}
+											checked={lists?.find((l) => l.id === listID)?.pinned}
+											onChange={(e) => {
+												setListPin.mutateAsync({ id: listID!, pinned: e.target.checked });
+											}}
+											disabled={setListPin.isLoading}
+										/>
+									</Tooltip>
+
+									{/* <ListItemEditor /> */}
 								</Toolbar>
 							</AppBar>
 
@@ -49,9 +68,10 @@ export default function ListItems() {
 								<Grid container spacing={2}>
 									{items
 										?.filter((i) => i.lists?.find((l) => l.list_id === listID))
+										?.filter((i) => !i.archived && !i.deleted)
 										.map((item, index) => (
 											// TODO: Change ItemCard to Renderer function to allow Grow transition/animation
-											<ItemCard item={item} editable />
+											<ItemCard index={index} key={item.id} item={item} editable />
 										))}
 
 									{items?.filter((i) => i.lists?.find((l) => l.list_id === listID)).length === 0 && (

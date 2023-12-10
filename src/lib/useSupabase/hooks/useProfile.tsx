@@ -100,9 +100,11 @@ export const useUpdateProfile = () => {
 					first_name: update.first_name,
 					last_name: update.last_name,
 					bio: update.bio,
+					home: update.home,
 					enable_lists: update.enable_lists,
 					enable_archive: update.enable_archive,
 					enable_trash: update.enable_trash,
+					enable_snowfall: update.enable_snowfall,
 					avatar_token: update.image ? Date.now() : -1,
 				})
 				.eq('user_id', user.id)
@@ -126,9 +128,6 @@ export const useUpdateProfile = () => {
 
 				profile.image = update.image;
 			} else if (profile.avatar_token === null || profile.avatar_token === -1) {
-				const { error: imageDelError } = await client.storage.from('avatars').remove([`${user.id}`]);
-				if (imageDelError) throw imageDelError;
-
 				profile.image = undefined;
 			} else {
 				profile.image = update.image;
