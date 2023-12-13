@@ -19,6 +19,6 @@ This file defines an `express` webserver with `http-proxy-middleware` that accep
 | --- | --- |
 | `'/auth', '/rest', '/realtime', '/storage', '/functions', '/analytics', '/pg'`| http://192.168.1.50:8000 |
 | `'/project', '/monaco-editor', '/css', '/_next', '/api', '/favicon', '/img'` | http://192.168.1.50:3000 |
-| `/` | http://localhost:443 |
+| anything else | http://localhost:443 |
 
-The React frontend is served on the root path `/` at [http://localhost:8000/](http://localhost:8000/).
+You can access the site at [http://localhost:8000/](http://localhost:8000/).
