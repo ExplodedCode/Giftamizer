@@ -1,0 +1,21 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		}
+	],
+  "settings": {
+    "files.eol": "\n",
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "eslint.validate": [
+      "typescript"
+    ],
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/bower_components": true,
+      "**/*.code-search": true,
+      "**/output": true
+    }
+  }
+}
