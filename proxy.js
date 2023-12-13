@@ -14,6 +14,6 @@ app.use(
 // supabase studio
 app.use(createProxyMiddleware(['/project', '/monaco-editor', '/css', '/_next', '/api', '/favicon', '/img'], { target: 'http://192.168.1.50:3000', changeOrigin: true, ws: true }));
 
-app.use(createProxyMiddleware('/', { target: 'http://localhost:443', changeOrigin: true, ws: true }));
+app.use(createProxyMiddleware('/', { target: 'http://localhost:8443', changeOrigin: true, ws: true }));
 
 app.listen(3000);
