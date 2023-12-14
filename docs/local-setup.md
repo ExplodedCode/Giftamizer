@@ -1,24 +1,39 @@
 # Local Setup
 
-To launch a webpack development server with hot reloading, run:
+## Setup Supabase Stack
+
+Clone the [ExplodedCode/Giftamizer-Supabase](https://github.com/ExplodedCode/Giftamizer-Supabase.git) repo.
+
+Create a copy of the `.env.example` to `.env` and update the following:
+
+-   `REACT_APP_URL` = `http://local.machine.ip.address:3001/` if you are running the frontend on the same machine.
+-   Generate API Keys: https://supabase.com/docs/guides/self-hosting/docker#generate-api-keys
+    -   ANON_KEY
+    -   SERVICE_ROLE_KEY
+
+Change any other variables if needed then start the stack:
 
 ```bash
+docker compose up -d
+```
 
+## Start Frontend
+
+To launch a webpack development server with hot reloading:
+
+```bash
 # install dependencies
 npm install
+```
 
-# start the app
+Create a copy of the `.env.example` to `.env` and update the following:
+
+-   `REACT_APP_SUPABASE_ANON_KEY` = Your Supabase `ANON_KEY` from above
+
+```bash
 npm start
 ```
 
-This will run `react-scripts start` in addition to running the `proxy.js` file in the root of the project with node.
+You can access Giftamizer at [http://localhost:8000](http://localhost:8000).
 
-This file defines an `express` webserver with `http-proxy-middleware` that accepts incoming http requests on port 8000 and forwards them to `http://192.168.1.50` (assumed Supabase cluster) or `localhost` based on the following table:
-
-| Path | Forwarded to |
-| --- | --- |
-| `'/auth', '/rest', '/realtime', '/storage', '/functions', '/analytics', '/pg'`| http://192.168.1.50:8000 |
-| `'/project', '/monaco-editor', '/css', '/_next', '/api', '/favicon', '/img'` | http://192.168.1.50:3000 |
-| anything else | http://localhost:443 |
-
-You can access the site at [http://localhost:8000/](http://localhost:8000/).
+-   kong will route app traffic like so: http://localhost:8000 > http://localhost:3001.

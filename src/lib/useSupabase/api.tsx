@@ -2,17 +2,10 @@ import { createClient } from '@supabase/supabase-js';
 import { Database } from './database.types';
 
 const getSupabaseUrl = () => {
-	let splits = window.location.hostname.split('.');
-
-	if (splits.length > 2) {
-		return `api.${splits[0]}.`;
-	} else {
-		return '';
-	}
+	return window.location.origin;
 };
+export let SUPABASE_URL = getSupabaseUrl();
 
-export let SUPABASE_URL = `https://${getSupabaseUrl()}giftamizer.com`;
-let SUPABASE_ANON_KEY =
-	'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNjk1MDIwNDAwLAogICJleHAiOiAxODUyODczMjAwCn0.iMJi-OrGmLKRQfxxXma-OnOXEstXpo9cZhj9zmtpr2w';
+let SUPABASE_ANON_KEY = process.env.REACT_APP_SUPABASE_ANON_KEY ?? '';
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY);

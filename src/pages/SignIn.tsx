@@ -165,8 +165,8 @@ export default function SignIn() {
 								}}
 							>
 								<Stack spacing={2} direction='row'>
-									<IconButton onClick={() => signInWithGoogle(redirectTo ?? '/')}>
-										<GoogleIcon />
+									<IconButton onClick={() => signInWithGoogle(redirectTo ?? '/')} disabled={window.location.host !== 'giftamizer.com'}>
+										<GoogleIcon sx={window.location.host !== 'giftamizer.com' ? { opacity: 0.15 } : undefined} />
 									</IconButton>
 									<IconButton onClick={() => signInWithFacebook(redirectTo ?? '/')} disabled={window.location.host !== 'giftamizer.com'}>
 										<FacebookIcon sx={window.location.host !== 'giftamizer.com' ? { opacity: 0.15 } : undefined} />
