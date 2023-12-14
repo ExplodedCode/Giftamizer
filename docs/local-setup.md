@@ -37,3 +37,5 @@ npm start
 You can access Giftamizer at [http://localhost:8000](http://localhost:8000).
 
 -   kong will route app traffic like so: http://localhost:8000 > http://localhost:3001.
+
+You can access the Supabase dashboard at [http://localhost:8000/project/default](http://localhost:8000/project/default).
