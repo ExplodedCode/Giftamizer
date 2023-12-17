@@ -38,7 +38,7 @@ export default function ListUpdate({ list, onClose }: ListUpdateProps) {
 	const handleSave = async () => {
 		if (list) {
 			await updateLists
-				.mutateAsync({ id: list.id, name, child_list: childList, image: image, bio: bio, groups: selectedGroups })
+				.mutateAsync({ id: list.id, name: name.trim(), child_list: childList, image: image, bio: bio, groups: selectedGroups })
 				.then(() => {
 					onClose();
 				})
@@ -123,7 +123,7 @@ export default function ListUpdate({ list, onClose }: ListUpdateProps) {
 									Cancel
 								</Button>
 
-								<LoadingButton onClick={handleSave} disabled={name.length === 0} endIcon={<Save />} loading={updateLists.isLoading} loadingPosition='end' variant='contained'>
+								<LoadingButton onClick={handleSave} disabled={name.trim().length === 0} endIcon={<Save />} loading={updateLists.isLoading} loadingPosition='end' variant='contained'>
 									Save
 								</LoadingButton>
 							</Stack>

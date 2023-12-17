@@ -272,9 +272,6 @@ const ProtectedRoute: React.FC<{ children: JSX.Element }> = ({ children }) => {
 
 	if (!user) {
 		// user is not authenticated
-
-		console.log(window.location.pathname);
-
 		return <Navigate to={`/signin?redirectTo=${window.location.pathname}${window.location.search}${window.location.hash}`} />;
 	}
 

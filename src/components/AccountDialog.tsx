@@ -141,10 +141,10 @@ export default function AccountDialog(props: AccountDialogProps) {
 
 		updateProfile
 			.mutateAsync({
-				first_name: firstName,
-				last_name: lastName,
+				first_name: firstName.trim(),
+				last_name: lastName.trim(),
 				image: image,
-				bio: bio,
+				bio: bio.trim(),
 				home: home,
 				enable_lists: enableLists,
 				enable_archive: enableArchive,
@@ -220,7 +220,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 						<Typography sx={{ ml: 2, flex: 1 }} variant='h6' component='div'>
 							My Account
 						</Typography>
-						<IconButton edge='start' color='inherit' onClick={handleSave} aria-label='close' disabled={updateProfile.isLoading}>
+						<IconButton edge='start' color='inherit' onClick={handleSave} aria-label='close' disabled={firstName.trim().length === 0 || lastName.trim().length === 0 || updateProfile.isLoading}>
 							{updateProfile.isLoading ? <CircularProgress size={20} color='inherit' /> : <Save />}
 						</IconButton>
 					</Toolbar>
@@ -235,10 +235,10 @@ export default function AccountDialog(props: AccountDialogProps) {
 							</Typography>
 							<Grid container spacing={2}>
 								<Grid item xs={12} sm={6}>
-									<TextField fullWidth label='First Name' variant='outlined' value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+									<TextField fullWidth label='First Name' variant='outlined' value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
 								</Grid>
 								<Grid item xs={12} sm={6}>
-									<TextField fullWidth label='Last Name' variant='outlined' value={lastName} onChange={(e) => setLastName(e.target.value)} />
+									<TextField fullWidth label='Last Name' variant='outlined' value={lastName} onChange={(e) => setLastName(e.target.value)} required/>
 								</Grid>
 							</Grid>
 						</Grid>

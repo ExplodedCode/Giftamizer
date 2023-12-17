@@ -67,7 +67,7 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 		createItem
 			.mutateAsync({
 				image: image,
-				name: name,
+				name: name.trim(),
 				description: description,
 				links: links.map((l) => l.trim()).filter((l) => l.trim().length !== 0),
 				custom_fields: customFields,
@@ -374,7 +374,7 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 										<LoadingButton
 											tour-element='item_create_btn'
 											onClick={handleCreate}
-											disabled={name.length === 0 || (shoppingItem && !selectedUser)}
+											disabled={name.trim().length === 0 || (shoppingItem && !selectedUser)}
 											endIcon={<Add />}
 											loading={createItem.isLoading}
 											loadingPosition='end'

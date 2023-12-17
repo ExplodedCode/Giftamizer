@@ -37,7 +37,7 @@ export default function CreateList() {
 		console.log(selectedGroups);
 
 		await createList
-			.mutateAsync({ user_id: user.id, name: name, child_list: childList, image: image, bio: bio, groups: selectedGroups })
+			.mutateAsync({ user_id: user.id, name: name.trim(), child_list: childList, image: image, bio: bio, groups: selectedGroups })
 			.then(() => {
 				handleClose();
 			})
@@ -117,7 +117,7 @@ export default function CreateList() {
 									Cancel
 								</Button>
 
-								<LoadingButton onClick={handleCreate} disabled={name.length === 0} endIcon={<Add />} loading={createList.isLoading} loadingPosition='end' variant='contained'>
+								<LoadingButton onClick={handleCreate} disabled={name.trim().length === 0} endIcon={<Add />} loading={createList.isLoading} loadingPosition='end' variant='contained'>
 									Create
 								</LoadingButton>
 							</Stack>
