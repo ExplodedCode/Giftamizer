@@ -16,6 +16,7 @@ const steps = ['Account', 'Profile', 'Confirm'];
 export default function SignUp() {
 	const { client, setUser } = useSupabase();
 	const { enqueueSnackbar } = useSnackbar();
+	const buttonRef = React.useRef<HTMLButtonElement>(null);
 	let [searchParams] = useSearchParams();
 
 	const redirectTo = searchParams.get('redirectTo');
@@ -30,13 +31,13 @@ export default function SignUp() {
 
 	const handleSubmit = async () => {
 		const { error, data } = await client.auth.signUp({
-			email: email,
+			email: email.trim(),
 			password: password,
 			options: {
 				data: {
-					email: email,
-					first_name: firstName,
-					last_name: lastName,
+					email: email.trim(),
+					first_name: firstName.trim(),
+					last_name: lastName.trim(),
 				},
 			},
 		});
@@ -46,8 +47,7 @@ export default function SignUp() {
 		}
 
 		if (error) {
-			console.log(error);
-
+			console.error(error);
 			enqueueSnackbar(error.message, {
 				variant: 'error',
 			});
@@ -57,17 +57,16 @@ export default function SignUp() {
 	React.useEffect(() => {
 		switch (activeStep) {
 			case 0:
-				setCanProceed(validateEmail(email) && password.length > 8);
+				setCanProceed(validateEmail(email.trim()) && password.length > 8);
 				break;
 			case 1:
-				setCanProceed(firstName.length > 0 && lastName.length > 0);
+				setCanProceed(firstName.trim().length > 0 && lastName.trim().length > 0);
 				break;
 			case 2:
 				setCanProceed(true);
 				break;
 			default:
 				setCanProceed(false);
-
 				break;
 		}
 	}, [activeStep, firstName, lastName, email, password]);
@@ -152,6 +151,9 @@ export default function SignUp() {
 									autoFocus
 									value={email}
 									onChange={(e) => setEmail(e.target.value)}
+									onKeyDown={(e) => {
+										if (e.key === 'Enter' && buttonRef.current) buttonRef.current.click();
+									}}
 								/>
 								<TextField
 									margin='normal'
@@ -164,6 +166,9 @@ export default function SignUp() {
 									autoComplete='password'
 									value={password}
 									onChange={(e) => setPassword(e.target.value)}
+									onKeyDown={(e) => {
+										if (e.key === 'Enter' && buttonRef.current) buttonRef.current.click();
+									}}
 								/>
 							</>
 						)}
@@ -180,6 +185,9 @@ export default function SignUp() {
 									autoFocus
 									value={firstName}
 									onChange={(e) => setFirstName(e.target.value)}
+									onKeyDown={(e) => {
+										if (e.key === 'Enter' && buttonRef.current) buttonRef.current.click();
+									}}
 								/>
 								<TextField
 									margin='normal'
@@ -191,6 +199,9 @@ export default function SignUp() {
 									autoComplete='lname'
 									value={lastName}
 									onChange={(e) => setLastName(e.target.value)}
+									onKeyDown={(e) => {
+										if (e.key === 'Enter' && buttonRef.current) buttonRef.current.click();
+									}}
 								/>
 							</>
 						)}
@@ -207,7 +218,7 @@ export default function SignUp() {
 								Back
 							</Button>
 							<Box sx={{ flex: '1 1 auto' }} />
-							<Button variant='contained' onClick={() => (activeStep === 2 ? handleSubmit() : setActiveStep(activeStep + 1))} disabled={!canProceed}>
+							<Button variant='contained' onClick={() => (activeStep === 2 ? handleSubmit() : setActiveStep(activeStep + 1))} disabled={!canProceed} ref={buttonRef}>
 								{activeStep === 2 ? 'Create Account' : 'Continue'}
 							</Button>
 						</Box>

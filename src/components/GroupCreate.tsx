@@ -28,7 +28,7 @@ export default function GroupCreate() {
 	const createGroup = useCreateGroup();
 	const handleCreate = async () => {
 		createGroup
-			.mutateAsync({ name: name, invite_link: true, image: image })
+			.mutateAsync({ name: name.trim(), invite_link: true, image: image })
 			.then(() => {
 				handleClose();
 			})
@@ -154,7 +154,7 @@ export default function GroupCreate() {
 									onClick={handleCreate}
 									endIcon={<Add />}
 									loading={createGroup.isLoading}
-									disabled={name.length <= 0}
+									disabled={name.trim().length <= 0}
 									loadingPosition='end'
 									variant='contained'
 								>

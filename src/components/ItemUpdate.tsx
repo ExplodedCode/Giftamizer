@@ -64,7 +64,7 @@ export default function ItemUpdate({ item, onClose, shoppingItem }: ItemUpdatePr
 					user_id: user.id,
 					id: item.id,
 					image: image,
-					name: name,
+					name: name.trim(),
 					description: description,
 					links: links.map((l) => l.trim()).filter((l) => l.trim().length !== 0),
 					custom_fields: customFields,
@@ -273,7 +273,7 @@ export default function ItemUpdate({ item, onClose, shoppingItem }: ItemUpdatePr
 										Cancel
 									</Button>
 
-									<LoadingButton onClick={handleSave} disabled={name.length === 0} endIcon={<Save />} loading={updateItems.isLoading} loadingPosition='end' variant='contained'>
+									<LoadingButton onClick={handleSave} disabled={name.trim().length === 0} endIcon={<Save />} loading={updateItems.isLoading} loadingPosition='end' variant='contained'>
 										Save
 									</LoadingButton>
 								</Stack>

@@ -166,7 +166,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 		const mem = queryClient.getQueryData<Member[]>([...GROUPS_QUERY_KEY, groupID, 'members']);
 		inviteToGroup
 			.mutateAsync({
-				group: { ...group, name: name, invite_link: inviteLink, image: image },
+				group: { ...group, name: name.trim(), invite_link: inviteLink, image: image },
 				members: mem!.filter((m) => !m.user_id.includes('_')),
 				invites: selectedInviteUsers,
 				inviteUsersOwner: inviteUsersOwner,
@@ -183,7 +183,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 	const handleSave = async () => {
 		const mem = queryClient.getQueryData<Member[]>([...GROUPS_QUERY_KEY, groupID, 'members']);
 		updateGroup
-			.mutateAsync({ group: { ...group, name: name, invite_link: inviteLink, image: image }, members: mem! })
+			.mutateAsync({ group: { ...group, name: name.trim(), invite_link: inviteLink, image: image }, members: mem! })
 			.then(() => {
 				handleClose();
 			})
@@ -514,7 +514,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 														loading={membersLoading || updateGroup.isLoading}
 														loadingPosition='end'
 														variant='contained'
-														disabled={!changed || name.length <= 0}
+														disabled={!changed || name.trim().length <= 0}
 													>
 														Save
 													</LoadingButton>

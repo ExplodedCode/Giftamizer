@@ -173,7 +173,20 @@ export default function SignIn() {
 									</IconButton>
 								</Stack>
 							</Box>
-							<TextField margin='normal' required fullWidth id='email' label='Email Address' name='email' autoComplete='email' value={email} onChange={(e) => setEmail(e.target.value)} />
+							<TextField
+								margin='normal'
+								required
+								fullWidth
+								id='email'
+								label='Email Address'
+								name='email'
+								autoComplete='email'
+								value={email}
+								onChange={(e) => setEmail(e.target.value)}
+								onKeyDown={(e) => {
+									if (e.key === 'Enter') handleSubmit();
+								}}
+							/>
 							<TextField
 								margin='normal'
 								required
@@ -185,6 +198,9 @@ export default function SignIn() {
 								autoComplete='password'
 								value={password}
 								onChange={(e) => setPassword(e.target.value)}
+								onKeyDown={(e) => {
+									if (e.key === 'Enter') handleSubmit();
+								}}
 							/>
 							<Button fullWidth variant='contained' sx={{ mt: 3, mb: 2 }} onClick={() => handleSubmit()}>
 								Sign in
