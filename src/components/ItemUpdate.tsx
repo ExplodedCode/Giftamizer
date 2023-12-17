@@ -6,6 +6,7 @@ import { ExtractURLFromText, useGetProfile, useSupabase, useUpdateItems } from '
 import { CustomField, ItemType, ListType, MemberItemType, Profile } from '../lib/useSupabase/types';
 
 import {
+	Avatar,
 	Dialog,
 	DialogTitle,
 	DialogContent,
@@ -22,6 +23,7 @@ import {
 	OutlinedInput,
 	Tooltip,
 	LinearProgress,
+	Collapse,
 } from '@mui/material';
 import { Add, AddLink, Delete, Save } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
@@ -47,6 +49,7 @@ export default function ItemUpdate({ item, onClose, shoppingItem }: ItemUpdatePr
 	const { data: profile } = useGetProfile();
 
 	const [image, setImage] = React.useState<string | undefined>();
+	const [availableImages, setAvailableImages] = React.useState<string[]>([]);
 	const [name, setName] = React.useState('');
 	const [description, setDescription] = React.useState('');
 	const [links, setLinks] = React.useState<string[]>(['']);
@@ -85,6 +88,8 @@ export default function ItemUpdate({ item, onClose, shoppingItem }: ItemUpdatePr
 		if (item) {
 			setImage(item.image);
 			setMetaImage(item.image);
+			setAvailableImages([]);
+
 			setName(item.name);
 			setDescription(item.description);
 			setLinks(item?.links?.length === 0 ? [''] : item?.links ?? ['']);
@@ -124,10 +129,25 @@ export default function ItemUpdate({ item, onClose, shoppingItem }: ItemUpdatePr
 			});
 			setMetaloading(false);
 		} else {
-			if (data?.name) setName(data?.name);
+			if (data?.title) setName(data?.title);
 			if (data?.description) setDescription(data?.description);
-			if (data?.image) setImage(data?.image);
-			if (data?.image) setMetaImage(data?.image);
+			if (data?.images) {
+				setImage(data?.images[0]);
+				setMetaImage(data?.images[0]);
+				setAvailableImages(data?.images);
+			}
+
+			if (data?.price) {
+				setCustomFields([
+					...customFields,
+					{
+						id: customFields.length,
+						name: 'Price',
+						value: data.price,
+					},
+				]);
+			}
+
 			setMetaloading(false);
 		}
 	};
@@ -139,6 +159,47 @@ export default function ItemUpdate({ item, onClose, shoppingItem }: ItemUpdatePr
 				<Grid container spacing={2}>
 					<Grid item xs={12}>
 						<ImageCropper value={image} onChange={setImage} square importedImage={metaImage} />
+					</Grid>
+
+					<Grid item xs={12} component={Collapse} in={availableImages.length > 0}>
+						<Stack
+							direction='row'
+							spacing={1}
+							sx={{
+								overflowY: 'scroll',
+								py: 1,
+							}}
+						>
+							{availableImages.map((img, index) => (
+								<Tooltip key={index} title='Use this image' arrow enterDelay={1500}>
+									<IconButton
+										onClick={() => {
+											setImage(img);
+											setMetaImage(img);
+										}}
+										// sx={{  }}
+										sx={{
+											width: 100,
+											height: 100,
+										}}
+									>
+										<Avatar
+											src={img}
+											alt={`Image-${index}`}
+											sx={{
+												border: '2px solid',
+												borderColor: image === img ? theme.palette.primary.main : theme.palette.divider,
+												width: 100,
+												height: 100,
+												'&:hover': {
+													borderColor: theme.palette.primary.light,
+												},
+											}}
+										/>
+									</IconButton>
+								</Tooltip>
+							))}
+						</Stack>
 					</Grid>
 
 					{shoppingItem && item && (

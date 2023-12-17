@@ -4,7 +4,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 
 import {
+	Avatar,
 	Button,
+	Collapse,
 	Dialog,
 	DialogActions,
 	DialogContent,
@@ -50,6 +52,7 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 	const open = location.hash === '#create-item';
 
 	const [image, setImage] = React.useState<string | undefined>();
+	const [availableImages, setAvailableImages] = React.useState<string[]>([]);
 	const [name, setName] = React.useState('');
 	const [description, setDescription] = React.useState('');
 	const [links, setLinks] = React.useState<string[]>(['']);
@@ -85,6 +88,7 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 	const handleClose = async () => {
 		setImage(undefined);
 		setMetaImage(undefined);
+		setAvailableImages([]);
 
 		setName('');
 		setDescription('');
@@ -117,10 +121,25 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 			});
 			setMetaloading(false);
 		} else {
-			if (data?.name) setName(data?.name);
+			if (data?.title) setName(data?.title);
 			if (data?.description) setDescription(data?.description);
-			if (data?.image) setImage(data?.image);
-			if (data?.image) setMetaImage(data?.image);
+			if (data?.images) {
+				setImage(data?.images[0]);
+				setMetaImage(data?.images[0]);
+				setAvailableImages(data?.images);
+			}
+
+			if (data?.price) {
+				setCustomFields([
+					...customFields,
+					{
+						id: customFields.length,
+						name: 'Price',
+						value: data.price,
+					},
+				]);
+			}
+
 			setMetaloading(false);
 		}
 	};
@@ -212,6 +231,47 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 							/>
 						</Grid>
 
+						<Grid item xs={12} component={Collapse} in={availableImages.length > 0}>
+							<Stack
+								direction='row'
+								spacing={1}
+								sx={{
+									overflowY: 'scroll',
+									py: 1,
+								}}
+							>
+								{availableImages.map((img, index) => (
+									<Tooltip key={index} title='Use this image' arrow enterDelay={1500}>
+										<IconButton
+											onClick={() => {
+												setImage(img);
+												setMetaImage(img);
+											}}
+											// sx={{  }}
+											sx={{
+												width: 100,
+												height: 100,
+											}}
+										>
+											<Avatar
+												src={img}
+												alt={`Image-${index}`}
+												sx={{
+													border: '2px solid',
+													borderColor: image === img ? theme.palette.primary.main : theme.palette.divider,
+													width: 100,
+													height: 100,
+													'&:hover': {
+														borderColor: theme.palette.primary.light,
+													},
+												}}
+											/>
+										</IconButton>
+									</Tooltip>
+								))}
+							</Stack>
+						</Grid>
+
 						{shoppingItem && (
 							<Grid item xs>
 								<UserSearchSingle selectedUser={selectedUser} setSelectedUser={setSelectedUser} label='Gift For' required />
@@ -242,7 +302,7 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 										value={link}
 										onChange={(e) => {
 											let value = e.target.value;
-											let extractedUrl = ExtractURLFromText(value)[0];
+											let extractedUrl = ExtractURLFromText(value)[0] ?? '';
 
 											setLinks(links.map((l, i) => (i === index ? value : l)));
 
