@@ -1,5 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+// Google Analytics
+import ReactGA from 'react-ga4';
+
 import { useSupabase } from './useSupabase';
 import { ItemStatuses, ItemType, MemberItemType } from '../types';
 import { dataUrlToFile } from '../../../components/ImageCropper';
@@ -112,6 +115,12 @@ export const useCreateItem = () => {
 		},
 		{
 			onSuccess: async (item: ItemType) => {
+				// Google Analytics
+				ReactGA.event({
+					category: 'item',
+					action: 'Create Item',
+				});
+
 				if (item.shopping_item) {
 					const { data: profile } = await client.from('profiles').select(`*`).eq('user_id', item.shopping_item).single();
 					const { data: itemStatus } = await client.from('items_status').upsert({ item_id: item.id, user_id: user.id, status: ItemStatuses.planned }).select().single();
@@ -209,6 +218,12 @@ export const useUpdateItems = () => {
 		},
 		{
 			onSuccess: async (item_updated: ItemType) => {
+				// Google Analytics
+				ReactGA.event({
+					category: 'item',
+					action: 'Update Item',
+				});
+
 				if (item_updated.shopping_item) {
 					const { data: profile } = await client.from('profiles').select(`*`).eq('user_id', item_updated.shopping_item).single();
 
@@ -269,6 +284,12 @@ export const useArchiveItem = () => {
 		},
 		{
 			onSuccess: (a) => {
+				// Google Analytics
+				ReactGA.event({
+					category: 'item',
+					action: 'Archive Item',
+				});
+
 				queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => {
 					if (prevItems) {
 						const updatedItems = prevItems.map((item) => {
@@ -315,6 +336,12 @@ export const useDeleteItem = () => {
 		},
 		{
 			onSuccess: (d) => {
+				// Google Analytics
+				ReactGA.event({
+					category: 'item',
+					action: 'Delete Item',
+				});
+
 				if (d.shopping_item) {
 					queryClient.setQueryData(CLAIMED_ITEMS_QUERY_KEY, (prevItems: MemberItemType[] | undefined) => (prevItems ? prevItems.filter((item) => item.id !== d.id) : prevItems));
 				} else {
@@ -355,6 +382,12 @@ export const useRestoreItem = () => {
 		},
 		{
 			onSuccess: (id) => {
+				// Google Analytics
+				ReactGA.event({
+					category: 'item',
+					action: 'Restore Item',
+				});
+
 				queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => {
 					if (prevItems) {
 						const updatedItems = prevItems.map((item) => {
@@ -384,6 +417,12 @@ export const useEmptyTrash = () => {
 		},
 		{
 			onSuccess: (items) => {
+				// Google Analytics
+				ReactGA.event({
+					category: 'item',
+					action: 'Empty Trash',
+				});
+
 				queryClient.setQueryData(ITEMS_QUERY_KEY, (prevItems: ItemType[] | undefined) => (prevItems ? prevItems.filter((item) => !items.includes(item.id)) : prevItems));
 			},
 		}

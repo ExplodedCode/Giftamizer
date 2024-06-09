@@ -2,13 +2,13 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import reportWebVitals from './reportWebVitals';
 
+// Google Analytics
+import ReactGA from 'react-ga4';
+
 import { SnackbarProvider } from 'notistack';
-
-import Theme from './Theme';
-
-import { supabase, SupabaseContextProvider } from './lib/useSupabase';
-
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { supabase, SupabaseContextProvider } from './lib/useSupabase';
+import Theme from './Theme';
 
 const queryClient = new QueryClient({
 	defaultOptions: {
@@ -19,6 +19,10 @@ const queryClient = new QueryClient({
 		},
 	},
 });
+
+// Google Analytics
+const TRACKING_ID = 'G-3YQD49G7SD';
+ReactGA.initialize(TRACKING_ID);
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(

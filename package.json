@@ -33,6 +33,7 @@
 		"react-dom": "^18.2.0",
 		"react-dropzone": "^14.2.3",
 		"react-email-validator": "^1.0.2",
+		"react-ga4": "^2.1.0",
 		"react-router-dom": "^6.5.0",
 		"react-router-dom-last-location": "^0.2.5",
 		"react-scripts": "^5.0.1",
@@ -67,10 +68,10 @@
 		]
 	},
 	"devDependencies": {
+		"@types/jest": "^27.5.2",
 		"@types/js-yaml": "^4.0.9",
 		"@types/lodash": "^4.14.197",
 		"@types/moment-holiday": "^1.5.4",
-		"@types/jest": "^27.5.2",
 		"@types/node": "^16.18.10",
 		"@types/react": "^18.0.26",
 		"@types/react-copy-to-clipboard": "^5.0.7",

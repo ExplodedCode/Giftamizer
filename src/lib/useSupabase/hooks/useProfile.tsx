@@ -1,5 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+// Google Analytics
+import ReactGA from 'react-ga4';
+
 import { useSupabase } from './useSupabase';
 import { ProfileType } from '../types';
 import { dataUrlToFile } from '../../../components/ImageCropper';
@@ -137,6 +140,12 @@ export const useUpdateProfile = () => {
 		},
 		{
 			onSuccess: (update: ProfileType) => {
+				// Google Analytics
+				ReactGA.event({
+					category: 'profile',
+					action: 'Update Profile',
+				});
+
 				refetch();
 				queryClient.setQueryData(QUERY_KEY, () => update);
 			},

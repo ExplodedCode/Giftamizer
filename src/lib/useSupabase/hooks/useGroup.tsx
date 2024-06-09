@@ -1,6 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import moment from 'moment';
 
+// Google Analytics
+import ReactGA from 'react-ga4';
+
 import { useSupabase } from './useSupabase';
 import { ExternalInvite, GroupType, ListType, Member, Profile } from '../types';
 import { dataUrlToFile } from '../../../components/ImageCropper';
@@ -148,6 +151,12 @@ export const useCreateGroup = () => {
 		},
 		{
 			onSuccess: (group: GroupType) => {
+				// Google Analytics
+				ReactGA.event({
+					category: 'group',
+					action: 'Create Group',
+				});
+
 				queryClient.setQueryData(GROUPS_QUERY_KEY, (prevGroups: GroupType[] | undefined) => (prevGroups ? [group, ...prevGroups] : [group]));
 			},
 		}
@@ -492,6 +501,12 @@ export const useSetGroupPin = () => {
 		},
 		{
 			onSuccess: (pinUpdate: PinUpdate) => {
+				// Google Analytics
+				ReactGA.event({
+					category: 'group',
+					action: pinUpdate.pinned ? 'Pin Group' : 'Unpin Group',
+				});
+
 				queryClient.setQueryData(GROUPS_QUERY_KEY, (prevGroups: GroupType[] | undefined) => {
 					if (prevGroups) {
 						const updatedGroups = prevGroups.map((group) => {
@@ -611,6 +626,12 @@ export const useUpdateGroup = () => {
 		},
 		{
 			onSuccess: (update: GroupUpdate) => {
+				// Google Analytics
+				ReactGA.event({
+					category: 'group',
+					action: 'Update Group',
+				});
+
 				queryClient.setQueryData(GROUPS_QUERY_KEY, (prevGroups: GroupType[] | undefined) => {
 					if (prevGroups) {
 						const updatedGroups = prevGroups.map((group) => {
@@ -733,6 +754,12 @@ export const useInviteToGroup = () => {
 		},
 		{
 			onSuccess: (update: GroupInvite) => {
+				// Google Analytics
+				ReactGA.event({
+					category: 'group',
+					action: 'Invite to Group',
+				});
+
 				queryClient.setQueryData(GROUPS_QUERY_KEY, (prevGroups: GroupType[] | undefined) => {
 					if (prevGroups) {
 						const updatedGroups = prevGroups.map((group) => {
@@ -790,6 +817,12 @@ export const useAcceptGroupInvite = () => {
 		},
 		{
 			onSuccess: (newGroup: GroupType) => {
+				// Google Analytics
+				ReactGA.event({
+					category: 'group',
+					action: 'Accept Group Invite',
+				});
+
 				queryClient.setQueryData(GROUPS_QUERY_KEY, (prevGroups: GroupType[] | undefined) => {
 					if (prevGroups) {
 						const updatedGroups = prevGroups.map((group) => {
@@ -826,6 +859,12 @@ export const useDeclineGroupInvite = () => {
 		},
 		{
 			onSuccess: (id) => {
+				// Google Analytics
+				ReactGA.event({
+					category: 'group',
+					action: 'Decline Group Invite',
+				});
+
 				queryClient.setQueryData(GROUPS_QUERY_KEY, (prevGroups: GroupType[] | undefined) => (prevGroups ? prevGroups.filter((group) => group.id !== id) : prevGroups));
 			},
 		}
@@ -844,6 +883,12 @@ export const useLeaveGroup = () => {
 		},
 		{
 			onSuccess: (id) => {
+				// Google Analytics
+				ReactGA.event({
+					category: 'group',
+					action: 'Leave Group',
+				});
+
 				queryClient.setQueryData(GROUPS_QUERY_KEY, (prevGroups: GroupType[] | undefined) => (prevGroups ? prevGroups.filter((group) => group.id !== id) : prevGroups));
 
 				// update lists
@@ -874,6 +919,12 @@ export const useDeleteGroup = () => {
 		},
 		{
 			onSuccess: (id) => {
+				// Google Analytics
+				ReactGA.event({
+					category: 'group',
+					action: 'Delete Group',
+				});
+
 				queryClient.setQueryData(GROUPS_QUERY_KEY, (prevGroups: GroupType[] | undefined) => (prevGroups ? prevGroups.filter((group) => group.id !== id) : prevGroups));
 
 				// update lists

@@ -1,5 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+// Google Analytics
+import ReactGA from 'react-ga4';
+
 import { useSupabase } from './useSupabase';
 import { GROUPS_QUERY_KEY } from './useGroup';
 import { ItemStatus, ItemStatuses, MemberItemType } from '../types';
@@ -184,6 +187,12 @@ export const useUpdateItemStatus = (group_id?: string, user_id?: string, list_id
 		},
 		{
 			onSuccess: (status: ItemStatus) => {
+				// Google Analytics
+				ReactGA.event({
+					category: 'item',
+					action: `Item Status: ${status.status === ItemStatuses.available ? 'Available' : status.status === ItemStatuses.planned ? 'Planned' : 'Unavailable'}`,
+				});
+
 				queryClient.setQueryData(
 					group_id ? [...GROUPS_QUERY_KEY, group_id, user_id, ...MEMBER_ITEMS_QUERY_KEY, list_id] : CLAIMED_ITEMS_QUERY_KEY,
 					(prevItems: MemberItemType[] | undefined) => {
