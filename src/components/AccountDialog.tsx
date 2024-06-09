@@ -394,7 +394,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 								Support
 							</Typography>
 							<Typography variant='body1'>
-								If you're experiencing any issues or just have a question, please contact us at <MUILink href='mailto:support@giftamizer.com'>support@giftamizer.com</MUILink>.
+								If you're experiencing any issues or just have a question, please <MUILink href='https://giftamizer.freshdesk.com' target='_blank'>contact us</MUILink>.
 							</Typography>
 						</Grid>
 
