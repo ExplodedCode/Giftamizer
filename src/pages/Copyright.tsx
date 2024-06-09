@@ -25,6 +25,10 @@ export default function Copyright() {
 				<MUILink component={Link} to='/policy' color='inherit'>
 					Policy
 				</MUILink>
+				{' - '}
+				<MUILink href='https://giftamizer.freshdesk.com' target='_blank' color='inherit'>
+					Support
+				</MUILink>
 			</Typography>
 		</>
 	);
