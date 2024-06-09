@@ -1,5 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+// Google Analytics
+import ReactGA from 'react-ga4';
+
 import { useSupabase } from './useSupabase';
 import { ItemType, ListType } from '../types';
 import { dataUrlToFile } from '../../../components/ImageCropper';
@@ -79,6 +82,12 @@ export const useCreateList = () => {
 		},
 		{
 			onSuccess: (list: ListType) => {
+				// Google Analytics
+				ReactGA.event({
+					category: 'list',
+					action: 'Create List',
+				});
+
 				queryClient.setQueryData(LISTS_QUERY_KEY, (prevLists: ListType[] | undefined) => (prevLists ? [...prevLists, list] : [list]));
 			},
 		}
@@ -143,6 +152,12 @@ export const useUpdateLists = () => {
 		},
 		{
 			onSuccess: (list_updated: ListType) => {
+				// Google Analytics
+				ReactGA.event({
+					category: 'list',
+					action: 'Update List',
+				});
+
 				queryClient.setQueryData(LISTS_QUERY_KEY, (prevLists: ListType[] | undefined) => {
 					if (prevLists) {
 						const updatedLists = prevLists.map((list) => {
@@ -192,6 +207,12 @@ export const useDeleteList = () => {
 		},
 		{
 			onSuccess: (id) => {
+				// Google Analytics
+				ReactGA.event({
+					category: 'list',
+					action: 'Delete List',
+				});
+
 				queryClient.setQueryData(LISTS_QUERY_KEY, (prevLists: ListType[] | undefined) => (prevLists ? prevLists.filter((list) => list.id !== id) : prevLists));
 
 				// update item list names
@@ -230,6 +251,12 @@ export const useSetListPin = () => {
 		},
 		{
 			onSuccess: (pinUpdate: PinUpdate) => {
+				// Google Analytics
+				ReactGA.event({
+					category: 'list',
+					action: pinUpdate.pinned ? 'Pin List' : 'Unpin List',
+				});
+
 				queryClient.setQueryData(LISTS_QUERY_KEY, (prevLists: ListType[] | undefined) => {
 					if (prevLists) {
 						const updatedLists = prevLists.map((list) => {

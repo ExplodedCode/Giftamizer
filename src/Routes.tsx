@@ -1,8 +1,11 @@
 import React from 'react';
 import { Link, Navigate, Route, Routes, useLocation, useSearchParams } from 'react-router-dom';
 import { LastLocationProvider } from 'react-router-dom-last-location';
-import { useSnackbar } from 'notistack';
 
+// Google Analytics
+import ReactGA from 'react-ga4';
+
+import { useSnackbar } from 'notistack';
 import { useGetProfile, useGetSystem, useSupabase } from './lib/useSupabase';
 
 import { Backdrop, Box, CircularProgress, Link as MUILink, Typography } from '@mui/material';
@@ -37,6 +40,11 @@ export default function AppRoutes() {
 	const { user, client } = useSupabase();
 
 	const [home, setHome] = React.useState('/');
+
+	React.useEffect(() => {
+		// ReactGA.pageview(window.location.pathname + window.location.search);
+		ReactGA.send({ hitType: 'pageview', page: `${window.location.pathname}${window.location.search}` });
+	}, []);
 
 	React.useEffect(() => {
 		if (location.hash.startsWith('#message=')) {
