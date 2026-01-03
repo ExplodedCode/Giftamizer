@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Database } from './database.types';
 
 const getSupabaseUrl = () => {
-	return window.location.origin;
+	return 'https://gift-api.trowbridge.tech'; //window.location.origin;
 };
 export let SUPABASE_URL = getSupabaseUrl();
 

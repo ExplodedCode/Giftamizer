@@ -4,7 +4,7 @@ import { useDropzone } from 'react-dropzone';
 import 'cropperjs/dist/cropper.css';
 import Cropper from 'react-cropper';
 
-import { Avatar, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Paper, Typography } from '@mui/material';
+import { Avatar, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Paper, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { AddPhotoAlternateOutlined, Clear, FileUpload } from '@mui/icons-material';
 
 export async function dataUrlToFile(dataUrl: string, fileName: string): Promise<File> {
@@ -27,7 +27,11 @@ type ImageCropperProps = {
 };
 
 export default function ImageCropper({ value, onChange, onClick, onClose, disabled, aspectRatio, autoCropArea, square, importedImage, tour_element }: ImageCropperProps) {
+	const theme = useTheme();
+
 	const cropperRef = React.useRef(null);
+
+	const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
 	const [open, setOpen] = React.useState(false);
 	const [selectedimage, setSelectedImage] = React.useState(typeof value === 'string' ? value : '');
@@ -75,6 +79,35 @@ export default function ImageCropper({ value, onChange, onClick, onClose, disabl
 
 		setOpen(true);
 	};
+
+	const handlePaste = React.useCallback((event: ClipboardEvent) => {
+		if (event.clipboardData) {
+			const items = event.clipboardData.items;
+			for (let i = 0; i < items.length; i++) {
+				if (items[i].type.indexOf('image') !== -1) {
+					const blob = items[i].getAsFile();
+					if (blob) {
+						const reader = new FileReader();
+						reader.onload = () => {
+							setSelectedImage(String(reader.result));
+							setImageLoaded(true);
+						};
+						reader.readAsDataURL(blob);
+					}
+				}
+			}
+		}
+	}, []);
+
+	React.useEffect(() => {
+		if (open) {
+			const handlePasteWrapper = (e: any) => handlePaste(e);
+			document.addEventListener('paste', handlePasteWrapper);
+			return () => {
+				document.removeEventListener('paste', handlePasteWrapper);
+			};
+		}
+	}, [open, handlePaste]);
 
 	// allow metadata image to be set
 	React.useEffect(() => {
@@ -130,7 +163,7 @@ export default function ImageCropper({ value, onChange, onClick, onClose, disabl
 							>
 								<input multiple={false} {...getInputProps()} />
 								<Typography variant='body1' component='div' gutterBottom>
-									Select or drop an Image
+									{isMobile ? 'Select an Image' : 'Select, drop or paste an Image'}
 								</Typography>
 								<FileUpload />
 							</Paper>

@@ -36,7 +36,7 @@ import {
 	DialogTitle,
 	useTheme,
 } from '@mui/material';
-import { ExpandLess, ExpandMore, Archive, Delete, Group, ListAlt, Logout, ShoppingCart, Menu as MenuIcon, Podcasts, Close } from '@mui/icons-material';
+import { ExpandLess, ExpandMore, Archive, Delete, Group, ListAlt, Logout, ShoppingCart, Menu as MenuIcon, Podcasts, Close, Help } from '@mui/icons-material';
 
 import AccountDialog from './AccountDialog';
 import Notifications from './Notifications';
@@ -328,6 +328,15 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 								</ListItemIcon>
 								<Typography textAlign='center'>Logout</Typography>
 							</MenuItem>
+
+							<Divider />
+
+							<MenuItem onClick={handleCloseUserMenu} component={Link} to='/support' sx={{ display: { xs: 'flex', md: 'none' } }}>
+								<ListItemIcon>
+									<Help fontSize='small' />
+								</ListItemIcon>
+								<Typography textAlign='center'>Support</Typography>
+							</MenuItem>
 						</Menu>
 					</Box>
 				</Toolbar>
@@ -530,6 +539,20 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 							</List>
 						</>
 					)}
+
+					<Box sx={{ position: 'absolute', bottom: 0, width: '100%' }}>
+						<Divider />
+						<List>
+							<ListItem disablePadding>
+								<ListItemButton component={Link} to='/support' selected={location.pathname === '/support'}>
+									<ListItemIcon>
+										<Help color={location.pathname === '/support' ? 'primary' : undefined} />
+									</ListItemIcon>
+									<ListItemText primary='Support' />
+								</ListItemButton>
+							</ListItem>
+						</List>
+					</Box>
 				</Box>
 			</Drawer>
 			<Box component='main' sx={{ flexGrow: 1 }}>

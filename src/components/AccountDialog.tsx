@@ -220,7 +220,13 @@ export default function AccountDialog(props: AccountDialogProps) {
 						<Typography sx={{ ml: 2, flex: 1 }} variant='h6' component='div'>
 							My Account
 						</Typography>
-						<IconButton edge='start' color='inherit' onClick={handleSave} aria-label='close' disabled={firstName.trim().length === 0 || lastName.trim().length === 0 || updateProfile.isLoading}>
+						<IconButton
+							edge='start'
+							color='inherit'
+							onClick={handleSave}
+							aria-label='close'
+							disabled={firstName.trim().length === 0 || lastName.trim().length === 0 || updateProfile.isLoading}
+						>
 							{updateProfile.isLoading ? <CircularProgress size={20} color='inherit' /> : <Save />}
 						</IconButton>
 					</Toolbar>
@@ -238,7 +244,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 									<TextField fullWidth label='First Name' variant='outlined' value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
 								</Grid>
 								<Grid item xs={12} sm={6}>
-									<TextField fullWidth label='Last Name' variant='outlined' value={lastName} onChange={(e) => setLastName(e.target.value)} required/>
+									<TextField fullWidth label='Last Name' variant='outlined' value={lastName} onChange={(e) => setLastName(e.target.value)} required />
 								</Grid>
 							</Grid>
 						</Grid>
@@ -394,7 +400,7 @@ export default function AccountDialog(props: AccountDialogProps) {
 								Support
 							</Typography>
 							<Typography variant='body1'>
-								If you're experiencing any issues or just have a question, please <MUILink href='https://giftamizer.freshdesk.com' target='_blank'>contact us</MUILink>.
+								If you're experiencing any issues or just have a question, please <Link to='/support'>contact us</Link>.
 							</Typography>
 						</Grid>
 

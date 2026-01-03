@@ -600,7 +600,7 @@ export default function ItemCard({ index, item, editable }: ItemCardProps) {
 										{(!editable || item.shopping_item || (item.links && item.links.length > 0)) && (
 											<Grid item>
 												<Stack direction='row' justifyContent='flex-start' spacing={1} useFlexGap flexWrap='wrap'>
-													{((!editable && item.user_id !== user.id) || item.shopping_item) && (
+													{(!editable || item.shopping_item) && (
 														<ItemStatus index={index} item={item as MemberItemType} claimError={claimError} setClaimError={setClaimError} />
 													)}
 
@@ -635,7 +635,8 @@ export default function ItemCard({ index, item, editable }: ItemCardProps) {
 							</ListItem>
 						)}
 
-						{item.image && <CardMedia component='img' alt={item.name} sx={{ height: 240 }} image={item.image} />}
+						{item.image && <CardMedia component='img' alt={item.name} sx={{ height: 220, cursor: 'zoom-in' }} image={item.image} onClick={() => setDialogImage(item.image ?? null)} />}
+
 						<CardContent>
 							<Grid container justifyContent='flex-start' spacing={2}>
 								<Grid item xs>
