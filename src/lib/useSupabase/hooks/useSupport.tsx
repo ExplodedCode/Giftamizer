@@ -5,6 +5,27 @@ import { SystemType } from '../types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 const ISSUES_QUERY_KEY = ['issues'];
+const SUPPORT_CONFIGURED_QUERY_KEY = ['support-configured'];
+
+// Used by Navigation to show/hide the Support nav item - the github function
+// returns { configured: false } (without calling the GitHub API) when
+// GITHUB_TOKEN/GITHUB_OWNER/GITHUB_REPO aren't set on the backend.
+export const useGetSupportConfigured = () => {
+	const { client } = useSupabase();
+
+	return useQuery({
+		queryKey: SUPPORT_CONFIGURED_QUERY_KEY,
+		queryFn: async (): Promise<boolean> => {
+			const { data, error } = await client.functions.invoke('github/status', { body: {} });
+
+			if (error) throw error;
+
+			return Boolean(data?.configured);
+		},
+		retry: 0,
+		staleTime: 5 * 60 * 1000,
+	});
+};
 
 export const useGetIssues = () => {
 	const { client } = useSupabase();

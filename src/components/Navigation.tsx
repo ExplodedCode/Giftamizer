@@ -42,6 +42,7 @@ import AccountDialog from './AccountDialog';
 import Notifications from './Notifications';
 
 import { useGetGroups } from '../lib/useSupabase/hooks/useGroup';
+import { useGetSupportConfigured } from '../lib/useSupabase/hooks/useSupport';
 import { GiftIcon } from './SvgIcons';
 import Snowfall from 'react-snowfall';
 import HtmlTooltip from './HtmlTooltip';
@@ -132,6 +133,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 
 	const { data: groups } = useGetGroups();
 	const { data: lists } = useGetLists();
+	const { data: supportConfigured } = useGetSupportConfigured();
 
 	//
 	// user tour
@@ -331,12 +333,14 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 
 							<Divider />
 
-							<MenuItem onClick={handleCloseUserMenu} component={Link} to='/support' sx={{ display: { xs: 'flex', md: 'none' } }}>
-								<ListItemIcon>
-									<Help fontSize='small' />
-								</ListItemIcon>
-								<Typography textAlign='center'>Support</Typography>
-							</MenuItem>
+							{supportConfigured && (
+								<MenuItem onClick={handleCloseUserMenu} component={Link} to='/support' sx={{ display: { xs: 'flex', md: 'none' } }}>
+									<ListItemIcon>
+										<Help fontSize='small' />
+									</ListItemIcon>
+									<Typography textAlign='center'>Support</Typography>
+								</MenuItem>
+							)}
 						</Menu>
 					</Box>
 				</Toolbar>
@@ -540,19 +544,21 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 						</>
 					)}
 
-					<Box sx={{ position: 'absolute', bottom: 0, width: '100%' }}>
-						<Divider />
-						<List>
-							<ListItem disablePadding>
-								<ListItemButton component={Link} to='/support' selected={location.pathname === '/support'}>
-									<ListItemIcon>
-										<Help color={location.pathname === '/support' ? 'primary' : undefined} />
-									</ListItemIcon>
-									<ListItemText primary='Support' />
-								</ListItemButton>
-							</ListItem>
-						</List>
-					</Box>
+					{supportConfigured && (
+						<Box sx={{ position: 'absolute', bottom: 0, width: '100%' }}>
+							<Divider />
+							<List>
+								<ListItem disablePadding>
+									<ListItemButton component={Link} to='/support' selected={location.pathname === '/support'}>
+										<ListItemIcon>
+											<Help color={location.pathname === '/support' ? 'primary' : undefined} />
+										</ListItemIcon>
+										<ListItemText primary='Support' />
+									</ListItemButton>
+								</ListItem>
+							</List>
+						</Box>
+					)}
 				</Box>
 			</Drawer>
 			<Box component='main' sx={{ flexGrow: 1 }}>
