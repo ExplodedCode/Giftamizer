@@ -40,7 +40,6 @@ import ItemUpdate from '../components/ItemUpdate';
 import {
 	ExtractDomain,
 	FakeDelay,
-	SUPABASE_URL,
 	StandardizeURL,
 	groupTourProgress,
 	useArchiveItem,
@@ -559,15 +558,7 @@ export default function ItemCard({ index, item, editable }: ItemCardProps) {
 														<ListItemAvatar>
 															<Avatar
 																alt={item.items_lists?.[0]?.lists.child_list ? item.items_lists?.[0]?.lists.name : item.profile.first_name}
-																src={
-																	item.items_lists?.[0]?.lists.child_list
-																		? item.items_lists?.[0]?.lists.avatar_token
-																			? `${SUPABASE_URL}/storage/v1/object/public/lists/${item.items_lists?.[0]?.lists.id}?${item.items_lists?.[0]?.lists.avatar_token}`
-																			: '/defaultAvatar.png'
-																		: item.profile.avatar_token && item.profile.avatar_token !== -1
-																		? `${SUPABASE_URL}/storage/v1/object/public/avatars/${item.profile.user_id}?${item.profile.avatar_token}`
-																		: '/defaultAvatar.png'
-																}
+																src={(item.items_lists?.[0]?.lists.child_list ? item.items_lists?.[0]?.lists.image : item.profile.image) ?? '/defaultAvatar.png'}
 															/>
 														</ListItemAvatar>
 													)}

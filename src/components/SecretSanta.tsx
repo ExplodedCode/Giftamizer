@@ -9,6 +9,7 @@ import { LoadingButton } from '@mui/lab';
 
 import { GroupType, Member, SecretSantaDrawings, SecretSantaStatus } from '../lib/useSupabase/types';
 import { useGetProfile, useSupabase, useUpdateGroup } from '../lib/useSupabase';
+import { getSignedUrl } from '../lib/useSupabase/storageUrls';
 import SecretSantaSetup from './SecretSantaSetup';
 
 interface SecretSantaProps {
@@ -131,7 +132,7 @@ export default function SecretSanta({ group, members }: SecretSantaProps) {
 				profile: {
 					...membership.profile,
 					// @ts-ignore
-					image: membership.profile.avatar_token ? `${client.supabaseUrl}/storage/v1/object/public/avatars/${user.id}?${membership.profile.avatar_token}` : '',
+					image: membership.profile.avatar_token ? await getSignedUrl(client, 'avatars', `${user.id}`) : '',
 				},
 			};
 			setMyMembership(membership);

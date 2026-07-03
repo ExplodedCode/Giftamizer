@@ -1,6 +1,7 @@
 import * as React from 'react';
 
-import { useSupabase, SUPABASE_URL, validateEmail, FakeDelay } from '../lib/useSupabase';
+import { useSupabase, validateEmail, FakeDelay } from '../lib/useSupabase';
+import { getSignedUrls } from '../lib/useSupabase/storageUrls';
 import { Member, Profile } from '../lib/useSupabase/types';
 
 import { Autocomplete, Avatar, Chip, CircularProgress, debounce, Grid, TextField, Typography } from '@mui/material';
@@ -37,7 +38,14 @@ export default function UserSearch(props: UserSearchProps) {
 				const { data, error } = await client.rpc('search_profiles', { user_search: search }).limit(8).neq('user_id', user.id).not('user_id', 'in', `(${excludeUsers.join()})`);
 				if (error) console.log(error);
 
-				callback(data as Profile[]);
+				const avatarUrls = await getSignedUrls(
+					client,
+					'avatars',
+					(data ?? []).map((p: Profile) => `${p.user_id}`)
+				);
+				const results = (data as Profile[])?.map((p) => ({ ...p, image: avatarUrls[`${p.user_id}`] }));
+
+				callback(results);
 
 				setLoading(false);
 			}, 400),
@@ -112,12 +120,7 @@ export default function UserSearch(props: UserSearchProps) {
 							<Grid container alignItems='center'>
 								<Grid item>
 									{option.user_id ? (
-										<Avatar
-											sizes='small'
-											src={`${SUPABASE_URL}/storage/v1/object/public/avatars/${option?.user_id}`}
-											alt={`${option.first_name} ${option.last_name}`}
-											sx={{ mr: 1, bgcolor: 'primary.main' }}
-										/>
+										<Avatar sizes='small' src={option.image} alt={`${option.first_name} ${option.last_name}`} sx={{ mr: 1, bgcolor: 'primary.main' }} />
 									) : (
 										<Avatar sizes='small' sx={{ mr: 1, bgcolor: 'primary.main' }}>
 											<Mail />
@@ -136,7 +139,7 @@ export default function UserSearch(props: UserSearchProps) {
 				renderTags={(value: readonly Profile[], getTagProps) =>
 					value.map((option: Profile, index: number) => (
 						<Chip
-							avatar={<Avatar alt={option.first_name} src={`${SUPABASE_URL}/storage/v1/object/public/avatars/${option.user_id}`} />}
+							avatar={<Avatar alt={option.first_name} src={option.image} />}
 							variant='outlined'
 							label={`${option.first_name} ${option.last_name}`}
 							{...getTagProps({ index })}

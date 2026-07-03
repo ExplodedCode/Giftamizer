@@ -7,6 +7,7 @@ import { useSupabase } from './useSupabase';
 import { GROUPS_QUERY_KEY } from './useGroup';
 import { ItemStatus, ItemStatuses, MemberItemType } from '../types';
 import { FakeDelay } from '.';
+import { getSignedUrl, getSignedUrls } from '../storageUrls';
 
 const MEMBER_ITEMS_QUERY_KEY = ['items'];
 export const CLAIMED_ITEMS_QUERY_KEY = ['claimed_items'];
@@ -67,9 +68,14 @@ export const useGetMemberItems = (group_id: string, user_id: string, list_id?: s
 				}
 				if (res.error) throw res.error;
 
+				const signedUrls = await getSignedUrls(
+					client,
+					'items',
+					res.data.filter((i) => i.image_token).map((i) => `${i.id}`)
+				);
 				return res.data.map((i) => {
 					// @ts-ignore
-					return { ...i, image: i.image_token && `${client.supabaseUrl}/storage/v1/object/public/items/${i.id}?${i.image_token}` };
+					return { ...i, image: i.image_token ? signedUrls[`${i.id}`] : undefined };
 				}) as MemberItemType[];
 			} else {
 				var res = await client
@@ -97,9 +103,14 @@ export const useGetMemberItems = (group_id: string, user_id: string, list_id?: s
 					.eq('items_lists.lists.lists_groups.group_id', group_id);
 				if (res.error) throw res.error;
 
+				const signedUrls = await getSignedUrls(
+					client,
+					'items',
+					res.data.filter((i) => i.image_token).map((i) => `${i.id}`)
+				);
 				return res.data.map((i) => {
 					// @ts-ignore
-					return { ...i, image: i.image_token && `${client.supabaseUrl}/storage/v1/object/public/items/${i.id}?${i.image_token}` };
+					return { ...i, image: i.image_token ? signedUrls[`${i.id}`] : undefined };
 				}) as MemberItemType[];
 			}
 		},
@@ -138,7 +149,7 @@ export const useRefreshItem = (group_id: string, user_id: string, list_id?: stri
 				.single();
 
 			// @ts-ignore
-			return { ...data, image: data.image_token && `${client.supabaseUrl}/storage/v1/object/public/items/${data.id}?${data.image_token}` } as MemberItemType;
+			return { ...data, image: data.image_token ? await getSignedUrl(client, 'items', `${data.id}`) : undefined } as MemberItemType;
 		},
 		{
 			onSuccess: (update: MemberItemType) => {
@@ -283,16 +294,44 @@ export const useClaimedItems = () => {
 				.not('shopping_item', 'is', null);
 			if (ShoppingItemError) throw ShoppingItemError;
 
-			return [...data, ...ShoppingItemData].map((i) => {
+			const allItems = [...data, ...ShoppingItemData];
+			const itemImageUrls = await getSignedUrls(
+				client,
+				'items',
+				allItems.filter((i) => i.image_token).map((i) => `${i.id}`)
+			);
+			const avatarUrls = await getSignedUrls(
+				client,
+				'avatars',
+				allItems.filter((i) => i.profile?.avatar_token).map((i) => `${i.profile.user_id}`)
+			);
+			const listAvatarUrls = await getSignedUrls(
+				client,
+				'lists',
+				allItems
+					.flatMap((i: any) => i.items_lists ?? [])
+					.filter((il: any) => il.lists?.avatar_token)
+					.map((il: any) => `${il.lists.id}`)
+			);
+
+			return allItems.map((i: any) => {
 				return {
 					...i,
 					// @ts-ignore
-					image: i.image_token && `${client.supabaseUrl}/storage/v1/object/public/items/${i.id}?${i.image_token}`,
+					image: i.image_token ? itemImageUrls[`${i.id}`] : undefined,
+
+					items_lists: i.items_lists?.map((il: any) => ({
+						...il,
+						lists: {
+							...il.lists,
+							image: il.lists?.avatar_token ? listAvatarUrls[`${il.lists.id}`] : undefined,
+						},
+					})),
 
 					profile: {
 						...i.profile,
 						// @ts-ignore
-						image: i.profile.avatar_token && `${client.supabaseUrl}/storage/v1/object/public/avatars/${i.profile.user_id}?${i.profile.avatar_token}`,
+						image: i.profile?.avatar_token ? avatarUrls[`${i.profile.user_id}`] : undefined,
 					},
 				};
 			}) as MemberItemType[];

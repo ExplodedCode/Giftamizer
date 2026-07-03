@@ -7,6 +7,7 @@ import { useSupabase } from './useSupabase';
 import { ProfileType } from '../types';
 import { dataUrlToFile } from '../../../components/ImageCropper';
 import { useGetItems } from './useItems';
+import { getSignedUrl } from '../storageUrls';
 
 const QUERY_KEY = ['profile'];
 
@@ -79,7 +80,7 @@ export const useGetProfile = () => {
 			//#endregion
 
 			// @ts-ignore
-			profile.image = profile.avatar_token && profile.avatar_token !== -1 ? `${client.supabaseUrl}/storage/v1/object/public/avatars/${user.id}?${profile.avatar_token}` : undefined;
+			profile.image = profile.avatar_token && profile.avatar_token !== -1 ? await getSignedUrl(client, 'avatars', `${user.id}`) : undefined;
 
 			return profile as ProfileType;
 		},
