@@ -40,7 +40,6 @@ import ItemUpdate from '../components/ItemUpdate';
 import {
 	ExtractDomain,
 	FakeDelay,
-	SUPABASE_URL,
 	StandardizeURL,
 	groupTourProgress,
 	useArchiveItem,
@@ -559,15 +558,7 @@ export default function ItemCard({ index, item, editable }: ItemCardProps) {
 														<ListItemAvatar>
 															<Avatar
 																alt={item.items_lists?.[0]?.lists.child_list ? item.items_lists?.[0]?.lists.name : item.profile.first_name}
-																src={
-																	item.items_lists?.[0]?.lists.child_list
-																		? item.items_lists?.[0]?.lists.avatar_token
-																			? `${SUPABASE_URL}/storage/v1/object/public/lists/${item.items_lists?.[0]?.lists.id}?${item.items_lists?.[0]?.lists.avatar_token}`
-																			: '/defaultAvatar.png'
-																		: item.profile.avatar_token && item.profile.avatar_token !== -1
-																		? `${SUPABASE_URL}/storage/v1/object/public/avatars/${item.profile.user_id}?${item.profile.avatar_token}`
-																		: '/defaultAvatar.png'
-																}
+																src={(item.items_lists?.[0]?.lists.child_list ? item.items_lists?.[0]?.lists.image : item.profile.image) ?? '/defaultAvatar.png'}
 															/>
 														</ListItemAvatar>
 													)}
@@ -600,7 +591,7 @@ export default function ItemCard({ index, item, editable }: ItemCardProps) {
 										{(!editable || item.shopping_item || (item.links && item.links.length > 0)) && (
 											<Grid item>
 												<Stack direction='row' justifyContent='flex-start' spacing={1} useFlexGap flexWrap='wrap'>
-													{((!editable && item.user_id !== user.id) || item.shopping_item) && (
+													{(!editable || item.shopping_item) && (
 														<ItemStatus index={index} item={item as MemberItemType} claimError={claimError} setClaimError={setClaimError} />
 													)}
 
@@ -635,7 +626,8 @@ export default function ItemCard({ index, item, editable }: ItemCardProps) {
 							</ListItem>
 						)}
 
-						{item.image && <CardMedia component='img' alt={item.name} sx={{ height: 240 }} image={item.image} />}
+						{item.image && <CardMedia component='img' alt={item.name} sx={{ height: 220, cursor: 'zoom-in' }} image={item.image} onClick={() => setDialogImage(item.image ?? null)} />}
+
 						<CardContent>
 							<Grid container justifyContent='flex-start' spacing={2}>
 								<Grid item xs>

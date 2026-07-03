@@ -24,7 +24,7 @@ import {
 } from '@mui/material';
 import { Check, Clear } from '@mui/icons-material';
 
-import { SUPABASE_URL, useGetGroups, useAcceptGroupInvite, useDeclineGroupInvite, useGetTour } from '../lib/useSupabase';
+import { useGetGroups, useAcceptGroupInvite, useDeclineGroupInvite, useGetTour } from '../lib/useSupabase';
 import { GroupType } from '../lib/useSupabase/types';
 
 export type InvitesDialogRefs = {
@@ -103,7 +103,7 @@ const AlertDialog: React.ForwardRefRenderFunction<InvitesDialogRefs> = (props, f
 										}
 									>
 										<ListItemAvatar>
-											<Avatar sx={{ bgcolor: 'primary.main' }} src={`${SUPABASE_URL}/storage/v1/object/public/groups/${group.id}?${group.image_token}`}>
+											<Avatar sx={{ bgcolor: 'primary.main' }} src={group.image}>
 												{Array.from(String(group.name).toUpperCase())[0]}
 											</Avatar>
 										</ListItemAvatar>

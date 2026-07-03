@@ -8,6 +8,7 @@ import { ItemStatuses, ItemType, MemberItemType } from '../types';
 import { dataUrlToFile } from '../../../components/ImageCropper';
 import { useGetProfile } from './useProfile';
 import { CLAIMED_ITEMS_QUERY_KEY } from './useMember';
+import { getSignedUrl, getSignedUrls } from '../storageUrls';
 
 export const ITEMS_QUERY_KEY = ['items'];
 
@@ -33,9 +34,15 @@ export const useGetItems = () => {
 				.is('shopping_item', null);
 			if (error) throw error;
 
+			const signedUrls = await getSignedUrls(
+				client,
+				'items',
+				data.filter((i) => i.image_token).map((i) => `${i.id}`)
+			);
+
 			return data.map((i) => {
 				// @ts-ignore
-				return { ...i, image: i.image_token && `${client.supabaseUrl}/storage/v1/object/public/items/${i.id}?${i.image_token}` };
+				return { ...i, image: i.image_token ? signedUrls[`${i.id}`] : undefined };
 			}) as ItemType[];
 		},
 	});
@@ -84,7 +91,7 @@ export const useCreateItem = () => {
 				if (imageError) throw imageError;
 
 				// @ts-ignore
-				newItem.image = `${client.supabaseUrl}/storage/v1/object/public/items/${data.id}?${data.image_token}`;
+				newItem.image = await getSignedUrl(client, 'items', `${data.id}`);
 			}
 
 			// Add list-group relationships
@@ -124,6 +131,7 @@ export const useCreateItem = () => {
 				if (item.shopping_item) {
 					const { data: profile } = await client.from('profiles').select(`*`).eq('user_id', item.shopping_item).single();
 					const { data: itemStatus } = await client.from('items_status').upsert({ item_id: item.id, user_id: user.id, status: ItemStatuses.planned }).select().single();
+					const avatarImage = profile.avatar_token ? await getSignedUrl(client, 'avatars', `${profile.user_id}`) : undefined;
 
 					let shoppingItem: MemberItemType = {
 						...item,
@@ -131,7 +139,7 @@ export const useCreateItem = () => {
 						profile: {
 							...profile,
 							// @ts-ignore
-							image: profile.avatar_token && `${client.supabaseUrl}/storage/v1/object/public/avatars/${profile.user_id}?${profile.avatar_token}`,
+							image: avatarImage,
 						},
 					};
 					queryClient.setQueryData(CLAIMED_ITEMS_QUERY_KEY, (prevItems: MemberItemType[] | undefined) => (prevItems ? [shoppingItem, ...prevItems] : [shoppingItem]));
@@ -174,7 +182,7 @@ export const useUpdateItems = () => {
 				if (imageError) throw imageError;
 
 				// @ts-ignore
-				item.image = `${client.supabaseUrl}/storage/v1/object/public/items/${data.id}?${data.image_token}`;
+				item.image = await getSignedUrl(client, 'items', `${data.id}`);
 			} else if (data.image_token === null) {
 				item.image = undefined;
 			}
@@ -226,13 +234,14 @@ export const useUpdateItems = () => {
 
 				if (item_updated.shopping_item) {
 					const { data: profile } = await client.from('profiles').select(`*`).eq('user_id', item_updated.shopping_item).single();
+					const avatarImage = profile.avatar_token ? await getSignedUrl(client, 'avatars', `${profile.user_id}`) : undefined;
 
 					let shoppingItem: MemberItemType = {
 						...item_updated,
 						profile: {
 							...profile,
 							// @ts-ignore
-							image: profile.avatar_token && `${client.supabaseUrl}/storage/v1/object/public/avatars/${profile.user_id}?${profile.avatar_token}`,
+							image: avatarImage,
 						},
 					};
 

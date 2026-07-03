@@ -26,7 +26,7 @@ export default function Copyright() {
 					Policy
 				</MUILink>
 				{' - '}
-				<MUILink href='https://giftamizer.freshdesk.com' target='_blank' color='inherit'>
+				<MUILink href='https://github.com/ExplodedCode/Giftamizer/issues' target='_blank' color='inherit'>
 					Support
 				</MUILink>
 			</Typography>

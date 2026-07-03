@@ -9,6 +9,7 @@ import { ExternalInvite, GroupType, ListType, Member, Profile } from '../types';
 import { dataUrlToFile } from '../../../components/ImageCropper';
 import { LISTS_QUERY_KEY } from './useLists';
 import { FakeDelay, useGetProfile } from '.';
+import { getSignedUrl, getSignedUrls } from '../storageUrls';
 
 export const GROUPS_QUERY_KEY = ['groups'];
 
@@ -54,9 +55,15 @@ export const useGetGroups = () => {
 				.order('name', { ascending: true });
 			if (error) throw error;
 
+			const signedUrls = await getSignedUrls(
+				client,
+				'groups',
+				data.filter((g) => g.image_token).map((g) => `${g.id}`)
+			);
+
 			return data.map((g) => {
 				// @ts-ignore
-				return { ...g, image: g.image_token && `${client.supabaseUrl}/storage/v1/object/public/groups/${g.id}?${g.image_token}` };
+				return { ...g, image: g.image_token ? signedUrls[`${g.id}`] : undefined };
 			}) as GroupType[];
 		},
 	});
@@ -83,7 +90,7 @@ export const useRefreshGroup = () => {
 				.single();
 
 			// @ts-ignore
-			return { ...data, image: data.image_token && `${client.supabaseUrl}/storage/v1/object/public/groups/${data.id}?${data.image_token}` } as GroupType;
+			return { ...data, image: data.image_token ? await getSignedUrl(client, 'groups', `${data.id}`) : undefined } as GroupType;
 		},
 		{
 			onSuccess: (update: GroupType) => {
@@ -133,7 +140,7 @@ export const useCreateGroup = () => {
 				if (imageError) throw imageError;
 
 				// @ts-ignore
-				newGroup.image = `${client.supabaseUrl}/storage/v1/object/public/groups/${data.id}?${data.image_token}`;
+				newGroup.image = await getSignedUrl(client, 'groups', `${data.id}`);
 			}
 
 			// Add fake member relationships
@@ -301,13 +308,18 @@ export const useGetGroupMembers = (group_id: string) => {
 				.neq('user_id', user.id)
 				.eq('group_id', group_id);
 			if (error) throw error;
+			const memberAvatarUrls = await getSignedUrls(
+				client,
+				'avatars',
+				(data as unknown as Member[]).filter((m) => m.profile.avatar_token && m.profile.avatar_token !== -1).map((m) => `${m.user_id}`)
+			);
 			var memberList: Member[] = (data as unknown as Member[]).map((m) => {
 				return {
 					...m,
 					profile: {
 						...m.profile,
 						// @ts-ignore
-						image: m.profile.avatar_token && m.profile.avatar_token !== -1 && `${client.supabaseUrl}/storage/v1/object/public/avatars/${m.user_id}?${m.profile.avatar_token}`,
+						image: m.profile.avatar_token && m.profile.avatar_token !== -1 ? memberAvatarUrls[`${m.user_id}`] : undefined,
 					},
 				};
 			}) as Member[];
@@ -328,6 +340,11 @@ export const useGetGroupMembers = (group_id: string) => {
 				.eq('lists_groups.group_id', group_id)
 				.eq('child_list', true);
 			if (ListsError) throw ListsError;
+			const listAvatarUrls = await getSignedUrls(
+				client,
+				'lists',
+				(lists as any[]).filter((l) => l.avatar_token).map((l) => `${l.id}`)
+			);
 			var childLists: Member[] = (lists as any[]).map((l) => {
 				return {
 					user_id: `${l.user_id}_${l.id}`,
@@ -338,7 +355,7 @@ export const useGetGroupMembers = (group_id: string) => {
 						last_name: '',
 						email: `${l.profile.first_name} ${l.profile.last_name}`,
 						// @ts-ignore
-						image: l.avatar_token ? `${client.supabaseUrl}/storage/v1/object/public/lists/${l.id}?${l.avatar_token}` : undefined,
+						image: l.avatar_token ? listAvatarUrls[`${l.id}`] : undefined,
 						bio: l.bio,
 						avatar_token: null,
 					},
@@ -407,7 +424,7 @@ export const useRefreshGroupMembers = (group_id: string) => {
 							last_name: '',
 							email: `${data.profile.first_name} ${data.profile.last_name}`,
 							// @ts-ignore
-							image: data.avatar_token && `${client.supabaseUrl}/storage/v1/object/public/lists/${data.id}?${data.avatar_token}`,
+							image: data.avatar_token ? await getSignedUrl(client, 'lists', `${data.id}`) : undefined,
 							bio: data.bio,
 							avatar_token: null,
 							enable_lists: false,
@@ -441,7 +458,7 @@ export const useRefreshGroupMembers = (group_id: string) => {
 						profile: {
 							...update.profile,
 							// @ts-ignore
-							image: update.profile.avatar_token ? `${client.supabaseUrl}/storage/v1/object/public/avatars/${update.user_id}?${update.profile.avatar_token}` : '',
+							image: update.profile.avatar_token ? await getSignedUrl(client, 'avatars', `${update.user_id}`) : '',
 						},
 					};
 				}
@@ -566,7 +583,7 @@ export const useUpdateGroup = () => {
 				if (imageError) throw imageError;
 
 				// @ts-ignore
-				update.group.image = `${client.supabaseUrl}/storage/v1/object/public/groups/${data.id}?${data.image_token}`;
+				update.group.image = await getSignedUrl(client, 'groups', `${data.id}`);
 			} else if (data.image_token === null) {
 				update.group.image = undefined;
 			}
@@ -707,7 +724,7 @@ export const useInviteToGroup = () => {
 				if (imageError) throw imageError;
 
 				// @ts-ignore
-				update.group.image = `${client.supabaseUrl}/storage/v1/object/public/groups/${data.id}?${data.image_token}`;
+				update.group.image = await getSignedUrl(client, 'groups', `${data.id}`);
 			} else if (data.image_token === null) {
 				update.group.image = undefined;
 			}

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Link, useNavigate, useLocation, Location } from 'react-router-dom';
 import { SnackbarKey, useSnackbar } from 'notistack';
 
-import { useSupabase, SUPABASE_URL, useGetProfile, useGetLists, DEFAULT_LIST_ID, useGetTour, useUpdateTour, groupTourProgress, listTourProgress, shoppingTourProgress } from '../lib/useSupabase';
+import { useSupabase, useGetProfile, useGetLists, DEFAULT_LIST_ID, useGetTour, useUpdateTour, groupTourProgress, listTourProgress, shoppingTourProgress } from '../lib/useSupabase';
 import { GroupType, ListType, UserRoles } from '../lib/useSupabase/types';
 
 import { TransitionGroup } from 'react-transition-group';
@@ -36,12 +36,13 @@ import {
 	DialogTitle,
 	useTheme,
 } from '@mui/material';
-import { ExpandLess, ExpandMore, Archive, Delete, Group, ListAlt, Logout, ShoppingCart, Menu as MenuIcon, Podcasts, Close } from '@mui/icons-material';
+import { ExpandLess, ExpandMore, Archive, Delete, Group, ListAlt, Logout, ShoppingCart, Menu as MenuIcon, Podcasts, Close, Help } from '@mui/icons-material';
 
 import AccountDialog from './AccountDialog';
 import Notifications from './Notifications';
 
 import { useGetGroups } from '../lib/useSupabase/hooks/useGroup';
+import { useGetSupportConfigured } from '../lib/useSupabase/hooks/useSupport';
 import { GiftIcon } from './SvgIcons';
 import Snowfall from 'react-snowfall';
 import HtmlTooltip from './HtmlTooltip';
@@ -95,7 +96,7 @@ function renderGroupItem({ group, location }: RenderGroupItemOptions) {
 				<Avatar
 					alt={group.name}
 					sx={{ width: 32, height: 32, bgcolor: location.pathname.startsWith(`/groups/${group.id}`) ? 'primary.main' : undefined }}
-					src={`${SUPABASE_URL}/storage/v1/object/public/groups/${group.id}?${group.image_token}`}
+					src={group.image}
 				/>
 			</ListItemAvatar>
 
@@ -132,6 +133,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 
 	const { data: groups } = useGetGroups();
 	const { data: lists } = useGetLists();
+	const { data: supportConfigured } = useGetSupportConfigured();
 
 	//
 	// user tour
@@ -328,6 +330,17 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 								</ListItemIcon>
 								<Typography textAlign='center'>Logout</Typography>
 							</MenuItem>
+
+							<Divider />
+
+							{supportConfigured && (
+								<MenuItem onClick={handleCloseUserMenu} component={Link} to='/support' sx={{ display: { xs: 'flex', md: 'none' } }}>
+									<ListItemIcon>
+										<Help fontSize='small' />
+									</ListItemIcon>
+									<Typography textAlign='center'>Support</Typography>
+								</MenuItem>
+							)}
 						</Menu>
 					</Box>
 				</Toolbar>
@@ -529,6 +542,22 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 								)}
 							</List>
 						</>
+					)}
+
+					{supportConfigured && (
+						<Box sx={{ position: 'absolute', bottom: 0, width: '100%' }}>
+							<Divider />
+							<List>
+								<ListItem disablePadding>
+									<ListItemButton component={Link} to='/support' selected={location.pathname === '/support'}>
+										<ListItemIcon>
+											<Help color={location.pathname === '/support' ? 'primary' : undefined} />
+										</ListItemIcon>
+										<ListItemText primary='Support' />
+									</ListItemButton>
+								</ListItem>
+							</List>
+						</Box>
 					)}
 				</Box>
 			</Drawer>

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 
-import { FakeDelay, SUPABASE_URL, useSupabase } from '../lib/useSupabase';
+import { FakeDelay, useSupabase } from '../lib/useSupabase';
 
 import { Grid, CssBaseline, Paper, Box, Avatar, Typography, Button, Backdrop, CircularProgress, CardMedia, AvatarGroup, Tooltip, Link as MUILink, Stack } from '@mui/material';
 
@@ -34,23 +34,13 @@ export default function SignIn() {
 		const getGroup = async () => {
 			await FakeDelay();
 
-			const { data, error } = await client.rpc('get_link_invite', { _group_id: groupID }).single();
+			const { data, error } = await client.functions.invoke('invite/preview', { body: { group_id: groupID } });
 			if (error) {
 				enqueueSnackbar(error.message, { variant: 'error' });
 				navigate('/');
 			} else {
 				if ((data as GroupInvite)?.name?.length > 0) {
-					setInvite({
-						...(data as GroupInvite),
-						image: (data as GroupInvite).image_token ? `${SUPABASE_URL}/storage/v1/object/public/groups/${groupID}?${(data as GroupInvite).image_token}` : undefined,
-
-						members: (data as GroupInvite).members.map((member) => {
-							return {
-								...member,
-								image: member.avatar_token ? `${SUPABASE_URL}/storage/v1/object/public/avatars/${member.user_id}?${member.avatar_token}` : undefined,
-							};
-						}),
-					});
+					setInvite(data as GroupInvite);
 				}
 			}
 		};

@@ -29,6 +29,7 @@ import { ProfileType, UserRoles } from './lib/useSupabase/types';
 import ShoppingList from './pages/ShoppingList';
 import ItemArchive from './pages/ItemArchive';
 import ItemsTrash from './pages/ItemsTrash';
+import Support from './pages/Support';
 
 export default function AppRoutes() {
 	const location = useLocation();
@@ -228,6 +229,15 @@ export default function AppRoutes() {
 							element={
 								<ProtectedRoute>
 									<ItemsTrash />
+								</ProtectedRoute>
+							}
+						/>
+
+						<Route
+							path='/support'
+							element={
+								<ProtectedRoute>
+									<Support />
 								</ProtectedRoute>
 							}
 						/>

@@ -5,7 +5,6 @@ import { useSnackbar } from 'notistack';
 import { useQueryClient } from '@tanstack/react-query';
 import {
 	useSupabase,
-	SUPABASE_URL,
 	useDeleteGroup,
 	useGetGroupMembers,
 	GROUPS_QUERY_KEY,
@@ -335,7 +334,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 
 	//
 	// link invite
-	const inviteURL = `https://${window.location.host}/group-invite/${group.id}`;
+	const inviteURL = `${window.location.protocol}//${window.location.host}/group-invite/${group.id}`;
 	const handleSharing = async () => {
 		if (navigator.share) {
 			try {
@@ -413,7 +412,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 													shrink: true,
 												}}
 												disabled
-												value={inviteURL.replace('https://', '')}
+												value={inviteURL.replace(`${window.location.protocol}//`, '')}
 											/>
 
 											<Tooltip title='Share Invitation' placement='bottom-end' arrow enterDelay={500}>
@@ -443,14 +442,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 											{profile && (
 												<ListItem>
 													<ListItemAvatar>
-														<Avatar
-															alt={profile.first_name}
-															src={
-																profile.avatar_token && profile.avatar_token !== -1
-																	? `${SUPABASE_URL}/storage/v1/object/public/avatars/${user.id}?${profile.avatar_token}`
-																	: '/defaultAvatar.png'
-															}
-														/>
+														<Avatar alt={profile.first_name} src={profile.image ?? '/defaultAvatar.png'} />
 													</ListItemAvatar>
 													<ListItemText primary={`${profile.first_name} ${profile.last_name}`} secondary={profile.email} />
 													<ListItemSecondaryAction>

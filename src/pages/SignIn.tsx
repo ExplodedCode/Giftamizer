@@ -67,21 +67,6 @@ export default function SignIn() {
 	}, [enqueueSnackbar, client, accessToken, refreshToken]);
 
 	const handleSubmit = async () => {
-		if (window.location.hostname.split('.').length === 2) {
-			const { error: firebaseAuthError } = await client.functions.invoke('firebase-auth', {
-				body: {
-					email: email,
-					password: password,
-				},
-			});
-			if (firebaseAuthError) {
-				console.log(firebaseAuthError);
-				enqueueSnackbar(String(firebaseAuthError.message), {
-					variant: 'error',
-				});
-			}
-		}
-
 		const { error, data } = await client.auth.signInWithPassword({
 			email: email,
 			password: password,

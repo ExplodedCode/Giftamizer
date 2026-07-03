@@ -8,6 +8,7 @@ import { ItemType, ListType } from '../types';
 import { dataUrlToFile } from '../../../components/ImageCropper';
 import { ITEMS_QUERY_KEY } from './useItems';
 import { FakeDelay } from '.';
+import { getSignedUrl, getSignedUrls } from '../storageUrls';
 
 export const DEFAULT_LIST_ID = 'default';
 
@@ -22,9 +23,15 @@ export const useGetLists = () => {
 			const { data, error } = await client.from('lists').select('*, groups( id, name )').eq('user_id', user.id).order('name', { ascending: true });
 			if (error) throw error;
 
+			const signedUrls = await getSignedUrls(
+				client,
+				'lists',
+				data.filter((l) => l.avatar_token).map((l) => `${l.id}`)
+			);
+
 			return data.map((l) => {
 				// @ts-ignore
-				return { ...l, image: l.avatar_token && `${client.supabaseUrl}/storage/v1/object/public/lists/${l.id}?${l.avatar_token}` };
+				return { ...l, image: l.avatar_token ? signedUrls[`${l.id}`] : undefined };
 			}) as ListType[];
 		},
 	});
@@ -59,7 +66,7 @@ export const useCreateList = () => {
 				if (imageError) throw imageError;
 
 				// @ts-ignore
-				newlist.image = `${client.supabaseUrl}/storage/v1/object/public/lists/${data.id}?${data.avatar_token}`;
+				newlist.image = await getSignedUrl(client, 'lists', `${data.id}`);
 			}
 
 			// Add list-group relationships
@@ -122,7 +129,7 @@ export const useUpdateLists = () => {
 				if (imageError) throw imageError;
 
 				// @ts-ignore
-				list.image = `${client.supabaseUrl}/storage/v1/object/public/lists/${data.id}?${data.avatar_token}`;
+				list.image = await getSignedUrl(client, 'lists', `${data.id}`);
 			} else if (data.avatar_token === null) {
 				list.image = undefined;
 			}
