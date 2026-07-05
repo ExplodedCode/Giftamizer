@@ -6,6 +6,7 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 
 import Routes from './Routes';
+import DevAccountSwitcher from './components/DevAccountSwitcher';
 
 export default function Theme() {
 	const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
@@ -58,6 +59,7 @@ export default function Theme() {
 		<Router>
 			<ThemeProvider theme={window.location.host === 'giftamizer.com' ? theme : devTheme}>
 				<CssBaseline />
+				<DevAccountSwitcher />
 				<Routes />
 			</ThemeProvider>
 		</Router>
