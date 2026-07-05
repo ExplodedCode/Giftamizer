@@ -62,7 +62,7 @@ export default function EmailEditor() {
 				<InputLabel htmlFor='component-outlined'>Email</InputLabel>
 				<OutlinedInput
 					id='component-outlined'
-					value={profile?.email}
+					value={profile?.email ?? ''}
 					label='Email'
 					disabled
 					endAdornment={
