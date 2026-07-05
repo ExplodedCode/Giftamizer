@@ -1,1 +1,5 @@
-docker build -t trowbridge/giftamizer .
+docker build \
+  --build-arg REACT_APP_SUPABASE_URL=https://api.giftamizer.com \
+  --build-arg REACT_APP_SUPABASE_ANON_KEY=<paste prod ANON_KEY from Giftamizer-Supabase/.env on the server> \
+  -t evantrow/giftamizer-frontend:latest .
+docker push evantrow/giftamizer-frontend:latest
