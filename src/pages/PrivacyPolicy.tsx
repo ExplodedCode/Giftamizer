@@ -46,16 +46,6 @@ function Landing() {
 								Google Play Services
 							</a>
 						</li>
-						<li>
-							<a href='https://firebase.google.com/policies/analytics' target='_blank' rel='noopener noreferrer'>
-								Google Analytics for Firebase
-							</a>
-						</li>
-						<li>
-							<a href='https://firebase.google.com/support/privacy/' target='_blank' rel='noopener noreferrer'>
-								Firebase Crashlytics
-							</a>
-						</li>
 					</ul>
 				</div>
 				<p>

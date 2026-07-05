@@ -2,10 +2,10 @@ import * as React from 'react';
 
 import { Link, useSearchParams } from 'react-router-dom';
 
-import { signInWithFacebook, signInWithGoogle, useSupabase, validateEmail } from '../lib/useSupabase';
+import { signInWithGoogle, useSupabase, validateEmail } from '../lib/useSupabase';
 import { useSnackbar } from 'notistack';
 
-import { GoogleIcon, FacebookIcon } from '../components/SvgIcons';
+import { GoogleIcon } from '../components/SvgIcons';
 import { Grid, CssBaseline, Paper, Box, Avatar, Typography, Stack, IconButton, TextField, Button, Stepper, Step, StepLabel, Link as MUILink } from '@mui/material';
 import { LockOutlined } from '@mui/icons-material';
 
@@ -116,9 +116,6 @@ export default function SignUp() {
 							<Stack spacing={2} direction='row'>
 								<IconButton onClick={() => signInWithGoogle(redirectTo ?? '/')} disabled={window.location.host !== 'giftamizer.com'}>
 									<GoogleIcon sx={window.location.host !== 'giftamizer.com' ? { opacity: 0.15 } : undefined} />
-								</IconButton>
-								<IconButton onClick={() => signInWithFacebook(redirectTo ?? '/')} disabled={window.location.host !== 'giftamizer.com'}>
-									<FacebookIcon sx={window.location.host !== 'giftamizer.com' ? { opacity: 0.15 } : undefined} />
 								</IconButton>
 							</Stack>
 						</Box>

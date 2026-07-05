@@ -2,8 +2,8 @@
 
 ## Pre-Requisites
 
--   Docker (on Windows: Docker Desktop with the WSL2 backend)
--   Node.js
+- Docker (on Windows: Docker Desktop with the WSL2 backend)
+- Node.js
 
 Windows is fully supported without WSL or Git Bash - the backend ships a
 `.ps1` equivalent of every `.sh` script, and this frontend only needs
@@ -14,11 +14,11 @@ Windows is fully supported without WSL or Git Bash - the backend ships a
 The frontend (this repo) and backend run as two separate processes in local
 dev:
 
--   **Backend** — the full Supabase stack (Postgres, Auth, REST, Storage,
-    Realtime, Edge Functions) behind the Kong API gateway at
-    `http://localhost:8000`.
--   **Frontend** — the CRA dev server with hot reloading at
-    `http://localhost:3001`.
+- **Backend** — the full Supabase stack (Postgres, Auth, REST, Storage,
+  Realtime, Edge Functions) behind the Kong API gateway at
+  `http://localhost:8000`.
+- **Frontend** — the CRA dev server with hot reloading at
+  `http://localhost:3001`.
 
 You open the app at `http://localhost:3001` and it talks to the backend
 directly at `http://localhost:8000` (Kong's CORS plugin allows this
@@ -73,10 +73,10 @@ You can access Giftamizer at [http://localhost:3001](http://localhost:3001).
 
 ## Notes
 
--   Google/Facebook sign-in buttons are intentionally disabled unless the
-    page is served from `giftamizer.com` (see `src/pages/SignIn.tsx`) - use
-    email/password signup for local testing.
--   `REACT_APP_SUPABASE_URL` falls back to the production API
-    (`https://gift-api.trowbridge.tech`) if unset, so an empty/missing
-    `.env` won't break anything - it'll just talk to prod instead of your
-    local backend.
+- Google sign-in button is intentionally disabled unless the
+  page is served from `giftamizer.com` (see `src/pages/SignIn.tsx`) - use
+  email/password signup for local testing.
+- `REACT_APP_SUPABASE_URL` falls back to the production API
+  (`https://gift-api.trowbridge.tech`) if unset, so an empty/missing
+  `.env` won't break anything - it'll just talk to prod instead of your
+  local backend.

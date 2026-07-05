@@ -23,7 +23,7 @@ export const useGetProfile = () => {
 					`*,
 					roles:user_roles(
 						roles
-					)`
+					)`,
 				)
 				.eq('user_id', user.id)
 				.single();
@@ -35,17 +35,7 @@ export const useGetProfile = () => {
 				if (!profile.avatar_token && profile.avatar_token !== -1) {
 					user.app_metadata.providers.every(async (provider: string) => {
 						let img;
-						if (provider === 'facebook') {
-							const url = `https://graph.facebook.com/me/picture?height=512&width=512&access_token=${sessionData.session?.provider_token}`;
-							const { data, error } = await client.functions.invoke('social-avatar', {
-								body: {
-									user_id: user.id,
-									url: url,
-								},
-							});
-							if (error) console.log(error);
-							img = data;
-						} else if (provider === 'google') {
+						if (provider === 'google') {
 							const url = `${user.identities?.find((i) => i.provider === 'google')?.identity_data?.avatar_url.split('=')[0]}=s512`;
 							const { data, error } = await client.functions.invoke('social-avatar', {
 								body: {
@@ -116,7 +106,7 @@ export const useUpdateProfile = () => {
 					`*,
 					roles:user_roles(
 						roles
-					)`
+					)`,
 				)
 				.single();
 			if (error) throw error;
@@ -150,6 +140,6 @@ export const useUpdateProfile = () => {
 				refetch();
 				queryClient.setQueryData(QUERY_KEY, () => update);
 			},
-		}
+		},
 	);
 };

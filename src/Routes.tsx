@@ -30,6 +30,7 @@ import ShoppingList from './pages/ShoppingList';
 import ItemArchive from './pages/ItemArchive';
 import ItemsTrash from './pages/ItemsTrash';
 import Support from './pages/Support';
+import Account from './pages/Account';
 
 export default function AppRoutes() {
 	const location = useLocation();
@@ -238,6 +239,15 @@ export default function AppRoutes() {
 							element={
 								<ProtectedRoute>
 									<Support />
+								</ProtectedRoute>
+							}
+						/>
+
+						<Route
+							path='/account'
+							element={
+								<ProtectedRoute>
+									<Account />
 								</ProtectedRoute>
 							}
 						/>

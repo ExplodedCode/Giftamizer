@@ -1,18 +1,20 @@
-FROM mhart/alpine-node:12
+FROM node:20-alpine AS build
+WORKDIR /app
 
-# Create app directory
-WORKDIR /usr/src/app/
+COPY package.json package-lock.json ./
+RUN npm ci
 
-# Copy all files into image
-COPY . ./
+COPY . .
 
-# install packages
-RUN npm install
+ARG REACT_APP_SUPABASE_URL
+ARG REACT_APP_SUPABASE_ANON_KEY
+ENV REACT_APP_SUPABASE_URL=${REACT_APP_SUPABASE_URL}
+ENV REACT_APP_SUPABASE_ANON_KEY=${REACT_APP_SUPABASE_ANON_KEY}
 
-# create react build
 RUN npm run build
 
-ENV IS_DOCKER_CONTAINER yes
+FROM nginx:1.27-alpine
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/build /usr/share/nginx/html
 
-EXPOSE 8080
-CMD [ "npm", "start" ]
+EXPOSE 80

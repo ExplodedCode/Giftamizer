@@ -36,9 +36,8 @@ import {
 	DialogTitle,
 	useTheme,
 } from '@mui/material';
-import { ExpandLess, ExpandMore, Archive, Delete, Group, ListAlt, Logout, ShoppingCart, Menu as MenuIcon, Podcasts, Close, Help } from '@mui/icons-material';
+import { ExpandLess, ExpandMore, Archive, Delete, Group, ListAlt, Logout, ShoppingCart, Menu as MenuIcon, Podcasts, Close, Help, Settings } from '@mui/icons-material';
 
-import AccountDialog from './AccountDialog';
 import Notifications from './Notifications';
 
 import { useGetGroups } from '../lib/useSupabase/hooks/useGroup';
@@ -93,11 +92,7 @@ function renderGroupItem({ group, location }: RenderGroupItemOptions) {
 	return (
 		<ListItemButton key={group.id} sx={{ pl: 4 }} component={Link} to={`/groups/${group.id}`} selected={location.pathname.startsWith(`/groups/${group.id}`)}>
 			<ListItemAvatar>
-				<Avatar
-					alt={group.name}
-					sx={{ width: 32, height: 32, bgcolor: location.pathname.startsWith(`/groups/${group.id}`) ? 'primary.main' : undefined }}
-					src={group.image}
-				/>
+				<Avatar alt={group.name} sx={{ width: 32, height: 32, bgcolor: location.pathname.startsWith(`/groups/${group.id}`) ? 'primary.main' : undefined }} src={group.image} />
 			</ListItemAvatar>
 
 			<ListItemText primary={group.name} />
@@ -299,7 +294,12 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 							open={Boolean(anchorElUser)}
 							onClose={handleCloseUserMenu}
 						>
-							<AccountDialog handleCloseMenu={handleCloseUserMenu} />
+							<MenuItem onClick={handleCloseUserMenu} component={Link} to='/account' sx={{ display: { xs: 'flex', md: 'none' } }}>
+								<ListItemIcon>
+									<Settings fontSize='small' />
+								</ListItemIcon>
+								<Typography textAlign='center'>User Settings</Typography>
+							</MenuItem>
 
 							{profile?.enable_archive && (
 								<MenuItem onClick={handleCloseUserMenu} component={Link} to='/archive' sx={{ display: { xs: 'flex', md: 'none' } }}>
@@ -331,15 +331,16 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 								<Typography textAlign='center'>Logout</Typography>
 							</MenuItem>
 
-							<Divider />
-
 							{supportConfigured && (
-								<MenuItem onClick={handleCloseUserMenu} component={Link} to='/support' sx={{ display: { xs: 'flex', md: 'none' } }}>
-									<ListItemIcon>
-										<Help fontSize='small' />
-									</ListItemIcon>
-									<Typography textAlign='center'>Support</Typography>
-								</MenuItem>
+								<>
+									<Divider sx={{ display: { xs: 'block', md: 'none' } }} />
+									<MenuItem onClick={handleCloseUserMenu} component={Link} to='/support' sx={{ display: { xs: 'flex', md: 'none' } }}>
+										<ListItemIcon>
+											<Help fontSize='small' />
+										</ListItemIcon>
+										<Typography textAlign='center'>Support</Typography>
+									</MenuItem>
+								</>
 							)}
 						</Menu>
 					</Box>
@@ -544,21 +545,33 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 						</>
 					)}
 
-					{supportConfigured && (
-						<Box sx={{ position: 'absolute', bottom: 0, width: '100%' }}>
-							<Divider />
-							<List>
-								<ListItem disablePadding>
-									<ListItemButton component={Link} to='/support' selected={location.pathname === '/support'}>
-										<ListItemIcon>
-											<Help color={location.pathname === '/support' ? 'primary' : undefined} />
-										</ListItemIcon>
-										<ListItemText primary='Support' />
-									</ListItemButton>
-								</ListItem>
-							</List>
-						</Box>
-					)}
+					<Box sx={{ position: 'absolute', bottom: 0, width: '100%' }}>
+						{supportConfigured && (
+							<>
+								<List>
+									<ListItem disablePadding>
+										<ListItemButton component={Link} to='/support' selected={location.pathname === '/support'}>
+											<ListItemIcon>
+												<Help color={location.pathname === '/support' ? 'primary' : undefined} />
+											</ListItemIcon>
+											<ListItemText primary='Support' />
+										</ListItemButton>
+									</ListItem>
+								</List>
+								<Divider />
+							</>
+						)}
+						<List>
+							<ListItem disablePadding>
+								<ListItemButton component={Link} to='/account' selected={location.pathname === '/account'}>
+									<ListItemIcon>
+										<Settings color={location.pathname === '/account' ? 'primary' : undefined} />
+									</ListItemIcon>
+									<ListItemText primary='Settings' />
+								</ListItemButton>
+							</ListItem>
+						</List>
+					</Box>
 				</Box>
 			</Drawer>
 			<Box component='main' sx={{ flexGrow: 1 }}>
