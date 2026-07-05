@@ -2,9 +2,9 @@ import * as React from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 
-import { signInWithFacebook, signInWithGoogle, useSupabase, validateEmail } from '../lib/useSupabase';
+import { signInWithGoogle, useSupabase, validateEmail } from '../lib/useSupabase';
 
-import { GoogleIcon, FacebookIcon } from '../components/SvgIcons';
+import { GoogleIcon } from '../components/SvgIcons';
 import {
 	Grid,
 	CssBaseline,
@@ -152,9 +152,6 @@ export default function SignIn() {
 								<Stack spacing={2} direction='row'>
 									<IconButton onClick={() => signInWithGoogle(redirectTo ?? '/')} disabled={window.location.host !== 'giftamizer.com'}>
 										<GoogleIcon sx={window.location.host !== 'giftamizer.com' ? { opacity: 0.15 } : undefined} />
-									</IconButton>
-									<IconButton onClick={() => signInWithFacebook(redirectTo ?? '/')} disabled={window.location.host !== 'giftamizer.com'}>
-										<FacebookIcon sx={window.location.host !== 'giftamizer.com' ? { opacity: 0.15 } : undefined} />
 									</IconButton>
 								</Stack>
 							</Box>

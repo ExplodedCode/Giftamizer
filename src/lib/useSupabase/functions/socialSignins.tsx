@@ -13,12 +13,3 @@ export const signInWithGoogle = async (redirectTo?: string) => {
 		},
 	});
 };
-
-export const signInWithFacebook = async (redirectTo?: string) => {
-	await supabase.auth.signInWithOAuth({
-		provider: 'facebook',
-		options: {
-			redirectTo: redirectTo ? `https://${window.location.host}${redirectTo}` : '/',
-		},
-	});
-};

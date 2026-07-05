@@ -73,10 +73,10 @@ You can access Giftamizer at [http://localhost:3001](http://localhost:3001).
 
 ## Notes
 
--   Google/Facebook sign-in buttons are intentionally disabled unless the
-    page is served from `giftamizer.com` (see `src/pages/SignIn.tsx`) - use
-    email/password signup for local testing.
--   `REACT_APP_SUPABASE_URL` falls back to the production API
-    (`https://gift-api.trowbridge.tech`) if unset, so an empty/missing
-    `.env` won't break anything - it'll just talk to prod instead of your
-    local backend.
+- Google sign-in button is intentionally disabled unless the
+  page is served from `giftamizer.com` (see `src/pages/SignIn.tsx`) - use
+  email/password signup for local testing.
+- `REACT_APP_SUPABASE_URL` falls back to the production API
+  (`https://gift-api.trowbridge.tech`) if unset, so an empty/missing
+  `.env` won't break anything - it'll just talk to prod instead of your
+  local backend.
