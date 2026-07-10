@@ -42,7 +42,7 @@ export default function SecretSantaExclusionSelector({ member, members, value, o
 					});
 			}}
 			renderInput={(params) => <TextField {...params} label={`${member.profile.first_name} ${member.profile.last_name}`} />}
-			renderTags={(selected) => (
+			renderValue={(selected) => (
 				<div style={{ margin: 2 }}>
 					{selected.map((option) => (
 						<Chip

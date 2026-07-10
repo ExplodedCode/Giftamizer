@@ -3,12 +3,12 @@ import { useSnackbar } from 'notistack';
 
 import { shoppingTourProgress, useClaimedItems, useGetTour, useUpdateTour } from '../lib/useSupabase';
 
-import { Container, Grid, Typography, Box, CircularProgress, AppBar, Breadcrumbs, Toolbar, FormGroup, FormControlLabel, Checkbox, DialogActions, DialogContent, useTheme } from '@mui/material';
+import { Container, Typography, Box, CircularProgress, AppBar, Breadcrumbs, Toolbar, FormGroup, FormControlLabel, Checkbox, DialogActions, DialogContent, useTheme, Button } from '@mui/material';
+import Grid from '@mui/material/Grid';
 
 import ItemCard from '../components/ItemCard';
 import { ItemStatuses, MemberItemType } from '../lib/useSupabase/types';
 import TourTooltip from '../components/TourTooltip';
-import { LoadingButton } from '@mui/lab';
 import { useLocation } from 'react-router-dom';
 import ItemCreate from '../components/ItemCreate';
 
@@ -106,7 +106,7 @@ export default function ShoppingList() {
 										<Typography>Purchased items are filtered out here.</Typography>
 									</DialogContent>
 									<DialogActions>
-										<LoadingButton
+										<Button
 											variant='outlined'
 											color='inherit'
 											onClick={() => {
@@ -117,7 +117,7 @@ export default function ShoppingList() {
 											loading={updateTour.isLoading}
 										>
 											Got it
-										</LoadingButton>
+										</Button>
 									</DialogActions>
 								</>
 							}
@@ -135,7 +135,7 @@ export default function ShoppingList() {
 										<Typography>Add items you plan on getting for other people even if they don't have it on their list.</Typography>
 									</DialogContent>
 									<DialogActions>
-										<LoadingButton
+										<Button
 											variant='outlined'
 											color='inherit'
 											onClick={() => {
@@ -146,7 +146,7 @@ export default function ShoppingList() {
 											loading={updateTour.isLoading}
 										>
 											Got it
-										</LoadingButton>
+										</Button>
 									</DialogActions>
 								</>
 							}

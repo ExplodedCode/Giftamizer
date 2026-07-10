@@ -2,7 +2,8 @@ import * as React from 'react';
 import moment from 'moment';
 import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
 
-import { Box, Button, Checkbox, Grid, Grow, List, ListItem, ListItemIcon, Paper, Stack, Step, StepContent, StepLabel, Stepper, TextField, Typography } from '@mui/material';
+import { Box, Button, Checkbox, Grow, List, ListItem, ListItemIcon, Paper, Stack, Step, StepContent, StepLabel, Stepper, TextField, Typography } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { LocalizationProvider, MobileDatePicker } from '@mui/x-date-pickers';
 
 import { Member, SecretSantaDrawings } from '../lib/useSupabase/types';
@@ -103,7 +104,7 @@ export default function SecretSantaSetup({ members, setAllowCreate, eventName, s
 			content: (
 				<>
 					<Typography>What do you want to draw names for?</Typography>
-					<Stack direction='row' spacing={1} useFlexGap flexWrap='wrap' sx={{ mt: 1, mb: 2 }}>
+					<Stack direction='row' spacing={1} useFlexGap sx={{ mt: 1, mb: 2, flexWrap: 'wrap' }}>
 						{events.map((e) => (
 							<Button variant={event === e ? 'contained' : 'outlined'} onClick={() => handleEventSelect(e)}>
 								{e}
@@ -113,10 +114,10 @@ export default function SecretSantaSetup({ members, setAllowCreate, eventName, s
 					{event.length > 0 && (
 						<Grow in={event.length > 0}>
 							<Grid container spacing={2}>
-								<Grid item xs={12}>
+								<Grid size={12}>
 									<TextField fullWidth label='Event Name' variant='outlined' value={eventName} onChange={(e) => setEventName(e.target.value)} />
 								</Grid>
-								<Grid item xs={12}>
+								<Grid size={12}>
 									<MobileDatePicker slotProps={{ textField: { fullWidth: true } }} label='Event Date' value={eventDate} onChange={(e) => setEventDate(e)} />
 								</Grid>
 								{/* <Grid item xs={12}>

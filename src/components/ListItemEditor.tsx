@@ -178,12 +178,14 @@ export default function ListItemEditor() {
 					<TextField
 						size='small'
 						label='Search'
-						InputProps={{
-							startAdornment: (
-								<InputAdornment position='start'>
-									<Search />
-								</InputAdornment>
-							),
+						slotProps={{
+							input: {
+								startAdornment: (
+									<InputAdornment position='start'>
+										<Search />
+									</InputAdornment>
+								),
+							},
 						}}
 						variant='outlined'
 						sx={{ m: 1, width: '96%' }}

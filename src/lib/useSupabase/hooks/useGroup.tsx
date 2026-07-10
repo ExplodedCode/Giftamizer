@@ -58,10 +58,10 @@ export const useGetGroups = () => {
 			const signedUrls = await getSignedUrls(
 				client,
 				'groups',
-				data.filter((g) => g.image_token).map((g) => `${g.id}`)
+				data.filter((g: any) => g.image_token).map((g: any) => `${g.id}`)
 			);
 
-			return data.map((g) => {
+			return data.map((g: any) => {
 				// @ts-ignore
 				return { ...g, image: g.image_token ? signedUrls[`${g.id}`] : undefined };
 			}) as GroupType[];

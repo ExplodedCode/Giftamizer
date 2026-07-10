@@ -14,7 +14,6 @@ import {
 	DialogTitle,
 	Fab,
 	FormControl,
-	Grid,
 	IconButton,
 	InputAdornment,
 	InputLabel,
@@ -26,8 +25,8 @@ import {
 	Typography,
 	useMediaQuery,
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { useTheme } from '@mui/material/styles';
-import LoadingButton from '@mui/lab/LoadingButton';
 import { Add, AddLink, AddShoppingCart, Delete } from '@mui/icons-material';
 
 import { useSupabase, useCreateItem, useGetProfile, ExtractURLFromText, useUpdateTour, itemTourProgress, useGetTour, useGetItems } from '../lib/useSupabase';
@@ -203,14 +202,14 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 				<DialogTitle>Create Item</DialogTitle>
 				<DialogContent>
 					<Grid container spacing={2}>
-						<Grid item xs={12}>
+						<Grid size={12}>
 							{shoppingItem ? (
 								<DialogContentText>Add items you plan on getting for other people even if they don't have it on their list.</DialogContentText>
 							) : (
 								<DialogContentText>Add items you'd love to receive, whether it's your favorite products, experiences, or anything else you desire.</DialogContentText>
 							)}
 						</Grid>
-						<Grid item xs={12}>
+						<Grid size={12}>
 							<ImageCropper
 								onClick={() => {
 									setImageDialogOpen(true);
@@ -231,7 +230,7 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 							/>
 						</Grid>
 
-						<Grid item xs={12} component={Collapse} in={availableImages.length > 0}>
+						<Grid size={12} component={Collapse} in={availableImages.length > 0}>
 							<Stack
 								direction='row'
 								spacing={1}
@@ -273,12 +272,12 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 						</Grid>
 
 						{shoppingItem && (
-							<Grid item xs>
+							<Grid size="grow">
 								<UserSearchSingle selectedUser={selectedUser} setSelectedUser={setSelectedUser} label='Gift For' required />
 							</Grid>
 						)}
 
-						<Grid item xs={12}>
+						<Grid size={12}>
 							<TextField
 								tour-element='item_name'
 								fullWidth
@@ -287,14 +286,14 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 								required
 								value={name}
 								onChange={(e) => setName(e.target.value)}
-								inputProps={{ maxLength: 100 }}
+								slotProps={{ htmlInput: { maxLength: 100 } }}
 							/>
 						</Grid>
-						<Grid item xs={12}>
-							<TextField fullWidth label='Description' variant='outlined' value={description} onChange={(e) => setDescription(e.target.value)} inputProps={{ maxLength: 250 }} />
+						<Grid size={12}>
+							<TextField fullWidth label='Description' variant='outlined' value={description} onChange={(e) => setDescription(e.target.value)} slotProps={{ htmlInput: { maxLength: 250 } }} />
 						</Grid>
 						{links.map((link, index) => (
-							<Grid key={index} item xs={12}>
+							<Grid key={index} size={12}>
 								<FormControl fullWidth variant='outlined'>
 									<InputLabel>URL</InputLabel>
 									<OutlinedInput
@@ -348,9 +347,9 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 							</Grid>
 						))}
 						{customFields.map((field, index) => (
-							<Grid key={index} item xs={12}>
-								<Grid container justifyContent='flex-start' spacing={2}>
-									<Grid item xs={5}>
+							<Grid key={index} size={12}>
+								<Grid container spacing={2} sx={{ justifyContent: 'flex-start' }}>
+									<Grid size={5}>
 										<TextField
 											fullWidth
 											label={`Custom Field ${index + 1}`}
@@ -359,11 +358,11 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 											onChange={(e) => {
 												setCustomFields(customFields.map((f, i) => (f.id === field.id ? { ...f, name: e.target.value } : f)));
 											}}
-											inputProps={{ maxLength: 25 }}
+											slotProps={{ htmlInput: { maxLength: 25 } }}
 										/>
 									</Grid>
 
-									<Grid item xs={7}>
+									<Grid size={7}>
 										<FormControl fullWidth variant='outlined'>
 											<InputLabel>Value</InputLabel>
 											<OutlinedInput
@@ -395,15 +394,15 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 						))}
 
 						{profile?.enable_lists && !shoppingItem && (
-							<Grid item xs={12}>
+							<Grid size={12}>
 								<ListSelector value={lists} onChange={(v) => setLists(v)} />
 							</Grid>
 						)}
 
-						<Grid item xs={12}>
-							<Grid container justifyContent='flex-start' spacing={2}>
-								<Grid item xs>
-									<Stack direction='row' justifyContent='flex-start' spacing={2}>
+						<Grid size={12}>
+							<Grid container spacing={2} sx={{ justifyContent: 'flex-start' }}>
+								<Grid size="grow">
+									<Stack direction='row' spacing={2} sx={{ justifyContent: 'flex-start' }}>
 										<Button
 											tour-element='item_custom_fields'
 											variant='outlined'
@@ -425,13 +424,13 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 										</Button>
 									</Stack>
 								</Grid>
-								<Grid item>
-									<Stack direction='row' justifyContent='flex-end' spacing={2}>
+								<Grid>
+									<Stack direction='row' spacing={2} sx={{ justifyContent: 'flex-end' }}>
 										<Button color='inherit' onClick={handleClose}>
 											Cancel
 										</Button>
 
-										<LoadingButton
+										<Button
 											tour-element='item_create_btn'
 											onClick={handleCreate}
 											disabled={name.trim().length === 0 || (shoppingItem && !selectedUser)}
@@ -441,7 +440,7 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 											variant='contained'
 										>
 											Create
-										</LoadingButton>
+										</Button>
 									</Stack>
 								</Grid>
 							</Grid>
@@ -471,9 +470,9 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 									)}
 								</DialogContent>
 								<DialogActions sx={{ justifyContent: 'left' }}>
-									<LoadingButton variant='outlined' color='inherit' onClick={skipTour} loading={updateTour.isLoading}>
+									<Button variant='outlined' color='inherit' onClick={skipTour} loading={updateTour.isLoading}>
 										Skip Item Tour
-									</LoadingButton>
+									</Button>
 								</DialogActions>
 							</>
 						}
@@ -504,9 +503,9 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 									)}
 								</DialogContent>
 								<DialogActions sx={{ justifyContent: 'left' }}>
-									<LoadingButton variant='outlined' color='inherit' onClick={skipTour} loading={updateTour.isLoading}>
+									<Button variant='outlined' color='inherit' onClick={skipTour} loading={updateTour.isLoading}>
 										Skip Item Tour
-									</LoadingButton>
+									</Button>
 								</DialogActions>
 							</>
 						}
@@ -523,7 +522,7 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 									<Typography>Give your item a name.</Typography>
 								</DialogContent>
 								<DialogActions>
-									<LoadingButton
+									<Button
 										variant='outlined'
 										color='inherit'
 										onClick={() => {
@@ -534,7 +533,7 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 										loading={updateTour.isLoading}
 									>
 										Next
-									</LoadingButton>
+									</Button>
 								</DialogActions>
 							</>
 						}
@@ -553,7 +552,7 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 									<Typography>A picture is worth a thousand words! Add images to your items so your friends know exactly what you want.</Typography>
 								</DialogContent>
 								<DialogActions>
-									<LoadingButton
+									<Button
 										variant='outlined'
 										color='inherit'
 										onClick={() => {
@@ -564,7 +563,7 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 										loading={updateTour.isLoading}
 									>
 										Next
-									</LoadingButton>
+									</Button>
 								</DialogActions>
 							</>
 						}
@@ -582,7 +581,7 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 									<Typography>If the URL is supported, Giftamizer will automatically fill in the item details.</Typography>
 								</DialogContent>
 								<DialogActions>
-									<LoadingButton
+									<Button
 										variant='outlined'
 										color='inherit'
 										onClick={() => {
@@ -593,7 +592,7 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 										loading={updateTour.isLoading}
 									>
 										Next
-									</LoadingButton>
+									</Button>
 								</DialogActions>
 							</>
 						}
@@ -610,7 +609,7 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 									<Typography>You can even add multiple links!</Typography>
 								</DialogContent>
 								<DialogActions>
-									<LoadingButton
+									<Button
 										variant='outlined'
 										color='inherit'
 										onClick={() => {
@@ -621,7 +620,7 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 										loading={updateTour.isLoading}
 									>
 										Next
-									</LoadingButton>
+									</Button>
 								</DialogActions>
 							</>
 						}
@@ -639,7 +638,7 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 									<Typography>Provide more information about a specific product.</Typography>
 								</DialogContent>
 								<DialogActions>
-									<LoadingButton
+									<Button
 										variant='outlined'
 										color='inherit'
 										onClick={() => {
@@ -650,7 +649,7 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 										loading={updateTour.isLoading}
 									>
 										Next
-									</LoadingButton>
+									</Button>
 								</DialogActions>
 							</>
 						}
@@ -667,7 +666,7 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 									<Typography>When you have everything ready, click Create to add the item.</Typography>
 								</DialogContent>
 								<DialogActions>
-									<LoadingButton
+									<Button
 										variant='outlined'
 										color='inherit'
 										onClick={() => {
@@ -678,7 +677,7 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 										loading={updateTour.isLoading}
 									>
 										Got it
-									</LoadingButton>
+									</Button>
 								</DialogActions>
 							</>
 						}

@@ -12,7 +12,6 @@ import {
 	CardContent,
 	CardMedia,
 	CircularProgress,
-	Grid,
 	Link as MUILink,
 	Typography,
 	Box,
@@ -31,12 +30,13 @@ import {
 	DialogActions,
 	useMediaQuery,
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { PushPinOutlined, PushPin, EscalatorWarning } from '@mui/icons-material';
 
 import GroupSettingsDialog from '../components/GroupSettingsDialog';
 import NotFound from '../components/NotFound';
 import TourTooltip from '../components/TourTooltip';
-import { LoadingButton } from '@mui/lab';
+import { Button } from '@mui/material';
 import SecretSanta from '../components/SecretSanta';
 
 interface RenderMemberProps {
@@ -51,7 +51,7 @@ function RenderMember({ index, member, navigate, tour, updateTour }: RenderMembe
 	const { group: groupID } = useParams();
 
 	return (
-		<Grid tour-element={index === 0 ? 'group_member_card' : undefined} key={member.user_id} item xs sx={{ maxWidth: { xs: '100%', sm: 250 }, margin: 1 }}>
+		<Grid tour-element={index === 0 ? 'group_member_card' : undefined} key={member.user_id} size="grow" sx={{ maxWidth: { xs: '100%', sm: 250 }, minWidth: { xs: '100%', sm: 250 }, margin: 1 }}>
 			<Card sx={{ height: '100%' }}>
 				<CardActionArea
 					sx={{ height: '100%', display: 'grid', alignItems: 'start' }}
@@ -82,14 +82,14 @@ function RenderMember({ index, member, navigate, tour, updateTour }: RenderMembe
 
 					<CardContent>
 						<Grid container>
-							<Grid item xs>
+							<Grid size="grow">
 								<Typography variant='h5' component='h2'>
 									{member.profile.first_name} {member.profile.last_name}
 								</Typography>
 							</Grid>
 
 							{member.child_list && (
-								<Grid item>
+								<Grid>
 									<EscalatorWarning />
 								</Grid>
 							)}
@@ -169,7 +169,7 @@ export default function Group() {
 							<Container sx={{ marginTop: 2, paddingBottom: 12 }}>
 								{members?.filter((m) => !m.invite).length! > 1 && <SecretSanta group={groups?.find((g) => g.id === groupID)!} members={members?.filter((m) => !m.invite) ?? []} />}
 
-								<TransitionGroup component={Grid} container justifyContent='center'>
+								<TransitionGroup component={Grid} container sx={{ justifyContent: 'center' }}>
 									{members
 										?.filter((m) => !m.invite)
 										.map((member, index) => (
@@ -208,7 +208,7 @@ export default function Group() {
 													</Typography>
 												</DialogContent>
 												<DialogActions>
-													<LoadingButton
+													<Button
 														variant='outlined'
 														color='inherit'
 														onClick={() => {
@@ -219,7 +219,7 @@ export default function Group() {
 														loading={updateTour.isLoading}
 													>
 														Next
-													</LoadingButton>
+													</Button>
 												</DialogActions>
 											</>
 										}
@@ -237,7 +237,7 @@ export default function Group() {
 													<Typography>Pin groups to the side navigation.</Typography>
 												</DialogContent>
 												<DialogActions>
-													<LoadingButton
+													<Button
 														variant='outlined'
 														color='inherit'
 														onClick={() => {
@@ -248,7 +248,7 @@ export default function Group() {
 														loading={updateTour.isLoading}
 													>
 														Next
-													</LoadingButton>
+													</Button>
 												</DialogActions>
 											</>
 										}

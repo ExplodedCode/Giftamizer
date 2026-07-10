@@ -3,9 +3,9 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import moment from 'moment';
 
-import { Avatar, Box, Button, Card, CardContent, Chip, Dialog, DialogContent, DialogTitle, Grid, Grow, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
+import { Avatar, Box, Button, Card, CardContent, Chip, Dialog, DialogContent, DialogTitle, Grow, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { Shuffle } from '@mui/icons-material';
-import { LoadingButton } from '@mui/lab';
 
 import { GroupType, Member, SecretSantaDrawings, SecretSantaStatus } from '../lib/useSupabase/types';
 import { useGetProfile, useSupabase, useUpdateGroup } from '../lib/useSupabase';
@@ -144,8 +144,8 @@ export default function SecretSanta({ group, members }: SecretSantaProps) {
 	return (
 		<>
 			{group.my_membership[0].owner && group.secret_santa.status === SecretSantaStatus.Init && (
-				<Grid container justifyContent='center'>
-					<Grid item xs={12} sm={8} md={6} lg={4}>
+				<Grid container sx={{ justifyContent: 'center' }}>
+					<Grid size={{ xs: 12, sm: 8, md: 6, lg: 4 }}>
 						<Grow in timeout={700}>
 							<Card
 								sx={(theme) => ({
@@ -162,13 +162,13 @@ export default function SecretSanta({ group, members }: SecretSantaProps) {
 											Draw names for your Secret Santa gift exchange!
 										</Typography>
 
-										<Stack direction='row' spacing={1} justifyContent='right' useFlexGap flexWrap='wrap'>
-											<LoadingButton variant='text' color='inherit' onClick={() => setStatus(SecretSantaStatus.Off)} loading={loading}>
+										<Stack direction='row' spacing={1} useFlexGap sx={{ justifyContent: 'right', flexWrap: 'wrap' }}>
+											<Button variant='text' color='inherit' onClick={() => setStatus(SecretSantaStatus.Off)} loading={loading}>
 												No thanks
-											</LoadingButton>
-											<LoadingButton variant='outlined' color='inherit' onClick={() => navigate('#secret-santa')} loading={loading}>
+											</Button>
+											<Button variant='outlined' color='inherit' onClick={() => navigate('#secret-santa')} loading={loading}>
 												Draw Names
-											</LoadingButton>
+											</Button>
 										</Stack>
 									</Box>
 								</CardContent>
@@ -179,8 +179,8 @@ export default function SecretSanta({ group, members }: SecretSantaProps) {
 			)}
 
 			{group.secret_santa.status === SecretSantaStatus.On && group.secret_santa.drawing?.[user.id] && myMembership && (
-				<Grid container justifyContent='center'>
-					<Grid item xs={12} sm={8} md={6} lg={4}>
+				<Grid container sx={{ justifyContent: 'center' }}>
+					<Grid size={{ xs: 12, sm: 8, md: 6, lg: 4 }}>
 						<Grow in timeout={700}>
 							<Card
 								sx={(theme) => ({
@@ -201,7 +201,7 @@ export default function SecretSanta({ group, members }: SecretSantaProps) {
 
 										<Typography variant='body1'>You're getting a gift for:</Typography>
 
-										<Stack direction='row' spacing={1} useFlexGap flexWrap='wrap'>
+										<Stack direction='row' spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
 											{group.secret_santa.drawing?.[user.id]?.map((uid) => {
 												let member = [myMembership!, ...members].find((m) => m.user_id === uid);
 												let name = `${member?.profile.first_name} ${member?.profile.last_name}`.trim();
@@ -233,7 +233,7 @@ export default function SecretSanta({ group, members }: SecretSantaProps) {
 															<Typography variant='body1'>
 																{`${listMember?.profile.first_name} ${listMember?.profile.last_name}`.trim()} is getting a gift for:
 															</Typography>
-															<Stack direction='row' spacing={1} useFlexGap flexWrap='wrap'>
+															<Stack direction='row' spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
 																{group.secret_santa.drawing[drawing]?.map((uid) => {
 																	let member = [myMembership!, ...members].find((m) => m.user_id === uid);
 																	let name = `${member?.profile.first_name} ${member?.profile.last_name}`.trim();
@@ -270,7 +270,7 @@ export default function SecretSanta({ group, members }: SecretSantaProps) {
 				<DialogTitle>Draw names for your Secret Santa gift exchange!</DialogTitle>
 				<DialogContent>
 					<Grid container spacing={2}>
-						<Grid item xs={12}>
+						<Grid size={12}>
 							<SecretSantaSetup
 								members={[myMembership!, ...members]}
 								eventName={eventName}
@@ -281,13 +281,13 @@ export default function SecretSanta({ group, members }: SecretSantaProps) {
 								setAllowCreate={setAllowCreate}
 							/>
 						</Grid>
-						<Grid item xs={12}>
-							<Stack direction='row' justifyContent='flex-end' spacing={2}>
+						<Grid size={12}>
+							<Stack direction='row' spacing={2} sx={{ justifyContent: 'flex-end' }}>
 								<Button color='inherit' onClick={() => navigate('#')}>
 									Cancel
 								</Button>
 
-								<LoadingButton
+								<Button
 									tour-element='group_create'
 									onClick={() => {
 										if (drawing) enabledSecretSanta(drawing);
@@ -299,7 +299,7 @@ export default function SecretSanta({ group, members }: SecretSantaProps) {
 									variant='contained'
 								>
 									Draw Names
-								</LoadingButton>
+								</Button>
 							</Stack>
 						</Grid>
 					</Grid>

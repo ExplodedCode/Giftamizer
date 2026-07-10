@@ -3,7 +3,8 @@ import { useSnackbar } from 'notistack';
 
 import { useGetItems } from '../lib/useSupabase';
 
-import { Container, Grid, Typography, Box, CircularProgress } from '@mui/material';
+import { Container, Typography, Box, CircularProgress } from '@mui/material';
+import Grid from '@mui/material/Grid';
 
 import ItemCreate from '../components/ItemCreate';
 import ItemCard from '../components/ItemCard';

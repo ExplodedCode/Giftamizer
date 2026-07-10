@@ -216,8 +216,7 @@ function isEmptyBlock(block) {
  * @return {String} markdown string
  **/
 function renderBlock(block, index, rawDraftObject, options) {
-	var openInlineStyles = [],
-		markdownToAdd = [];
+	var markdownToAdd = [];
 	var markdownString = '',
 		customStyleItems = options.styleItems || {},
 		customEntityItems = options.entityItems || {},
@@ -331,7 +330,7 @@ function renderBlock(block, index, rawDraftObject, options) {
 	const reverse = (array) => array.concat().reverse();
 
 	// Render text within content, along with any inline styles/entities
-	Array.from(block.text).some(function (character, characterIndex) {
+	Array.from(block.text).forEach(function (character, characterIndex) {
 		// Close any tags that need closing, starting from top of the stack
 		reverse(openTags).forEach(function (tag) {
 			if (tag.offset + tag.length === characterIndex) {

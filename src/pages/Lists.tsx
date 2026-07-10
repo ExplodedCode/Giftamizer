@@ -8,7 +8,6 @@ import { ListType, TourSteps } from '../lib/useSupabase/types';
 import { useSnackbar } from 'notistack';
 import {
 	Container,
-	Grid,
 	Typography,
 	Box,
 	CircularProgress,
@@ -37,12 +36,13 @@ import {
 	AlertTitle,
 	Backdrop,
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { Delete, Edit, EscalatorWarning, ListAlt, MoreVert } from '@mui/icons-material';
 import { TransitionGroup } from 'react-transition-group';
 
 import ListCreate from '../components/ListCreate';
 import ListUpdate from '../components/ListUpdate';
-import { LoadingButton } from '@mui/lab';
+import { Button } from '@mui/material';
 import TourTooltip from '../components/TourTooltip';
 import { UseMutationResult } from '@tanstack/react-query';
 import HtmlTooltip from '../components/HtmlTooltip';
@@ -179,7 +179,7 @@ function RenderListItem({ index, list, handleListEdit, tour, updateTour }: Rende
 								<i>Add this list to a groups for the items to be visible to others.</i>
 							</Box>
 						) : (
-							<Stack direction='row' spacing={1} useFlexGap flexWrap='wrap'>
+							<Stack direction='row' spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
 								{list.groups.map((g) => (
 									<Chip label={g.name} size='small' />
 								))}
@@ -253,7 +253,7 @@ export default function Lists() {
 							</Alert>
 						</DialogContent>
 						<DialogActions>
-							<LoadingButton
+							<Button
 								variant='outlined'
 								color='inherit'
 								onClick={() => {
@@ -267,7 +267,7 @@ export default function Lists() {
 								loading={updateTour.isLoading}
 							>
 								Get Started
-							</LoadingButton>
+							</Button>
 						</DialogActions>
 					</Paper>
 				</Backdrop>

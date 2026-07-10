@@ -14,7 +14,6 @@ import {
 	DialogContent,
 	DialogTitle,
 	Divider,
-	Grid,
 	Link as MUILink,
 	Stack,
 	TextField,
@@ -28,6 +27,7 @@ import {
 	Switch,
 	debounce,
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 
 import { useGetProfile, useSupabase, useUpdateProfile, useUpdateTour } from '../lib/useSupabase';
 import EmailEditor from '../components/EmailEditor';
@@ -234,7 +234,7 @@ export default function Account() {
 					</Breadcrumbs>
 
 					{saveStatus === 'saving' && (
-						<Stack direction='row' spacing={1} alignItems='center'>
+						<Stack direction='row' spacing={1} sx={{ alignItems: 'center' }}>
 							<CircularProgress size={16} />
 							<Typography variant='body2' color='text.secondary'>
 								Saving...
@@ -251,21 +251,21 @@ export default function Account() {
 
 			<Container maxWidth='md' sx={{ pb: 12 }}>
 				<Grid container spacing={2}>
-					<Grid item xs={12}>
+					<Grid size={12}>
 						<ImageCropper value={image} onChange={setImage} aspectRatio={1} />
 						<Typography variant='h6' gutterBottom>
 							Account Settings
 						</Typography>
 						<Grid container spacing={2}>
-							<Grid item xs={12} sm={6}>
+							<Grid size={{ xs: 12, sm: 6 }}>
 								<TextField fullWidth label='First Name' variant='outlined' value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
 							</Grid>
-							<Grid item xs={12} sm={6}>
+							<Grid size={{ xs: 12, sm: 6 }}>
 								<TextField fullWidth label='Last Name' variant='outlined' value={lastName} onChange={(e) => setLastName(e.target.value)} required />
 							</Grid>
 						</Grid>
 					</Grid>
-					<Grid item xs={12}>
+					<Grid size={12}>
 						<TextField
 							fullWidth
 							multiline
@@ -273,28 +273,28 @@ export default function Account() {
 							maxRows={7}
 							label='Bio'
 							variant='outlined'
-							inputProps={{ maxLength: 250 }}
+							slotProps={{ htmlInput: { maxLength: 250 } }}
 							value={bio}
 							onChange={(e) => setBio(e.target.value)}
 							helperText={`${bio.length} / 250`}
 						/>
 					</Grid>
 
-					<Grid item xs={12}>
+					<Grid size={12}>
 						<HomeSelector value={home} onChange={setHome} />
 					</Grid>
 
 					{user.app_metadata.provider === 'email' && (
-						<Grid item xs={12}>
+						<Grid size={12}>
 							<EmailEditor />
 						</Grid>
 					)}
 
-					<Grid item xs={12}>
+					<Grid size={12}>
 						<Divider />
 					</Grid>
 
-					<Grid item xs={12}>
+					<Grid size={12}>
 						<Typography variant='h6' gutterBottom>
 							Features
 						</Typography>
@@ -326,7 +326,7 @@ export default function Account() {
 							</FormGroup>
 						</FormControl>
 					</Grid>
-					<Grid item xs={12}>
+					<Grid size={12}>
 						<FormControl component='fieldset' variant='standard'>
 							<FormGroup>
 								<FormControlLabel
@@ -347,7 +347,7 @@ export default function Account() {
 							</FormGroup>
 						</FormControl>
 					</Grid>
-					<Grid item xs={12}>
+					<Grid size={12}>
 						<FormControl component='fieldset' variant='standard'>
 							<FormGroup>
 								<FormControlLabel
@@ -370,7 +370,7 @@ export default function Account() {
 					</Grid>
 
 					{(new Date().getMonth() === 10 || new Date().getMonth() === 11 || new Date().getMonth() === 0) && (
-						<Grid item xs={12}>
+						<Grid size={12}>
 							<FormControl component='fieldset' variant='standard'>
 								<FormGroup>
 									<FormControlLabel control={<Switch checked={enableSnowFall} onChange={(e) => setEnableSnowFall(e.target.checked)} />} label='Snow Fall ❄️' />
@@ -380,11 +380,11 @@ export default function Account() {
 						</Grid>
 					)}
 
-					<Grid item xs={12}>
+					<Grid size={12}>
 						<Divider />
 					</Grid>
 
-					<Grid item xs={12}>
+					<Grid size={12}>
 						<Typography variant='h6' gutterBottom>
 							Email Settings
 						</Typography>
@@ -395,7 +395,7 @@ export default function Account() {
 							</FormGroup>
 						</FormControl>
 					</Grid>
-					<Grid item xs={12}>
+					<Grid size={12}>
 						<FormControl component='fieldset' variant='standard'>
 							<FormGroup>
 								<FormControlLabel control={<Switch checked={emailInvites} onChange={(e) => setEmailInvites(e.target.checked)} />} label='Invites' />
@@ -404,11 +404,11 @@ export default function Account() {
 						</FormControl>
 					</Grid>
 
-					<Grid item xs={12}>
+					<Grid size={12}>
 						<Divider />
 					</Grid>
 
-					<Grid item xs={12}>
+					<Grid size={12}>
 						<Typography variant='h5' gutterBottom>
 							Danger Zone
 						</Typography>
@@ -418,7 +418,7 @@ export default function Account() {
 							<Grid container spacing={2}>
 								{groupsWithoutCoOwner && groupsWithoutCoOwner.length > 0 ? (
 									<>
-										<Grid item xs={12}>
+										<Grid size={12}>
 											<Typography variant='body1'>
 												Your account is currently an owner of {groupsWithoutCoOwner.length > 1 ? 'these groups' : 'this group'}:{' '}
 												{groupsWithoutCoOwner.map((g, i) => (
@@ -431,20 +431,20 @@ export default function Account() {
 												))}
 											</Typography>
 										</Grid>
-										<Grid item xs={12}>
+										<Grid size={12}>
 											<Typography variant='body1'>
 												You must add another owner or delete {groupsWithoutCoOwner.length > 1 ? 'these groups' : 'this group'} before you can delete your account.
 											</Typography>
 										</Grid>
 									</>
 								) : (
-									<Grid item xs={12}>
+									<Grid size={12}>
 										<Typography variant='body1'>
 											<b>This action is permanent! All user data will be deleted.</b>
 										</Typography>
 									</Grid>
 								)}
-								<Grid item xs={12}>
+								<Grid size={12}>
 									<Button variant='outlined' color='error' disabled={!groupsWithoutCoOwner || groupsWithoutCoOwner.length > 0} onClick={() => navigate('#my-account-delete')}>
 										Delete My Account
 									</Button>
@@ -453,11 +453,11 @@ export default function Account() {
 						</Alert>
 					</Grid>
 
-					<Grid item xs={12}>
+					<Grid size={12}>
 						<Divider />
 					</Grid>
 
-					<Grid item xs={12}>
+					<Grid size={12}>
 						<Typography variant='h6' gutterBottom>
 							Support
 						</Typography>
@@ -466,7 +466,7 @@ export default function Account() {
 						</Typography>
 					</Grid>
 
-					<Grid item xs={12}>
+					<Grid size={12}>
 						<MUILink
 							sx={{
 								cursor: 'pointer',

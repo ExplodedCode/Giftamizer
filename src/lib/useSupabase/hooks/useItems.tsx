@@ -37,10 +37,10 @@ export const useGetItems = () => {
 			const signedUrls = await getSignedUrls(
 				client,
 				'items',
-				data.filter((i) => i.image_token).map((i) => `${i.id}`)
+				data.filter((i: any) => i.image_token).map((i: any) => `${i.id}`)
 			);
 
-			return data.map((i) => {
+			return data.map((i: any) => {
 				// @ts-ignore
 				return { ...i, image: i.image_token ? signedUrls[`${i.id}`] : undefined };
 			}) as ItemType[];
@@ -191,7 +191,7 @@ export const useUpdateItems = () => {
 			const { data: listsData, error: ListsError } = await client.from('items_lists').select('*').eq('item_id', item.id);
 			if (ListsError) throw ListsError;
 			for (let list of item.newLists!) {
-				if (!listsData?.find((l) => l.item_id === list.id)) {
+				if (!listsData?.find((l: any) => l.item_id === list.id)) {
 					const { error } = await client.from('items_lists').upsert({
 						item_id: item.id,
 						list_id: list.id,

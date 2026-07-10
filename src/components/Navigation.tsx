@@ -298,7 +298,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 								<ListItemIcon>
 									<Settings fontSize='small' />
 								</ListItemIcon>
-								<Typography textAlign='center'>User Settings</Typography>
+								<Typography align='center'>User Settings</Typography>
 							</MenuItem>
 
 							{profile?.enable_archive && (
@@ -306,7 +306,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 									<ListItemIcon>
 										<Archive fontSize='small' />
 									</ListItemIcon>
-									<Typography textAlign='center'>Archive</Typography>
+									<Typography align='center'>Archive</Typography>
 								</MenuItem>
 							)}
 							{profile?.enable_trash && (
@@ -314,7 +314,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 									<ListItemIcon>
 										<Delete fontSize='small' />
 									</ListItemIcon>
-									<Typography textAlign='center'>Trash</Typography>
+									<Typography align='center'>Trash</Typography>
 								</MenuItem>
 							)}
 
@@ -328,7 +328,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 								<ListItemIcon>
 									<Logout fontSize='small' />
 								</ListItemIcon>
-								<Typography textAlign='center'>Logout</Typography>
+								<Typography align='center'>Logout</Typography>
 							</MenuItem>
 
 							{supportConfigured && (
@@ -338,7 +338,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 										<ListItemIcon>
 											<Help fontSize='small' />
 										</ListItemIcon>
-										<Typography textAlign='center'>Support</Typography>
+										<Typography align='center'>Support</Typography>
 									</MenuItem>
 								</>
 							)}

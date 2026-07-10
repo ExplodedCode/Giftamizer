@@ -1,8 +1,8 @@
-import React, { FunctionComponent, useEffect, useState, useRef, forwardRef, useImperativeHandle, ForwardRefRenderFunction } from 'react';
+import React, { FunctionComponent, useEffect, useMemo, useState, useRef, forwardRef, useImperativeHandle, ForwardRefRenderFunction } from 'react';
 import Immutable from 'immutable';
 import classNames from 'classnames';
-import { createStyles, withStyles, WithStyles, CSSProperties, CreateCSSProperties, PropsFunc } from '@mui/styles';
-import { Theme } from '@mui/material/styles';
+import { css } from '@emotion/css';
+import { Theme, useTheme } from '@mui/material/styles';
 import { Paper } from '@mui/material';
 import {
 	Editor,
@@ -105,7 +105,7 @@ export type TMUIRichTextEditorProps = {
 	onBlur?: () => void;
 };
 
-interface IMUIRichTextEditorProps extends TMUIRichTextEditorProps, WithStyles<typeof styles> {}
+type IMUIRichTextEditorProps = TMUIRichTextEditorProps;
 
 type TMUIRichTextEditorState = {
 	anchorUrlPopover?: HTMLElement;
@@ -120,78 +120,51 @@ type TStateOffset = {
 	end: number;
 };
 
-interface TMUIRichTextEditorStyles {
-	overrides?: {
-		MUIRichTextEditor?: {
-			root?: CSSProperties | CreateCSSProperties<{}> | PropsFunc<{}, CreateCSSProperties<{}>>;
-			container?: CSSProperties | CreateCSSProperties<{}> | PropsFunc<{}, CreateCSSProperties<{}>>;
-			inheritFontSize?: CSSProperties | CreateCSSProperties<{}> | PropsFunc<{}, CreateCSSProperties<{}>>;
-			editor?: CSSProperties | CreateCSSProperties<{}> | PropsFunc<{}, CreateCSSProperties<{}>>;
-			editorContainer?: CSSProperties | CreateCSSProperties<{}> | PropsFunc<{}, CreateCSSProperties<{}>>;
-			editorReadOnly?: CSSProperties | CreateCSSProperties<{}> | PropsFunc<{}, CreateCSSProperties<{}>>;
-			error?: CSSProperties | CreateCSSProperties<{}> | PropsFunc<{}, CreateCSSProperties<{}>>;
-			hidePlaceholder?: CSSProperties | CreateCSSProperties<{}> | PropsFunc<{}, CreateCSSProperties<{}>>;
-			placeHolder?: CSSProperties | CreateCSSProperties<{}> | PropsFunc<{}, CreateCSSProperties<{}>>;
-			linkPopover?: CSSProperties | CreateCSSProperties<{}> | PropsFunc<{}, CreateCSSProperties<{}>>;
-			linkTextField?: CSSProperties | CreateCSSProperties<{}> | PropsFunc<{}, CreateCSSProperties<{}>>;
-			anchorLink?: CSSProperties | CreateCSSProperties<{}> | PropsFunc<{}, CreateCSSProperties<{}>>;
-			toolbar?: CSSProperties | CreateCSSProperties<{}> | PropsFunc<{}, CreateCSSProperties<{}>>;
-			inlineToolbar?: CSSProperties | CreateCSSProperties<{}> | PropsFunc<{}, CreateCSSProperties<{}>>;
-		};
-	};
-}
-
-const styles = (theme: Theme & TMUIRichTextEditorStyles) =>
-	createStyles({
-		root: theme?.overrides?.MUIRichTextEditor?.root || {},
-		container: theme?.overrides?.MUIRichTextEditor?.container || {
-			margin: theme.spacing(1, 0, 0, 0),
-			position: 'relative',
-			fontFamily: theme.typography.body1.fontFamily,
-			fontSize: theme.typography.body1.fontSize,
-			'& figure': {
-				margin: 0,
-			},
-		},
-		inheritFontSize: theme?.overrides?.MUIRichTextEditor?.inheritFontSize || {
-			fontSize: 'inherit',
-		},
-		editor: theme?.overrides?.MUIRichTextEditor?.editor || {},
-		editorContainer: theme?.overrides?.MUIRichTextEditor?.editorContainer || {
-			margin: theme.spacing(1, 0, 0, 0),
-			cursor: 'text',
-			width: '100%',
-			padding: theme.spacing(0, 0, 1, 0),
-		},
-		editorReadOnly: theme?.overrides?.MUIRichTextEditor?.editorReadOnly || {
-			borderBottom: 'none',
-		},
-		error: theme?.overrides?.MUIRichTextEditor?.error || {
-			borderBottom: '2px solid red',
-		},
-		hidePlaceholder: theme?.overrides?.MUIRichTextEditor?.hidePlaceholder || {
-			display: 'none',
-		},
-		placeHolder: theme?.overrides?.MUIRichTextEditor?.placeHolder || {
-			color: theme.palette.grey[600],
-			position: 'absolute',
-			outline: 'none',
-		},
-		linkPopover: theme?.overrides?.MUIRichTextEditor?.linkPopover || {
-			padding: theme.spacing(2, 2, 2, 2),
-		},
-		linkTextField: theme?.overrides?.MUIRichTextEditor?.linkTextField || {
-			width: '100%',
-		},
-		anchorLink: theme?.overrides?.MUIRichTextEditor?.anchorLink || {},
-		toolbar: theme?.overrides?.MUIRichTextEditor?.toolbar || {},
-		inlineToolbar: theme?.overrides?.MUIRichTextEditor?.inlineToolbar || {
-			maxWidth: '180px',
-			position: 'absolute',
-			padding: '5px',
-			zIndex: 10,
-		},
-	});
+const useStyles = (theme: Theme) =>
+	useMemo(
+		() => ({
+			root: css({}),
+			container: css({
+				margin: theme.spacing(1, 0, 0, 0),
+				position: 'relative',
+				fontFamily: theme.typography.body1.fontFamily,
+				fontSize: theme.typography.body1.fontSize,
+				'& figure': {
+					margin: 0,
+				},
+			}),
+			inheritFontSize: css({
+				fontSize: 'inherit',
+			}),
+			editor: css({}),
+			editorContainer: css({
+				margin: theme.spacing(1, 0, 0, 0),
+				cursor: 'text',
+				width: '100%',
+				padding: theme.spacing(0, 0, 1, 0),
+			}),
+			editorReadOnly: css({
+				borderBottom: 'none',
+			}),
+			error: css({
+				borderBottom: '2px solid red',
+			}),
+			placeHolder: css({
+				color: theme.palette.grey[600],
+				position: 'absolute',
+				outline: 'none',
+			}),
+			anchorLink: css({}),
+			toolbar: css({}),
+			inlineToolbar: css({
+				maxWidth: '180px',
+				position: 'absolute',
+				padding: '5px',
+				zIndex: 10,
+			}),
+		}),
+		[theme]
+	);
 
 const blockRenderMap = Immutable.Map({
 	blockquote: {
@@ -257,7 +230,10 @@ const createEditorState = (props: IMUIRichTextEditorProps) => {
 };
 
 const MUIRichTextEditor: ForwardRefRenderFunction<TMUIRichTextEditorRef, IMUIRichTextEditorProps> = (props, ref) => {
-	const { classes, controls, customControls } = props;
+	const { controls, customControls } = props;
+
+	const theme = useTheme();
+	const classes = useStyles(theme);
 
 	const [state, setState] = useState<TMUIRichTextEditorState>({});
 	const [focus, setFocus] = useState(false);
@@ -311,6 +287,7 @@ const MUIRichTextEditor: ForwardRefRenderFunction<TMUIRichTextEditorRef, IMUIRic
 		return () => {
 			toggleMouseUpListener();
 		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [props.value, props.defaultValue]);
 
 	useEffect(() => {
@@ -318,6 +295,7 @@ const MUIRichTextEditor: ForwardRefRenderFunction<TMUIRichTextEditorRef, IMUIRic
 			props.onChange(editorState);
 		}
 		editorStateRef.current = editorState;
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [editorState]);
 
 	useEffect(() => {
@@ -1177,4 +1155,4 @@ const MUIRichTextEditor: ForwardRefRenderFunction<TMUIRichTextEditorRef, IMUIRic
 	);
 };
 
-export default withStyles(styles, { withTheme: true, name: 'MUIRichTextEditor' })(forwardRef(MUIRichTextEditor));
+export default forwardRef(MUIRichTextEditor);

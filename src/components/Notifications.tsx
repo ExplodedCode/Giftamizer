@@ -262,7 +262,7 @@ export default function Notifications() {
 				<List sx={{ bgcolor: 'background.paper', width: { xs: '90vw', sm: 450 }, pt: 0, maxHeight: '40vh' }}>
 					<AppBar position='static' sx={{ mb: 1, pt: 0.5, bgcolor: 'background.paper' }}>
 						<Toolbar variant='dense'>
-							<Stack direction='row' justifyContent='flex-end' spacing={2}>
+							<Stack direction='row' spacing={2} sx={{ justifyContent: 'flex-end' }}>
 								<StyledBadge
 									badgeContent={groups?.filter((g) => g.my_membership[0].invite).length}
 									anchorOrigin={{
@@ -313,7 +313,7 @@ export default function Notifications() {
 							No notifications
 						</Typography>
 					) : (
-						<Stack direction='row' justifyContent='flex-end' spacing={2} sx={{ mt: 1, mr: 1 }}>
+						<Stack direction='row' spacing={2} sx={{ mt: 1, mr: 1, justifyContent: 'flex-end' }}>
 							<Button variant='outlined' size='small' color='primary' onClick={dismissAllNotifications}>
 								Clear All
 							</Button>

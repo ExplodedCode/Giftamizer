@@ -5,7 +5,6 @@ import { useSupabase, useGetGroupMembers, useGetGroups, useGetMemberItems, group
 
 import {
 	CircularProgress,
-	Grid,
 	Link as MUILink,
 	Typography,
 	Box,
@@ -25,13 +24,14 @@ import {
 	DialogContent,
 	useMediaQuery,
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { FilterAlt } from '@mui/icons-material';
 
 import NotFound from '../components/NotFound';
 import ItemCard from '../components/ItemCard';
 import { ItemStatuses, MemberItemType } from '../lib/useSupabase/types';
 import TourTooltip from '../components/TourTooltip';
-import { LoadingButton } from '@mui/lab';
+import { Button } from '@mui/material';
 
 export default function Member() {
 	const theme = useTheme();
@@ -135,8 +135,8 @@ export default function Member() {
 								</Toolbar>
 							</AppBar>
 
-							<Grid container justifyContent='center'>
-								<Grid item xs={12}>
+							<Grid container sx={{ justifyContent: 'center' }}>
+								<Grid size={12}>
 									<Typography variant='h4' gutterBottom sx={{ mt: 4, textAlign: 'center' }}>
 										{members?.find((m) => m.user_id === userID)?.profile.first_name} {members?.find((m) => m.user_id === userID)?.profile.last_name}
 									</Typography>
@@ -185,7 +185,7 @@ export default function Member() {
 													<Typography>Some items may not be shown if they've been claimed by someone else.</Typography>
 												</DialogContent>
 												<DialogActions>
-													<LoadingButton
+													<Button
 														variant='outlined'
 														color='inherit'
 														onClick={() => {
@@ -198,7 +198,7 @@ export default function Member() {
 														loading={updateTour.isLoading}
 													>
 														Got it
-													</LoadingButton>
+													</Button>
 												</DialogActions>
 											</>
 										}

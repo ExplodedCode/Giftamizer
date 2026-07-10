@@ -12,7 +12,6 @@ import {
 	DialogContent,
 	Button,
 	TextField,
-	Grid,
 	Stack,
 	useMediaQuery,
 	useTheme,
@@ -25,8 +24,8 @@ import {
 	LinearProgress,
 	Collapse,
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { Add, AddLink, Delete, Save } from '@mui/icons-material';
-import { LoadingButton } from '@mui/lab';
 
 import ListSelector from './ListSelector';
 import ImageCropper from './ImageCropper';
@@ -157,11 +156,11 @@ export default function ItemUpdate({ item, onClose, shoppingItem }: ItemUpdatePr
 			<DialogTitle>Edit Item</DialogTitle>
 			<DialogContent>
 				<Grid container spacing={2}>
-					<Grid item xs={12}>
+					<Grid size={12}>
 						<ImageCropper value={image} onChange={setImage} square importedImage={metaImage} />
 					</Grid>
 
-					<Grid item xs={12} component={Collapse} in={availableImages.length > 0}>
+					<Grid size={12} component={Collapse} in={availableImages.length > 0}>
 						<Stack
 							direction='row'
 							spacing={1}
@@ -203,19 +202,19 @@ export default function ItemUpdate({ item, onClose, shoppingItem }: ItemUpdatePr
 					</Grid>
 
 					{shoppingItem && item && (
-						<Grid item xs>
+						<Grid size="grow">
 							<UserSearchSingle selectedUser={selectedUser!} setSelectedUser={setSelectedUser} label='Gift For' required />
 						</Grid>
 					)}
 
-					<Grid item xs={12}>
-						<TextField fullWidth label='Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} inputProps={{ maxLength: 100 }} />
+					<Grid size={12}>
+						<TextField fullWidth label='Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} slotProps={{ htmlInput: { maxLength: 100 } }} />
 					</Grid>
-					<Grid item xs={12}>
-						<TextField fullWidth label='Description' variant='outlined' value={description} onChange={(e) => setDescription(e.target.value)} inputProps={{ maxLength: 250 }} />
+					<Grid size={12}>
+						<TextField fullWidth label='Description' variant='outlined' value={description} onChange={(e) => setDescription(e.target.value)} slotProps={{ htmlInput: { maxLength: 250 } }} />
 					</Grid>
 					{links.map((link, index) => (
-						<Grid key={index} item xs={12}>
+						<Grid key={index} size={12}>
 							<FormControl fullWidth variant='outlined'>
 								<InputLabel htmlFor='outlined-adornment-password'>URL</InputLabel>
 								<OutlinedInput
@@ -261,9 +260,9 @@ export default function ItemUpdate({ item, onClose, shoppingItem }: ItemUpdatePr
 						</Grid>
 					))}
 					{customFields.map((field, index) => (
-						<Grid key={index} item xs={12}>
-							<Grid container justifyContent='flex-start' spacing={2}>
-								<Grid item xs={5}>
+						<Grid key={index} size={12}>
+							<Grid container spacing={2} sx={{ justifyContent: 'flex-start' }}>
+								<Grid size={5}>
 									<TextField
 										fullWidth
 										label={`Custom Field ${index + 1}`}
@@ -272,11 +271,11 @@ export default function ItemUpdate({ item, onClose, shoppingItem }: ItemUpdatePr
 										onChange={(e) => {
 											setCustomFields(customFields.map((f, i) => (f.id === field.id ? { ...f, name: e.target.value } : f)));
 										}}
-										inputProps={{ maxLength: 25 }}
+										slotProps={{ htmlInput: { maxLength: 25 } }}
 									/>
 								</Grid>
 
-								<Grid item xs={7}>
+								<Grid size={7}>
 									<FormControl fullWidth variant='outlined'>
 										<InputLabel>Value</InputLabel>
 										<OutlinedInput
@@ -308,14 +307,14 @@ export default function ItemUpdate({ item, onClose, shoppingItem }: ItemUpdatePr
 					))}
 
 					{profile?.enable_lists && !shoppingItem && (
-						<Grid item xs={12}>
+						<Grid size={12}>
 							<ListSelector value={lists} onChange={(v) => setLists(v)} />
 						</Grid>
 					)}
-					<Grid item xs={12}>
-						<Grid container justifyContent='flex-start' spacing={2}>
-							<Grid item xs>
-								<Stack direction='row' justifyContent='flex-start' spacing={2}>
+					<Grid size={12}>
+						<Grid container spacing={2} sx={{ justifyContent: 'flex-start' }}>
+							<Grid size="grow">
+								<Stack direction='row' spacing={2} sx={{ justifyContent: 'flex-start' }}>
 									<Button
 										variant='outlined'
 										size='small'
@@ -328,15 +327,15 @@ export default function ItemUpdate({ item, onClose, shoppingItem }: ItemUpdatePr
 									</Button>
 								</Stack>
 							</Grid>
-							<Grid item>
-								<Stack direction='row' justifyContent='flex-end' spacing={2}>
+							<Grid>
+								<Stack direction='row' spacing={2} sx={{ justifyContent: 'flex-end' }}>
 									<Button color='inherit' onClick={onClose} disabled={updateItems.isLoading}>
 										Cancel
 									</Button>
 
-									<LoadingButton onClick={handleSave} disabled={name.trim().length === 0} endIcon={<Save />} loading={updateItems.isLoading} loadingPosition='end' variant='contained'>
+									<Button onClick={handleSave} disabled={name.trim().length === 0} endIcon={<Save />} loading={updateItems.isLoading} loadingPosition='end' variant='contained'>
 										Save
-									</LoadingButton>
+									</Button>
 								</Stack>
 							</Grid>
 						</Grid>
