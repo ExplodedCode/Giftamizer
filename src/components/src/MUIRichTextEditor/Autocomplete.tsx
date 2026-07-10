@@ -5,7 +5,7 @@ import { css } from '@emotion/css'
 export type TAutocompleteItem = {
     keys: string[]
     value: any
-    content: string | JSX.Element
+    content: string | React.JSX.Element
 }
 
 interface TAutocompleteProps {

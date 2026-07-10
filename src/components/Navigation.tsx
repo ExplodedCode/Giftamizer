@@ -117,7 +117,7 @@ function renderListItem({ list, location }: RenderListItemOptions) {
 	);
 }
 
-const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
+const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => {
 	const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 	const theme = useTheme();
 	const navigate = useNavigate();

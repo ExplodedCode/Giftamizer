@@ -60,7 +60,7 @@ function IconLookup(props: IconLookupProps) {
 
 interface RenderItemOptions {
 	notification: NotificationType;
-	invitesDialogRef: React.RefObject<InvitesDialogRefs>;
+	invitesDialogRef: React.RefObject<InvitesDialogRefs | null>;
 	dismissNotification: (id: string) => void;
 	handleClose: () => void;
 	navigate: NavigateFunction;

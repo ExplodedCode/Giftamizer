@@ -211,7 +211,7 @@ const createEditorState = (props: IMUIRichTextEditorProps) => {
 	const decorators: DraftDecorator[] = [
 		{
 			strategy: findLinkEntities,
-			component: Link,
+			component: Link as DraftDecorator['component'],
 		},
 	];
 	if (props.decorators) {
@@ -220,7 +220,7 @@ const createEditorState = (props: IMUIRichTextEditorProps) => {
 				strategy: (contentBlock: any, callback: any) => {
 					findDecoWithRegex(deco.regex, contentBlock, callback);
 				},
-				component: deco.component,
+				component: deco.component as DraftDecorator['component'],
 			})
 		);
 	}

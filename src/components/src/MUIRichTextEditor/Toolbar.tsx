@@ -26,7 +26,7 @@ export type TToolbarComponentProps = {
 export type TCustomControl = {
 	id?: string;
 	name: string;
-	icon?: JSX.Element;
+	icon?: React.JSX.Element;
 	type: TControlType;
 	component?: FunctionComponent<TToolbarComponentProps>;
 	inlineStyle?: React.CSSProperties;
@@ -40,7 +40,7 @@ type TStyleType = {
 	name: TToolbarControl | string;
 	label: string;
 	style: string;
-	icon?: JSX.Element;
+	icon?: React.JSX.Element;
 	component?: FunctionComponent<TToolbarComponentProps>;
 	type: TControlType;
 	active?: boolean;

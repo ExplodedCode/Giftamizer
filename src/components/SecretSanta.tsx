@@ -222,7 +222,7 @@ export default function SecretSanta({ group, members }: SecretSantaProps) {
 
 										{(() => {
 											// Display drawing result for child lists to list owner
-											let listDrawings: JSX.Element[] = [];
+											let listDrawings: React.JSX.Element[] = [];
 
 											for (const drawing in group.secret_santa.drawing) {
 												if (drawing !== user.id && drawing.startsWith(user.id)) {
