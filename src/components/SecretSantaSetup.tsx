@@ -1,14 +1,16 @@
 import * as React from 'react';
 import moment from 'moment';
-import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
-
-import { Box, Button, Checkbox, Grow, List, ListItem, ListItemIcon, Paper, Stack, Step, StepContent, StepLabel, Stepper, TextField, Typography } from '@mui/material';
-import Grid from '@mui/material/Grid';
-import { LocalizationProvider, MobileDatePicker } from '@mui/x-date-pickers';
 
 import { Member, SecretSantaDrawings } from '../lib/useSupabase/types';
 import SecretSantaExclusionSelector from './SecretSantaExclusionSelector';
 import { secretSantaMatch } from '../lib/useSupabase';
+
+import { Button } from './ui/button';
+import { Checkbox } from './ui/checkbox';
+import { DatePicker } from './ui/date-picker';
+import { FormField } from './ui/form-field';
+import { Input } from './ui/input';
+import { VerticalStepper } from './ui/stepper';
 
 export interface SecretSantaExclusions {
 	user_id: string;
@@ -17,6 +19,7 @@ export interface SecretSantaExclusions {
 
 interface SecretSantaProps {
 	members: Member[];
+	/** Must be a stable callback (a `useState` setter) — it is used inside effects. */
 	setAllowCreate: (value: boolean) => void;
 
 	eventName: string;
@@ -25,6 +28,7 @@ interface SecretSantaProps {
 	eventDate: moment.Moment | null;
 	setEventDate: (value: moment.Moment | null) => void;
 
+	/** Must be a stable callback (a `useState` setter) — it is used inside effects. */
 	setDrawing: (value: SecretSantaDrawings) => void;
 }
 
@@ -34,6 +38,7 @@ export default function SecretSantaSetup({ members, setAllowCreate, eventName, s
 	const [excludedMembers, setExcludedMembers] = React.useState<Member[]>([]);
 	const [exclusions, setExclusions] = React.useState<SecretSantaExclusions[]>([]);
 	const [tooManyExclusions, setTooManyExclusions] = React.useState<string | null>(null);
+	const [drawingReady, setDrawingReady] = React.useState<boolean>(false);
 
 	const [activeStep, setActiveStep] = React.useState(0);
 
@@ -45,204 +50,188 @@ export default function SecretSantaSetup({ members, setAllowCreate, eventName, s
 		setActiveStep((prevActiveStep) => prevActiveStep - 1);
 	};
 
-	const handleReset = () => {
-		setActiveStep(0);
-	};
-
 	const handleEventSelect = (selection: string) => {
-		setEvent(event.startsWith(selection) ? '' : selection);
-		if (selection === 'Other') setEventName('');
+		const deselecting = event === selection;
+
+		setEvent(deselecting ? '' : selection);
+		if (deselecting || selection === 'Other') setEventName('');
 		else setEventName(`${selection} ${moment().format('YYYY')}`);
 	};
 
+	// The parent re-creates the member array on every render, so anything derived
+	// from it has to be keyed on the member ids rather than the array identity.
+	const validMembers = React.useMemo(() => members.filter((m): m is Member => Boolean(m?.user_id)), [members]);
+
+	// Drop exclusions that belong to — or point at — a member who is no longer in
+	// the drawing. Returns the previous state when nothing changed so this can
+	// never re-trigger itself.
 	React.useEffect(() => {
-		let newExclusions: SecretSantaExclusions[] = [];
-		exclusions.forEach((exclusion) => {
-			newExclusions.push({
-				user_id: exclusion.user_id,
-				members: exclusion.members.filter((m) => excludedMembers.find((em) => em.user_id === m.user_id) === undefined),
-			});
-		});
-
-		setExclusions(newExclusions.filter((e) => excludedMembers.find((em) => em.user_id === e.user_id) === undefined));
-	}, [excludedMembers, exclusions]);
-
-	React.useEffect(() => {
-		const generateRules = () => {
-			let rules: any = {};
-
-			members
-				.filter((m) => excludedMembers.find((em) => em.user_id === m.user_id) === undefined)
-				.forEach((member) => {
-					if (exclusions.find((exclusion) => exclusion.user_id === member.user_id)) {
-						rules[member.user_id] = {
-							exclude: exclusions.find((exclusion) => exclusion.user_id === member.user_id)!.members.map((m) => m.user_id),
-						};
-					} else {
-						rules[member.user_id] = null;
-					}
+		setExclusions((prev) => {
+			const next = prev
+				.filter((e) => !excludedMembers.some((em) => em.user_id === e.user_id))
+				.map((e) => {
+					const remaining = e.members.filter((m) => !excludedMembers.some((em) => em.user_id === m.user_id));
+					return remaining.length === e.members.length ? e : { ...e, members: remaining };
 				});
 
-			return rules;
-		};
+			const unchanged = next.length === prev.length && next.every((e, i) => e === prev[i]);
+			return unchanged ? prev : next;
+		});
+	}, [excludedMembers]);
 
+	const activeMembers = React.useMemo(
+		() => validMembers.filter((m) => excludedMembers.find((em) => em.user_id === m.user_id) === undefined),
+		[validMembers, excludedMembers]
+	);
+
+	// Serialized so the (random, expensive) match only re-runs when the rules
+	// themselves change — not on every render of the dialog.
+	const rulesKey = React.useMemo(() => {
+		let rules: { [user_id: string]: { exclude: string[] } | null } = {};
+
+		activeMembers.forEach((member) => {
+			const exclusion = exclusions.find((e) => e.user_id === member.user_id);
+			rules[member.user_id] = exclusion ? { exclude: exclusion.members.map((m) => m.user_id) } : null;
+		});
+
+		return JSON.stringify(rules);
+	}, [activeMembers, exclusions]);
+
+	React.useEffect(() => {
 		try {
-			setDrawing(secretSantaMatch(generateRules(), 1));
-			setAllowCreate(true && eventName.length > 0 && event.length > 0);
+			setDrawing(secretSantaMatch(JSON.parse(rulesKey), 1));
+			setDrawingReady(true);
 			setTooManyExclusions(null);
 		} catch (error) {
-			console.log(error);
-			setAllowCreate(false);
+			console.error(error);
+			setDrawingReady(false);
 			setTooManyExclusions(String(error).split(' -- ')?.[1] ?? null);
 		}
-	}, [activeStep, exclusions, excludedMembers, members, setAllowCreate, setDrawing, eventName.length, event.length]);
+	}, [rulesKey, setDrawing]);
+
+	React.useEffect(() => {
+		setAllowCreate(drawingReady && eventName.trim().length > 0 && event.length > 0);
+	}, [setAllowCreate, drawingReady, eventName, event]);
 
 	const events = ['Secret Santa', 'Christmas', 'Hanukkah', 'Thanksgiving', "New Year's Eve", 'Other'];
 	const steps = [
 		{
 			label: 'Event Details',
+			allowNext: eventName.trim().length > 0 && event.length > 0,
 			content: (
-				<>
-					<Typography>What do you want to draw names for?</Typography>
-					<Stack direction='row' spacing={1} useFlexGap sx={{ mt: 1, mb: 2, flexWrap: 'wrap' }}>
+				<div className='flex flex-col gap-3'>
+					<p className='text-sm'>What do you want to draw names for?</p>
+					<div className='flex flex-wrap gap-1.5'>
 						{events.map((e) => (
-							<Button variant={event === e ? 'contained' : 'outlined'} onClick={() => handleEventSelect(e)}>
+							<Button key={e} variant={event === e ? 'default' : 'outline'} size='sm' onClick={() => handleEventSelect(e)}>
 								{e}
 							</Button>
 						))}
-					</Stack>
+					</div>
 					{event.length > 0 && (
-						<Grow in={event.length > 0}>
-							<Grid container spacing={2}>
-								<Grid size={12}>
-									<TextField fullWidth label='Event Name' variant='outlined' value={eventName} onChange={(e) => setEventName(e.target.value)} />
-								</Grid>
-								<Grid size={12}>
-									<MobileDatePicker slotProps={{ textField: { fullWidth: true } }} label='Event Date' value={eventDate} onChange={(e) => setEventDate(e)} />
-								</Grid>
-								{/* <Grid item xs={12}>
-									<Box>
-										<Typography id='track-false-slider'>Number of Gifts Per Person</Typography>
-										<Slider value={giftCount} onChange={(e, v) => setGiftCount(v as number)} valueLabelDisplay='auto' step={1} marks min={1} max={members.length - 2} />
-									</Box>
-								</Grid> */}
-							</Grid>
-						</Grow>
+						<div className='flex animate-in flex-col gap-3 fade-in zoom-in-95'>
+							<FormField label='Event Name'>
+								<Input value={eventName} onChange={(e) => setEventName(e.target.value)} />
+							</FormField>
+							<FormField label='Event Date'>
+								<DatePicker value={eventDate?.toDate()} onChange={(date) => setEventDate(date ? moment(date) : null)} />
+							</FormField>
+						</div>
 					)}
-				</>
+				</div>
 			),
-			allowNext: eventName.length > 0 && event.length > 0,
 		},
 		{
 			label: 'Exclusions',
+			allowNext: drawingReady,
 			content: (
-				<>
-					<Typography>
+				<div className='flex flex-col gap-3'>
+					<p className='text-sm'>
 						An exclusion indicates who may <u>not</u> draw whom.
-					</Typography>
+					</p>
 
-					{members.length > 3 ? (
-						<Box>
-							<List sx={{ width: '100%' }} dense>
-								{members.map((member) => (
-									<>
-										<ListItem sx={{ pl: 0, pr: 0 }}>
-											<ListItemIcon sx={{ minWidth: 45 }}>
-												<Checkbox
-													checked={excludedMembers.find((m) => m?.user_id === member?.user_id) === undefined}
-													onChange={(e) => {
-														if (excludedMembers.find((m) => m?.user_id === member?.user_id) !== undefined) {
-															setExcludedMembers(excludedMembers.filter((m) => m.user_id !== member.user_id));
-														} else {
-															setExcludedMembers([...excludedMembers, member]);
-														}
-													}}
-													disabled={
-														excludedMembers.find((m) => m?.user_id === member?.user_id) === undefined &&
-														members.filter((m) => m?.user_id !== member?.user_id && excludedMembers.find((em) => em.user_id === m.user_id) === undefined).length < 3
-													}
-												/>
-											</ListItemIcon>
-											<SecretSantaExclusionSelector
-												member={member}
-												members={members.filter((m) => m?.user_id !== member?.user_id && excludedMembers.find((em) => em.user_id === m.user_id) === undefined)}
-												value={exclusions.find((e) => e.user_id === member.user_id)!}
-												onChange={(e) => {
-													if (exclusions.find((exclusion) => exclusion.user_id === member.user_id)) {
-														setExclusions((prev) => prev.map((exclusion) => (exclusion.user_id === member.user_id ? e : exclusion)));
-													} else {
-														setExclusions([...exclusions, e]);
-													}
-												}}
-												disabled={excludedMembers.find((m) => m?.user_id === member?.user_id) !== undefined}
-											/>
-										</ListItem>
-									</>
-								))}
-							</List>
+					{validMembers.length > 3 ? (
+						<div className='flex flex-col gap-3'>
+							{validMembers.map((member) => (
+								<div key={member.user_id} className='flex items-center gap-3'>
+									<Checkbox
+										checked={excludedMembers.find((m) => m?.user_id === member?.user_id) === undefined}
+										onCheckedChange={() => {
+											if (excludedMembers.find((m) => m?.user_id === member?.user_id) !== undefined) {
+												setExcludedMembers(excludedMembers.filter((m) => m.user_id !== member.user_id));
+											} else {
+												setExcludedMembers([...excludedMembers, member]);
+											}
+										}}
+										disabled={
+											excludedMembers.find((m) => m?.user_id === member?.user_id) === undefined &&
+											validMembers.filter((m) => m?.user_id !== member?.user_id && excludedMembers.find((em) => em.user_id === m.user_id) === undefined).length < 3
+										}
+									/>
+									<div className='min-w-0 flex-1'>
+										<SecretSantaExclusionSelector
+											member={member}
+											members={validMembers.filter((m) => m?.user_id !== member?.user_id && excludedMembers.find((em) => em.user_id === m.user_id) === undefined)}
+											value={exclusions.find((e) => e.user_id === member.user_id)!}
+											onChange={(e) => {
+												if (exclusions.find((exclusion) => exclusion.user_id === member.user_id)) {
+													setExclusions((prev) => prev.map((exclusion) => (exclusion.user_id === member.user_id ? e : exclusion)));
+												} else {
+													setExclusions((prev) => [...prev, e]);
+												}
+											}}
+											disabled={excludedMembers.find((m) => m?.user_id === member?.user_id) !== undefined}
+										/>
+									</div>
+								</div>
+							))}
 
 							{tooManyExclusions && (
-								<Box sx={{ color: 'error.main' }}>
-									<b>
-										Too many exclusions have been set for
-										{(() => {
-											let member = members.find((m) => m.user_id === tooManyExclusions);
-											let name = `${member?.profile.first_name} ${member?.profile.last_name}`;
-											return ` ${name.trim()}`;
-										})()}
-										! Delete an exclusion.
-									</b>
-								</Box>
+								<p className='text-sm font-bold text-destructive'>
+									Too many exclusions have been set for
+									{(() => {
+										let member = validMembers.find((m) => m.user_id === tooManyExclusions);
+										let name = `${member?.profile.first_name} ${member?.profile.last_name}`;
+										return ` ${name.trim()}`;
+									})()}
+									! Delete an exclusion.
+								</p>
 							)}
-						</Box>
+
+							{!drawingReady && !tooManyExclusions && <p className='text-sm font-bold text-destructive'>Names can't be drawn with these settings. Remove an exclusion or add someone back to the drawing.</p>}
+						</div>
 					) : (
-						<Box sx={{ color: 'warning.main' }}>
-							<b>Your group is too small for exclusions.</b>
-						</Box>
+						<p className='text-sm font-bold text-status-planned'>Your group is too small for exclusions.</p>
 					)}
-				</>
+				</div>
 			),
-			allowNext: !tooManyExclusions,
 		},
 	];
 
 	return (
-		<LocalizationProvider dateAdapter={AdapterMoment}>
-			<Box>
-				<Stepper activeStep={activeStep} orientation='vertical'>
-					{steps.map((step, index) => (
-						<Step key={step.label}>
-							<StepLabel>{step.label}</StepLabel>
-							<StepContent>
-								{step.content}
-								<Box sx={{ mb: 2 }}>
-									<div>
-										{index !== 0 && (
-											<Button color='inherit' onClick={handleBack} sx={{ mt: 1, mr: 1 }}>
-												Back
-											</Button>
-										)}
+		<VerticalStepper
+			activeStep={activeStep}
+			steps={steps.map((step, index) => ({
+				label: step.label,
+				content: (
+					<div className='flex flex-col gap-3'>
+						{step.content}
+						<div className='flex gap-2'>
+							{index !== 0 && (
+								<Button variant='ghost' size='sm' onClick={handleBack}>
+									Back
+								</Button>
+							)}
 
-										{index !== steps.length - 1 && (
-											<Button variant='contained' onClick={handleNext} sx={{ mt: 1, mr: 1 }} disabled={!step.allowNext}>
-												{index === steps.length - 1 ? 'Finish' : 'Next'}
-											</Button>
-										)}
-									</div>
-								</Box>
-							</StepContent>
-						</Step>
-					))}
-				</Stepper>
-				{activeStep === steps.length && (
-					<Paper square elevation={0} sx={{ p: 3 }}>
-						<Typography>All steps completed - you're finished</Typography>
-						<Button onClick={handleReset} sx={{ mt: 1, mr: 1 }}>
-							Reset
-						</Button>
-					</Paper>
-				)}
-			</Box>
-		</LocalizationProvider>
+							{index !== steps.length - 1 && (
+								<Button size='sm' onClick={handleNext} disabled={!step.allowNext}>
+									Next
+								</Button>
+							)}
+						</div>
+					</div>
+				),
+			}))}
+		/>
 	);
 }

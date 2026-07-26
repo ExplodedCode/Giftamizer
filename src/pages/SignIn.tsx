@@ -1,29 +1,16 @@
 import * as React from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { useSnackbar } from 'notistack';
+import { useSnackbar } from '../lib/snackbar';
 
 import { signInWithGoogle, useSupabase, validateEmail } from '../lib/useSupabase';
 
+import { Lock } from 'lucide-react';
+
 import { GoogleIcon } from '../components/SvgIcons';
-import {
-	CssBaseline,
-	Paper,
-	Box,
-	Avatar,
-	Typography,
-	Stack,
-	IconButton,
-	TextField,
-	Button,
-	Dialog,
-	DialogTitle,
-	DialogContent,
-	DialogContentText,
-	DialogActions,
-	Link as MUILink,
-} from '@mui/material';
-import Grid from '@mui/material/Grid';
-import { LockOutlined } from '@mui/icons-material';
+import { Button } from '../components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { FormField } from '../components/ui/form-field';
+import { Input } from '../components/ui/input';
 
 var randomImage = Math.floor(Math.random() * 10) + 1;
 
@@ -107,138 +94,124 @@ export default function SignIn() {
 
 	return (
 		<>
-			<Grid container component='main' sx={{ height: '100vh' }}>
-				<CssBaseline />
-				<Grid
-					size={{ xs: false, sm: 4, md: 7 }}
-					sx={{
-						backgroundImage: 'url(/images/signin/' + randomImage + '.jpg)',
-						backgroundRepeat: 'no-repeat',
-						backgroundColor: (t) => (t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.grey[900]),
-						backgroundSize: 'cover',
-						backgroundPosition: 'center',
-					}}
-				/>
-				<Grid size={{ xs: 12, sm: 8, md: 5 }} component={Paper} elevation={6} square>
-					<Box
-						sx={{
-							py: 8,
-							px: 4,
-							display: 'flex',
-							flexDirection: 'column',
-							alignItems: 'center',
-							height: '100%',
-						}}
-					>
-						<Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
-							<LockOutlined />
-						</Avatar>
-						<Typography component='h1' variant='h5'>
-							Sign in
-						</Typography>
+			<div className='flex min-h-dvh'>
+				{/* Hero image side */}
+				<div className='relative hidden sm:block sm:w-1/3 md:w-7/12'>
+					<div className='absolute inset-0 bg-cover bg-center' style={{ backgroundImage: 'url(/images/signin/' + randomImage + '.jpg)' }} />
+					<div className='absolute inset-0 bg-gradient-to-tr from-primary/50 via-primary/10 to-transparent' />
+				</div>
 
-						<Box sx={{ mt: 1, maxWidth: 500 }}>
-							<Box
-								sx={{
-									display: 'flex',
-									flexDirection: 'column',
-									alignItems: 'center',
-								}}
+				{/* Form side */}
+				<div className='flex w-full flex-col items-center bg-card px-6 py-12 sm:w-2/3 md:w-5/12'>
+					<span className='flex size-11 items-center justify-center rounded-full bg-primary text-primary-foreground'>
+						<Lock className='size-5' />
+					</span>
+					<h1 className='mt-3 text-2xl font-semibold tracking-tight'>Sign in</h1>
+
+					<div className='mt-4 flex w-full max-w-sm flex-col gap-4'>
+						<div className='flex justify-center'>
+							<button
+								type='button'
+								onClick={() => signInWithGoogle(redirectTo ?? '/')}
+								disabled={window.location.host !== 'giftamizer.com'}
+								className='flex size-11 cursor-pointer items-center justify-center rounded-full border border-border transition-colors outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none'
 							>
-								<Stack spacing={2} direction='row'>
-									<IconButton onClick={() => signInWithGoogle(redirectTo ?? '/')} disabled={window.location.host !== 'giftamizer.com'}>
-										<GoogleIcon sx={window.location.host !== 'giftamizer.com' ? { opacity: 0.15 } : undefined} />
-									</IconButton>
-								</Stack>
-							</Box>
-							<TextField
-								margin='normal'
-								required
-								fullWidth
+								<GoogleIcon className='size-6' style={window.location.host !== 'giftamizer.com' ? { opacity: 0.15 } : undefined} />
+							</button>
+						</div>
+
+						<FormField label='Email Address' required htmlFor='email'>
+							<Input
 								id='email'
-								label='Email Address'
 								name='email'
 								autoComplete='email'
+								required
 								value={email}
 								onChange={(e) => setEmail(e.target.value)}
 								onKeyDown={(e) => {
 									if (e.key === 'Enter') handleSubmit();
 								}}
 							/>
-							<TextField
-								margin='normal'
-								required
-								fullWidth
-								name='password'
-								label='Password'
-								type='password'
+						</FormField>
+
+						<FormField label='Password' required htmlFor='password'>
+							<Input
 								id='password'
+								name='password'
+								type='password'
 								autoComplete='password'
+								required
 								value={password}
 								onChange={(e) => setPassword(e.target.value)}
 								onKeyDown={(e) => {
 									if (e.key === 'Enter') handleSubmit();
 								}}
 							/>
-							<Button fullWidth variant='contained' sx={{ mt: 3, mb: 2 }} onClick={() => handleSubmit()}>
-								Sign in
-							</Button>
-							<Grid container>
-								<Grid size="grow">
-									<MUILink
-										component='button'
-										variant='body2'
-										onClick={() => {
-											setForgotDialogOpen(true);
-										}}
-									>
-										Forgot password?
-									</MUILink>
-								</Grid>
+						</FormField>
 
-								<Grid>
-									<MUILink component={Link} to={`/signup${window.location.search}${window.location.hash}`} variant='body2'>
-										Don't have an account? Create Account
-									</MUILink>
-								</Grid>
-							</Grid>
-						</Box>
-					</Box>
-				</Grid>
-			</Grid>
+						<Button className='w-full' onClick={() => handleSubmit()}>
+							Sign in
+						</Button>
+
+						<div className='flex flex-wrap items-center justify-between gap-2 text-sm'>
+							<button
+								type='button'
+								className='cursor-pointer text-primary underline-offset-4 hover:underline'
+								onClick={() => {
+									setForgotDialogOpen(true);
+								}}
+							>
+								Forgot password?
+							</button>
+
+							<Link to={`/signup${window.location.search}${window.location.hash}`} className='text-primary underline-offset-4 hover:underline'>
+								Don't have an account? Create Account
+							</Link>
+						</div>
+					</div>
+				</div>
+			</div>
 
 			<Dialog
 				open={forgotDialogOpen}
-				onClose={() => {
-					setForgotDialogOpen(false);
-					setResetEmail('');
+				onOpenChange={(next) => {
+					if (!next) {
+						setForgotDialogOpen(false);
+						setResetEmail('');
+					}
 				}}
 			>
-				<DialogTitle>Forgot Password</DialogTitle>
-				<DialogContent>
-					<DialogContentText>Tell us the email address associated with your Giftamizer account, and we'll send you an email with a link to reset your password.</DialogContentText>
-					<TextField autoFocus margin='dense' id='name' label='Email Address' type='email' fullWidth variant='standard' value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} />
+				<DialogContent size='sm'>
+					<DialogHeader>
+						<DialogTitle>Forgot Password</DialogTitle>
+						<DialogDescription>Tell us the email address associated with your Giftamizer account, and we'll send you an email with a link to reset your password.</DialogDescription>
+					</DialogHeader>
+
+					<FormField label='Email Address'>
+						<Input autoFocus type='email' value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} />
+					</FormField>
+
+					<DialogFooter>
+						<Button
+							variant='ghost'
+							onClick={() => {
+								setForgotDialogOpen(false);
+								setResetEmail('');
+							}}
+						>
+							Cancel
+						</Button>
+						<Button
+							onClick={() => {
+								handlePasswordReset();
+							}}
+							disabled={!validateEmail(resetEmail)}
+							loading={passwordResetLoading}
+						>
+							Send Reset
+						</Button>
+					</DialogFooter>
 				</DialogContent>
-				<DialogActions>
-					<Button
-						onClick={() => {
-							setForgotDialogOpen(false);
-							setResetEmail('');
-						}}
-						color='inherit'
-					>
-						Cancel
-					</Button>
-					<Button
-						onClick={() => {
-							handlePasswordReset();
-						}}
-						disabled={!validateEmail(resetEmail)}
-						loading={passwordResetLoading}
-					>
-						Send Reset
-					</Button>
-				</DialogActions>
 			</Dialog>
 		</>
 	);

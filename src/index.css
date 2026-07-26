@@ -1,0 +1,193 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+	/* Match MUI's breakpoints exactly so every responsive behavior migrates 1:1
+	   (fullscreen dialogs at md, ItemCard tree switch, drawer <-> bottom nav). */
+	--breakpoint-sm: 600px;
+	--breakpoint-md: 900px;
+	--breakpoint-lg: 1200px;
+	--breakpoint-xl: 1536px;
+
+	--font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+:root {
+	color-scheme: light;
+
+	--radius: 0.75rem;
+
+	--background: #fafafa;
+	--foreground: #09090b;
+	--card: #ffffff;
+	--card-foreground: #09090b;
+	--popover: #ffffff;
+	--popover-foreground: #09090b;
+	--primary: #059669;
+	--primary-hover: #047857;
+	--primary-foreground: #ffffff;
+	--secondary: #f4f4f5;
+	--secondary-foreground: #18181b;
+	--muted: #f4f4f5;
+	--muted-foreground: #71717a;
+	--accent: #f4f4f5;
+	--accent-foreground: #18181b;
+	--festive: #f59e0b;
+	--festive-foreground: #451a03;
+	--destructive: #dc2626;
+	--destructive-foreground: #ffffff;
+	--border: #e4e4e7;
+	--input: #e4e4e7;
+	--ring: #059669;
+
+	/* Item claim-status colors — semantic meaning matches the old UI exactly:
+	   AVAILABLE = green, PLANNED = amber/orange, PURCHASED = red. */
+	--status-available: #059669;
+	--status-planned: #d97706;
+	--status-purchased: #dc2626;
+
+	--sidebar: #ffffff;
+	--sidebar-border: #e4e4e7;
+}
+
+.dark {
+	color-scheme: dark;
+
+	--background: #09090b;
+	--foreground: #fafafa;
+	--card: #18181b;
+	--card-foreground: #fafafa;
+	--popover: #18181b;
+	--popover-foreground: #fafafa;
+	--primary: #10b981;
+	--primary-hover: #34d399;
+	--primary-foreground: #022c22;
+	--secondary: #27272a;
+	--secondary-foreground: #fafafa;
+	--muted: #27272a;
+	--muted-foreground: #a1a1aa;
+	--accent: #27272a;
+	--accent-foreground: #fafafa;
+	--festive: #fbbf24;
+	--festive-foreground: #451a03;
+	--destructive: #ef4444;
+	--destructive-foreground: #fafafa;
+	--border: rgba(255, 255, 255, 0.1);
+	--input: rgba(255, 255, 255, 0.15);
+	--ring: #10b981;
+
+	--status-available: #34d399;
+	--status-planned: #fbbf24;
+	--status-purchased: #f87171;
+
+	--sidebar: #18181b;
+	--sidebar-border: rgba(255, 255, 255, 0.1);
+}
+
+@theme inline {
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-primary: var(--primary);
+	--color-primary-hover: var(--primary-hover);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-festive: var(--festive);
+	--color-festive-foreground: var(--festive-foreground);
+	--color-destructive: var(--destructive);
+	--color-destructive-foreground: var(--destructive-foreground);
+	--color-border: var(--border);
+	--color-input: var(--input);
+	--color-ring: var(--ring);
+	--color-status-available: var(--status-available);
+	--color-status-planned: var(--status-planned);
+	--color-status-purchased: var(--status-purchased);
+	--color-sidebar: var(--sidebar);
+	--color-sidebar-border: var(--sidebar-border);
+
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
+}
+
+body {
+	@apply bg-background text-foreground font-sans antialiased;
+	overflow: overlay;
+}
+
+/* --- Global styles migrated from public/index.html (behavior-preserving) --- */
+
+::-webkit-scrollbar {
+	width: 6px;
+	height: 10px;
+}
+::-webkit-scrollbar-thumb {
+	background: #545a60;
+	border-radius: 6px;
+}
+::-webkit-scrollbar-track {
+	opacity: 0;
+}
+
+/* Circular avatar crop overrides for cropper.js (consumed by ImageCropper.tsx). */
+.rounded-crop .cropper-crop-box,
+.rounded-crop .cropper-view-box {
+	border-radius: 50%;
+}
+.rounded-crop .cropper-view-box {
+	box-shadow: 0 0 0 1px var(--primary);
+	outline: 0;
+}
+
+/* Claim-race feedback on ItemCard (PostgREST 42501) — keep keyframes verbatim. */
+.error-shake {
+	animation: shake 0.5s;
+	animation-iteration-count: 1;
+}
+
+@keyframes shake {
+	0% {
+		transform: translate(1px, 1px) rotate(0deg);
+	}
+	10% {
+		transform: translate(-1px, -2px) rotate(-1deg);
+	}
+	20% {
+		transform: translate(-3px, 0px) rotate(1deg);
+	}
+	30% {
+		transform: translate(3px, 2px) rotate(0deg);
+	}
+	40% {
+		transform: translate(1px, -1px) rotate(1deg);
+	}
+	50% {
+		transform: translate(-1px, 2px) rotate(-1deg);
+	}
+	60% {
+		transform: translate(-3px, 1px) rotate(0deg);
+	}
+	70% {
+		transform: translate(3px, 1px) rotate(-1deg);
+	}
+	80% {
+		transform: translate(-1px, -1px) rotate(1deg);
+	}
+	90% {
+		transform: translate(1px, 2px) rotate(0deg);
+	}
+	100% {
+		transform: translate(1px, -2px) rotate(-1deg);
+	}
+}

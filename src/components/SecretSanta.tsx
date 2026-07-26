@@ -1,16 +1,20 @@
 import * as React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useSnackbar } from 'notistack';
+import { useSnackbar } from '../lib/snackbar';
 import moment from 'moment';
 
-import { Avatar, Box, Button, Card, CardContent, Chip, Dialog, DialogContent, DialogTitle, Grow, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
-import Grid from '@mui/material/Grid';
-import { Shuffle } from '@mui/icons-material';
+import { Shuffle } from 'lucide-react';
 
 import { GroupType, Member, SecretSantaDrawings, SecretSantaStatus } from '../lib/useSupabase/types';
 import { useGetProfile, useSupabase, useUpdateGroup } from '../lib/useSupabase';
 import { getSignedUrl } from '../lib/useSupabase/storageUrls';
 import SecretSantaSetup from './SecretSantaSetup';
+
+import { Button } from './ui/button';
+import { Chip } from './ui/chip';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Spinner } from './ui/spinner';
+import { UserAvatar } from './ui/avatar';
 
 interface SecretSantaProps {
 	group: GroupType;
@@ -18,7 +22,6 @@ interface SecretSantaProps {
 }
 
 export default function SecretSanta({ group, members }: SecretSantaProps) {
-	const theme = useTheme();
 	const navigate = useNavigate();
 	const location = useLocation();
 
@@ -29,8 +32,6 @@ export default function SecretSanta({ group, members }: SecretSantaProps) {
 	const updateGroup = useUpdateGroup();
 
 	const [myMembership, setMyMembership] = React.useState<Member | undefined>();
-
-	// const [open, setOpen] = React.useState<boolean>(false);
 
 	const open = location.hash === '#secret-santa';
 
@@ -54,6 +55,15 @@ export default function SecretSanta({ group, members }: SecretSantaProps) {
 			});
 	};
 
+	const handleClose = React.useCallback(() => {
+		navigate('#');
+
+		setAllowCreate(false);
+		setEventName('');
+		setEventDate(moment());
+		setDrawing(undefined);
+	}, [navigate]);
+
 	const enabledSecretSanta = async (drawings: SecretSantaDrawings) => {
 		setLoading(true);
 		await updateGroup
@@ -63,7 +73,7 @@ export default function SecretSanta({ group, members }: SecretSantaProps) {
 					secret_santa: {
 						...group.secret_santa,
 						status: SecretSantaStatus.On,
-						name: eventName,
+						name: eventName.trim(),
 						date: eventDate?.format('LL') ?? '',
 						drawing: drawings,
 					},
@@ -87,13 +97,8 @@ export default function SecretSanta({ group, members }: SecretSantaProps) {
 					}
 				}
 
-				navigate('#');
 				setLoading(false);
-				setAllowCreate(false);
-
-				setEventName('');
-				setEventDate(moment());
-				setDrawing(undefined);
+				handleClose();
 			})
 			.catch((err) => {
 				enqueueSnackbar(`Unable to update group! ${err.message}`, { variant: 'error' });
@@ -102,6 +107,8 @@ export default function SecretSanta({ group, members }: SecretSantaProps) {
 	};
 
 	React.useEffect(() => {
+		let active = true;
+
 		const getMyMembership = async () => {
 			const { data, error } = await client
 				.from('group_members')
@@ -122,157 +129,124 @@ export default function SecretSanta({ group, members }: SecretSantaProps) {
 				.eq('user_id', user.id)
 				.eq('group_id', group.id)
 				.single();
-			if (error) {
+
+			if (!active) return;
+
+			if (error || !data) {
 				enqueueSnackbar(`Unable to get your membership for Secret Santa!`, { variant: 'error' });
+				setMyMembership(undefined);
+				return;
 			}
 
-			let membership = data as unknown as Member;
-			membership = {
+			const membership = data as unknown as Member;
+			const image = membership.profile.avatar_token ? await getSignedUrl(client, 'avatars', `${user.id}`) : '';
+
+			if (!active) return;
+
+			setMyMembership({
 				...membership,
 				profile: {
 					...membership.profile,
 					// @ts-ignore
-					image: membership.profile.avatar_token ? await getSignedUrl(client, 'avatars', `${user.id}`) : '',
+					image: image,
 				},
-			};
-			setMyMembership(membership);
+			});
 		};
 
 		getMyMembership();
-	}, [client, enqueueSnackbar, user, group]);
+
+		return () => {
+			active = false;
+		};
+	}, [client, enqueueSnackbar, user, group.id]);
+
+	// The members list handed down by the page is a fresh array on every render;
+	// everything below reads from this memo so the setup wizard stays stable.
+	const allMembers = React.useMemo(() => (myMembership ? [myMembership, ...members] : members), [myMembership, members]);
+
+	const drawingChip = (uid: string, clickable: boolean = true) => {
+		let member = allMembers.find((m) => m.user_id === uid);
+		let name = `${member?.profile.first_name} ${member?.profile.last_name}`.trim();
+
+		return (
+			<Chip
+				key={uid}
+				icon={<UserAvatar alt={name} src={member?.profile.image} className='size-4' />}
+				className='border-transparent bg-white text-zinc-900 hover:bg-white/90'
+				onClick={clickable ? () => navigate(`/groups/${group.id}/${uid}`) : undefined}
+			>
+				{name}
+			</Chip>
+		);
+	};
 
 	return (
 		<>
 			{group.my_membership[0].owner && group.secret_santa.status === SecretSantaStatus.Init && (
-				<Grid container sx={{ justifyContent: 'center' }}>
-					<Grid size={{ xs: 12, sm: 8, md: 6, lg: 4 }}>
-						<Grow in timeout={700}>
-							<Card
-								sx={(theme) => ({
-									display: 'flex',
-									flexDirection: 'column',
-									background: `linear-gradient(to right bottom, ${theme.palette.primary.main}, ${theme.palette.primary.main} 120%)`,
-									boxShadow: '0px 20px 25px rgba(0, 0, 0, 0.1), 0px 10px 10px rgba(0, 0, 0, 0.04)',
-									mb: 4,
-								})}
-							>
-								<CardContent sx={{ p: 3 }}>
-									<Box sx={{ my: 'auto' }}>
-										<Typography gutterBottom variant='h5' component='div'>
-											Draw names for your Secret Santa gift exchange!
-										</Typography>
+				<div className='mb-6 flex justify-center'>
+					<div className='w-full max-w-xl animate-in rounded-xl bg-gradient-to-br from-primary to-primary-hover p-5 text-primary-foreground shadow-lg fade-in zoom-in-95'>
+						<p className='mb-3 text-lg font-semibold'>Draw names for your Secret Santa gift exchange!</p>
 
-										<Stack direction='row' spacing={1} useFlexGap sx={{ justifyContent: 'right', flexWrap: 'wrap' }}>
-											<Button variant='text' color='inherit' onClick={() => setStatus(SecretSantaStatus.Off)} loading={loading}>
-												No thanks
-											</Button>
-											<Button variant='outlined' color='inherit' onClick={() => navigate('#secret-santa')} loading={loading}>
-												Draw Names
-											</Button>
-										</Stack>
-									</Box>
-								</CardContent>
-							</Card>
-						</Grow>
-					</Grid>
-				</Grid>
+						<div className='flex flex-wrap justify-end gap-2'>
+							<Button variant='ghost' className='text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground' onClick={() => setStatus(SecretSantaStatus.Off)} loading={loading}>
+								No thanks
+							</Button>
+							<Button variant='secondary' onClick={() => navigate('#secret-santa')} loading={loading}>
+								Draw Names
+							</Button>
+						</div>
+					</div>
+				</div>
 			)}
 
 			{group.secret_santa.status === SecretSantaStatus.On && group.secret_santa.drawing?.[user.id] && myMembership && (
-				<Grid container sx={{ justifyContent: 'center' }}>
-					<Grid size={{ xs: 12, sm: 8, md: 6, lg: 4 }}>
-						<Grow in timeout={700}>
-							<Card
-								sx={(theme) => ({
-									display: 'flex',
-									flexDirection: 'column',
-									background: `linear-gradient(to right bottom, ${theme.palette.primary.main}, ${theme.palette.primary.main} 120%)`,
-									boxShadow: '0px 20px 25px rgba(0, 0, 0, 0.1), 0px 10px 10px rgba(0, 0, 0, 0.04)',
-									mb: 4,
-									color: theme.palette.common.white,
-								})}
-							>
-								<CardContent sx={{ p: 3 }}>
-									<Box sx={{ my: 'auto' }}>
-										<Typography variant='h5'>{group.secret_santa.name}</Typography>
-										<Typography variant='caption' gutterBottom component='div'>
-											{group.secret_santa.date}
-										</Typography>
+				<div className='mb-6 flex justify-center'>
+					<div className='w-full max-w-xl animate-in rounded-xl bg-gradient-to-br from-primary to-primary-hover p-5 text-primary-foreground shadow-lg fade-in zoom-in-95'>
+						<p className='text-lg font-semibold'>{group.secret_santa.name}</p>
+						<p className='mb-3 text-xs opacity-90'>{group.secret_santa.date}</p>
 
-										<Typography variant='body1'>You're getting a gift for:</Typography>
+						<p className='mb-1.5 text-sm'>You're getting a gift for:</p>
 
-										<Stack direction='row' spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
-											{group.secret_santa.drawing?.[user.id]?.map((uid) => {
-												let member = [myMembership!, ...members].find((m) => m.user_id === uid);
-												let name = `${member?.profile.first_name} ${member?.profile.last_name}`.trim();
+						<div className='flex flex-wrap gap-1.5'>{group.secret_santa.drawing?.[user.id]?.map((uid) => drawingChip(uid))}</div>
 
-												return (
-													<Chip
-														avatar={<Avatar alt={name} src={member?.profile.image} />}
-														label={name}
-														sx={{
-															bgcolor: theme.palette.common.white,
-															color: theme.palette.common.black,
-														}}
-														onClick={() => navigate(`/groups/${group.id}/${uid}`)}
-													/>
-												);
-											})}
-										</Stack>
+						{(() => {
+							// Display drawing result for child lists to list owner
+							let listDrawings: React.JSX.Element[] = [];
 
-										{(() => {
-											// Display drawing result for child lists to list owner
-											let listDrawings: React.JSX.Element[] = [];
+							for (const drawing in group.secret_santa.drawing) {
+								if (drawing !== user.id && drawing.startsWith(user.id)) {
+									let listMember = allMembers.find((m) => m.user_id === drawing);
 
-											for (const drawing in group.secret_santa.drawing) {
-												if (drawing !== user.id && drawing.startsWith(user.id)) {
-													let listMember = [myMembership!, ...members].find((m) => m.user_id === drawing);
+									listDrawings.push(
+										<div className='mt-3' key={drawing}>
+											<p className='mb-1.5 text-sm'>{`${listMember?.profile.first_name} ${listMember?.profile.last_name}`.trim()} is getting a gift for:</p>
+											<div className='flex flex-wrap gap-1.5'>{group.secret_santa.drawing[drawing]?.map((uid) => drawingChip(uid, uid !== user.id))}</div>
+										</div>
+									);
+								}
+							}
 
-													listDrawings.push(
-														<Box sx={{ mt: 1 }}>
-															<Typography variant='body1'>
-																{`${listMember?.profile.first_name} ${listMember?.profile.last_name}`.trim()} is getting a gift for:
-															</Typography>
-															<Stack direction='row' spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
-																{group.secret_santa.drawing[drawing]?.map((uid) => {
-																	let member = [myMembership!, ...members].find((m) => m.user_id === uid);
-																	let name = `${member?.profile.first_name} ${member?.profile.last_name}`.trim();
-
-																	return (
-																		<Chip
-																			avatar={<Avatar alt={name} src={member?.profile.image} />}
-																			label={name}
-																			sx={{
-																				bgcolor: theme.palette.common.white,
-																				color: theme.palette.common.black,
-																			}}
-																			onClick={uid === user.id ? undefined : () => navigate(`/groups/${group.id}/${uid}`)}
-																		/>
-																	);
-																})}
-															</Stack>
-														</Box>
-													);
-												}
-											}
-
-											return listDrawings.map((e) => <>{e}</>);
-										})()}
-									</Box>
-								</CardContent>
-							</Card>
-						</Grow>
-					</Grid>
-				</Grid>
+							return listDrawings;
+						})()}
+					</div>
+				</div>
 			)}
 
-			<Dialog open={group.my_membership[0].owner && open} onClose={() => navigate('#')} fullWidth maxWidth='sm' fullScreen={useMediaQuery(theme.breakpoints.down('md'))}>
-				<DialogTitle>Draw names for your Secret Santa gift exchange!</DialogTitle>
-				<DialogContent>
-					<Grid container spacing={2}>
-						<Grid size={12}>
+			<Dialog
+				open={group.my_membership[0].owner && open}
+				onOpenChange={(next) => {
+					if (!next) handleClose();
+				}}
+			>
+				<DialogContent fullScreenOnMobile>
+					<DialogHeader>
+						<DialogTitle>Draw names for your Secret Santa gift exchange!</DialogTitle>
+					</DialogHeader>
+
+					{myMembership ? (
+						<div className='flex flex-col gap-4'>
 							<SecretSantaSetup
-								members={[myMembership!, ...members]}
+								members={allMembers}
 								eventName={eventName}
 								setEventName={setEventName}
 								eventDate={eventDate}
@@ -280,29 +254,29 @@ export default function SecretSanta({ group, members }: SecretSantaProps) {
 								setDrawing={setDrawing}
 								setAllowCreate={setAllowCreate}
 							/>
-						</Grid>
-						<Grid size={12}>
-							<Stack direction='row' spacing={2} sx={{ justifyContent: 'flex-end' }}>
-								<Button color='inherit' onClick={() => navigate('#')}>
+
+							<div className='flex justify-end gap-2'>
+								<Button variant='ghost' onClick={handleClose} disabled={updateGroup.isLoading}>
 									Cancel
 								</Button>
 
 								<Button
-									tour-element='group_create'
 									onClick={() => {
 										if (drawing) enabledSecretSanta(drawing);
 									}}
-									endIcon={<Shuffle />}
 									loading={updateGroup.isLoading}
-									disabled={!allowCreate}
-									loadingPosition='end'
-									variant='contained'
+									disabled={!allowCreate || !drawing}
 								>
 									Draw Names
+									<Shuffle />
 								</Button>
-							</Stack>
-						</Grid>
-					</Grid>
+							</div>
+						</div>
+					) : (
+						<div className='flex justify-center py-10'>
+							<Spinner size={32} />
+						</div>
+					)}
 				</DialogContent>
 			</Dialog>
 		</>

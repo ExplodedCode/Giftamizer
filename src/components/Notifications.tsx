@@ -1,62 +1,24 @@
 import * as React from 'react';
-import { SnackbarKey, useSnackbar } from 'notistack';
+import { SnackbarKey, useSnackbar } from '../lib/snackbar';
 import moment from 'moment';
 
-import { groupInviteTourProgress, itemTourProgress, useGetGroups, useGetTour, useSupabase, useUpdateTour } from '../lib/useSupabase';
+import { groupInviteTourProgress, useActiveTourLeg, useGetGroups, useGetTour, useSupabase, useUpdateTour } from '../lib/useSupabase';
 import { NotificationType } from '../lib/useSupabase/types';
 
 import { TransitionGroup } from 'react-transition-group';
-import {
-	IconButton,
-	Badge,
-	Popover,
-	List,
-	ListItemButton,
-	ListItemAvatar,
-	Avatar,
-	ListItemText,
-	Typography,
-	Button,
-	Stack,
-	ListItem,
-	Collapse,
-	AppBar,
-	Toolbar,
-	styled,
-	BadgeProps,
-	DialogContent,
-	DialogTitle,
-	useTheme,
-} from '@mui/material';
-import { Close, Notifications as NotificationsIcon } from '@mui/icons-material';
-import * as muiIcons from '@mui/icons-material';
+import { NavigateFunction, useLocation, useNavigate } from 'react-router-dom';
+import { Bell, X } from 'lucide-react';
 
 import InvitesDialog, { InvitesDialogRefs } from './InvitesDialog';
-import TourTooltip from './TourTooltip';
-import HtmlTooltip from './HtmlTooltip';
-import { NavigateFunction, useLocation, useNavigate } from 'react-router-dom';
+import TourTooltip, { TourContent } from './TourTooltip';
 import { GiftIcon } from './SvgIcons';
 
-type IconLookupProps = {
-	icon: string | undefined | null;
-};
-function IconLookup(props: IconLookupProps) {
-	try {
-		const Icon = {
-			// @ts-ignore
-			icon: muiIcons?.[props?.icon],
-		};
-		if (Icon && Icon.icon) {
-			// eslint-disable-next-line react/jsx-pascal-case
-			return <Icon.icon />;
-		} else {
-			return <NotificationsIcon />;
-		}
-	} catch (error) {
-		console.log(error);
-		return <NotificationsIcon />;
-	}
-}
+import { NotificationIcon } from './ui/icon-map';
+import { NotificationBadge } from './ui/notification-badge';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { TourHint } from './ui/tour-hint';
+import { Collapse } from './ui/collapse';
+import { Button } from './ui/button';
 
 interface RenderItemOptions {
 	notification: NotificationType;
@@ -67,18 +29,10 @@ interface RenderItemOptions {
 }
 function renderItem({ notification, invitesDialogRef, dismissNotification, handleClose, navigate }: RenderItemOptions) {
 	return (
-		<ListItem
-			key={notification.id}
-			secondaryAction={
-				<>
-					<IconButton edge='end' aria-label='delete' onClick={() => dismissNotification(notification.id)}>
-						<Close />
-					</IconButton>
-				</>
-			}
-			disablePadding
-		>
-			<ListItemButton
+		<div className='group relative flex items-start'>
+			<button
+				type='button'
+				className='flex w-full cursor-pointer items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring/50'
 				onClick={() => {
 					if (notification.action === 'openInvite') {
 						invitesDialogRef.current?.handleClickOpen();
@@ -92,46 +46,37 @@ function renderItem({ notification, invitesDialogRef, dismissNotification, handl
 					handleClose();
 				}}
 			>
-				<ListItemAvatar>
-					<Avatar sx={{ bgcolor: 'primary.main' }}>
-						{(() => {
-							switch (notification.icon) {
-								default:
-									return <IconLookup icon={notification.icon} />;
-								case 'gift':
-									return <GiftIcon />;
-							}
-						})()}
-					</Avatar>
-				</ListItemAvatar>
-				<ListItemText
-					primary={
-						<>
-							{notification.title}
-
-							<Typography sx={{ display: 'inline-block', ml: 1 }} color='GrayText'>
-								{' — '}
-								{moment(notification.created_at).fromNow()}
-							</Typography>
-						</>
-					}
-					secondary={notification.body}
-				/>
-			</ListItemButton>
-		</ListItem>
+				<span className='mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground [&_svg]:size-5'>
+					{(() => {
+						switch (notification.icon) {
+							default:
+								return <NotificationIcon icon={notification.icon} />;
+							case 'gift':
+								return <GiftIcon />;
+						}
+					})()}
+				</span>
+				<span className='flex min-w-0 flex-col pr-8'>
+					<span className='text-sm font-medium'>
+						{notification.title}
+						<span className='ml-1 text-muted-foreground'>— {moment(notification.created_at).fromNow()}</span>
+					</span>
+					{notification.body && <span className='text-sm text-muted-foreground'>{notification.body}</span>}
+				</span>
+			</button>
+			<button
+				type='button'
+				aria-label='delete'
+				onClick={() => dismissNotification(notification.id)}
+				className='absolute top-2.5 right-2.5 cursor-pointer rounded-md p-1 text-muted-foreground opacity-60 transition-opacity outline-none hover:bg-accent hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring/50'
+			>
+				<X className='size-4' />
+			</button>
+		</div>
 	);
 }
 
-const StyledBadge = styled(Badge)<BadgeProps>(({ theme }) => ({
-	'& .MuiBadge-badge': {
-		top: 2,
-		left: 2,
-		padding: '0 4px',
-	},
-}));
-
 export default function Notifications() {
-	const theme = useTheme();
 	const location = useLocation();
 	const navigate = useNavigate();
 
@@ -141,9 +86,8 @@ export default function Notifications() {
 	const { data: groups, isLoading: groupsLoading } = useGetGroups();
 
 	const notificationBtnRef = React.useRef<HTMLButtonElement>(null); // invite dialog ref
-	const invitesDialogRef = React.useRef<React.ElementRef<typeof InvitesDialog>>(null); // invite dialog ref
+	const invitesDialogRef = React.useRef<InvitesDialogRefs | null>(null); // invite dialog ref
 
-	const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
 	const [open, setOpen] = React.useState(false);
 
 	const [notifications, setNotifications] = React.useState<NotificationType[] | undefined>(undefined);
@@ -152,6 +96,7 @@ export default function Notifications() {
 	// user tour
 	const { data: tour } = useGetTour();
 	const updateTour = useUpdateTour();
+	const activeTourLeg = useActiveTourLeg();
 
 	React.useEffect(() => {
 		const getNotifications = async () => {
@@ -169,8 +114,8 @@ export default function Notifications() {
 					const action = (snackbarId: SnackbarKey | undefined) => (
 						<React.Fragment>
 							<Button
-								color='secondary'
-								size='small'
+								variant='secondary'
+								size='sm'
 								onClick={() => {
 									notificationBtnRef.current?.click();
 									closeSnackbar(snackbarId);
@@ -178,9 +123,9 @@ export default function Notifications() {
 							>
 								View
 							</Button>
-							<IconButton size='small' aria-label='close' color='inherit' onClick={() => closeSnackbar(snackbarId)}>
-								<Close fontSize='small' />
-							</IconButton>
+							<button type='button' aria-label='close' className='cursor-pointer rounded-md p-1 opacity-70 hover:opacity-100' onClick={() => closeSnackbar(snackbarId)}>
+								<X className='size-4' />
+							</button>
 						</React.Fragment>
 					);
 
@@ -198,15 +143,14 @@ export default function Notifications() {
 		getNotifications();
 	}, [client, closeSnackbar, enqueueSnackbar, user]);
 
-	const handleOpen = async (event: React.MouseEvent<HTMLButtonElement>) => {
+	const handleOpen = async () => {
 		if (!tour?.group_invite_nav) {
 			updateTour.mutateAsync({
 				group_invite_nav: true,
 			});
 		}
 
-		setAnchorEl(event.currentTarget);
-		setOpen(!open);
+		setOpen(true);
 
 		notifications?.forEach(async (notification) => {
 			const { error } = await client.from('notifications').update({ seen: true }).eq('id', notification.id).eq('user_id', user.id);
@@ -216,8 +160,7 @@ export default function Notifications() {
 	};
 
 	const handleClose = () => {
-		setAnchorEl(null);
-		setOpen(!open);
+		setOpen(false);
 
 		if (!tour?.group_invite_button) {
 			updateTour.mutateAsync({
@@ -238,108 +181,82 @@ export default function Notifications() {
 		if (error) console.log(error);
 	};
 
+	const inviteCount = groups?.filter((g) => g.my_membership[0].invite)?.length || 0;
+	const badgeCount = (notifications?.filter((n) => !n.seen).length || 0) + inviteCount;
+
 	return (
 		<>
-			<IconButton tour-element='group_invite_nav' size='large' ref={notificationBtnRef} color='inherit' onClick={handleOpen}>
-				<Badge badgeContent={(notifications?.filter((n) => !n.seen).length || 0) + (groups?.filter((g) => g.my_membership[0].invite)?.length || 0)} color='error'>
-					<NotificationsIcon />
-				</Badge>
-			</IconButton>
+			<Popover open={open} onOpenChange={(next) => (next ? handleOpen() : handleClose())}>
+				<PopoverTrigger asChild>
+					<button
+						type='button'
+						{...({ 'tour-element': 'group_invite_nav' } as object)}
+						ref={notificationBtnRef}
+						className='flex size-9 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50'
+					>
+						<NotificationBadge count={badgeCount}>
+							<Bell className='size-5' />
+						</NotificationBadge>
+					</button>
+				</PopoverTrigger>
 
-			<Popover
-				open={open}
-				anchorEl={anchorEl}
-				onClose={handleClose}
-				anchorOrigin={{
-					vertical: 'bottom',
-					horizontal: 'right',
-				}}
-				transformOrigin={{
-					vertical: 'top',
-					horizontal: 'right',
-				}}
-			>
-				<List sx={{ bgcolor: 'background.paper', width: { xs: '90vw', sm: 450 }, pt: 0, maxHeight: '40vh' }}>
-					<AppBar position='static' sx={{ mb: 1, pt: 0.5, bgcolor: 'background.paper' }}>
-						<Toolbar variant='dense'>
-							<Stack direction='row' spacing={2} sx={{ justifyContent: 'flex-end' }}>
-								<StyledBadge
-									badgeContent={groups?.filter((g) => g.my_membership[0].invite).length}
-									anchorOrigin={{
-										vertical: 'top',
-										horizontal: 'left',
-									}}
-									color='primary'
-								>
-									<HtmlTooltip
-										title={
-											<>
-												<Typography>Open Group Invites</Typography>
-											</>
+				<PopoverContent align='end' sideOffset={8} className='w-[90vw] p-0 sm:w-[450px]'>
+					<div className='flex items-center justify-between border-b border-border px-3 py-2'>
+						<p className='text-sm font-semibold'>Notifications</p>
+						<NotificationBadge count={inviteCount}>
+							<TourHint
+								title={<p className='font-semibold'>Review your invites here.</p>}
+								placement='bottom-end'
+								open={activeTourLeg === 'group_invite' && groupInviteTourProgress(tour ?? {}) === 'group_invite_button' && open}
+							>
+								<Button
+									variant='outline'
+									size='sm'
+									onClick={() => {
+										if (!tour?.group_invite_button) {
+											updateTour.mutateAsync({
+												group_invite_button: true,
+											});
 										}
-										arrow
-										open={groupInviteTourProgress(tour ?? {}) === 'group_invite_button' && open}
-										placement='bottom-end'
-									>
-										<Button
-											variant='outlined'
-											size='small'
-											color='primary'
-											onClick={() => {
-												if (!tour?.group_invite_button) {
-													updateTour.mutateAsync({
-														group_invite_button: true,
-													});
-												}
 
-												handleClose();
-												invitesDialogRef.current?.handleClickOpen();
-											}}
-										>
-											Group Invites
-										</Button>
-									</HtmlTooltip>
-								</StyledBadge>
-							</Stack>
-						</Toolbar>
-					</AppBar>
-					<TransitionGroup>
-						{notifications?.map((notification) => (
-							<Collapse key={notification.id}>{renderItem({ notification, invitesDialogRef, dismissNotification, handleClose, navigate })}</Collapse>
-						))}
-					</TransitionGroup>
-					{notifications?.length === 0 ? (
-						<Typography variant='h6' gutterBottom sx={{ mt: 1, textAlign: 'center' }}>
-							No notifications
-						</Typography>
-					) : (
-						<Stack direction='row' spacing={2} sx={{ mt: 1, mr: 1, justifyContent: 'flex-end' }}>
-							<Button variant='outlined' size='small' color='primary' onClick={dismissAllNotifications}>
-								Clear All
-							</Button>
-						</Stack>
-					)}
-				</List>
+										handleClose();
+										invitesDialogRef.current?.handleClickOpen();
+									}}
+								>
+									Group Invites
+								</Button>
+							</TourHint>
+						</NotificationBadge>
+					</div>
+
+					<div className='max-h-[40vh] overflow-y-auto p-1'>
+						<TransitionGroup component={null}>
+							{notifications?.map((notification) => (
+								<Collapse key={notification.id}>{renderItem({ notification, invitesDialogRef, dismissNotification, handleClose, navigate })}</Collapse>
+							))}
+						</TransitionGroup>
+						{notifications?.length === 0 ? (
+							<p className='py-6 text-center text-sm text-muted-foreground'>No notifications</p>
+						) : (
+							<div className='flex justify-end p-2'>
+								<Button variant='outline' size='sm' onClick={dismissAllNotifications}>
+									Clear All
+								</Button>
+							</div>
+						)}
+					</div>
+				</PopoverContent>
 			</Popover>
 
 			<InvitesDialog ref={invitesDialogRef} />
 
-			{!groupsLoading && tour && itemTourProgress(tour) === null && location.hash === '' && groups?.filter((g) => g.my_membership[0].invite).length !== 0 && (
+			{!groupsLoading && tour && activeTourLeg === 'group_invite' && location.hash === '' && (
 				<>
 					<TourTooltip
 						open={groupInviteTourProgress(tour) === 'group_invite_nav'}
 						anchorEl={document.querySelector('[tour-element="group_invite_nav"]')}
 						placement='bottom'
-						content={
-							<>
-								<DialogTitle>You've been invited to a group!</DialogTitle>
-								<DialogContent>
-									<Typography>Accept or decline group invites in the notification menu.</Typography>
-								</DialogContent>
-							</>
-						}
-						backgroundColor={theme.palette.primary.main}
-						color={theme.palette.primary.contrastText}
+						content={<TourContent title="You've been invited to a group!">Open your notifications to accept or decline.</TourContent>}
 						mask
 						allowClick
 					/>

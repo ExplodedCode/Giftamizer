@@ -5,17 +5,21 @@ import { useSupabase } from '../lib/useSupabase';
 import { GroupType } from '../lib/useSupabase/types';
 import { useCreateList, useGetGroups } from '../lib/useSupabase/hooks';
 
-import { useSnackbar } from 'notistack';
+import { useSnackbar } from '../lib/snackbar';
 
-import { useTheme } from '@mui/material/styles';
-import { Button, Dialog, DialogContent, DialogContentText, DialogTitle, Fab, FormControl, FormControlLabel, FormHelperText, Stack, Switch, TextField, useMediaQuery } from '@mui/material';
-import Grid from '@mui/material/Grid';
-import { Add, PlaylistAdd } from '@mui/icons-material';
+import { ListPlus, Plus } from 'lucide-react';
+
 import GroupSelector from './GroupSelector';
 import ImageCropper from './ImageCropper';
 
+import { Button } from './ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
+import { FormField } from './ui/form-field';
+import { Input } from './ui/input';
+import { Textarea } from './ui/textarea';
+import { LabeledSwitch } from './ui/switch';
+
 export default function CreateList() {
-	const theme = useTheme();
 	const { enqueueSnackbar } = useSnackbar();
 	const navigate = useNavigate();
 	const location = useLocation();
@@ -58,71 +62,67 @@ export default function CreateList() {
 
 	return (
 		<>
-			<Fab color='primary' aria-label='add' onClick={() => navigate('#new-list')} sx={{ position: 'fixed', bottom: { xs: 64, md: 16 }, right: { xs: 8, md: 16 } }}>
-				<PlaylistAdd />
-			</Fab>
+			<button
+				type='button'
+				aria-label='add'
+				onClick={() => navigate('#new-list')}
+				className='fixed right-2 bottom-20 z-30 flex size-14 cursor-pointer items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg transition-all outline-none hover:bg-primary-hover hover:shadow-xl focus-visible:ring-2 focus-visible:ring-ring/50 active:scale-95 md:right-4 md:bottom-4'
+			>
+				<ListPlus className='size-6' />
+			</button>
 
-			<Dialog open={open} onClose={() => (createList.isLoading ? undefined : handleClose())} maxWidth='sm' fullScreen={useMediaQuery(theme.breakpoints.down('md'))}>
-				<DialogTitle>Create List</DialogTitle>
-				<DialogContent>
-					<Grid container spacing={2}>
-						<Grid size={12}>
-							<DialogContentText>Organize your wishlist into categories, making it easier for others to find the perfect gift for you.</DialogContentText>
-						</Grid>
+			<Dialog
+				open={open}
+				onOpenChange={(next) => {
+					if (!next && !createList.isLoading) handleClose();
+				}}
+			>
+				<DialogContent fullScreenOnMobile dismissible={!createList.isLoading}>
+					<DialogHeader>
+						<DialogTitle>Create List</DialogTitle>
+						<DialogDescription>Organize your wishlist into categories, making it easier for others to find the perfect gift for you.</DialogDescription>
+					</DialogHeader>
+
+					<div className='flex flex-col gap-4'>
 						{childList && (
-							<Grid size={12}>
+							<div className='flex justify-center'>
 								<ImageCropper value={image} onChange={setImage} aspectRatio={1} />
-							</Grid>
+							</div>
 						)}
-						<Grid size={12}>
-							<TextField fullWidth label='Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} disabled={createList.isLoading} />
-						</Grid>
-						<Grid size={12}>
-							<GroupSelector
-								groups={groups?.filter((g) => g.my_membership[0].invite === false) as Omit<GroupType, 'image_token' | 'my_membership'>[]}
-								value={selectedGroups}
-								onChange={setSelectedGroups}
-								disabled={createList.isLoading}
-							/>
-						</Grid>
-						<Grid size={12}>
-							<FormControl component='fieldset' variant='standard'>
-								<FormControlLabel
-									control={<Switch checked={childList} onChange={(e) => setChildList(e.target.checked)} disabled={createList.isLoading} />}
-									label='Display Separately in Groups'
-								/>
-								<FormHelperText sx={{ color: 'warning.main' }}>This can only be set when creating a new list.</FormHelperText>
-							</FormControl>
-						</Grid>
+
+						<FormField label='Name' required>
+							<Input required value={name} onChange={(e) => setName(e.target.value)} disabled={createList.isLoading} />
+						</FormField>
+
+						<GroupSelector
+							groups={groups?.filter((g) => g.my_membership[0].invite === false) as Omit<GroupType, 'image_token' | 'my_membership'>[]}
+							value={selectedGroups}
+							onChange={setSelectedGroups}
+							disabled={createList.isLoading}
+						/>
+
+						<div className='flex flex-col gap-1'>
+							<LabeledSwitch label='Display Separately in Groups' checked={childList} onCheckedChange={(checked) => setChildList(checked === true)} disabled={createList.isLoading} />
+							<p className='text-xs text-status-planned'>This can only be set when creating a new list.</p>
+						</div>
+
 						{childList && (
-							<Grid size={12}>
-								<TextField
-									fullWidth
-									multiline
-									minRows={3}
-									maxRows={7}
-									label='Bio'
-									variant='outlined'
-									slotProps={{ htmlInput: { maxLength: 250 } }}
-									value={bio}
-									onChange={(e) => setBio(e.target.value)}
-									helperText={`${bio.length} / 250`}
-								/>
-							</Grid>
+							<FormField label='Bio' helperText={`${bio.length} / 250`}>
+								<Textarea rows={3} maxLength={250} value={bio} onChange={(e) => setBio(e.target.value)} />
+							</FormField>
 						)}
 
-						<Grid size={12}>
-							<Stack direction='row' spacing={2} sx={{ justifyContent: 'flex-end' }}>
-								<Button color='inherit' onClick={handleClose} disabled={createList.isLoading}>
-									Cancel
-								</Button>
+						<div className='flex justify-end gap-2'>
+							<Button variant='ghost' onClick={handleClose} disabled={createList.isLoading}>
+								Cancel
+							</Button>
 
-								<Button onClick={handleCreate} disabled={name.trim().length === 0} endIcon={<Add />} loading={createList.isLoading} loadingPosition='end' variant='contained'>
-									Create
-								</Button>
-							</Stack>
-						</Grid>
-					</Grid>
+							<Button onClick={handleCreate} disabled={name.trim().length === 0} loading={createList.isLoading}>
+								Create
+								<Plus />
+							</Button>
+						</div>
+					</div>
 				</DialogContent>
 			</Dialog>
 		</>

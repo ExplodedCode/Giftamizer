@@ -3,10 +3,13 @@ import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { supabase } from '../lib/useSupabase';
-import { useSnackbar } from 'notistack';
-import { CssBaseline, Paper, Box, Avatar, Typography, TextField, Button } from '@mui/material';
-import Grid from '@mui/material/Grid';
-import { LockOutlined } from '@mui/icons-material';
+import { useSnackbar } from '../lib/snackbar';
+
+import { Lock } from 'lucide-react';
+
+import { Button } from '../components/ui/button';
+import { FormField } from '../components/ui/form-field';
+import { Input } from '../components/ui/input';
 
 var randomImage = Math.floor(Math.random() * 10) + 1;
 
@@ -33,56 +36,30 @@ export default function UpdatePassword() {
 	};
 
 	return (
-		<>
-			<Grid container component='main' sx={{ height: '100vh' }}>
-				<CssBaseline />
-				<Grid
-					size={{ xs: false, sm: 4, md: 7 }}
-					sx={{
-						backgroundImage: 'url(/images/signin/' + randomImage + '.jpg)',
-						backgroundRepeat: 'no-repeat',
-						backgroundColor: (t) => (t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.grey[900]),
-						backgroundSize: 'cover',
-						backgroundPosition: 'center',
-					}}
-				/>
-				<Grid size={{ xs: 12, sm: 8, md: 5 }} component={Paper} elevation={6} square>
-					<Box
-						sx={{
-							my: 8,
-							mx: 4,
-							display: 'flex',
-							flexDirection: 'column',
-							alignItems: 'center',
-						}}
-					>
-						<Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
-							<LockOutlined />
-						</Avatar>
-						<Typography component='h1' variant='h5'>
-							Set a New Password
-						</Typography>
+		<div className='flex min-h-dvh'>
+			{/* Hero image side */}
+			<div className='relative hidden sm:block sm:w-1/3 md:w-7/12'>
+				<div className='absolute inset-0 bg-cover bg-center' style={{ backgroundImage: 'url(/images/signin/' + randomImage + '.jpg)' }} />
+				<div className='absolute inset-0 bg-gradient-to-tr from-primary/50 via-primary/10 to-transparent' />
+			</div>
 
-						<Box sx={{ mt: 1, maxWidth: 500 }}>
-							<TextField
-								margin='normal'
-								required
-								fullWidth
-								name='password'
-								label='Password'
-								type='password'
-								id='password'
-								autoComplete='password'
-								value={password}
-								onChange={(e) => setPassword(e.target.value)}
-							/>
-							<Button fullWidth variant='contained' sx={{ mt: 3, mb: 2 }} onClick={() => handleSubmit()} disabled={password.length < 8}>
-								Reset Password
-							</Button>
-						</Box>
-					</Box>
-				</Grid>
-			</Grid>
-		</>
+			{/* Form side */}
+			<div className='flex w-full flex-col items-center bg-card px-6 py-16 sm:w-2/3 md:w-5/12'>
+				<span className='flex size-11 items-center justify-center rounded-full bg-primary text-primary-foreground'>
+					<Lock className='size-5' />
+				</span>
+				<h1 className='mt-3 text-2xl font-semibold tracking-tight'>Set a New Password</h1>
+
+				<div className='mt-6 flex w-full max-w-sm flex-col gap-4'>
+					<FormField label='Password' required htmlFor='password'>
+						<Input id='password' name='password' type='password' autoComplete='password' required value={password} onChange={(e) => setPassword(e.target.value)} />
+					</FormField>
+
+					<Button className='w-full' onClick={() => handleSubmit()} disabled={password.length < 8}>
+						Reset Password
+					</Button>
+				</div>
+			</div>
+		</div>
 	);
 }

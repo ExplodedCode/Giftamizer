@@ -2,50 +2,26 @@ import React, { useEffect } from 'react';
 
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { useDeleteList, useGetLists, DEFAULT_LIST_ID, useGetTour, useUpdateTour, listTourProgress } from '../lib/useSupabase/hooks';
+import { useDeleteList, useGetLists, DEFAULT_LIST_ID, useGetTour, useUpdateTour, listTourProgress, useActiveTourLeg, SKIP_LIST_TOUR } from '../lib/useSupabase/hooks';
 import { ListType, TourSteps } from '../lib/useSupabase/types';
 
-import { useSnackbar } from 'notistack';
-import {
-	Container,
-	Typography,
-	Box,
-	CircularProgress,
-	IconButton,
-	ListItem,
-	Avatar,
-	ListItemAvatar,
-	ListItemText,
-	MenuItem,
-	Collapse,
-	List,
-	Menu,
-	ListItemIcon,
-	ListItemButton,
-	Chip,
-	Stack,
-	AppBar,
-	Breadcrumbs,
-	Toolbar,
-	Alert,
-	Paper,
-	useTheme,
-	DialogTitle,
-	DialogContent,
-	DialogActions,
-	AlertTitle,
-	Backdrop,
-} from '@mui/material';
-import Grid from '@mui/material/Grid';
-import { Delete, Edit, EscalatorWarning, ListAlt, MoreVert } from '@mui/icons-material';
+import { useSnackbar } from '../lib/snackbar';
 import { TransitionGroup } from 'react-transition-group';
+import { UseMutationResult } from '@tanstack/react-query';
+import { Baby, ClipboardList, EllipsisVertical, Pencil, Trash2, TriangleAlert } from 'lucide-react';
 
 import ListCreate from '../components/ListCreate';
 import ListUpdate from '../components/ListUpdate';
-import { Button } from '@mui/material';
-import TourTooltip from '../components/TourTooltip';
-import { UseMutationResult } from '@tanstack/react-query';
-import HtmlTooltip from '../components/HtmlTooltip';
+import TourTooltip, { TourContent, TourSkipButton } from '../components/TourTooltip';
+
+import { Button } from '../components/ui/button';
+import { Chip } from '../components/ui/chip';
+import { Collapse } from '../components/ui/collapse';
+import { ConfirmDialog } from '../components/ui/confirm-dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../components/ui/dropdown-menu';
+import { PageHeader } from '../components/ui/page-header';
+import { Spinner } from '../components/ui/spinner';
+import { UserAvatar } from '../components/ui/avatar';
 
 interface RenderListItemProps {
 	index: number;
@@ -57,144 +33,116 @@ interface RenderListItemProps {
 function RenderListItem({ index, list, handleListEdit, tour, updateTour }: RenderListItemProps) {
 	const { enqueueSnackbar } = useSnackbar();
 	const navigate = useNavigate();
-	const location = useLocation();
 
 	const deleteList = useDeleteList();
 
-	const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-	const open = Boolean(anchorEl);
-	const handleClick = (event: React.MouseEvent<HTMLElement>) => {
-		setAnchorEl(event.currentTarget);
+	const [open, setOpen] = React.useState(false);
+	const [confirmDeleteOpen, setConfirmDeleteOpen] = React.useState(false);
 
-		if (!tour?.list_menu) {
+	// Opening the menu completes the `list_menu` step - the Edit entry inside it
+	// needs no callout of its own.
+	const handleOpenChange = (next: boolean) => {
+		setOpen(next);
+
+		if (next && !tour?.list_menu) {
 			updateTour.mutateAsync({
 				list_menu: true,
 			});
 		}
 	};
-	const handleClose = () => {
-		setAnchorEl(null);
-	};
 
 	const handleDelete = async (id: string) => {
-		await deleteList.mutateAsync(id).catch((err) => {
-			enqueueSnackbar(`Unable to delete list! ${err.message}`, { variant: 'error' });
-		});
+		await deleteList
+			.mutateAsync(id)
+			.then(() => {
+				setConfirmDeleteOpen(false);
+			})
+			.catch((err) => {
+				enqueueSnackbar(`Unable to delete list! ${err.message}`, { variant: 'error' });
+			});
 	};
 
-	//
-	// user tour
-	const [showTour, setShowTour] = React.useState<boolean>(false);
-	useEffect(() => {
-		if (open) {
-			setTimeout(() => {
-				setShowTour(true);
-			}, 250);
-		} else {
-			setShowTour(false);
-		}
-	}, [open]);
-
 	return (
-		<ListItem
-			secondaryAction={
-				<>
-					<IconButton onClick={handleClick} tour-element={index === 0 ? 'list_menu' : undefined}>
-						<MoreVert />
-					</IconButton>
-
-					<Menu
-						anchorEl={anchorEl}
-						anchorOrigin={{
-							vertical: 'bottom',
-							horizontal: 'right',
-						}}
-						transformOrigin={{
-							vertical: 'top',
-							horizontal: 'right',
-						}}
-						open={open}
-						onClose={handleClose}
-					>
-						<HtmlTooltip
-							title={<DialogTitle>Edit your {list.name} list and add it to one more more groups!</DialogTitle>}
-							arrow
-							open={showTour && listTourProgress(tour ?? {}) === 'list_edit' && location.hash === ''}
-							placement='top-end'
-						>
-							<MenuItem
-								onClick={() => {
-									if (!tour?.list_edit) {
-										updateTour.mutateAsync({
-											list_edit: true,
-										});
-									}
-
-									if (handleListEdit !== undefined) handleListEdit(list);
-									handleClose();
-								}}
-								tour-element={index === 0 ? 'list_edit' : undefined}
-							>
-								<ListItemIcon>
-									<Edit fontSize='small' />
-								</ListItemIcon>
-								<ListItemText>Edit</ListItemText>
-							</MenuItem>
-						</HtmlTooltip>
-
-						<MenuItem
-							onClick={() => {
-								handleDelete(list.id);
-								handleClose();
-							}}
-							disabled={list.id === DEFAULT_LIST_ID} // don't allow delete of default list
-						>
-							<ListItemIcon>
-								<Delete fontSize='small' />
-							</ListItemIcon>
-							<ListItemText>Delete</ListItemText>
-						</MenuItem>
-					</Menu>
-				</>
-			}
-			disablePadding
-		>
-			<ListItemButton onClick={() => navigate(`/lists/${list.id}`)}>
-				<ListItemAvatar>
-					{list.image ? (
-						<Avatar alt={list.name} src={list.image} />
-					) : (
-						<Avatar sx={{ bgcolor: list.id === DEFAULT_LIST_ID ? 'primary.main' : undefined }}>{list.child_list ? <EscalatorWarning /> : <ListAlt />}</Avatar>
-					)}
-				</ListItemAvatar>
-
-				<ListItemText
-					primary={list.name}
-					secondary={
-						list.groups.length === 0 ? (
-							<Box sx={{ ml: 1, mt: 0.5 }}>
-								<Box sx={{ color: 'warning.main' }}>
-									<b>This list is not assigned any groups!</b>
-								</Box>
-								<i>Add this list to a groups for the items to be visible to others.</i>
-							</Box>
-						) : (
-							<Stack direction='row' spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
-								{list.groups.map((g) => (
-									<Chip label={g.name} size='small' />
-								))}
-							</Stack>
-						)
-					}
+		<div className='group flex items-center gap-1 rounded-xl border border-border bg-card p-2 shadow-xs transition-shadow hover:shadow-sm'>
+			<button type='button' onClick={() => navigate(`/lists/${list.id}`)} className='flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-lg p-1.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/50'>
+				<UserAvatar
+					src={list.image}
+					alt={list.name}
+					fallback={list.child_list ? <Baby className='size-5' /> : <ClipboardList className='size-5' />}
+					className={list.id === DEFAULT_LIST_ID ? 'size-10' : 'size-10 [&_[data-slot=avatar-fallback]]:bg-muted [&_[data-slot=avatar-fallback]]:text-muted-foreground'}
 				/>
-			</ListItemButton>
-		</ListItem>
+
+				<div className='flex min-w-0 flex-col gap-1'>
+					<span className='truncate text-sm font-medium'>{list.name}</span>
+					{list.groups.length === 0 ? (
+						<span className='flex flex-col text-xs'>
+							<span className='flex items-center gap-1 font-semibold text-status-planned'>
+								<TriangleAlert className='size-3.5' />
+								This list is not assigned any groups!
+							</span>
+							<span className='text-muted-foreground italic'>Add this list to a groups for the items to be visible to others.</span>
+						</span>
+					) : (
+						<span className='flex flex-wrap gap-1'>
+							{list.groups.map((g) => (
+								<Chip key={g.id} size='sm'>
+									{g.name}
+								</Chip>
+							))}
+						</span>
+					)}
+				</div>
+			</button>
+
+			<DropdownMenu open={open} onOpenChange={handleOpenChange}>
+				<DropdownMenuTrigger asChild>
+					<button
+						type='button'
+						{...({ 'tour-element': index === 0 ? 'list_menu' : undefined } as object)}
+						aria-label='list menu'
+						className='flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50'
+					>
+						<EllipsisVertical className='size-5' />
+					</button>
+				</DropdownMenuTrigger>
+
+				<DropdownMenuContent align='end'>
+					<DropdownMenuItem
+						onClick={() => {
+							if (handleListEdit !== undefined) handleListEdit(list);
+						}}
+					>
+						<Pencil />
+						Edit
+					</DropdownMenuItem>
+
+					<DropdownMenuItem
+						onClick={() => {
+							setConfirmDeleteOpen(true);
+						}}
+						disabled={list.id === DEFAULT_LIST_ID} // don't allow delete of default list
+					>
+						<Trash2 />
+						Delete
+					</DropdownMenuItem>
+				</DropdownMenuContent>
+			</DropdownMenu>
+
+			<ConfirmDialog
+				open={confirmDeleteOpen}
+				onOpenChange={setConfirmDeleteOpen}
+				title={`Delete ${list.name} List?`}
+				description={`This action is permanent! Items assigned to this list will be unassigned${list.groups.length > 0 ? `, and the list will be removed from ${list.groups.length === 1 ? 'its group' : 'its groups'}` : ''}.`}
+				confirmText='Yes, Delete it'
+				destructive
+				loading={deleteList.isLoading}
+				onConfirm={() => handleDelete(list.id)}
+			/>
+		</div>
 	);
 }
 
 export default function Lists() {
-	const theme = useTheme();
-
 	const { enqueueSnackbar } = useSnackbar();
 	const navigate = useNavigate();
 	const location = useLocation();
@@ -213,6 +161,7 @@ export default function Lists() {
 	const [showTour, setShowTour] = React.useState<boolean>(false);
 	const { data: tour } = useGetTour();
 	const updateTour = useUpdateTour();
+	const activeTourLeg = useActiveTourLeg();
 	useEffect(() => {
 		if (!isLoading) {
 			setTimeout(() => {
@@ -221,106 +170,101 @@ export default function Lists() {
 		}
 	}, [isLoading]);
 
+	const handleSkipListTour = () => {
+		updateTour.mutateAsync(SKIP_LIST_TOUR);
+	};
+
 	return (
 		<>
-			<AppBar position='static' sx={{ marginBottom: 2 }} color='default'>
-				<Toolbar variant='dense'>
-					<Breadcrumbs aria-label='breadcrumb' sx={{ flexGrow: 1 }}>
-						<Typography color='text.primary'>Lists</Typography>
-					</Breadcrumbs>
-				</Toolbar>
-			</AppBar>
+			<PageHeader crumbs={[{ label: 'Lists' }]} />
 
-			{listTourProgress(tour ?? {}) === 'list_intro' && location.hash === '' && (
-				<Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={true}>
-					<Paper
-						elevation={12}
-						sx={{
-							backgroundColor: theme.palette.primary.main,
-							maxWidth: 550,
-							margin: 2,
-						}}
-					>
-						<DialogTitle>Get Started with Lists!</DialogTitle>
-						<DialogContent>
-							<Typography gutterBottom>Lists allow you to have more control over who can see specific items. Even create seperate managed lists for your kids or pets.</Typography>
+			{activeTourLeg === 'list' && listTourProgress(tour ?? {}) === 'list_intro' && location.hash === '' && (
+				<div className='fixed inset-0 z-[1300] flex items-center justify-center bg-black/60 p-4'>
+					<div className='max-w-[550px] rounded-xl bg-primary p-5 text-primary-foreground shadow-xl'>
+						<TourContent title='Get Started with Lists!'>
+							<p>A list is a bundle of items you share with specific groups — so your coworkers don't have to see the gift you picked out for your partner.</p>
+							<p>You can also create separate managed lists for your kids or pets.</p>
 
-							<Alert severity='warning'>
-								<AlertTitle sx={{ fontWeight: 'bold' }}>Item Assignment</AlertTitle>
-								<Typography variant='body2' gutterBottom>
-									To ensure that your items are visible to others in a group, you must assign your lists to a group, <b>and</b> items must be assigned to a list
-								</Typography>
-							</Alert>
-						</DialogContent>
-						<DialogActions>
-							<Button
-								variant='outlined'
-								color='inherit'
-								onClick={() => {
-									if (!tour?.list_intro) {
-										updateTour.mutateAsync({
-											list_nav: true,
-											list_intro: true,
-										});
-									}
-								}}
-								loading={updateTour.isLoading}
-							>
-								Get Started
-							</Button>
-						</DialogActions>
-					</Paper>
-				</Backdrop>
+							{/* Opaque card surface: a translucent status tint would blend into the primary
+							    background behind it and read as plain green. */}
+							<div className='mt-1 rounded-lg bg-card p-3 text-sm text-card-foreground'>
+								<p className='mb-1 flex items-center gap-1.5 font-bold'>
+									<TriangleAlert className='size-4 text-status-planned' />
+									Two things to remember
+								</p>
+								<p>
+									An item shows up for a group only when the list is shared with that group <b>and</b> the item is on that list.
+								</p>
+							</div>
+
+							<div className='mt-2 flex justify-end gap-2'>
+								<TourSkipButton onClick={handleSkipListTour} loading={updateTour.isLoading}>
+									Skip List Tour
+								</TourSkipButton>
+								<Button
+									variant='secondary'
+									size='sm'
+									onClick={() => {
+										if (!tour?.list_intro) {
+											updateTour.mutateAsync({
+												list_nav: true,
+												list_intro: true,
+											});
+										}
+									}}
+									loading={updateTour.isLoading}
+								>
+									Get Started
+								</Button>
+							</div>
+						</TourContent>
+					</div>
+				</div>
 			)}
 
-			<Container maxWidth='sm' sx={{ pt: 4, pb: 12 }}>
-				<Grid container spacing={2}>
-					{lists && (
-						<>
-							<TransitionGroup component={List} sx={{ width: '100%' }} dense>
-								{[...lists.filter((l) => l.id === DEFAULT_LIST_ID)!, ...lists.filter((l) => l.id !== DEFAULT_LIST_ID)!]?.map((list, index) => (
-									<Collapse key={list.id}>
-										<RenderListItem
-											index={index}
-											list={list}
-											handleListEdit={(l) => {
-												setListEdit(l);
-												navigate('#list-edit'); // close dialog
-											}}
-											tour={tour}
-											updateTour={updateTour}
-										/>
-									</Collapse>
-								))}
-							</TransitionGroup>
-
-							{showTour && tour && (
-								<>
-									<TourTooltip
-										open={listTourProgress(tour ?? {}) === 'list_menu' && location.hash === ''}
-										anchorEl={document.querySelector('[tour-element="list_menu"]')}
-										placement='bottom-end'
-										content={
-											<>
-												<DialogTitle>Edit your {lists?.find((l) => l.id === DEFAULT_LIST_ID)?.name} list add it to a group!</DialogTitle>
-											</>
-										}
-										backgroundColor={theme.palette.primary.main}
-										color={theme.palette.primary.contrastText}
-										mask
-										allowClick
+			<div className='mx-auto max-w-xl px-4 pt-6 pb-12'>
+				{lists && (
+					<>
+						<TransitionGroup component={null}>
+							{[...lists.filter((l) => l.id === DEFAULT_LIST_ID)!, ...lists.filter((l) => l.id !== DEFAULT_LIST_ID)!]?.map((list, index) => (
+								<Collapse key={list.id} className='[&>*]:mb-2'>
+									<RenderListItem
+										index={index}
+										list={list}
+										handleListEdit={(l) => {
+											setListEdit(l);
+											navigate('#list-edit'); // close dialog
+										}}
+										tour={tour}
+										updateTour={updateTour}
 									/>
-								</>
-							)}
-						</>
-					)}
-				</Grid>
-				{isLoading && (
-					<Box sx={{ display: 'flex', justifyContent: 'center', mt: 16 }}>
-						<CircularProgress />
-					</Box>
+								</Collapse>
+							))}
+						</TransitionGroup>
+
+						{showTour && tour && (
+							<TourTooltip
+								open={activeTourLeg === 'list' && listTourProgress(tour ?? {}) === 'list_menu' && location.hash === ''}
+								anchorEl={document.querySelector('[tour-element="list_menu"]')}
+								placement='bottom-end'
+								content={
+									<TourContent title='Share your first list'>
+										<p>Open this menu and choose Edit to add your {lists?.find((l) => l.id === DEFAULT_LIST_ID)?.name} list to a group.</p>
+									</TourContent>
+								}
+								mask
+								allowClick
+							/>
+						)}
+					</>
 				)}
-			</Container>
+
+				{isLoading && (
+					<div className='mt-32 flex justify-center'>
+						<Spinner size={32} />
+					</div>
+				)}
+			</div>
 
 			<ListCreate />
 

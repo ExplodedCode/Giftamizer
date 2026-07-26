@@ -3,12 +3,15 @@ import * as React from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
 import { signInWithGoogle, useSupabase, validateEmail } from '../lib/useSupabase';
-import { useSnackbar } from 'notistack';
+import { useSnackbar } from '../lib/snackbar';
+
+import { Lock } from 'lucide-react';
 
 import { GoogleIcon } from '../components/SvgIcons';
-import { CssBaseline, Paper, Box, Avatar, Typography, Stack, IconButton, TextField, Button, Stepper, Step, StepLabel, Link as MUILink } from '@mui/material';
-import Grid from '@mui/material/Grid';
-import { LockOutlined } from '@mui/icons-material';
+import { Button } from '../components/ui/button';
+import { FormField } from '../components/ui/form-field';
+import { Input } from '../components/ui/input';
+import { Stepper } from '../components/ui/stepper';
 
 var randomImage = Math.floor(Math.random() * 10) + 1;
 
@@ -72,176 +75,99 @@ export default function SignUp() {
 		}
 	}, [activeStep, firstName, lastName, email, password]);
 
+	const enterAdvances = (e: React.KeyboardEvent) => {
+		if (e.key === 'Enter' && buttonRef.current) buttonRef.current.click();
+	};
+
 	return (
-		<Grid container component='main' sx={{ height: '100vh' }}>
-			<CssBaseline />
-			<Grid
-				size={{ xs: false, sm: 4, md: 7 }}
-				sx={{
-					backgroundImage: 'url(/images/signin/' + randomImage + '.jpg)',
-					backgroundRepeat: 'no-repeat',
-					backgroundColor: (t) => (t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.grey[900]),
-					backgroundSize: 'cover',
-					backgroundPosition: 'center',
-				}}
-			/>
-			<Grid size={{ xs: 12, sm: 8, md: 5 }} component={Paper} elevation={6} square>
-				<Box
-					sx={{
-						py: 8,
-						px: 4,
-						display: 'flex',
-						flexDirection: 'column',
-						alignItems: 'center',
-						height: '100%',
-					}}
-				>
-					<Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
-						<LockOutlined />
-					</Avatar>
-					<Typography component='h1' variant='h5'>
-						Create your Giftamizer Account
-					</Typography>
+		<div className='flex min-h-dvh'>
+			{/* Hero image side */}
+			<div className='relative hidden sm:block sm:w-1/3 md:w-7/12'>
+				<div className='absolute inset-0 bg-cover bg-center' style={{ backgroundImage: 'url(/images/signin/' + randomImage + '.jpg)' }} />
+				<div className='absolute inset-0 bg-gradient-to-tr from-primary/50 via-primary/10 to-transparent' />
+			</div>
 
-					<Box sx={{ mt: 1, maxWidth: 500 }}>
-						<Box
-							sx={{
-								display: 'flex',
-								flexDirection: 'column',
-								alignItems: 'center',
-							}}
+			{/* Form side */}
+			<div className='flex w-full flex-col items-center bg-card px-6 py-12 sm:w-2/3 md:w-5/12'>
+				<span className='flex size-11 items-center justify-center rounded-full bg-primary text-primary-foreground'>
+					<Lock className='size-5' />
+				</span>
+				<h1 className='mt-3 text-center text-2xl font-semibold tracking-tight'>Create your Giftamizer Account</h1>
+
+				<div className='mt-4 flex w-full max-w-sm flex-col gap-4'>
+					<div className='flex justify-center'>
+						<button
+							type='button'
+							onClick={() => signInWithGoogle(redirectTo ?? '/')}
+							disabled={window.location.host !== 'giftamizer.com'}
+							className='flex size-11 cursor-pointer items-center justify-center rounded-full border border-border transition-colors outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none'
 						>
-							<Stack spacing={2} direction='row'>
-								<IconButton onClick={() => signInWithGoogle(redirectTo ?? '/')} disabled={window.location.host !== 'giftamizer.com'}>
-									<GoogleIcon sx={window.location.host !== 'giftamizer.com' ? { opacity: 0.15 } : undefined} />
-								</IconButton>
-							</Stack>
-						</Box>
+							<GoogleIcon className='size-6' style={window.location.host !== 'giftamizer.com' ? { opacity: 0.15 } : undefined} />
+						</button>
+					</div>
 
-						<Stepper activeStep={activeStep} sx={{ mt: 2 }}>
-							{steps.map((label, index) => {
-								const stepProps: { completed?: boolean } = {};
-								const labelProps: {
-									optional?: React.ReactNode;
-								} = {};
+					<Stepper steps={steps} activeStep={activeStep} className='my-2' />
 
-								return (
-									<Step key={label} {...stepProps}>
-										<StepLabel {...labelProps}>{label}</StepLabel>
-									</Step>
-								);
-							})}
-						</Stepper>
+					{activeStep === 0 && (
+						<>
+							<FormField label='Email Address' required htmlFor='email'>
+								<Input id='email' name='email' autoComplete='email' autoFocus required value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={enterAdvances} />
+							</FormField>
+							<FormField label='Password' required htmlFor='password'>
+								<Input id='password' name='password' type='password' autoComplete='password' required value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={enterAdvances} />
+							</FormField>
+						</>
+					)}
+					{activeStep === 1 && (
+						<>
+							<FormField label='First Name' required htmlFor='fname'>
+								<Input id='fname' name='fname' autoComplete='fname' autoFocus required value={firstName} onChange={(e) => setFirstName(e.target.value)} onKeyDown={enterAdvances} />
+							</FormField>
+							<FormField label='Last Name' required htmlFor='lname'>
+								<Input id='lname' name='lname' autoComplete='lname' required value={lastName} onChange={(e) => setLastName(e.target.value)} onKeyDown={enterAdvances} />
+							</FormField>
+						</>
+					)}
+					{activeStep === 2 && (
+						<>
+							<FormField label='Email Address' required>
+								<Input value={email} disabled />
+							</FormField>
+							<FormField label='First Name'>
+								<Input value={firstName} disabled />
+							</FormField>
+							<FormField label='Last Name'>
+								<Input value={lastName} disabled />
+							</FormField>
+						</>
+					)}
 
-						{activeStep === 0 && (
-							<>
-								<TextField
-									margin='normal'
-									required
-									fullWidth
-									id='email'
-									label='Email Address'
-									name='email'
-									autoComplete='email'
-									autoFocus
-									value={email}
-									onChange={(e) => setEmail(e.target.value)}
-									onKeyDown={(e) => {
-										if (e.key === 'Enter' && buttonRef.current) buttonRef.current.click();
-									}}
-								/>
-								<TextField
-									margin='normal'
-									required
-									fullWidth
-									name='password'
-									label='Password'
-									type='password'
-									id='password'
-									autoComplete='password'
-									value={password}
-									onChange={(e) => setPassword(e.target.value)}
-									onKeyDown={(e) => {
-										if (e.key === 'Enter' && buttonRef.current) buttonRef.current.click();
-									}}
-								/>
-							</>
-						)}
-						{activeStep === 1 && (
-							<>
-								<TextField
-									margin='normal'
-									required
-									fullWidth
-									id='fname'
-									label='First Name'
-									name='fname'
-									autoComplete='fname'
-									autoFocus
-									value={firstName}
-									onChange={(e) => setFirstName(e.target.value)}
-									onKeyDown={(e) => {
-										if (e.key === 'Enter' && buttonRef.current) buttonRef.current.click();
-									}}
-								/>
-								<TextField
-									margin='normal'
-									required
-									fullWidth
-									id='lname'
-									label='Last Name'
-									name='lname'
-									autoComplete='lname'
-									value={lastName}
-									onChange={(e) => setLastName(e.target.value)}
-									onKeyDown={(e) => {
-										if (e.key === 'Enter' && buttonRef.current) buttonRef.current.click();
-									}}
-								/>
-							</>
-						)}
-						{activeStep === 2 && (
-							<>
-								<TextField margin='normal' required fullWidth id='email' label='Email Address' value={email} disabled />
-								<TextField margin='normal' fullWidth label='First Name' value={firstName} disabled />
-								<TextField margin='normal' fullWidth label='Last Name' value={lastName} disabled />
-							</>
-						)}
+					<div className='flex items-center justify-between pt-2'>
+						<Button variant='ghost' disabled={activeStep === 0} onClick={() => setActiveStep(activeStep - 1)}>
+							Back
+						</Button>
+						<Button onClick={() => (activeStep === 2 ? handleSubmit() : setActiveStep(activeStep + 1))} disabled={!canProceed} ref={buttonRef}>
+							{activeStep === 2 ? 'Create Account' : 'Continue'}
+						</Button>
+					</div>
 
-						<Box sx={{ display: 'flex', flexDirection: 'row', pt: 2, pb: 2 }}>
-							<Button color='inherit' disabled={activeStep === 0} onClick={() => setActiveStep(activeStep - 1)} sx={{ mr: 1 }}>
-								Back
-							</Button>
-							<Box sx={{ flex: '1 1 auto' }} />
-							<Button variant='contained' onClick={() => (activeStep === 2 ? handleSubmit() : setActiveStep(activeStep + 1))} disabled={!canProceed} ref={buttonRef}>
-								{activeStep === 2 ? 'Create Account' : 'Continue'}
-							</Button>
-						</Box>
+					<Link to={`/signin${window.location.search}${window.location.hash}`} className='text-sm text-primary underline-offset-4 hover:underline'>
+						Already have an account? Login
+					</Link>
+				</div>
 
-						<Grid container>
-							<Grid>
-								<MUILink component={Link} to={`/signin${window.location.search}${window.location.hash}`} variant='body2'>
-									Already have an account? Login
-								</MUILink>
-							</Grid>
-						</Grid>
-					</Box>
-					<Box sx={{ marginTop: 'auto' }}>
-						<Typography variant='subtitle2' color='GrayText'>
-							By clicking continue you agree to our{' '}
-							<MUILink component={Link} to='/terms' color='inherit'>
-								Terms of Service
-							</MUILink>{' '}
-							and you acknowledge you have read our{' '}
-							<MUILink component={Link} to='/policy' color='inherit'>
-								Privacy Policy
-							</MUILink>
-							. You also consent to receive marketing emails and/or emails relating to your account activity. If you choose not to consent disable email notifications in your user
-							profile.
-						</Typography>
-					</Box>
-				</Box>
-			</Grid>
-		</Grid>
+				<p className='mt-auto max-w-md pt-8 text-xs text-muted-foreground'>
+					By clicking continue you agree to our{' '}
+					<Link to='/terms' className='underline underline-offset-4 hover:text-foreground'>
+						Terms of Service
+					</Link>{' '}
+					and you acknowledge you have read our{' '}
+					<Link to='/policy' className='underline underline-offset-4 hover:text-foreground'>
+						Privacy Policy
+					</Link>
+					. You also consent to receive marketing emails and/or emails relating to your account activity. If you choose not to consent disable email notifications in your user profile.
+				</p>
+			</div>
+		</div>
 	);
 }

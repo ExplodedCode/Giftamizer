@@ -6,7 +6,7 @@ import ReactGA from 'react-ga4';
 
 import { useSupabase } from './useSupabase';
 import { ExternalInvite, GroupType, ListType, Member, Profile } from '../types';
-import { dataUrlToFile } from '../../../components/ImageCropper';
+import { dataUrlToFile } from '../utils';
 import { LISTS_QUERY_KEY } from './useLists';
 import { FakeDelay, useGetProfile } from '.';
 import { getSignedUrl, getSignedUrls } from '../storageUrls';

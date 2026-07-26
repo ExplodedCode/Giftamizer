@@ -5,7 +5,7 @@ import ReactGA from 'react-ga4';
 
 import { useSupabase } from './useSupabase';
 import { ItemType, ListType } from '../types';
-import { dataUrlToFile } from '../../../components/ImageCropper';
+import { dataUrlToFile } from '../utils';
 import { ITEMS_QUERY_KEY } from './useItems';
 import { FakeDelay } from '.';
 import { getSignedUrl, getSignedUrls } from '../storageUrls';

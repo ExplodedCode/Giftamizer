@@ -229,13 +229,21 @@ export interface NotificationType {
 	created_at?: Date;
 }
 
+/**
+ * Guided-tour progress. Keys are written to `profiles.tour` (jsonb) as the user
+ * advances, so keys are only ever added or retired - never renamed. Retired keys
+ * left over in a profile are harmless; they are simply never read again.
+ *
+ * Steps are listed in the order they are presented. See the `*TourProgress`
+ * helpers in `hooks/useTour.tsx` for the sequencing.
+ */
 export interface TourSteps {
 	item_create_fab?: boolean;
-	item_name?: boolean;
-	item_url?: boolean;
-	item_more_links?: boolean;
-	item_custom_fields?: boolean;
 	item_image?: boolean;
+	item_url?: boolean;
+	item_custom_fields?: boolean;
+	/** Only presented when the Lists feature is enabled. */
+	item_list_assign?: boolean;
 	item_create_btn?: boolean;
 
 	group_invite_nav?: boolean;
@@ -243,25 +251,25 @@ export interface TourSteps {
 
 	group_nav?: boolean;
 	group_create_fab?: boolean;
-	group_create_name?: boolean;
 	group_create_image?: boolean;
-	group_create?: boolean;
 	group_card?: boolean;
 	group_settings?: boolean;
+	/** Desktop only - there is no sidebar to pin to on mobile. */
 	group_pin?: boolean;
 	group_member_card?: boolean;
 	group_member_item_status?: boolean;
 	group_member_item_status_taken?: boolean;
 	group_member_item_filter?: boolean;
 
+	/** Group-settings leg - only reachable by opening the group's Manage dialog. */
 	group_settings_add_people?: boolean;
 	group_settings_permissions?: boolean;
+	group_settings_secret_santa?: boolean;
 
 	list_tour_start?: boolean;
 	list_nav?: boolean;
 	list_intro?: boolean;
 	list_menu?: boolean;
-	list_edit?: boolean;
 	list_group_assign?: boolean;
 
 	shopping_nav?: boolean;

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Giftamizer</title>
+		<meta name="description" content="An easier way to organize your gifts." />
+
+		<meta charset="utf-8" />
+		<link rel="icon" href="/favicon.ico" />
+		<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+		<link rel="manifest" href="/site.webmanifest" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="theme-color" content="#059669" />
+		<link rel="apple-touch-icon" href="/logo192.png" />
+		<link rel="manifest" href="/manifest.json" />
+
+		<script>
+			// Apply the persisted theme before first paint to avoid a flash.
+			(function () {
+				try {
+					var stored = localStorage.getItem('giftamizer-theme');
+					var dark = stored === 'dark' || ((stored === null || stored === 'system') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+					if (dark) document.documentElement.classList.add('dark');
+				} catch (e) {}
+			})();
+		</script>
+	</head>
+	<body>
+		<noscript>You need to enable JavaScript to run this app.</noscript>
+		<div id="root"></div>
+		<script type="module" src="/src/index.tsx"></script>
+	</body>
+</html>

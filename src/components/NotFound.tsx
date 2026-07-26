@@ -1,28 +1,22 @@
 import { Link } from 'react-router-dom';
 import { useSupabase } from '../lib/useSupabase';
 
-import { Typography, Link as MUILink } from '@mui/material';
-
 export default function NotFound() {
 	const { user } = useSupabase();
 
 	return (
 		<>
 			{user ? (
-				<Typography variant='h5' gutterBottom style={{ marginTop: 100, textAlign: 'center' }}>
-					Page not found!
-				</Typography>
+				<p className='mt-24 text-center text-xl font-medium'>Page not found!</p>
 			) : (
 				<>
-					<Typography variant='h5' gutterBottom style={{ marginTop: 100, textAlign: 'center' }}>
-						Page not found!
-					</Typography>
+					<p className='mt-24 mb-2 text-center text-xl font-medium'>Page not found!</p>
 
-					<Typography variant='body1' style={{ textAlign: 'center' }}>
-						<MUILink component={Link} to='/groups'>
+					<p className='text-center text-sm'>
+						<Link to='/groups' className='text-primary underline-offset-4 hover:underline'>
 							Go Back
-						</MUILink>
-					</Typography>
+						</Link>
+					</p>
 				</>
 			)}
 		</>

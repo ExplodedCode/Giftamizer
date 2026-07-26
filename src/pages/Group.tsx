@@ -1,43 +1,23 @@
 import React from 'react';
 
-import { useParams, useNavigate, Link, NavigateFunction, useLocation } from 'react-router-dom';
-import { groupTourProgress, useGetGroupMembers, useGetGroups, useGetLists, useGetProfile, useGetTour, useSetGroupPin, useUpdateTour } from '../lib/useSupabase';
-import { TransitionGroup } from 'react-transition-group';
+import { useParams, useNavigate, NavigateFunction, useLocation } from 'react-router-dom';
+import { groupTourProgress, useActiveTourLeg, useGetGroupMembers, useGetGroups, useGetLists, useGetProfile, useGetTour, useSetGroupPin, useUpdateTour } from '../lib/useSupabase';
 import { UseMutationResult } from '@tanstack/react-query';
 import { Member, TourSteps } from '../lib/useSupabase/types';
 
-import {
-	Card,
-	CardActionArea,
-	CardContent,
-	CardMedia,
-	CircularProgress,
-	Link as MUILink,
-	Typography,
-	Box,
-	Breadcrumbs,
-	AppBar,
-	Toolbar,
-	Checkbox,
-	Grow,
-	Container,
-	Tooltip,
-	Alert,
-	Collapse,
-	DialogTitle,
-	useTheme,
-	DialogContent,
-	DialogActions,
-	useMediaQuery,
-} from '@mui/material';
-import Grid from '@mui/material/Grid';
-import { PushPinOutlined, PushPin, EscalatorWarning } from '@mui/icons-material';
+import { Baby, Pin } from 'lucide-react';
 
 import GroupSettingsDialog from '../components/GroupSettingsDialog';
 import NotFound from '../components/NotFound';
 import TourTooltip from '../components/TourTooltip';
-import { Button } from '@mui/material';
 import SecretSanta from '../components/SecretSanta';
+
+import { cn, useMediaQuery } from '../lib/utils';
+import { Button } from '../components/ui/button';
+import { Collapse } from '../components/ui/collapse';
+import { PageHeader } from '../components/ui/page-header';
+import { Spinner } from '../components/ui/spinner';
+import { SimpleTooltip } from '../components/ui/tooltip';
 
 interface RenderMemberProps {
 	index: number;
@@ -51,59 +31,42 @@ function RenderMember({ index, member, navigate, tour, updateTour }: RenderMembe
 	const { group: groupID } = useParams();
 
 	return (
-		<Grid tour-element={index === 0 ? 'group_member_card' : undefined} key={member.user_id} size="grow" sx={{ maxWidth: { xs: '100%', sm: 250 }, minWidth: { xs: '100%', sm: 250 }, margin: 1 }}>
-			<Card sx={{ height: '100%' }}>
-				<CardActionArea
-					sx={{ height: '100%', display: 'grid', alignItems: 'start' }}
-					onClick={() => {
-						navigate(`/groups/${groupID}/${member.user_id}`);
+		<div {...({ 'tour-element': index === 0 ? 'group_member_card' : undefined } as object)} className='w-full sm:w-[250px]'>
+			<button
+				type='button'
+				onClick={() => {
+					navigate(`/groups/${groupID}/${member.user_id}`);
 
-						if (!tour?.group_member_card) {
-							updateTour.mutateAsync({
-								group_member_card: true,
-							});
-						}
-					}}
-				>
-					<CardMedia
-						sx={{
-							height: 250,
-							width: { xs: 'calc(100vw - 48px)', sm: 250 },
-							fontSize: 150,
-							lineHeight: 1.7,
-							textAlign: 'center',
-							backgroundColor: '#5cb660',
-							color: '#fff',
-						}}
-						image={member.profile.image}
-					>
-						{member.profile.image ? '' : Array.from(String(member.profile.first_name + member.profile.last_name).toUpperCase())[0]}
-					</CardMedia>
+					if (!tour?.group_member_card) {
+						updateTour.mutateAsync({
+							group_member_card: true,
+						});
+					}
+				}}
+				className='group block w-full animate-in cursor-pointer overflow-hidden rounded-xl border border-border bg-card text-left shadow-xs transition-all outline-none fade-in zoom-in-95 fill-mode-backwards hover:shadow-md hover:ring-2 hover:ring-primary/40 focus-visible:ring-2 focus-visible:ring-ring'
+				style={{ animationDelay: `${index * 25}ms` }}
+			>
+				<div className='flex h-[250px] w-full items-center justify-center overflow-hidden bg-primary'>
+					{member.profile.image ? (
+						<img src={member.profile.image} alt={`${member.profile.first_name} ${member.profile.last_name}`} className='size-full object-cover transition-transform duration-300 group-hover:scale-105' />
+					) : (
+						<span className='text-[150px] leading-none font-medium text-primary-foreground'>{Array.from(String(member.profile.first_name + member.profile.last_name).toUpperCase())[0]}</span>
+					)}
+				</div>
 
-					<CardContent>
-						<Grid container>
-							<Grid size="grow">
-								<Typography variant='h5' component='h2'>
-									{member.profile.first_name} {member.profile.last_name}
-								</Typography>
-							</Grid>
+				<div className='flex items-center justify-between gap-2 p-4'>
+					<p className='truncate text-lg font-semibold'>
+						{member.profile.first_name} {member.profile.last_name}
+					</p>
 
-							{member.child_list && (
-								<Grid>
-									<EscalatorWarning />
-								</Grid>
-							)}
-						</Grid>
-					</CardContent>
-				</CardActionArea>
-			</Card>
-		</Grid>
+					{member.child_list && <Baby className='size-5 shrink-0 text-muted-foreground' />}
+				</div>
+			</button>
+		</div>
 	);
 }
 
 export default function Group() {
-	const theme = useTheme();
-
 	const navigate = useNavigate();
 	const location = useLocation();
 	const { group: groupID, user: userID } = useParams();
@@ -116,11 +79,11 @@ export default function Group() {
 
 	//
 	// User tour
-	// const addGroupFab = React.useRef(null);
 	const [showTour, setShowTour] = React.useState<boolean>(false);
 	const { data: tour } = useGetTour();
 	const updateTour = useUpdateTour();
-	const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+	const activeTourLeg = useActiveTourLeg();
+	const isMobile = useMediaQuery('(max-width: 899.95px)');
 
 	React.useEffect(() => {
 		setTimeout(() => {
@@ -128,89 +91,81 @@ export default function Group() {
 		}, 500);
 	}, []);
 
+	const pinned = groups?.find((g) => g.id === groupID)?.my_membership[0].pinned;
+
+	// Memoized so children (Secret Santa) get a stable array reference.
+	const visibleMembers = React.useMemo(() => members?.filter((m) => !m.invite) ?? [], [members]);
+
 	return (
 		<>
 			{groupsLoading || membersLoading ? (
-				<Box sx={{ display: 'flex', justifyContent: 'center', mt: 16 }}>
-					<CircularProgress />
-				</Box>
+				<div className='mt-32 flex justify-center'>
+					<Spinner size={32} />
+				</div>
 			) : (
 				<>
 					{!userID && groups?.find((g) => g.id === groupID && !g.my_membership[0].invite) ? (
 						<>
-							<AppBar position='static' sx={{ bgcolor: 'background.paper' }}>
-								<Toolbar variant='dense'>
-									<Breadcrumbs aria-label='breadcrumb' sx={{ flexGrow: 1 }}>
-										<MUILink underline='hover' color='inherit' component={Link} to='/groups'>
-											Groups
-										</MUILink>
-										<Typography color='text.primary'>{groups?.find((g) => g.id === groupID)?.name}</Typography>
-									</Breadcrumbs>
-
-									<Tooltip title={groups?.find((g) => g.id === groupID)?.my_membership[0].pinned ? 'Unpin' : 'Pin'} arrow>
-										<Checkbox
-											tour-element='group_pin'
-											size='small'
-											icon={setGroupPin.isLoading ? <CircularProgress size={20} /> : <PushPinOutlined />}
-											checkedIcon={setGroupPin.isLoading ? <CircularProgress size={20} /> : <PushPin />}
-											sx={{ mr: 1, display: { xs: 'none', sm: 'none', md: 'flex' } }}
-											checked={groups?.find((g) => g.id === groupID)?.my_membership[0].pinned}
-											onChange={(e) => {
-												setGroupPin.mutateAsync({ id: groupID!, pinned: e.target.checked });
-											}}
-											disabled={setGroupPin.isLoading}
-										/>
-									</Tooltip>
-
-									<GroupSettingsDialog group={groups?.find((g) => g.id === groupID)!} owner={groups?.find((g) => g.id === groupID)?.my_membership[0].owner!} />
-								</Toolbar>
-							</AppBar>
-							<ListUnassignedAlert open={profile?.enable_lists && lists?.filter((l) => !l.child_list && l.groups.find((g) => g.id === groupID)).length === 0} />
-							<Container sx={{ marginTop: 2, paddingBottom: 12 }}>
-								{members?.filter((m) => !m.invite).length! > 1 && <SecretSanta group={groups?.find((g) => g.id === groupID)!} members={members?.filter((m) => !m.invite) ?? []} />}
-
-								<TransitionGroup component={Grid} container sx={{ justifyContent: 'center' }}>
-									{members
-										?.filter((m) => !m.invite)
-										.map((member, index) => (
-											<Grow
-												key={member.user_id}
-												style={{ transitionDelay: `${index * 25}ms` }}
-												addEndListener={() => {
-													setTimeout(() => {
-														setShowTour(true);
-													}, 150);
+							<PageHeader
+								crumbs={[{ label: 'Groups', to: '/groups' }, { label: groups?.find((g) => g.id === groupID)?.name }]}
+								actions={
+									<>
+										<SimpleTooltip title={pinned ? 'Unpin' : 'Pin'}>
+											<button
+												type='button'
+												{...({ 'tour-element': 'group_pin' } as object)}
+												onClick={() => {
+													setGroupPin.mutateAsync({ id: groupID!, pinned: !pinned });
 												}}
+												disabled={setGroupPin.isLoading}
+												className={cn(
+													'hidden size-9 cursor-pointer items-center justify-center rounded-lg transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/50 md:flex',
+													pinned ? 'text-festive hover:bg-festive/10' : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+													setGroupPin.isLoading && 'pointer-events-none opacity-50'
+												)}
 											>
-												{RenderMember({ index: index, member: member, navigate: navigate, tour: tour, updateTour: updateTour })}
-											</Grow>
-										))}
-								</TransitionGroup>
+												{setGroupPin.isLoading ? <Spinner size={18} /> : <Pin className={cn('size-5', pinned && 'fill-current')} />}
+											</button>
+										</SimpleTooltip>
 
-								{members?.filter((m) => !m.invite).length === 0 && (!groupsLoading || !membersLoading) && (
-									<Typography variant='h5' gutterBottom style={{ marginTop: 100, textAlign: 'center' }}>
-										This group has no members, invite some friends and family!
-									</Typography>
+										<GroupSettingsDialog group={groups?.find((g) => g.id === groupID)!} owner={groups?.find((g) => g.id === groupID)?.my_membership[0].owner!} />
+									</>
+								}
+							/>
+
+							<ListUnassignedAlert open={profile?.enable_lists && lists?.filter((l) => !l.child_list && l.groups.find((g) => g.id === groupID)).length === 0} />
+
+							<div className='mx-auto max-w-6xl px-4 pt-4 pb-12'>
+								{visibleMembers.length > 1 && <SecretSanta group={groups?.find((g) => g.id === groupID)!} members={visibleMembers} />}
+
+								<div className='flex flex-wrap justify-center gap-4'>
+									{visibleMembers.map((member, index) => (
+										<RenderMember key={member.user_id} index={index} member={member} navigate={navigate} tour={tour} updateTour={updateTour} />
+									))}
+								</div>
+
+								{visibleMembers.length === 0 && (!groupsLoading || !membersLoading) && (
+									<p className='mt-24 text-center text-xl font-medium'>This group has no members, invite some friends and family!</p>
 								)}
-							</Container>
+							</div>
 
-							{groups && showTour && tour && (
+							{groups && showTour && tour && activeTourLeg === 'group' && (
 								<>
 									<TourTooltip
 										open={groupTourProgress(tour, isMobile) === 'group_settings' && location.hash === ''}
 										anchorEl={document.querySelector('[tour-element="group_settings"]')}
 										placement='bottom-end'
 										content={
-											<>
-												<DialogContent>
-													<Typography>
-														{groups?.find((g) => g.id === groupID)?.my_membership[0].owner ? 'Manage your group members and settings here.' : 'Manage your group here.'}
-													</Typography>
-												</DialogContent>
-												<DialogActions>
+											<div>
+												<p>
+													{groups?.find((g) => g.id === groupID)?.my_membership[0].owner
+														? 'Invite people, set who can manage the group, and start a Secret Santa in here.'
+														: 'Group details and your membership live in here.'}
+												</p>
+												<div className='mt-1 flex justify-end'>
 													<Button
-														variant='outlined'
-														color='inherit'
+														variant='secondary'
+														size='sm'
 														onClick={() => {
 															updateTour.mutateAsync({
 																group_settings: true,
@@ -220,11 +175,9 @@ export default function Group() {
 													>
 														Next
 													</Button>
-												</DialogActions>
-											</>
+												</div>
+											</div>
 										}
-										backgroundColor={theme.palette.primary.main}
-										color={theme.palette.primary.contrastText}
 										allowClick
 									/>
 									<TourTooltip
@@ -232,14 +185,12 @@ export default function Group() {
 										anchorEl={document.querySelector('[tour-element="group_pin"]')}
 										placement='bottom-end'
 										content={
-											<>
-												<DialogContent>
-													<Typography>Pin groups to the side navigation.</Typography>
-												</DialogContent>
-												<DialogActions>
+											<div>
+												<p>Pin this group to the sidebar so it's one click away.</p>
+												<div className='mt-1 flex justify-end'>
 													<Button
-														variant='outlined'
-														color='inherit'
+														variant='secondary'
+														size='sm'
 														onClick={() => {
 															updateTour.mutateAsync({
 																group_pin: true,
@@ -249,11 +200,9 @@ export default function Group() {
 													>
 														Next
 													</Button>
-												</DialogActions>
-											</>
+												</div>
+											</div>
 										}
-										backgroundColor={theme.palette.primary.main}
-										color={theme.palette.primary.contrastText}
 										allowClick
 									/>
 
@@ -261,13 +210,7 @@ export default function Group() {
 										open={groupTourProgress(tour, isMobile) === 'group_member_card' && location.hash === ''}
 										anchorEl={document.querySelector('[tour-element="group_member_card"]')}
 										placement='bottom'
-										content={
-											<>
-												<DialogTitle>View items your friends and family shared!</DialogTitle>
-											</>
-										}
-										backgroundColor={theme.palette.primary.main}
-										color={theme.palette.primary.contrastText}
+										content={<p className='text-base font-semibold'>Open someone to see the items they've shared.</p>}
 										mask
 										allowClick
 									/>
@@ -288,12 +231,8 @@ interface ListUnassignedAlertProps {
 }
 function ListUnassignedAlert({ open }: ListUnassignedAlertProps) {
 	return (
-		<Box sx={{ width: '100%' }}>
-			<Collapse in={open}>
-				<Collapse in={alert !== undefined}>
-					<Alert severity='warning'>You are not sharing any lists with this group!</Alert>
-				</Collapse>
-			</Collapse>
-		</Box>
+		<Collapse in={!!open}>
+			<div className='bg-status-planned/10 px-4 py-2.5 text-sm text-status-planned'>You are not sharing any lists with this group!</div>
+		</Collapse>
 	);
 }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { useSnackbar } from 'notistack';
+import { useSnackbar } from '../lib/snackbar';
 
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -18,41 +18,23 @@ import {
 import { GroupType, Member, Profile, SecretSanta, SecretSantaStatus } from '../lib/useSupabase/types';
 import { TransitionGroup } from 'react-transition-group';
 
-import Collapse from '@mui/material/Collapse';
-import { useTheme } from '@mui/material/styles';
-import {
-	Avatar,
-	Box,
-	Button,
-	Dialog,
-	DialogActions,
-	DialogContent,
-	DialogContentText,
-	DialogTitle,
-	Divider,
-	FormControl,
-	FormControlLabel,
-	IconButton,
-	List,
-	ListItem,
-	ListItemAvatar,
-	ListItemSecondaryAction,
-	ListItemText,
-	MenuItem,
-	Select,
-	Stack,
-	Switch,
-	TextField,
-	Tooltip,
-	Typography,
-	useMediaQuery,
-} from '@mui/material';
-import Grid from '@mui/material/Grid';
-import { Share, Delete, DeleteForever, Email, EscalatorWarning, Logout, Save, Send, Settings } from '@mui/icons-material';
+import { Baby, LogOut, Mail, Save, Send, Settings, Share2, Trash2 } from 'lucide-react';
 
 import UserSearch from './UserSearch';
 import ImageCropper from './ImageCropper';
-import TourTooltip from './TourTooltip';
+import TourTooltip, { TourContent } from './TourTooltip';
+
+import { useMediaQuery } from '../lib/utils';
+import { Button } from './ui/button';
+import { Collapse } from './ui/collapse';
+import { ConfirmDialog } from './ui/confirm-dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
+import { FormField } from './ui/form-field';
+import { Input } from './ui/input';
+import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from './ui/select';
+import { LabeledSwitch } from './ui/switch';
+import { SimpleTooltip } from './ui/tooltip';
+import { UserAvatar } from './ui/avatar';
 
 interface RenderItemOptionsProps {
 	member: Member;
@@ -62,64 +44,58 @@ interface RenderItemOptionsProps {
 
 function renderItem({ member, handleMemberEdit, owner }: RenderItemOptionsProps) {
 	return (
-		<ListItem>
-			<ListItemAvatar>
-				{!member.external ? (
-					<Avatar alt={`${member.profile.first_name} ${member.profile.last_name}`} src={member.profile.image ?? '/defaultAvatar.png'} />
-				) : (
-					<Avatar sx={{ bgcolor: 'primary.main' }}>
-						{member.child_list && <EscalatorWarning />}
-						{member.external && <Email />}
-					</Avatar>
-				)}
-			</ListItemAvatar>
-			<ListItemText
-				primary={
-					<>
-						{member.external ? member.profile.email : `${member.profile.first_name} ${member.profile.last_name}`}
+		<div className='flex items-center gap-3 py-2'>
+			{!member.external ? (
+				<UserAvatar alt={`${member.profile.first_name} ${member.profile.last_name}`} src={member.profile.image ?? '/defaultAvatar.png'} />
+			) : (
+				<span className='flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground'>
+					{member.child_list && <Baby className='size-5' />}
+					{member.external && <Mail className='size-5' />}
+				</span>
+			)}
 
-						{member.invite && (
-							<Typography sx={{ display: 'inline-block', ml: 1 }} color='GrayText'>
-								{' — '}
-								Pending
-							</Typography>
-						)}
-					</>
-				}
-				secondary={!member.external && member.profile.email}
-			/>
-			<ListItemSecondaryAction>
+			<div className='min-w-0 flex-1'>
+				<p className='truncate text-sm font-medium'>
+					{member.external ? member.profile.email : `${member.profile.first_name} ${member.profile.last_name}`}
+					{member.invite && <span className='ml-1 text-muted-foreground'>— Pending</span>}
+				</p>
+				{!member.external && member.profile.email && <p className='truncate text-sm text-muted-foreground'>{member.profile.email}</p>}
+			</div>
+
+			<div className='shrink-0'>
 				{member.child_list ? (
 					owner && (
-						<>
-							<Button variant='outlined' color='error' onClick={() => handleMemberEdit({ ...member, deleted: true })}>
-								Remove
-							</Button>
-						</>
+						<Button variant='outline' size='sm' className='border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive' onClick={() => handleMemberEdit({ ...member, deleted: true })}>
+							Remove
+						</Button>
 					)
 				) : (
-					<FormControl fullWidth>
-						<Select
-							value={member.owner ? 1 : 0}
-							onChange={(e) => {
-								if (e.target.value === -1) {
-									handleMemberEdit({ ...member, deleted: true });
-								} else {
-									handleMemberEdit({ ...member, owner: e.target.value === 1 ? true : false });
-								}
-							}}
-							size='small'
-							disabled={!owner}
-						>
-							<MenuItem value={0}>Member</MenuItem>
-							<MenuItem value={1}>Owner</MenuItem>
-							<Divider />
-							<MenuItem value={-1}>Remove Access</MenuItem>
-						</Select>
-					</FormControl>
+					<Select
+						value={member.owner ? '1' : '0'}
+						onValueChange={(value) => {
+							if (value === '-1') {
+								handleMemberEdit({ ...member, deleted: true });
+							} else {
+								handleMemberEdit({ ...member, owner: value === '1' ? true : false });
+							}
+						}}
+						disabled={!owner}
+					>
+						<SelectTrigger className='h-8 w-28'>
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value='0'>Member</SelectItem>
+							<SelectItem value='1'>Owner</SelectItem>
+							<SelectSeparator />
+							<SelectItem value='-1' className='text-destructive'>
+								Remove Access
+							</SelectItem>
+						</SelectContent>
+					</Select>
 				)}
-			</ListItemSecondaryAction>
-		</ListItem>
+			</div>
+		</div>
 	);
 }
 
@@ -128,7 +104,6 @@ type GroupSettingsDialogProps = {
 	owner: boolean;
 };
 export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialogProps) {
-	const theme = useTheme();
 	const navigate = useNavigate();
 	const location = useLocation();
 	const { enqueueSnackbar } = useSnackbar();
@@ -141,6 +116,8 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 	const { data: members, isLoading: membersLoading, refetch: refetchMembers } = useGetGroupMembers(groupID!);
 
 	const open = location.hash.startsWith('#group-settings');
+
+	const isDesktop = useMediaQuery('(min-width: 900px)');
 
 	const [name, setName] = React.useState('');
 	const [inviteLink, setInviteLink] = React.useState<boolean>(true);
@@ -234,11 +211,14 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 		setSelectedInviteUsers([]);
 		if (changed) refetchMembers();
 
-		if (!tour?.group_settings || !tour?.group_settings_add_people || !tour?.group_settings_permissions) {
+		// Every step of this leg anchors to an owner-only control, so closing the
+		// dialog retires the whole leg rather than stalling members on it.
+		if (!tour?.group_settings || !tour?.group_settings_add_people || !tour?.group_settings_permissions || !tour?.group_settings_secret_santa) {
 			updateTour.mutateAsync({
 				group_settings: true,
 				group_settings_add_people: true,
 				group_settings_permissions: true,
+				group_settings_secret_santa: true,
 			});
 		}
 	};
@@ -350,237 +330,217 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 
 	return (
 		<>
-			{useMediaQuery(theme.breakpoints.up('md')) ? (
-				<Button tour-element='group_settings' variant='outlined' color='primary' size='small' onClick={handleOpen}>
+			{isDesktop ? (
+				<Button {...({ 'tour-element': 'group_settings' } as object)} variant='outline' size='sm' onClick={handleOpen}>
 					Manage
 				</Button>
 			) : (
-				<IconButton tour-element='group_settings' onClick={handleOpen}>
-					<Settings />
-				</IconButton>
+				<button
+					type='button'
+					{...({ 'tour-element': 'group_settings' } as object)}
+					onClick={handleOpen}
+					className='flex size-9 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50'
+				>
+					<Settings className='size-5' />
+				</button>
 			)}
 
-			<Dialog open={open} onClose={handleClose} fullWidth maxWidth='sm' fullScreen={useMediaQuery(theme.breakpoints.down('md'))}>
-				<DialogTitle>Group Settings</DialogTitle>
-				<DialogContent>
-					<Grid container spacing={2}>
-						<Grid size={12}>
-							<DialogContentText>Share your gift lists with your friends and family.</DialogContentText>
+			<Dialog
+				open={open && !confirmLeaveOpen && !confirmDeleteOpen && !confirmSecretSantaOpen}
+				onOpenChange={(next) => {
+					if (!next) handleClose();
+				}}
+			>
+				<DialogContent fullScreenOnMobile>
+					<DialogHeader>
+						<DialogTitle>Group Settings</DialogTitle>
+						<DialogDescription>Share your gift lists with your friends and family.</DialogDescription>
+					</DialogHeader>
 
-							<Grid container spacing={2}>
-								<Grid size={12}>
-									<ImageCropper value={image} onChange={setImage} aspectRatio={1} disabled={!owner} />
-								</Grid>
-								<Grid size={12}>
-									<TextField label='Group Name' variant='outlined' fullWidth value={name} onChange={(e) => setName(e.target.value)} disabled={!owner} />
-								</Grid>
+					<div className='flex flex-col gap-4'>
+						<div className='flex justify-center'>
+							<ImageCropper value={image} onChange={setImage} aspectRatio={1} disabled={!owner} />
+						</div>
+
+						<FormField label='Group Name'>
+							<Input value={name} onChange={(e) => setName(e.target.value)} disabled={!owner} />
+						</FormField>
+
+						{owner && (
+							<div className='flex items-end gap-2'>
+								<div className='min-w-0 flex-1'>
+									<UserSearch selectedInviteUsers={selectedInviteUsers} setSelectedInviteUsers={setSelectedInviteUsers} members={members!} disabled={!owner} />
+								</div>
+								<div {...({ 'tour-element': 'group_settings_permissions' } as object)} className='shrink-0'>
+									<Select value={inviteUsersOwner ? '1' : '0'} onValueChange={(value) => setInviteUsersOwner(value === '1' ? true : false)} disabled={!owner}>
+										<SelectTrigger className='w-28'>
+											<SelectValue />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value='0'>Member</SelectItem>
+											<SelectItem value='1'>Owner</SelectItem>
+										</SelectContent>
+									</Select>
+								</div>
+							</div>
+						)}
+
+						<div>
+							<LabeledSwitch label='Join by Link' checked={inviteLink} onCheckedChange={(checked) => setInviteLink(checked === true)} disabled={!owner} className='mb-2' />
+
+							<Collapse in={inviteLink}>
+								<div className='flex items-center gap-1 pt-1'>
+									<FormField label='Invitation Link' className='min-w-0 flex-1'>
+										<Input disabled value={inviteURL.replace(`${window.location.protocol}//`, '')} className='h-8 text-xs' />
+									</FormField>
+									<SimpleTooltip title='Share Invitation'>
+										<button
+											type='button'
+											aria-label='share'
+											onClick={() => handleSharing()}
+											className='mt-5 flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50'
+										>
+											<Share2 className='size-5' />
+										</button>
+									</SimpleTooltip>
+								</div>
+							</Collapse>
+						</div>
+
+						{owner && secretSanta?.status === SecretSantaStatus.Off && (
+							<div {...({ 'tour-element': 'group_settings_secret_santa' } as object)} className='w-fit'>
+								<Button disabled={changed} loading={updateGroup.isLoading} onClick={handleSecretSantaEnable}>
+									Enable Secret Santa
+								</Button>
+							</div>
+						)}
+
+						{selectedInviteUsers.length === 0 && (
+							<div>
+								<p className='mb-1 font-semibold'>People with access</p>
+
+								<div className='flex flex-col'>
+									{profile && (
+										<div className='flex items-center gap-3 py-2'>
+											<UserAvatar alt={profile.first_name} src={profile.image ?? '/defaultAvatar.png'} />
+											<div className='min-w-0 flex-1'>
+												<p className='truncate text-sm font-medium'>{`${profile.first_name} ${profile.last_name}`}</p>
+												<p className='truncate text-sm text-muted-foreground'>{profile.email}</p>
+											</div>
+											<span className='shrink-0 text-sm text-muted-foreground'>{owner ? 'Owner' : 'Member'}</span>
+										</div>
+									)}
+
+									<div className='h-px bg-border' />
+									<TransitionGroup component={null}>
+										{members
+											?.filter((m) => !m.deleted)
+											.map((member) => (
+												<Collapse key={member.user_id}>{renderItem({ member: member, handleMemberEdit, owner })}</Collapse>
+											))}
+									</TransitionGroup>
+								</div>
+							</div>
+						)}
+
+						<div className='flex flex-wrap items-center justify-between gap-2'>
+							<div className='flex flex-wrap items-center gap-2'>
+								{owner && (
+									<Button variant='destructive' onClick={handleDeleteOpen} loading={membersLoading}>
+										Delete
+										<Trash2 />
+									</Button>
+								)}
+
+								{!changed && (members?.filter((m) => m.owner).length !== 0 || !owner) && (
+									<Button variant='destructive' onClick={handleLeaveOpen} loading={leaveGroup.isLoading}>
+										Leave Group
+										<LogOut />
+									</Button>
+								)}
+
+								{secretSanta?.status === SecretSantaStatus.On && owner && (
+									<Button variant='destructive' onClick={handleSecretSantaOpen} disabled={changed}>
+										Secret Santa
+										<Trash2 />
+									</Button>
+								)}
+							</div>
+
+							<div className='flex items-center gap-2'>
+								<Button variant='ghost' onClick={handleClose}>
+									Cancel
+								</Button>
 								{owner && (
 									<>
-										<Grid size="grow">
-											<UserSearch selectedInviteUsers={selectedInviteUsers} setSelectedInviteUsers={setSelectedInviteUsers} members={members!} disabled={!owner} />
-										</Grid>
-										<Grid>
-											<FormControl fullWidth tour-element='group_settings_permissions'>
-												<Select value={inviteUsersOwner ? 1 : 0} onChange={(e) => setInviteUsersOwner(e.target.value === 1 ? true : false)} disabled={!owner}>
-													<MenuItem value={0}>Member</MenuItem>
-													<MenuItem value={1}>Owner</MenuItem>
-												</Select>
-											</FormControl>
-										</Grid>
+										{selectedInviteUsers.length === 0 ? (
+											<Button onClick={handleSave} loading={membersLoading || updateGroup.isLoading} disabled={!changed || name.trim().length <= 0}>
+												Save
+												<Save />
+											</Button>
+										) : (
+											<Button onClick={handleInvite} loading={membersLoading || inviteToGroup.isLoading}>
+												Invite
+												<Send />
+											</Button>
+										)}
 									</>
 								)}
-
-								<Grid size={12}>
-									<FormControlLabel
-										control={<Switch checked={inviteLink} onChange={(e) => setInviteLink(e.target.checked)} />}
-										label='Join by Link'
-										disabled={!owner}
-										sx={{ mb: 1 }}
-									/>
-
-									<Collapse in={inviteLink}>
-										<Box sx={{ display: 'flex', alignItems: 'flex-end' }}>
-											<TextField
-												label='Invitation Link'
-												variant='outlined'
-												size='small'
-												fullWidth
-												slotProps={{
-													inputLabel: {
-														shrink: true,
-													},
-												}}
-												disabled
-												value={inviteURL.replace(`${window.location.protocol}//`, '')}
-											/>
-
-											<Tooltip title='Share Invitation' placement='bottom-end' arrow enterDelay={500}>
-												<IconButton aria-label='delete' sx={{ ml: 0.5 }} onClick={() => handleSharing()}>
-													<Share />
-												</IconButton>
-											</Tooltip>
-										</Box>
-									</Collapse>
-								</Grid>
-
-								{owner && secretSanta?.status === SecretSantaStatus.Off && (
-									<Grid size={12}>
-										<Button variant='contained' disabled={changed} onClick={handleSecretSantaEnable}>
-											Enable Secret Santa
-										</Button>
-									</Grid>
-								)}
-
-								{selectedInviteUsers.length === 0 && (
-									<Grid size={12}>
-										<Typography variant='h6' gutterBottom>
-											People with access
-										</Typography>
-
-										<List sx={{ width: '100%' }} dense>
-											{profile && (
-												<ListItem>
-													<ListItemAvatar>
-														<Avatar alt={profile.first_name} src={profile.image ?? '/defaultAvatar.png'} />
-													</ListItemAvatar>
-													<ListItemText primary={`${profile.first_name} ${profile.last_name}`} secondary={profile.email} />
-													<ListItemSecondaryAction>
-														<Button variant='text' size='large' disabled sx={{ textTransform: 'none' }}>
-															{owner ? 'Owner' : 'Member'}
-														</Button>
-													</ListItemSecondaryAction>
-												</ListItem>
-											)}
-
-											<Divider />
-											<TransitionGroup>
-												{members
-													?.filter((m) => !m.deleted)
-													.map((member) => (
-														<Collapse key={member.user_id}>{renderItem({ member: member, handleMemberEdit, owner })}</Collapse>
-													))}
-											</TransitionGroup>
-										</List>
-									</Grid>
-								)}
-							</Grid>
-						</Grid>
-
-						<Grid size={12}>
-							<Grid container spacing={2}>
-								<Grid size="grow">
-									<Stack direction='row' spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
-										{owner && (
-											<Button onClick={handleDeleteOpen} endIcon={<Delete />} loading={membersLoading} loadingPosition='end' variant='contained' color='error'>
-												Delete
-											</Button>
-										)}
-
-										{!changed && (members?.filter((m) => m.owner).length !== 0 || !owner) && (
-											<Button onClick={handleLeaveOpen} endIcon={<Logout />} loading={leaveGroup.isLoading} loadingPosition='end' variant='contained' color='error'>
-												Leave Group
-											</Button>
-										)}
-
-										{secretSanta?.status === SecretSantaStatus.On && owner && (
-											<Grid size={12}>
-												<Button onClick={handleSecretSantaOpen} variant='contained' color='error' endIcon={<Delete />} disabled={changed}>
-													Secret Santa
-												</Button>
-											</Grid>
-										)}
-									</Stack>
-								</Grid>
-								<Grid>
-									<Stack direction='row' spacing={2} sx={{ justifyContent: 'flex-end' }}>
-										<Button color='inherit' onClick={handleClose}>
-											Cancel
-										</Button>
-										{owner && (
-											<>
-												{selectedInviteUsers.length === 0 ? (
-													<Button
-														onClick={handleSave}
-														endIcon={<Save />}
-														loading={membersLoading || updateGroup.isLoading}
-														loadingPosition='end'
-														variant='contained'
-														disabled={!changed || name.trim().length <= 0}
-													>
-														Save
-													</Button>
-												) : (
-													<Button
-														onClick={handleInvite}
-														endIcon={<Send />}
-														loading={membersLoading || inviteToGroup.isLoading}
-														loadingPosition='end'
-														variant='contained'
-													>
-														Invite
-													</Button>
-												)}
-											</>
-										)}
-									</Stack>
-								</Grid>
-							</Grid>
-						</Grid>
-					</Grid>
+							</div>
+						</div>
+					</div>
 				</DialogContent>
 			</Dialog>
 
-			<Dialog open={confirmDeleteOpen} onClose={handleDeleteClose}>
-				<DialogTitle>Delete {group.name} Group?</DialogTitle>
-				<DialogContent>
-					<DialogContentText>
+			<ConfirmDialog
+				open={confirmDeleteOpen}
+				onOpenChange={(next) => {
+					if (!next) handleDeleteClose();
+				}}
+				title={`Delete ${group.name} Group?`}
+				description={
+					<>
 						Are you sure you want to delete this group? <b>All members will be removed!</b>
-					</DialogContentText>
-				</DialogContent>
-				<DialogActions>
-					<Button color='inherit' onClick={handleDeleteClose}>
-						Cancel
-					</Button>
-					<Button onClick={() => handleDelete(groupID!)} endIcon={<DeleteForever />} color='error' loading={deleteGroup.isLoading} loadingPosition='end' variant='contained'>
-						Yes, Delete it
-					</Button>
-				</DialogActions>
-			</Dialog>
+					</>
+				}
+				confirmText='Yes, Delete it'
+				destructive
+				loading={deleteGroup.isLoading}
+				onConfirm={() => handleDelete(groupID!)}
+			/>
 
-			<Dialog open={confirmLeaveOpen} onClose={handleLeaveClose}>
-				<DialogTitle>Leave {group.name} Group?</DialogTitle>
-				<DialogContent>
-					<DialogContentText>Are you sure you want to leave this group?</DialogContentText>
-				</DialogContent>
-				<DialogActions>
-					<Button color='inherit' onClick={handleLeaveClose}>
-						Cancel
-					</Button>
-					<Button onClick={() => handleLeave(groupID!)} endIcon={<Logout />} color='error' loading={leaveGroup.isLoading} loadingPosition='end' variant='contained'>
-						Yes, Leave it
-					</Button>
-				</DialogActions>
-			</Dialog>
+			<ConfirmDialog
+				open={confirmLeaveOpen}
+				onOpenChange={(next) => {
+					if (!next) handleLeaveClose();
+				}}
+				title={`Leave ${group.name} Group?`}
+				description='Are you sure you want to leave this group?'
+				confirmText='Yes, Leave it'
+				destructive
+				loading={leaveGroup.isLoading}
+				onConfirm={() => handleLeave(groupID!)}
+			/>
 
-			<Dialog open={confirmSecretSantaOpen} onClose={handleSecretSantaClose}>
-				<DialogTitle>Remove Secret Santa from the group?</DialogTitle>
-				<DialogContent>
-					<DialogContentText>
-						Are you sure you want to secret santa this group?
+			<ConfirmDialog
+				open={confirmSecretSantaOpen}
+				onOpenChange={(next) => {
+					if (!next) handleSecretSantaClose();
+				}}
+				title='Remove Secret Santa from the group?'
+				description={
+					<>
+						Are you sure you want to remove Secret Santa from this group?
 						<br />
 						<br />
-						This effects to all group members.
-					</DialogContentText>
-				</DialogContent>
-				<DialogActions>
-					<Button color='inherit' onClick={handleSecretSantaClose}>
-						Cancel
-					</Button>
-					<Button onClick={() => handleSecretSantaRemove()} endIcon={<Delete />} color='error' loading={leaveGroup.isLoading} loadingPosition='end' variant='contained'>
-						Remove
-					</Button>
-				</DialogActions>
-			</Dialog>
+						The drawing will be deleted for all group members.
+					</>
+				}
+				confirmText='Remove'
+				destructive
+				loading={updateGroup.isLoading}
+				onConfirm={() => handleSecretSantaRemove()}
+			/>
 
 			{tour && tourStart && (
 				<>
@@ -589,14 +549,12 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 						anchorEl={document.querySelector('[tour-element="group_settings_add_people"]')}
 						placement='top'
 						content={
-							<>
-								<DialogContent>
-									<Typography>Invite existing Giftamizer users or send anyone an invite via email.</Typography>
-								</DialogContent>
-								<DialogActions>
+							<div>
+								<p>Search for people already on Giftamizer, or type an email address to invite someone new.</p>
+								<div className='mt-1 flex justify-end'>
 									<Button
-										variant='outlined'
-										color='inherit'
+										variant='secondary'
+										size='sm'
 										onClick={() => {
 											updateTour.mutateAsync({
 												group_settings_add_people: true,
@@ -606,11 +564,9 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 									>
 										Next
 									</Button>
-								</DialogActions>
-							</>
+								</div>
+							</div>
 						}
-						backgroundColor={theme.palette.primary.main}
-						color={theme.palette.primary.contrastText}
 						mask
 					/>
 
@@ -619,15 +575,17 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 						anchorEl={document.querySelector('[tour-element="group_settings_permissions"]')}
 						placement='top'
 						content={
-							<>
-								<DialogContent sx={{ p: 1.5 }}>
-									<Typography gutterBottom>Members can only view other member and either items.</Typography>
-									<Typography>Owners can manage groups settings and members.</Typography>
-								</DialogContent>
-								<DialogActions>
+							<div className='flex flex-col gap-1'>
+								<p>
+									<b>Members</b> can see everyone in the group and the items they've shared.
+								</p>
+								<p>
+									<b>Owners</b> can do that plus rename the group, invite people, and manage everyone's access.
+								</p>
+								<div className='mt-1 flex justify-end'>
 									<Button
-										variant='outlined'
-										color='inherit'
+										variant='secondary'
+										size='sm'
 										onClick={() => {
 											updateTour.mutateAsync({
 												group_settings_permissions: true,
@@ -635,13 +593,37 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 										}}
 										loading={updateTour.isLoading}
 									>
+										Next
+									</Button>
+								</div>
+							</div>
+						}
+						mask
+					/>
+
+					<TourTooltip
+						open={groupSettingsTourProgress(tour) === 'group_settings_secret_santa'}
+						anchorEl={document.querySelector('[tour-element="group_settings_secret_santa"]')}
+						placement='top'
+						content={
+							<TourContent title='Secret Santa'>
+								<p>Draw names for the group and everyone gets one person to shop for — each member only sees their own assignment.</p>
+								<div className='mt-1 flex justify-end'>
+									<Button
+										variant='secondary'
+										size='sm'
+										onClick={() => {
+											updateTour.mutateAsync({
+												group_settings_secret_santa: true,
+											});
+										}}
+										loading={updateTour.isLoading}
+									>
 										Got it
 									</Button>
-								</DialogActions>
-							</>
+								</div>
+							</TourContent>
 						}
-						backgroundColor={theme.palette.primary.main}
-						color={theme.palette.primary.contrastText}
 						mask
 					/>
 				</>

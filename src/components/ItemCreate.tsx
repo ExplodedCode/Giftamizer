@@ -1,53 +1,36 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-import { useSnackbar } from 'notistack';
+import { useSnackbar } from '../lib/snackbar';
 
-import {
-	Avatar,
-	Button,
-	Collapse,
-	Dialog,
-	DialogActions,
-	DialogContent,
-	DialogContentText,
-	DialogTitle,
-	Fab,
-	FormControl,
-	IconButton,
-	InputAdornment,
-	InputLabel,
-	LinearProgress,
-	OutlinedInput,
-	Stack,
-	TextField,
-	Tooltip,
-	Typography,
-	useMediaQuery,
-} from '@mui/material';
-import Grid from '@mui/material/Grid';
-import { useTheme } from '@mui/material/styles';
-import { Add, AddLink, AddShoppingCart, Delete } from '@mui/icons-material';
+import { Link2, Plus, ShoppingCart, Trash2 } from 'lucide-react';
 
-import { useSupabase, useCreateItem, useGetProfile, ExtractURLFromText, useUpdateTour, itemTourProgress, useGetTour, useGetItems } from '../lib/useSupabase';
+import { useSupabase, useCreateItem, useGetProfile, ExtractURLFromText, useUpdateTour, itemTourProgress, useGetTour, useGetItems, SKIP_ITEM_TOUR } from '../lib/useSupabase';
 import { CustomField, ListType, Profile } from '../lib/useSupabase/types';
 
 import ListSelector from './ListSelector';
 import ImageCropper from './ImageCropper';
-import TourTooltip from './TourTooltip';
+import TourTooltip, { TourContent, TourSkipButton } from './TourTooltip';
 import UserSearchSingle from './UserSearchSingle';
+
+import { cn } from '../lib/utils';
+import { Button } from './ui/button';
+import { Collapse } from './ui/collapse';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
+import { FormField } from './ui/form-field';
+import { Input } from './ui/input';
+import { LinearProgress } from './ui/spinner';
+import { SimpleTooltip } from './ui/tooltip';
 
 interface ItemCreateProps {
 	defaultList?: ListType;
 	shoppingItem?: boolean;
 }
 export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProps) {
-	const theme = useTheme();
 	const { enqueueSnackbar } = useSnackbar();
 	const navigate = useNavigate();
 	const location = useLocation();
 
-	// const [open, setOpen] = React.useState(false);
 	const open = location.hash === '#create-item';
 
 	const [image, setImage] = React.useState<string | undefined>();
@@ -77,6 +60,11 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 				shopping_item: selectedUser?.user_id ?? null,
 			})
 			.then(() => {
+				// The item exists now, so the tour has nothing left to demonstrate.
+				// Retiring it here rather than in handleClose keeps a plain cancel
+				// (or a stray dialog dismiss) from silently ending the tour.
+				if (itemTourProgress(tour ?? {}, profile?.enable_lists) !== null) skipTour();
+
 				handleClose();
 			})
 			.catch((err) => {
@@ -98,10 +86,6 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 		setSelectedUser(undefined);
 
 		navigate('#'); // close dialog
-
-		if (itemTourProgress(tour ?? {}) !== null) {
-			skipTour();
-		}
 	};
 
 	const [metaImage, setMetaImage] = React.useState<string | undefined>();
@@ -153,15 +137,7 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 	const updateTour = useUpdateTour();
 
 	const skipTour = async () => {
-		updateTour.mutateAsync({
-			item_create_fab: true,
-			item_name: true,
-			item_url: true,
-			item_more_links: true,
-			item_custom_fields: true,
-			item_image: true,
-			item_create_btn: true,
-		});
+		updateTour.mutateAsync(SKIP_ITEM_TOUR);
 	};
 
 	React.useEffect(() => {
@@ -178,12 +154,44 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 		}
 	}, [open]);
 
+	const welcomeTourContent = (
+		<TourContent title='Welcome to Giftamizer!'>
+			<p>Items are the gifts you'd like to receive — everyone in your groups can see them.</p>
+			{!profile?.enable_lists && (
+				<p className='opacity-80'>Want finer control over who sees what? Turn on Lists in your settings — you can even keep separate lists for your kids or pets.</p>
+			)}
+			<p className='font-medium'>Use the + button to add {items?.length === 0 ? 'your first item' : 'an item'}.</p>
+			<div className='mt-1 flex justify-end'>
+				<TourSkipButton onClick={skipTour} loading={updateTour.isLoading}>
+					Skip Item Tour
+				</TourSkipButton>
+			</div>
+		</TourContent>
+	);
+
+	const tourNextButton = (tourKey: string, label: string = 'Next') => (
+		<div className='mt-1 flex justify-end'>
+			<Button
+				variant='secondary'
+				size='sm'
+				onClick={() => {
+					updateTour.mutateAsync({
+						[tourKey]: true,
+					});
+				}}
+				loading={updateTour.isLoading}
+			>
+				{label}
+			</Button>
+		</div>
+	);
+
 	return (
 		<>
-			<Fab
-				tour-element={shoppingItem ? 'shopping_item_create_fab' : 'item_create_fab'}
+			<button
+				type='button'
+				{...({ 'tour-element': shoppingItem ? 'shopping_item_create_fab' : 'item_create_fab' } as object)}
 				ref={addItemFab}
-				color='primary'
 				aria-label='add'
 				onClick={() => {
 					navigate('#create-item');
@@ -193,23 +201,32 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 						});
 					}
 				}}
-				sx={{ position: 'fixed', bottom: { xs: 64, md: 16 }, right: { xs: 8, md: 16 } }}
+				className={cn(
+					'fixed right-2 bottom-20 z-30 flex size-14 cursor-pointer items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg transition-all outline-none',
+					'hover:bg-primary-hover hover:shadow-xl focus-visible:ring-2 focus-visible:ring-ring/50 active:scale-95 md:right-4 md:bottom-4'
+				)}
 			>
-				{shoppingItem ? <AddShoppingCart /> : <Add />}
-			</Fab>
+				{shoppingItem ? <ShoppingCart className='size-6' /> : <Plus className='size-7' />}
+			</button>
 
-			<Dialog open={open} onClose={handleClose} maxWidth='sm' fullScreen={useMediaQuery(theme.breakpoints.down('md'))}>
-				<DialogTitle>Create Item</DialogTitle>
-				<DialogContent>
-					<Grid container spacing={2}>
-						<Grid size={12}>
-							{shoppingItem ? (
-								<DialogContentText>Add items you plan on getting for other people even if they don't have it on their list.</DialogContentText>
-							) : (
-								<DialogContentText>Add items you'd love to receive, whether it's your favorite products, experiences, or anything else you desire.</DialogContentText>
-							)}
-						</Grid>
-						<Grid size={12}>
+			<Dialog
+				open={open}
+				onOpenChange={(next) => {
+					if (!next) handleClose();
+				}}
+			>
+				<DialogContent fullScreenOnMobile>
+					<DialogHeader>
+						<DialogTitle>Create Item</DialogTitle>
+						<DialogDescription>
+							{shoppingItem
+								? `Add items you plan on getting for other people even if they don't have it on their list.`
+								: `Add items you'd love to receive, whether it's your favorite products, experiences, or anything else you desire.`}
+						</DialogDescription>
+					</DialogHeader>
+
+					<div className='flex flex-col gap-4'>
+						<div className='flex justify-center'>
 							<ImageCropper
 								onClick={() => {
 									setImageDialogOpen(true);
@@ -228,461 +245,238 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 								square
 								importedImage={metaImage}
 							/>
-						</Grid>
+						</div>
 
-						<Grid size={12} component={Collapse} in={availableImages.length > 0}>
-							<Stack
-								direction='row'
-								spacing={1}
-								sx={{
-									overflowY: 'scroll',
-									py: 1,
-								}}
-							>
+						<Collapse in={availableImages.length > 0}>
+							<div className='flex gap-2 overflow-x-auto py-1'>
 								{availableImages.map((img, index) => (
-									<Tooltip key={index} title='Use this image' arrow enterDelay={1500}>
-										<IconButton
+									<SimpleTooltip key={index} title='Use this image'>
+										<button
+											type='button'
 											onClick={() => {
 												setImage(img);
 												setMetaImage(img);
 											}}
-											// sx={{  }}
-											sx={{
-												width: 100,
-												height: 100,
-											}}
+											className={cn(
+												'size-[100px] shrink-0 cursor-pointer overflow-hidden rounded-full border-2 transition-colors',
+												image === img ? 'border-primary' : 'border-border hover:border-primary/60'
+											)}
 										>
-											<Avatar
-												src={img}
-												alt={`Image-${index}`}
-												sx={{
-													border: '2px solid',
-													borderColor: image === img ? theme.palette.primary.main : theme.palette.divider,
-													width: 100,
-													height: 100,
-													'&:hover': {
-														borderColor: theme.palette.primary.light,
-													},
-												}}
-											/>
-										</IconButton>
-									</Tooltip>
+											<img src={img} alt={`Image-${index}`} className='size-full object-cover' />
+										</button>
+									</SimpleTooltip>
 								))}
-							</Stack>
-						</Grid>
+							</div>
+						</Collapse>
 
-						{shoppingItem && (
-							<Grid size="grow">
-								<UserSearchSingle selectedUser={selectedUser} setSelectedUser={setSelectedUser} label='Gift For' required />
-							</Grid>
-						)}
+						{shoppingItem && <UserSearchSingle selectedUser={selectedUser} setSelectedUser={setSelectedUser} label='Gift For' required />}
 
-						<Grid size={12}>
-							<TextField
-								tour-element='item_name'
-								fullWidth
-								label='Name'
-								variant='outlined'
-								required
-								value={name}
-								onChange={(e) => setName(e.target.value)}
-								slotProps={{ htmlInput: { maxLength: 100 } }}
-							/>
-						</Grid>
-						<Grid size={12}>
-							<TextField fullWidth label='Description' variant='outlined' value={description} onChange={(e) => setDescription(e.target.value)} slotProps={{ htmlInput: { maxLength: 250 } }} />
-						</Grid>
+						<FormField label='Name' required>
+							<Input required value={name} onChange={(e) => setName(e.target.value)} maxLength={100} />
+						</FormField>
+
+						<FormField label='Description'>
+							<Input value={description} onChange={(e) => setDescription(e.target.value)} maxLength={250} />
+						</FormField>
+
 						{links.map((link, index) => (
-							<Grid key={index} size={12}>
-								<FormControl fullWidth variant='outlined'>
-									<InputLabel>URL</InputLabel>
-									<OutlinedInput
-										tour-element='item_url'
-										value={link}
-										onChange={(e) => {
-											let value = e.target.value;
-											let extractedUrl = ExtractURLFromText(value)[0] ?? '';
-
-											setLinks(links.map((l, i) => (i === index ? value : l)));
-
-											// @ts-ignore
-											if (e.nativeEvent.inputType === 'insertFromPaste' && index === 0 && extractedUrl.startsWith('http')) {
-												setLinks(links.map((l, i) => (i === index ? extractedUrl : l)));
-
-												setMetaloading(true);
-												getUrlMetadata(extractedUrl);
-											}
-										}}
-										endAdornment={
-											<InputAdornment position='end'>
-												<Tooltip title={index === 0 ? 'Add another URL' : 'Remove URL'} placement='left'>
-													<IconButton
-														tour-element='item_more_links'
-														onClick={() => {
-															if (index === 0) {
-																setLinks([...links, '']);
-
-																if (!tour?.item_more_links) {
-																	updateTour.mutateAsync({
-																		item_more_links: true,
-																	});
-																}
-															} else {
-																setLinks(links.filter((l, i) => i !== index));
-															}
-														}}
-														edge='end'
-														disabled={links.length === 5 && index === 0}
-													>
-														{index === 0 ? <AddLink /> : <Delete />}
-													</IconButton>
-												</Tooltip>
-											</InputAdornment>
-										}
-										label='URL'
-										inputProps={{ maxLength: 2000 }}
-									/>
-								</FormControl>
-								{index === 0 && <LinearProgress style={{ display: metaLoading ? 'block' : 'none' }} />}
-							</Grid>
-						))}
-						{customFields.map((field, index) => (
-							<Grid key={index} size={12}>
-								<Grid container spacing={2} sx={{ justifyContent: 'flex-start' }}>
-									<Grid size={5}>
-										<TextField
-											fullWidth
-											label={`Custom Field ${index + 1}`}
-											variant='outlined'
-											value={customFields.find((f) => f.id === field.id)?.name}
+							<div key={index}>
+								<FormField label='URL'>
+									<div className='relative'>
+										<Input
+											{...({ 'tour-element': index === 0 ? 'item_url' : undefined } as object)}
+											value={link}
+											maxLength={2000}
+											className='pr-10'
 											onChange={(e) => {
-												setCustomFields(customFields.map((f, i) => (f.id === field.id ? { ...f, name: e.target.value } : f)));
-											}}
-											slotProps={{ htmlInput: { maxLength: 25 } }}
-										/>
-									</Grid>
+												let value = e.target.value;
+												let extractedUrl = ExtractURLFromText(value)[0] ?? '';
 
-									<Grid size={7}>
-										<FormControl fullWidth variant='outlined'>
-											<InputLabel>Value</InputLabel>
-											<OutlinedInput
-												value={customFields.find((f) => f.id === field.id)?.value}
-												onChange={(e) => {
-													setCustomFields(customFields.map((f, i) => (f.id === field.id ? { ...f, value: e.target.value } : f)));
-												}}
-												endAdornment={
-													<InputAdornment position='end'>
-														<Tooltip title='Remove Field' placement='left'>
-															<IconButton
-																onClick={() => {
-																	setCustomFields(customFields.filter((f) => f.id !== field.id));
-																}}
-																edge='end'
-															>
-																<Delete />
-															</IconButton>
-														</Tooltip>
-													</InputAdornment>
+												setLinks(links.map((l, i) => (i === index ? value : l)));
+
+												// @ts-ignore
+												if (e.nativeEvent.inputType === 'insertFromPaste' && index === 0 && extractedUrl.startsWith('http')) {
+													setLinks(links.map((l, i) => (i === index ? extractedUrl : l)));
+
+													setMetaloading(true);
+													getUrlMetadata(extractedUrl);
 												}
-												label='Value'
-												inputProps={{ maxLength: 50 }}
-											/>
-										</FormControl>
-									</Grid>
-								</Grid>
-							</Grid>
+											}}
+										/>
+										<SimpleTooltip title={index === 0 ? 'Add another URL' : 'Remove URL'} side='left'>
+											<button
+												type='button'
+												onClick={() => {
+													if (index === 0) {
+														setLinks([...links, '']);
+													} else {
+														setLinks(links.filter((l, i) => i !== index));
+													}
+												}}
+												disabled={links.length === 5 && index === 0}
+												className='absolute top-1/2 right-1.5 -translate-y-1/2 cursor-pointer rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40'
+											>
+												{index === 0 ? <Link2 className='size-4' /> : <Trash2 className='size-4' />}
+											</button>
+										</SimpleTooltip>
+									</div>
+								</FormField>
+								{index === 0 && metaLoading && <LinearProgress className='mt-1' />}
+							</div>
 						))}
 
-						{profile?.enable_lists && !shoppingItem && (
-							<Grid size={12}>
-								<ListSelector value={lists} onChange={(v) => setLists(v)} />
-							</Grid>
-						)}
+						{customFields.map((field, index) => (
+							<div key={index} className='grid grid-cols-12 gap-3'>
+								<FormField label={`Custom Field ${index + 1}`} className='col-span-5'>
+									<Input
+										value={customFields.find((f) => f.id === field.id)?.name}
+										maxLength={25}
+										onChange={(e) => {
+											setCustomFields(customFields.map((f, i) => (f.id === field.id ? { ...f, name: e.target.value } : f)));
+										}}
+									/>
+								</FormField>
 
-						<Grid size={12}>
-							<Grid container spacing={2} sx={{ justifyContent: 'flex-start' }}>
-								<Grid size="grow">
-									<Stack direction='row' spacing={2} sx={{ justifyContent: 'flex-start' }}>
-										<Button
-											tour-element='item_custom_fields'
-											variant='outlined'
-											size='small'
-											color='inherit'
-											startIcon={<Add />}
-											onClick={() => {
-												setCustomFields([...customFields, { id: customFields.length, name: '', value: '' }]);
-
-												if (!tour?.item_custom_fields) {
-													updateTour.mutateAsync({
-														item_custom_fields: true,
-													});
-												}
+								<FormField label='Value' className='col-span-7'>
+									<div className='relative'>
+										<Input
+											value={customFields.find((f) => f.id === field.id)?.value}
+											maxLength={50}
+											className='pr-10'
+											onChange={(e) => {
+												setCustomFields(customFields.map((f, i) => (f.id === field.id ? { ...f, value: e.target.value } : f)));
 											}}
-											disabled={customFields.length === 10}
-										>
-											Field
-										</Button>
-									</Stack>
-								</Grid>
-								<Grid>
-									<Stack direction='row' spacing={2} sx={{ justifyContent: 'flex-end' }}>
-										<Button color='inherit' onClick={handleClose}>
-											Cancel
-										</Button>
+										/>
+										<SimpleTooltip title='Remove Field' side='left'>
+											<button
+												type='button'
+												onClick={() => {
+													setCustomFields(customFields.filter((f) => f.id !== field.id));
+												}}
+												className='absolute top-1/2 right-1.5 -translate-y-1/2 cursor-pointer rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground'
+											>
+												<Trash2 className='size-4' />
+											</button>
+										</SimpleTooltip>
+									</div>
+								</FormField>
+							</div>
+						))}
 
-										<Button
-											tour-element='item_create_btn'
-											onClick={handleCreate}
-											disabled={name.trim().length === 0 || (shoppingItem && !selectedUser)}
-											endIcon={<Add />}
-											loading={createItem.isLoading}
-											loadingPosition='end'
-											variant='contained'
-										>
-											Create
-										</Button>
-									</Stack>
-								</Grid>
-							</Grid>
-						</Grid>
-					</Grid>
+						{profile?.enable_lists && !shoppingItem && <ListSelector tourElement='item_list_assign' value={lists} onChange={(v) => setLists(v)} />}
+
+						<div className='flex items-center justify-between gap-2'>
+							<Button
+								{...({ 'tour-element': 'item_custom_fields' } as object)}
+								variant='outline'
+								size='sm'
+								onClick={() => {
+									setCustomFields([...customFields, { id: customFields.length, name: '', value: '' }]);
+
+									if (!tour?.item_custom_fields) {
+										updateTour.mutateAsync({
+											item_custom_fields: true,
+										});
+									}
+								}}
+								disabled={customFields.length === 10}
+							>
+								<Plus />
+								Field
+							</Button>
+
+							<div className='flex items-center gap-2'>
+								<Button variant='ghost' onClick={handleClose}>
+									Cancel
+								</Button>
+
+								<Button
+									{...({ 'tour-element': 'item_create_btn' } as object)}
+									onClick={handleCreate}
+									disabled={name.trim().length === 0 || (shoppingItem && !selectedUser)}
+									loading={createItem.isLoading}
+								>
+									Create
+									<Plus />
+								</Button>
+							</div>
+						</div>
+					</div>
 				</DialogContent>
 			</Dialog>
 
 			{fabLoaded && !imageDialogOpen && tour && (
-				<>
-					<TourTooltip
-						open={itemTourProgress(tour) === 'item_create_fab' && location.hash === ''}
-						anchorEl={document.querySelector('[tour-element="item_create_fab"]')}
-						placement='top-end'
-						content={
-							<>
-								<DialogTitle>Welcome to Giftamizer!</DialogTitle>
-								<DialogContent>
-									<Typography gutterBottom>{items?.length === 0 && `Let's create your first item! `}By default items are shared to all of your groups.</Typography>
-									{!profile?.enable_lists && (
-										<>
-											<Typography gutterBottom color='grayText'>
-												For more control over who can see specific items, enable lists in the settings.
-											</Typography>
-											<Typography color='grayText'>You can even create separate managed lists for your kids or pets.</Typography>
-										</>
-									)}
-								</DialogContent>
-								<DialogActions sx={{ justifyContent: 'left' }}>
-									<Button variant='outlined' color='inherit' onClick={skipTour} loading={updateTour.isLoading}>
-										Skip Item Tour
-									</Button>
-								</DialogActions>
-							</>
-						}
-						mask
-						allowClick
-					/>
-				</>
+				<TourTooltip
+					open={itemTourProgress(tour, profile?.enable_lists) === 'item_create_fab' && location.hash === ''}
+					anchorEl={document.querySelector('[tour-element="item_create_fab"]')}
+					placement='top-end'
+					content={welcomeTourContent}
+					mask
+					allowClick
+				/>
 			)}
 
+			{/* Steps follow the form top to bottom. The name field is deliberately
+			    un-toured: its label already says what it is. */}
 			{fabLoaded && dialogOpenedTour && !imageDialogOpen && tour && (
 				<>
 					<TourTooltip
-						open={itemTourProgress(tour) === 'item_create_fab' && location.hash === ''}
-						anchorEl={document.querySelector('[tour-element="item_create_fab"]')}
-						placement='top-end'
-						content={
-							<>
-								<DialogTitle>Welcome to Giftamizer!</DialogTitle>
-								<DialogContent>
-									<Typography gutterBottom>{items?.length === 0 && `Let's create your first item! `}By default items are shared to all of your groups.</Typography>
-									{!profile?.enable_lists && (
-										<>
-											<Typography gutterBottom color='grayText'>
-												For more control over who can see specific items, enable lists in the settings.
-											</Typography>
-											<Typography color='grayText'>You can even create separate managed lists for your kids or pets.</Typography>
-										</>
-									)}
-								</DialogContent>
-								<DialogActions sx={{ justifyContent: 'left' }}>
-									<Button variant='outlined' color='inherit' onClick={skipTour} loading={updateTour.isLoading}>
-										Skip Item Tour
-									</Button>
-								</DialogActions>
-							</>
-						}
-						mask
-						allowClick
-					/>
-					<TourTooltip
-						open={itemTourProgress(tour) === 'item_name' && location.hash === '#create-item'}
-						anchorEl={document.querySelector('[tour-element="item_name"]')}
-						placement='bottom'
-						content={
-							<>
-								<DialogContent>
-									<Typography>Give your item a name.</Typography>
-								</DialogContent>
-								<DialogActions>
-									<Button
-										variant='outlined'
-										color='inherit'
-										onClick={() => {
-											updateTour.mutateAsync({
-												item_name: true,
-											});
-										}}
-										loading={updateTour.isLoading}
-									>
-										Next
-									</Button>
-								</DialogActions>
-							</>
-						}
-						backgroundColor={theme.palette.primary.main}
-						color={theme.palette.primary.contrastText}
-						allowClick
-						mask
-					/>
-					<TourTooltip
-						open={itemTourProgress(tour) === 'item_image' && location.hash === '#create-item'}
+						open={itemTourProgress(tour, profile?.enable_lists) === 'item_image' && location.hash === '#create-item'}
 						anchorEl={document.querySelector('[tour-element="item_image"]')}
 						placement='bottom'
 						content={
-							<>
-								<DialogContent>
-									<Typography>A picture is worth a thousand words! Add images to your items so your friends know exactly what you want.</Typography>
-								</DialogContent>
-								<DialogActions>
-									<Button
-										variant='outlined'
-										color='inherit'
-										onClick={() => {
-											updateTour.mutateAsync({
-												item_image: true,
-											});
-										}}
-										loading={updateTour.isLoading}
-									>
-										Next
-									</Button>
-								</DialogActions>
-							</>
+							<div>
+								<p>A picture is worth a thousand words. Add one so your friends know exactly what you want.</p>
+								{tourNextButton('item_image')}
+							</div>
 						}
-						backgroundColor={theme.palette.primary.main}
-						color={theme.palette.primary.contrastText}
 					/>
 					<TourTooltip
-						open={itemTourProgress(tour) === 'item_url' && location.hash === '#create-item'}
+						open={itemTourProgress(tour, profile?.enable_lists) === 'item_url' && location.hash === '#create-item'}
 						anchorEl={document.querySelector('[tour-element="item_url"]')}
 						placement='top'
 						content={
-							<>
-								<DialogTitle>Add links to you items!</DialogTitle>
-								<DialogContent>
-									<Typography>If the URL is supported, Giftamizer will automatically fill in the item details.</Typography>
-								</DialogContent>
-								<DialogActions>
-									<Button
-										variant='outlined'
-										color='inherit'
-										onClick={() => {
-											updateTour.mutateAsync({
-												item_url: true,
-											});
-										}}
-										loading={updateTour.isLoading}
-									>
-										Next
-									</Button>
-								</DialogActions>
-							</>
+							<TourContent title='Paste a link, skip the typing'>
+								<p>For supported stores, Giftamizer fills in the name, picture, description and price for you.</p>
+								<p className='opacity-80'>Use the link button to add up to five links for the same item.</p>
+								{tourNextButton('item_url')}
+							</TourContent>
 						}
-						backgroundColor={theme.palette.primary.main}
-						color={theme.palette.primary.contrastText}
 					/>
 					<TourTooltip
-						open={itemTourProgress(tour) === 'item_more_links' && location.hash === '#create-item'}
-						anchorEl={document.querySelector('[tour-element="item_more_links"]')}
-						placement='top'
-						content={
-							<>
-								<DialogContent>
-									<Typography>You can even add multiple links!</Typography>
-								</DialogContent>
-								<DialogActions>
-									<Button
-										variant='outlined'
-										color='inherit'
-										onClick={() => {
-											updateTour.mutateAsync({
-												item_more_links: true,
-											});
-										}}
-										loading={updateTour.isLoading}
-									>
-										Next
-									</Button>
-								</DialogActions>
-							</>
-						}
-						backgroundColor={theme.palette.primary.main}
-						color={theme.palette.primary.contrastText}
-					/>
-					<TourTooltip
-						open={itemTourProgress(tour) === 'item_custom_fields' && location.hash === '#create-item'}
+						open={itemTourProgress(tour, profile?.enable_lists) === 'item_custom_fields' && location.hash === '#create-item'}
 						anchorEl={document.querySelector('[tour-element="item_custom_fields"]')}
 						placement='top'
 						content={
-							<>
-								<DialogTitle>Custom Fields</DialogTitle>
-								<DialogContent>
-									<Typography>Provide more information about a specific product.</Typography>
-								</DialogContent>
-								<DialogActions>
-									<Button
-										variant='outlined'
-										color='inherit'
-										onClick={() => {
-											updateTour.mutateAsync({
-												item_custom_fields: true,
-											});
-										}}
-										loading={updateTour.isLoading}
-									>
-										Next
-									</Button>
-								</DialogActions>
-							</>
+							<TourContent title='Custom Fields'>
+								<p>Add any detail that matters — size, color, or model number.</p>
+								{tourNextButton('item_custom_fields')}
+							</TourContent>
 						}
-						backgroundColor={theme.palette.primary.main}
-						color={theme.palette.primary.contrastText}
 					/>
+					{profile?.enable_lists && !shoppingItem && (
+						<TourTooltip
+							open={itemTourProgress(tour, profile?.enable_lists) === 'item_list_assign' && location.hash === '#create-item'}
+							anchorEl={document.querySelector('[tour-element="item_list_assign"]')}
+							placement='top'
+							content={
+								<TourContent title='Choose which lists get this item'>
+									<p>An item is only visible to a group if it's on a list you've shared with that group.</p>
+									{tourNextButton('item_list_assign')}
+								</TourContent>
+							}
+						/>
+					)}
 					<TourTooltip
-						open={itemTourProgress(tour) === 'item_create_btn' && location.hash === '#create-item'}
+						open={itemTourProgress(tour, profile?.enable_lists) === 'item_create_btn' && location.hash === '#create-item'}
 						anchorEl={document.querySelector('[tour-element="item_create_btn"]')}
 						placement='top'
 						content={
-							<>
-								<DialogContent>
-									<Typography>When you have everything ready, click Create to add the item.</Typography>
-								</DialogContent>
-								<DialogActions>
-									<Button
-										variant='outlined'
-										color='inherit'
-										onClick={() => {
-											updateTour.mutateAsync({
-												item_create_btn: true,
-											});
-										}}
-										loading={updateTour.isLoading}
-									>
-										Got it
-									</Button>
-								</DialogActions>
-							</>
+							<div>
+								<p>That's everything — create the item. You can edit or delete it any time from your items page.</p>
+								{tourNextButton('item_create_btn', 'Got it')}
+							</div>
 						}
-						backgroundColor={theme.palette.primary.main}
-						color={theme.palette.primary.contrastText}
 					/>
 				</>
 			)}

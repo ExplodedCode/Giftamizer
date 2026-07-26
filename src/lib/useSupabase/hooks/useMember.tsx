@@ -71,7 +71,7 @@ export const useGetMemberItems = (group_id: string, user_id: string, list_id?: s
 				const signedUrls = await getSignedUrls(
 					client,
 					'items',
-					res.data.filter((i: any) => i.image_token).map((i: any) => ``)
+					res.data.filter((i: any) => i.image_token).map((i: any) => `${i.id}`)
 				);
 				return res.data.map((i: any) => {
 					// @ts-ignore
@@ -106,7 +106,7 @@ export const useGetMemberItems = (group_id: string, user_id: string, list_id?: s
 				const signedUrls = await getSignedUrls(
 					client,
 					'items',
-					res.data.filter((i: any) => i.image_token).map((i: any) => ``)
+					res.data.filter((i: any) => i.image_token).map((i: any) => `${i.id}`)
 				);
 				return res.data.map((i: any) => {
 					// @ts-ignore

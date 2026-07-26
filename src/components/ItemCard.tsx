@@ -1,192 +1,202 @@
 import React from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { useSnackbar } from 'notistack';
+import { useNavigate } from 'react-router-dom';
 
-import { useTheme } from '@mui/material/styles';
-import {
-	Card,
-	CardContent,
-	CardMedia,
-	Typography,
-	Button,
-	Stack,
-	IconButton,
-	Chip,
-	Menu,
-	MenuItem,
-	ListItemIcon,
-	ListItemText,
-	Collapse,
-	Paper,
-	ButtonBase,
-	Tooltip,
-	Box,
-	Alert,
-	Dialog,
-	Slide,
-	useMediaQuery,
-	DialogActions,
-	ListItemAvatar,
-	Avatar,
-	ListItem,
-} from '@mui/material';
-import Grid from '@mui/material/Grid';
-import { TransitionProps } from '@mui/material/transitions';
-import { Archive, Close, Delete, DeleteForever, Edit, MoreVert, Restore, Unarchive } from '@mui/icons-material';
+import { Baby, ClipboardList, ExternalLink, Gift, X } from 'lucide-react';
 
+import ItemCardMenu from './ItemCardMenu';
+import ItemStatus from './ItemStatus';
 import ItemUpdate from '../components/ItemUpdate';
 
-import {
-	ExtractDomain,
-	FakeDelay,
-	StandardizeURL,
-	groupTourProgress,
-	useArchiveItem,
-	useDeleteItem,
-	useGetProfile,
-	useGetTour,
-	useRefreshItem,
-	useRestoreItem,
-	useSupabase,
-	useUpdateItemStatus,
-	useUpdateTour,
-} from '../lib/useSupabase';
-import { ItemStatuses, ItemType, MemberItemType } from '../lib/useSupabase/types';
-import HtmlTooltip from './HtmlTooltip';
+import { ExtractDomain, StandardizeURL, useGetProfile } from '../lib/useSupabase';
+import { ItemType, MemberItemType } from '../lib/useSupabase/types';
 
-const Transition = React.forwardRef(function Transition(
-	props: TransitionProps & {
-		children: React.ReactElement<any, any>;
-	},
-	ref: React.Ref<unknown>
-) {
-	return <Slide direction='up' ref={ref} {...props} />;
-});
+import { cn } from '../lib/utils';
+import { Card } from './ui/card';
+import { Chip } from './ui/chip';
+import { Collapse } from './ui/collapse';
+import { Dialog, DialogContent } from './ui/dialog';
+import { Skeleton } from './ui/skeleton';
+import { SimpleTooltip } from './ui/tooltip';
+import { UserAvatar } from './ui/avatar';
 
-interface VertMenuProps {
+export type ItemCardProps = {
+	index: number;
 	item: ItemType | MemberItemType;
-}
-function VertMenu({ item }: VertMenuProps) {
-	const { enqueueSnackbar } = useSnackbar();
-	const navigate = useNavigate();
-
+	editable?: boolean;
+};
+export default function ItemCard({ index, item, editable }: ItemCardProps) {
 	const { data: profile } = useGetProfile();
 
+	const navigate = useNavigate();
+
+	const [dialogImage, setDialogImage] = React.useState<string | null>(null);
+	const [dialogPrevImage, setDialogPrevImage] = React.useState<string | null>(null);
+
 	const [itemEdit, setItemEdit] = React.useState<ItemType | null>(null);
-	const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
-	const open = Boolean(anchorEl);
+	const [claimError, setClaimError] = React.useState<string | undefined>();
 
-	const handleVertMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-		setAnchorEl(event.currentTarget);
-	};
-	const handleVertMenuClose = () => {
-		setAnchorEl(null);
-	};
-
-	const archiveItem = useArchiveItem();
-	const handleArchive = async (id: string, archive: boolean) => {
-		await archiveItem.mutateAsync({ id: id, archive: archive }).catch((err) => {
-			enqueueSnackbar(`Unable to ${archive ? '' : 'un'}archive item! ${err.message}`, { variant: 'error' });
-		});
+	// Archived and trashed items keep their menu (Unarchive/Restore) but are not click-to-edit,
+	// matching the menu's own Edit guard.
+	const canEdit = !!editable && !item.archived && !item.deleted;
+	const handleEdit = () => {
+		setItemEdit(item);
+		navigate('#item-edit'); // open dialog
 	};
 
-	const deleteItem = useDeleteItem();
-	const handleDelete = async (id: string, deleted: boolean) => {
-		await deleteItem.mutateAsync({ id: id, deleted: deleted, shopping_item: item.shopping_item !== null }).catch((err) => {
-			enqueueSnackbar(`Unable to delete item! ${err.message}`, { variant: 'error' });
-		});
+	// Child lists surface under the list's own name and avatar, not the managing parent's.
+	const ownerList = 'profile' in item ? item.items_lists?.[0]?.lists : undefined;
+	const ownerProfile = 'profile' in item ? item.profile : undefined;
+	const ownerName = ownerList?.child_list ? ownerList.name : ownerProfile ? `${ownerProfile.first_name} ${ownerProfile.last_name}` : undefined;
+	const ownerImage = (ownerList?.child_list ? ownerList.image : ownerProfile?.image) ?? '/defaultAvatar.png';
+
+	const showClaim = !editable || !!item.shopping_item;
+	const showChips = !!profile?.enable_lists && (item.lists?.length ?? 0) > 0;
+	const showActions = showClaim || (item.links?.length ?? 0) > 0;
+
+	const handleChipKey = (e: React.KeyboardEvent, list_id: string) => {
+		if (e.key === 'Enter' || e.key === ' ') {
+			e.preventDefault();
+			navigate(`/lists/${list_id}`);
+		}
 	};
 
-	const restoreItem = useRestoreItem();
-	const handleRestore = async (id: string) => {
-		await restoreItem.mutateAsync(id).catch((err) => {
-			enqueueSnackbar(`Unable to restore item! ${err.message}`, { variant: 'error' });
-		});
-	};
+	const linkButtons = item.links?.map((link, i) => (
+		<a
+			key={`${item.id}-link-${i}`}
+			href={StandardizeURL(link)}
+			target='_blank'
+			rel='noreferrer'
+			className='inline-flex h-8 max-w-48 items-center gap-1.5 rounded-lg border border-border px-2.5 text-xs font-medium text-foreground transition-colors outline-none hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring/50'
+		>
+			<ExternalLink className='size-3.5 shrink-0 text-muted-foreground' />
+			<span className='truncate'>{item.domains?.[i] ?? ExtractDomain(link)}</span>
+		</a>
+	));
 
 	return (
 		<>
-			<IconButton onClick={handleVertMenuOpen}>
-				<MoreVert />
-			</IconButton>
+			<Card className={cn('overflow-hidden transition-shadow', canEdit && 'hover:shadow-md')}>
+				<div className='relative flex gap-3 p-3 sm:gap-4 sm:p-4'>
+					{/* Full-row edit target. A sibling overlay rather than a wrapper: a <button> may not contain
+					    the image button, chips, links or menu below it, and this way no descendant needs
+					    stopPropagation — they simply paint above it via `relative z-10`. Trade-off: title and
+					    description text is not selectable on your own cards. */}
+					{canEdit && (
+						<button
+							type='button'
+							data-slot='item-card-edit'
+							aria-label={`Edit ${item.name}`}
+							onClick={handleEdit}
+							className='absolute inset-0 cursor-pointer rounded-xl outline-none focus-visible:inset-ring-2 focus-visible:inset-ring-ring/50'
+						/>
+					)}
 
-			<Menu
-				anchorEl={anchorEl}
-				anchorOrigin={{
-					vertical: 'bottom',
-					horizontal: 'right',
+					{item.image ? (
+						<button
+							type='button'
+							aria-label={`View image of ${item.name}`}
+							onClick={() => setDialogImage(item.image ?? null)}
+							className='relative z-10 size-24 shrink-0 cursor-zoom-in self-start overflow-hidden rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring/50 sm:size-30'
+						>
+							<img alt={item.name} src={item.image} loading='lazy' decoding='async' className='size-full object-cover' />
+						</button>
+					) : (
+						/* Keeps the left rail constant so every title starts at the same x — the strongest
+						   scanning cue in a single-column list. */
+						<div aria-hidden className='flex size-24 shrink-0 items-center justify-center self-start rounded-lg bg-muted text-muted-foreground sm:size-30'>
+							<Gift className='size-8 opacity-40' />
+						</div>
+					)}
+
+					<div className='flex min-w-0 flex-1 flex-col gap-1.5'>
+						{ownerName && (
+							<div className='flex items-center gap-1.5 text-xs font-medium text-muted-foreground'>
+								<UserAvatar alt={ownerName} src={ownerImage} className='size-6' />
+								<span className='truncate'>{ownerName}</span>
+							</div>
+						)}
+
+						<p className='line-clamp-2 font-semibold sm:text-lg'>{item.name}</p>
+						{item.description && (
+							<p className='line-clamp-2 text-sm text-muted-foreground' title={item.description}>
+								{item.description}
+							</p>
+						)}
+
+						{(item.custom_fields?.length ?? 0) > 0 && (
+							<div className='flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground'>
+								{item.custom_fields?.map((c) => (
+									<span key={`${item.id}-field-${c.id}`}>
+										{c.name}: <span className='font-medium text-foreground'>{c.value}</span>
+									</span>
+								))}
+							</div>
+						)}
+
+						{showChips && (
+							<div className='relative z-10 flex flex-wrap gap-1.5 pt-0.5'>
+								{item.lists?.map((l) => (
+									<Chip
+										key={`${item.id}-list-${l.list_id}`}
+										size='sm'
+										icon={l.list.child_list ? <Baby /> : <ClipboardList />}
+										role='button'
+										tabIndex={0}
+										onClick={() => navigate(`/lists/${l.list_id}`)}
+										onKeyDown={(e) => handleChipKey(e, l.list_id)}
+									>
+										{l.list.name}
+									</Chip>
+								))}
+							</div>
+						)}
+
+						{showActions && (
+							<div className='relative z-10 mt-auto flex flex-wrap items-center gap-2 pt-1.5'>
+								{showClaim && <ItemStatus index={index} item={item as MemberItemType} claimError={claimError} setClaimError={setClaimError} />}
+
+								{linkButtons}
+							</div>
+						)}
+					</div>
+
+					{editable && (
+						<div className='relative z-10 shrink-0 self-start'>
+							<ItemCardMenu item={item} onEdit={handleEdit} />
+						</div>
+					)}
+				</div>
+
+				{/* Outside the `relative` wrapper, so the edit overlay can never cover ItemAlert's close button. */}
+				<ItemUnassignedAlert open={profile?.enable_lists && item.lists?.length === 0 && !item.shopping_item} />
+				<ItemAlert alert={claimError} setAlert={setClaimError} />
+			</Card>
+
+			{/* Image lightbox */}
+			<Dialog
+				open={dialogImage !== null}
+				onOpenChange={(open) => {
+					if (!open) {
+						setDialogPrevImage(dialogImage);
+						setDialogImage(null);
+					}
 				}}
-				transformOrigin={{
-					vertical: 'top',
-					horizontal: 'right',
-				}}
-				open={open}
-				onClose={handleVertMenuClose}
 			>
-				{!item.archived && !item.deleted && (
-					<MenuItem
-						onClick={() => {
-							setItemEdit(item);
-							navigate('#item-edit'); // open dialog
-							handleVertMenuClose();
-						}}
-					>
-						<ListItemIcon>
-							<Edit fontSize='small' />
-						</ListItemIcon>
-						<ListItemText>Edit</ListItemText>
-					</MenuItem>
-				)}
-
-				{profile?.enable_archive && !item.deleted && !item.shopping_item && (
-					<MenuItem
-						onClick={() => {
-							handleArchive(item.id, !item.archived);
-							handleVertMenuClose();
-						}}
-					>
-						<ListItemIcon>{item.archived ? <Unarchive fontSize='small' /> : <Archive fontSize='small' />}</ListItemIcon>
-						<ListItemText>{item.archived ? 'Unarchive' : 'Archive'}</ListItemText>
-					</MenuItem>
-				)}
-				{!item.deleted ? (
-					<MenuItem
-						onClick={() => {
-							handleDelete(item.id, item.deleted);
-							handleVertMenuClose();
-						}}
-					>
-						<ListItemIcon>{profile?.enable_trash && !item.shopping_item ? <Delete fontSize='small' /> : <DeleteForever fontSize='small' />}</ListItemIcon>
-						<ListItemText>{profile?.enable_trash && !item.shopping_item ? 'Trash' : 'Delete'}</ListItemText>
-					</MenuItem>
-				) : (
-					<>
-						<MenuItem
+				<DialogContent size='lg' hideCloseButton className='overflow-hidden p-0'>
+					<SimpleTooltip title='Click to hide image' side='top'>
+						<img
+							src={dialogImage ?? dialogPrevImage ?? ''}
+							alt={item.name}
+							className='w-full cursor-zoom-out'
 							onClick={() => {
-								handleRestore(item.id);
-								handleVertMenuClose();
+								setDialogPrevImage(dialogImage);
+								setDialogImage(null);
 							}}
-						>
-							<ListItemIcon>
-								<Restore fontSize='small' />
-							</ListItemIcon>
-							<ListItemText>Restore</ListItemText>
-						</MenuItem>
-						<MenuItem
-							onClick={() => {
-								handleDelete(item.id, item.deleted);
-								handleVertMenuClose();
-							}}
-						>
-							<ListItemIcon>
-								<DeleteForever fontSize='small' />
-							</ListItemIcon>
-							<ListItemText>Delete</ListItemText>
-						</MenuItem>
-					</>
-				)}
-			</Menu>
+						/>
+					</SimpleTooltip>
+				</DialogContent>
+			</Dialog>
 
 			{itemEdit && (
 				<ItemUpdate
@@ -202,513 +212,37 @@ function VertMenu({ item }: VertMenuProps) {
 	);
 }
 
-interface ItemStatusProps {
-	index: number;
-	item: MemberItemType;
-	claimError: string | undefined;
-	setClaimError(claimError: string | undefined): void;
-}
-function ItemStatus({ index, item, claimError, setClaimError }: ItemStatusProps) {
-	const theme = useTheme();
-	const location = useLocation();
-
-	const { enqueueSnackbar } = useSnackbar();
-	const { user } = useSupabase();
-
-	const { group: groupID, user: userID } = useParams();
-	const user_id = userID?.split('_')[0] ?? userID!;
-	const list_id = userID?.split('_')[1] ?? undefined;
-
-	const refreshItem = useRefreshItem(groupID!, user_id, list_id);
-	const updateItemStatus = useUpdateItemStatus(groupID!, user_id, list_id, item.shopping_item !== null);
-	const handleUpdateItemStatus = async (status: ItemStatuses) => {
-		await updateItemStatus.mutateAsync({ item_id: item.id, user_id: user.id, status: status }).catch(async (err) => {
-			switch (err.code) {
-				case '42501':
-					enqueueSnackbar(`This item was just claimed by someone else!`, { variant: 'error' });
-					setClaimError(`This item was just claimed by someone else!`);
-					await FakeDelay(4000);
-					await refreshItem.mutateAsync(item.id);
-					break;
-
-				default:
-					enqueueSnackbar(`Unable to update item status! ${err.message}`, { variant: 'error' });
-					break;
-			}
-		});
-	};
-
-	// user tour
-	const { data: tour } = useGetTour();
-	const updateTour = useUpdateTour();
-	const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-
-	const claimButton = () => {
-		return (
-			<Button
-				className={claimError && 'error-shake'}
-				variant='outlined'
-				color={(() => {
-					switch (item.status?.status) {
-						default:
-							return 'success';
-						case ItemStatuses.planned:
-							return 'warning';
-						case ItemStatuses.unavailable:
-							return 'error';
-					}
-				})()}
-				size='small'
-				onClick={() => {
-					handleUpdateItemStatus(
-						(() => {
-							switch (item.status?.status) {
-								default:
-									return ItemStatuses.planned;
-								case ItemStatuses.planned:
-									return ItemStatuses.unavailable;
-								case ItemStatuses.unavailable:
-									return ItemStatuses.available;
-							}
-						})()
-					);
-				}}
-				loading={updateItemStatus.isLoading}
-				disabled={claimError !== undefined || (item.status?.user_id !== undefined && item.status?.user_id !== user.id)}
-				sx={
-					item.status?.user_id !== user.id && !claimError
-						? {
-								'&.Mui-disabled': {
-									color: (() => {
-										switch (item.status?.status) {
-											default:
-												return theme.palette.success.main + 80;
-											case ItemStatuses.planned:
-												return theme.palette.warning.main + 80;
-											case ItemStatuses.unavailable:
-												return theme.palette.error.main + 80;
-										}
-									})(),
-									border: (() => {
-										switch (item.status?.status) {
-											default:
-												return `1px solid ${theme.palette.success.main}80`;
-											case ItemStatuses.planned:
-												return `1px solid ${theme.palette.warning.main}80`;
-											case ItemStatuses.unavailable:
-												return `1px solid ${theme.palette.error.main}80`;
-										}
-									})(),
-								},
-								pointer: 'not-allowed',
-								pointerEvents: 'all',
-						  }
-						: {}
-				}
-			>
-				<span style={claimError ? { textDecoration: 'line-through' } : {}}>
-					{(() => {
-						switch (item.status?.status) {
-							default:
-								return 'Available';
-							case ItemStatuses.planned:
-								return 'Planned';
-							case ItemStatuses.unavailable:
-								return 'Purchased';
-						}
-					})()}
-				</span>
-			</Button>
-		);
-	};
-
+/** Matches the ItemCard row so list pages don't reflow when data lands. */
+export function ItemCardSkeleton() {
 	return (
-		<>
-			{index === 0 &&
-			location.hash === '' &&
-			location.pathname.startsWith('/groups/') &&
-			(groupTourProgress(tour ?? {}, isMobile) === 'group_member_item_status' || groupTourProgress(tour ?? {}, isMobile) === 'group_member_item_status_taken') ? (
-				<HtmlTooltip
-					title={
-						<>
-							{groupTourProgress(tour ?? {}, isMobile) === 'group_member_item_status' && (
-								<>
-									<Typography variant='h6' gutterBottom>
-										Item Claim Status:
-									</Typography>
+		<Card className='overflow-hidden'>
+			<div className='flex gap-3 p-3 sm:gap-4 sm:p-4'>
+				<Skeleton className='size-24 shrink-0 sm:size-30' />
 
-									<Paper elevation={6} sx={{ p: 1 }}>
-										<Grid>
-											<Grid size={12} sx={{ mb: 1 }}>
-												<Button
-													size='small'
-													variant='outlined'
-													color='success'
-													sx={{
-														'&.Mui-disabled': {
-															border: `1px solid ${theme.palette.success.main}80`,
-															color: theme.palette.success.main,
-														},
-														pointer: 'not-allowed',
-														pointerEvents: 'all',
-													}}
-													disabled
-												>
-													Available
-												</Button>
-												<Typography sx={{ ml: 0.5, mt: 0.5, display: 'inline' }}> - Available for purchase</Typography>
-											</Grid>
-											<Grid size={12} sx={{ mb: 1 }}>
-												<Button
-													size='small'
-													variant='outlined'
-													color='warning'
-													disabled
-													sx={{
-														'&.Mui-disabled': {
-															border: `1px solid ${theme.palette.warning.main}80`,
-															color: theme.palette.warning.main,
-														},
-													}}
-												>
-													Planned
-												</Button>
-												<Typography sx={{ ml: 0.5, mt: 0.5, display: 'inline' }}> - Planned for purchase</Typography>
-											</Grid>
-											<Grid
-												size={12}
-												//  sx={{ mb: 1 }}
-											>
-												<Button
-													size='small'
-													variant='outlined'
-													color='error'
-													disabled
-													sx={{
-														'&.Mui-disabled': {
-															border: `1px solid ${theme.palette.error.main}80`,
-															color: theme.palette.error.main,
-														},
-													}}
-												>
-													Purchased
-												</Button>
-												<Typography sx={{ ml: 0.5, mt: 0.5, display: 'inline' }}> - Purchased</Typography>
-											</Grid>
-										</Grid>
-									</Paper>
-									<DialogActions>
-										<Button
-											variant='outlined'
-											color='inherit'
-											onClick={() => {
-												if (!tour?.group_member_item_status) {
-													updateTour.mutateAsync({
-														group_member_item_status: true,
-													});
-												}
-											}}
-											loading={updateTour.isLoading}
-										>
-											Next
-										</Button>
-									</DialogActions>
-								</>
-							)}
+				<div className='flex min-w-0 flex-1 flex-col gap-2'>
+					<Skeleton className='h-5 w-1/2' />
+					<Skeleton className='h-4 w-full' />
+					<Skeleton className='h-4 w-2/3' />
 
-							{groupTourProgress(tour ?? {}, isMobile) === 'group_member_item_status_taken' && (
-								<>
-									<Typography variant='body1' gutterBottom>
-										Disabled Buttons will indicate that the item has been claimed by someone else.
-									</Typography>
+					<div className='mt-auto flex gap-2 pt-1'>
+						<Skeleton className='h-8 w-24' />
+						<Skeleton className='h-8 w-20' />
+					</div>
+				</div>
 
-									<Paper elevation={6} sx={{ p: 1 }}>
-										<Grid>
-											<Grid size={12} sx={{ mb: 1 }}>
-												<Button
-													size='small'
-													variant='outlined'
-													color='warning'
-													disabled
-													sx={{
-														'&.Mui-disabled': {
-															color: theme.palette.warning.main + 80,
-														},
-													}}
-												>
-													Planned
-												</Button>
-												<Typography sx={{ ml: 0.5, mt: 0.5, display: 'inline' }}> - Planned by someone else</Typography>
-											</Grid>
-											<Grid size={12}>
-												<Button
-													size='small'
-													variant='outlined'
-													color='error'
-													disabled
-													sx={{
-														'&.Mui-disabled': {
-															color: theme.palette.error.main + 80,
-														},
-													}}
-												>
-													Purchased
-												</Button>
-												<Typography sx={{ ml: 0.5, mt: 0.5, display: 'inline' }}> - Purchased by someone else</Typography>
-											</Grid>
-										</Grid>
-									</Paper>
-									<DialogActions>
-										<Button
-											variant='outlined'
-											color='inherit'
-											onClick={() => {
-												if (!tour?.group_member_item_status_taken) {
-													updateTour.mutateAsync({
-														group_member_item_status_taken: true,
-													});
-												}
-											}}
-											loading={updateTour.isLoading}
-										>
-											Got it
-										</Button>
-									</DialogActions>
-								</>
-							)}
-						</>
-					}
-					placement='bottom-start'
-					arrow
-					open
-				>
-					{claimButton()}
-				</HtmlTooltip>
-			) : (
-				<Tooltip
-					title={(() => {
-						switch (item.status?.status) {
-							default:
-								return 'Mark as Planned';
-							case ItemStatuses.planned:
-								return 'Mark as Purchased';
-							case ItemStatuses.unavailable:
-								return 'Mark as Available';
-						}
-					})()}
-					placement='right'
-					arrow
-				>
-					{claimButton()}
-				</Tooltip>
-			)}
-		</>
+				<Skeleton className='size-9 shrink-0' />
+			</div>
+		</Card>
 	);
 }
 
-export type ItemCardProps = {
-	index: number;
-	item: ItemType | MemberItemType;
-	editable?: boolean;
-};
-export default function ItemCard({ index, item, editable }: ItemCardProps) {
-	const theme = useTheme();
-
-	const { user } = useSupabase();
-	const { data: profile } = useGetProfile();
-
-	const navigate = useNavigate();
-
-	const [dialogImage, setDialogImage] = React.useState<string | null>(null);
-	const [dialogPrevImage, setDialogPrevImage] = React.useState<string | null>(null);
-
-	const [claimError, setClaimError] = React.useState<string | undefined>();
-
-	const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-
+export function ItemCardSkeletonList({ count = 4 }: { count?: number }) {
 	return (
-		<>
-			<Grid size={12}>
-				{!isMobile ? (
-					<Paper>
-						<Box
-							sx={{
-								p: 2,
-								margin: 'auto',
-								flexGrow: 1,
-								display: 'flex',
-							}}
-						>
-							<Grid container spacing={2} sx={{ width: '100%' }}>
-								{item.image && (
-									<Grid>
-										<ButtonBase onClick={() => setDialogImage(item.image ?? null)} sx={{ cursor: 'zoom-in' }}>
-											<img alt={item.name} src={item.image} style={{ objectFit: 'cover', width: 150, height: 150, borderRadius: 4 }} />
-										</ButtonBase>
-									</Grid>
-								)}
-								<Grid size={{ xs: 12, sm: 'grow' }} sx={{ minWidth: 0 }}>
-									<Stack direction='row' spacing={2} sx={{ justifyContent: 'space-between' }}>
-									<Box sx={{ flexGrow: 1, minWidth: 0 }}>
-										<Stack spacing={2}>
-											<Box sx={{ flexGrow: 1 }}>
-											{'profile' in item && (
-												<ListItem sx={{ p: 0 }}>
-													{item.profile && (
-														<ListItemAvatar>
-															<Avatar
-																alt={item.items_lists?.[0]?.lists.child_list ? item.items_lists?.[0]?.lists.name : item.profile.first_name}
-																src={(item.items_lists?.[0]?.lists.child_list ? item.items_lists?.[0]?.lists.image : item.profile.image) ?? '/defaultAvatar.png'}
-															/>
-														</ListItemAvatar>
-													)}
-
-													<ListItemText
-														primary={item.items_lists?.[0]?.lists.child_list ? item.items_lists?.[0]?.lists.name : `${item.profile?.first_name} ${item.profile?.last_name}`}
-													/>
-												</ListItem>
-											)}
-
-											<Typography component='div' variant='h6'>
-												{item.name}
-											</Typography>
-											<Typography variant='body1' gutterBottom>
-												{item.description}
-											</Typography>
-											{item.custom_fields?.map((c) => (
-												<Typography key={`${item.id}-field-${c.id}`} variant='body2' color='text.secondary'>
-													{c.name}: <b>{c.value}</b>
-												</Typography>
-											))}
-											{profile?.enable_lists && (
-												<Stack direction='row' useFlexGap spacing={1} sx={{ mt: 0.5, justifyContent: 'flex-start', flexWrap: 'wrap' }}>
-													{item.lists?.map((l) => (
-														<Chip key={`${item.id}-list-${l.list_id}`} label={l.list.name} size='small' clickable onClick={() => navigate(`/lists/${l.list_id}`)} />
-													))}
-												</Stack>
-											)}
-										</Box>
-										{(!editable || item.shopping_item || (item.links && item.links.length > 0)) && (
-											<Box>
-												<Stack direction='row' spacing={1} useFlexGap sx={{ justifyContent: 'flex-start', flexWrap: 'wrap' }}>
-													{(!editable || item.shopping_item) && (
-														<ItemStatus index={index} item={item as MemberItemType} claimError={claimError} setClaimError={setClaimError} />
-													)}
-
-													{item.links?.map((link, i) => (
-														<Button key={`${item.id + i}-link-${i}`} href={StandardizeURL(link)} target='_blank' color='info' size='small'>
-															{item.domains?.[i] ?? ExtractDomain(link)}
-														</Button>
-													))}
-												</Stack>
-											</Box>
-										)}
-										</Stack>
-									</Box>
-									{editable && <Box><VertMenu item={item} /></Box>}
-									</Stack>
-								</Grid>
-							</Grid>
-						</Box>
-
-						<ItemUnassignedAlert open={profile?.enable_lists && item.lists?.length === 0 && !item.shopping_item} />
-						<ItemAlert alert={claimError} setAlert={setClaimError} />
-					</Paper>
-				) : (
-					<Card>
-						{'profile' in item && (
-							<ListItem sx={{ p: 1 }}>
-								{item.profile?.image && (
-									<ListItemAvatar>
-										<Avatar src={item.profile?.image} />
-									</ListItemAvatar>
-								)}
-
-								<ListItemText primary={`${item.profile?.first_name} ${item.profile?.last_name}`} />
-							</ListItem>
-						)}
-
-						{item.image && <CardMedia component='img' alt={item.name} sx={{ height: 220, cursor: 'zoom-in' }} image={item.image} onClick={() => setDialogImage(item.image ?? null)} />}
-
-						<CardContent>
-							<Grid container spacing={2} sx={{ justifyContent: 'flex-start' }}>
-								<Grid size={12}>
-									<Stack direction='row' sx={{ justifyContent: 'space-between' }}>
-										<Box sx={{ flexGrow: 1, minWidth: 0 }}>
-											<Typography variant='h5' component='div'>
-												{item.name}
-											</Typography>
-											<Typography gutterBottom variant='body2' color='text.secondary'>
-												{item.description}
-											</Typography>
-											{item.custom_fields?.map((c) => (
-												<Typography key={`${item.id}-field-${c.id}`} variant='body2' color='text.secondary'>
-													{c.name}: <b>{c.value}</b>
-												</Typography>
-											))}
-										</Box>
-										{editable && (
-											<Box>
-												<VertMenu item={item} />
-											</Box>
-										)}
-									</Stack>
-								</Grid>
-								{profile?.enable_lists && editable && (
-									<Grid size={12}>
-										<Stack direction='row' useFlexGap spacing={1} sx={{ justifyContent: 'flex-start', flexWrap: 'wrap' }}>
-											{item.lists?.map((l, i) => (
-												<Chip key={`${item.id + i}-list-${l.list_id}`} label={l.list.name} size='small' clickable onClick={() => navigate(`/lists/${l.list_id}`)} />
-											))}
-										</Stack>
-									</Grid>
-								)}
-
-								{(!editable || item.shopping_item || (item.links && item.links.length > 0)) && (
-									<Grid size={12}>
-										<Stack direction='row' spacing={1} useFlexGap sx={{ justifyContent: 'flex-start', flexWrap: 'wrap' }}>
-											{((!editable && item.user_id !== user.id) || item.shopping_item) && (
-												<ItemStatus index={index} item={item as MemberItemType} claimError={claimError} setClaimError={setClaimError} />
-											)}
-
-											{item.links?.map((link, i) => (
-												<Button key={`${item.id + i}-link-${i}`} href={StandardizeURL(link)} target='_blank' color='info' size='small'>
-													{item.domains?.[i] ?? ExtractDomain(link)}
-												</Button>
-											))}
-										</Stack>
-									</Grid>
-								)}
-							</Grid>
-						</CardContent>
-						<ItemUnassignedAlert open={profile?.enable_lists && item.lists?.length === 0 && !item.shopping_item} />
-						<ItemAlert alert={claimError} setAlert={setClaimError} />
-					</Card>
-				)}
-			</Grid>
-			<Dialog
-				maxWidth='md'
-				fullWidth
-				slots={{ transition: Transition }}
-				onClose={() => {
-					setDialogPrevImage(dialogImage);
-					setDialogImage(null);
-				}}
-				open={dialogImage !== null}
-			>
-				<Tooltip title='Click to hide image' arrow placement='top'>
-					<img
-						src={dialogImage ?? dialogPrevImage ?? ''}
-						alt='dialog-img'
-						style={{ width: '100%', cursor: 'zoom-out' }}
-						onClick={() => {
-							setDialogPrevImage(dialogImage);
-							setDialogImage(null);
-						}}
-					/>
-				</Tooltip>
-			</Dialog>
-		</>
+		<div className='flex flex-col gap-3'>
+			{Array.from({ length: count }).map((_, i) => (
+				<ItemCardSkeleton key={i} />
+			))}
+		</div>
 	);
 }
 
@@ -718,27 +252,21 @@ interface ItemAlertProps {
 }
 function ItemAlert({ alert, setAlert }: ItemAlertProps) {
 	return (
-		<Box sx={{ width: '100%' }}>
-			<Collapse in={alert !== undefined}>
-				<Alert
-					severity='error'
-					action={
-						<IconButton
-							aria-label='close'
-							color='inherit'
-							size='small'
-							onClick={() => {
-								setAlert(undefined);
-							}}
-						>
-							<Close fontSize='inherit' />
-						</IconButton>
-					}
+		<Collapse in={alert !== undefined}>
+			<div className='flex items-center justify-between gap-2 bg-destructive/10 px-4 py-2.5 text-sm text-destructive'>
+				<span>{alert}</span>
+				<button
+					type='button'
+					aria-label='close'
+					className='cursor-pointer rounded-md p-1 transition-colors hover:bg-destructive/15'
+					onClick={() => {
+						setAlert(undefined);
+					}}
 				>
-					{alert}
-				</Alert>
-			</Collapse>
-		</Box>
+					<X className='size-4' />
+				</button>
+			</div>
+		</Collapse>
 	);
 }
 
@@ -747,12 +275,8 @@ interface ItemUnassignedAlertProps {
 }
 function ItemUnassignedAlert({ open }: ItemUnassignedAlertProps) {
 	return (
-		<Box sx={{ width: '100%' }}>
-			<Collapse in={open}>
-				<Collapse in={alert !== undefined}>
-					<Alert severity='warning'>This item is not assigned to a list!</Alert>
-				</Collapse>
-			</Collapse>
-		</Box>
+		<Collapse in={!!open}>
+			<div className='bg-status-planned/10 px-4 py-2.5 text-sm text-status-planned'>This item is not assigned to a list!</div>
+		</Collapse>
 	);
 }

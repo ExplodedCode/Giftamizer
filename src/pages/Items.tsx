@@ -1,13 +1,10 @@
 import React from 'react';
-import { useSnackbar } from 'notistack';
+import { useSnackbar } from '../lib/snackbar';
 
 import { useGetItems } from '../lib/useSupabase';
 
-import { Container, Typography, Box, CircularProgress } from '@mui/material';
-import Grid from '@mui/material/Grid';
-
 import ItemCreate from '../components/ItemCreate';
-import ItemCard from '../components/ItemCard';
+import ItemCard, { ItemCardSkeletonList } from '../components/ItemCard';
 
 export default function Items() {
 	const { enqueueSnackbar } = useSnackbar();
@@ -22,33 +19,24 @@ export default function Items() {
 
 	return (
 		<>
-			<Container sx={{ paddingTop: 2, paddingBottom: 12 }}>
-				<Grid container spacing={2}>
+			<div className='mx-auto max-w-5xl px-4 pt-4 pb-12'>
+				<div className='flex flex-col gap-3'>
 					{items
 						?.filter((i) => !i.archived && !i.deleted)
 						.map((item, index) => (
-							// TODO: Change ItemCard to Renderer function to allow Grow transition/animation
 							<ItemCard index={index} key={item.id} item={item} editable />
 						))}
 
 					{items?.filter((i) => !i.archived && !i.deleted).length === 0 && (
-						<Box style={{ marginTop: 100, textAlign: 'center', width: '100%' }}>
-							<Typography variant='h5' gutterBottom>
-								You don't have any items!
-							</Typography>
-							<Typography variant='body1' gutterBottom>
-								Add some gift ideas to share with your friends and family!
-							</Typography>
-						</Box>
+						<div className='mt-24 text-center'>
+							<p className='mb-1 text-xl font-medium'>You don't have any items!</p>
+							<p className='text-muted-foreground'>Add some gift ideas to share with your friends and family!</p>
+						</div>
 					)}
-				</Grid>
+				</div>
 
-				{isLoading && (
-					<Box sx={{ display: 'flex', justifyContent: 'center', mt: 16 }}>
-						<CircularProgress />
-					</Box>
-				)}
-			</Container>
+				{isLoading && <ItemCardSkeletonList />}
+			</div>
 
 			<ItemCreate />
 		</>

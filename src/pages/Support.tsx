@@ -1,48 +1,30 @@
 import React from 'react';
-import { useSnackbar } from 'notistack';
-
-import {
-	Container,
-	Typography,
-	Box,
-	CircularProgress,
-	AppBar,
-	Breadcrumbs,
-	Toolbar,
-	FormControlLabel,
-	DialogContent,
-	useTheme,
-	Stack,
-	Chip,
-	useMediaQuery,
-	Fab,
-	Button,
-	Dialog,
-	DialogContentText,
-	DialogTitle,
-	FormControl,
-	TextField,
-	Paper,
-	RadioGroup,
-	Radio,
-} from '@mui/material';
-import Grid from '@mui/material/Grid';
+import { useSnackbar } from '../lib/snackbar';
 
 import { useLocation, useNavigate } from 'react-router-dom';
+import { Plus } from 'lucide-react';
+
 import { useCreateIssue, useGetIssues } from '../lib/useSupabase/hooks/useSupport';
-import { ButtonBase } from '@mui/material';
-import { Add } from '@mui/icons-material';
-import MUIRichTextEditor from '../components/src/MUIRichTextEditor';
-import { convertToRaw } from 'draft-js';
-import draftToMarkdown from '../components/src/MUIRichTextEditor/draft-to-markdown';
 import { useGetProfile } from '../lib/useSupabase';
-export default function ShoppingList() {
-	const theme = useTheme();
+
+import RichTextEditor from '../components/RichTextEditor';
+
+import { useMediaQuery } from '../lib/utils';
+import { Button } from '../components/ui/button';
+import { Chip } from '../components/ui/chip';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { FormField } from '../components/ui/form-field';
+import { Input } from '../components/ui/input';
+import { PageHeader } from '../components/ui/page-header';
+import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
+import { Spinner } from '../components/ui/spinner';
+
+export default function Support() {
 	const navigate = useNavigate();
 	const location = useLocation();
 	const { enqueueSnackbar } = useSnackbar();
 
-	const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+	const isMobile = useMediaQuery('(max-width: 599.95px)');
 
 	const { data: issues, isLoading } = useGetIssues();
 	const { data: profile } = useGetProfile();
@@ -90,143 +72,106 @@ export default function ShoppingList() {
 
 	return (
 		<>
-			<AppBar position='static' sx={{ marginBottom: 2 }} color='default'>
-				<Toolbar variant='dense'>
-					<Breadcrumbs aria-label='breadcrumb' sx={{ flexGrow: 1 }}>
-						<Typography color='text.primary'>Support</Typography>
-					</Breadcrumbs>
-				</Toolbar>
-			</AppBar>
+			<PageHeader crumbs={[{ label: 'Support' }]} />
 
-			<Container sx={{ pt: 2, pb: 12 }}>
-				<Box sx={{ mt: 2, mb: 4, textAlign: 'center', width: '100%' }}>
-					<Typography variant='h5' gutterBottom>
-						Issues and Requests
-					</Typography>
-					<Typography variant='body1' gutterBottom>
-						If you're experiencing any issues, have feature requests or just have a question, please create a new issue below.
-					</Typography>
-				</Box>
+			<div className='mx-auto max-w-5xl px-4 pt-4 pb-12'>
+				<div className='my-6 text-center'>
+					<h1 className='mb-1 text-xl font-semibold'>Issues and Requests</h1>
+					<p className='text-muted-foreground'>If you're experiencing any issues, have feature requests or just have a question, please create a new issue below.</p>
+				</div>
 
-				<Grid container spacing={1}>
-					{issues?.map((issue, index) => (
-						<Grid size={12} key={issue.id}>
-							<ButtonBase sx={{ width: '100%', textAlign: 'left', borderRadius: 2, display: 'block' }} href={issue.html_url} target='_blank'>
-								<Box
-									sx={{
-										display: 'flex',
-										alignItems: 'center',
-										background: theme.palette.background.paper,
-										border: `1px solid ${theme.palette.divider}`,
-										borderRadius: 2,
-										p: 2,
-										boxShadow: 1,
-									}}
-								>
-									<Box sx={{ mr: 2 }}>
-										<Box
-											sx={{
-												width: 16,
-												height: 16,
-												borderRadius: '50%',
-												backgroundColor: theme.palette.success.main,
-												display: 'inline-block',
-												mr: 1,
-											}}
-										/>
-									</Box>
-									<Box sx={{ flexGrow: 1 }}>
-										<Typography variant='subtitle1' sx={{ fontWeight: 600 }}>
-											{issue.title}
-										</Typography>
-										<Typography variant='body2' color='text.secondary'>
-											#{issue.number} · {getCreatedBy(issue)} opened on {new Date(issue.created_at).toLocaleDateString()}
-										</Typography>
-									</Box>
-									{!isMobile && (
-										<Box>
-											<Stack direction='row' spacing={1}>
-												{issue.labels.map((label: any) => (
-													<Chip key={label.id} label={label.name} sx={{ color: `#${label.color}`, borderColor: `#${label.color}` }} size='small' variant='outlined' />
-												))}
-											</Stack>
-										</Box>
-									)}
-								</Box>
-							</ButtonBase>
-						</Grid>
+				<div className='flex flex-col gap-2'>
+					{issues?.map((issue) => (
+						<a
+							key={issue.id}
+							href={issue.html_url}
+							target='_blank'
+							rel='noreferrer'
+							className='flex items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-xs transition-shadow outline-none hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring/50'
+						>
+							<span className='size-4 shrink-0 rounded-full bg-status-available' />
+
+							<span className='flex min-w-0 flex-1 flex-col'>
+								<span className='truncate font-semibold'>{issue.title}</span>
+								<span className='text-sm text-muted-foreground'>
+									#{issue.number} · {getCreatedBy(issue)} opened on {new Date(issue.created_at).toLocaleDateString()}
+								</span>
+							</span>
+
+							{!isMobile && (
+								<span className='flex shrink-0 gap-1.5'>
+									{issue.labels.map((label: any) => (
+										<Chip key={label.id} size='sm' variant='outline' style={{ color: `#${label.color}`, borderColor: `#${label.color}40` }}>
+											{label.name}
+										</Chip>
+									))}
+								</span>
+							)}
+						</a>
 					))}
 
 					{issues?.length === 0 && (
-						<Box style={{ marginTop: 100, textAlign: 'center', width: '100%' }}>
-							<Typography variant='h5' gutterBottom>
-								No open issues!
-							</Typography>
-						</Box>
+						<div className='mt-24 text-center'>
+							<p className='text-xl font-medium'>No open issues!</p>
+						</div>
 					)}
-				</Grid>
+				</div>
 
 				{isLoading && (
-					<Box sx={{ display: 'flex', justifyContent: 'center', mt: 16 }}>
-						<CircularProgress />
-					</Box>
+					<div className='mt-32 flex justify-center'>
+						<Spinner size={32} />
+					</div>
 				)}
-			</Container>
+			</div>
 
-			<Fab color='primary' aria-label='add' onClick={() => navigate('#new-issue')} sx={{ position: 'fixed', bottom: { xs: 64, md: 16 }, right: { xs: 8, md: 16 } }}>
-				<Add />
-			</Fab>
+			<button
+				type='button'
+				aria-label='add'
+				onClick={() => navigate('#new-issue')}
+				className='fixed right-2 bottom-20 z-30 flex size-14 cursor-pointer items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg transition-all outline-none hover:bg-primary-hover hover:shadow-xl focus-visible:ring-2 focus-visible:ring-ring/50 active:scale-95 md:right-4 md:bottom-4'
+			>
+				<Plus className='size-7' />
+			</button>
 
-			<Dialog open={open} onClose={() => (createIssue.isLoading ? undefined : handleClose())} maxWidth='md' fullScreen={useMediaQuery(theme.breakpoints.down('md'))}>
-				<DialogTitle>Create Issues or Requests</DialogTitle>
-				<DialogContent>
-					<Grid container spacing={2}>
-						<Grid size={12}>
-							<DialogContentText>Please provide a title and description for your issue or request.</DialogContentText>
-						</Grid>
-						<Grid size={{ xs: 12, sm: 6 }}>
-							<FormControl component='fieldset' fullWidth>
-								<RadioGroup row name='issueType' value={type} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setType(e.target.value as 'issue' | 'request')}>
-									<FormControlLabel value='issue' control={<Radio />} label='Issue' />
-									<FormControlLabel value='request' control={<Radio />} label='Request' />
-									<FormControlLabel value='question' control={<Radio />} label='Question' />
-								</RadioGroup>
-							</FormControl>
-						</Grid>
-						<Grid size={12}>
-							<TextField fullWidth label='Title' variant='outlined' required value={title} onChange={(e) => setTitle(e.target.value)} disabled={createIssue.isLoading} />
-						</Grid>
-						<Grid size={12}>
-							<Paper variant='elevation' elevation={2} sx={{ px: 1 }}>
-								<MUIRichTextEditor
-									label='Description...'
-									onChange={(e: any) => {
-										const markdown = draftToMarkdown(convertToRaw(e.getCurrentContent()), {}).trim();
-										console.log(markdown);
-										setBody(markdown);
-									}}
-								/>
-							</Paper>
-						</Grid>
-						<Grid size={12}>
-							<Stack direction='row' spacing={2} sx={{ justifyContent: 'flex-end' }}>
-								<Button color='inherit' onClick={handleClose} disabled={createIssue.isLoading}>
-									Cancel
-								</Button>
+			<Dialog
+				open={open}
+				onOpenChange={(next) => {
+					if (!next && !createIssue.isLoading) handleClose();
+				}}
+			>
+				<DialogContent size='lg' fullScreenOnMobile dismissible={!createIssue.isLoading}>
+					<DialogHeader>
+						<DialogTitle>Create Issues or Requests</DialogTitle>
+						<DialogDescription>Please provide a title and description for your issue or request.</DialogDescription>
+					</DialogHeader>
 
-								<Button
-									onClick={handleCreate}
-									disabled={title.trim().length === 0 || body.trim().length === 0}
-									endIcon={<Add />}
-									loading={createIssue.isLoading}
-									loadingPosition='end'
-									variant='contained'
-								>
-									Create
-								</Button>
-							</Stack>
-						</Grid>
-					</Grid>
+					<div className='flex flex-col gap-4'>
+						<RadioGroup value={type} onValueChange={(value) => setType(value as 'issue' | 'request' | 'question')} className='flex flex-row gap-5'>
+							{(['issue', 'request', 'question'] as const).map((option) => (
+								<label key={option} className='flex cursor-pointer items-center gap-2 text-sm font-medium capitalize'>
+									<RadioGroupItem value={option} />
+									{option}
+								</label>
+							))}
+						</RadioGroup>
+
+						<FormField label='Title' required>
+							<Input required value={title} onChange={(e) => setTitle(e.target.value)} disabled={createIssue.isLoading} />
+						</FormField>
+
+						<RichTextEditor placeholder='Description...' onChangeMarkdown={setBody} />
+
+						<div className='flex justify-end gap-2'>
+							<Button variant='ghost' onClick={handleClose} disabled={createIssue.isLoading}>
+								Cancel
+							</Button>
+
+							<Button onClick={handleCreate} disabled={title.trim().length === 0 || body.trim().length === 0} loading={createIssue.isLoading}>
+								Create
+								<Plus />
+							</Button>
+						</div>
+					</div>
 				</DialogContent>
 			</Dialog>
 		</>

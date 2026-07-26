@@ -1,18 +1,20 @@
 import React from 'react';
-import { useSnackbar } from 'notistack';
+import { useSnackbar } from '../lib/snackbar';
 
 import { useEmptyTrash, useGetItems } from '../lib/useSupabase';
 
-import { Container, Typography, Box, CircularProgress, Button } from '@mui/material';
-import Grid from '@mui/material/Grid';
-import { DeleteSweep } from '@mui/icons-material';
+import { Trash2 } from 'lucide-react';
 
-import ItemCard from '../components/ItemCard';
+import ItemCard, { ItemCardSkeletonList } from '../components/ItemCard';
+import { Button } from '../components/ui/button';
+import { ConfirmDialog } from '../components/ui/confirm-dialog';
 
 export default function ItemsTrash() {
 	const { enqueueSnackbar } = useSnackbar();
 
 	const { data: items, isLoading, isError, error } = useGetItems();
+
+	const [confirmEmptyOpen, setConfirmEmptyOpen] = React.useState(false);
 
 	React.useEffect(() => {
 		if (isError) {
@@ -20,47 +22,62 @@ export default function ItemsTrash() {
 		}
 	}, [isError, error, enqueueSnackbar]);
 
+	const deletedItems = items?.filter((i) => i.deleted);
+
 	const emptyTrash = useEmptyTrash();
 	const handleEmptyTrash = async () => {
-		await emptyTrash.mutateAsync(items?.filter((i) => i.deleted).map((i) => i.id)!).catch((err) => {
-			enqueueSnackbar(`Unable to restore item! ${err.message}`, { variant: 'error' });
-		});
+		await emptyTrash
+			.mutateAsync(deletedItems?.map((i) => i.id)!)
+			.then(() => {
+				setConfirmEmptyOpen(false);
+			})
+			.catch((err) => {
+				enqueueSnackbar(`Unable to empty trash! ${err.message}`, { variant: 'error' });
+			});
 	};
 
 	return (
 		<>
-			<Container sx={{ paddingTop: 2, paddingBottom: 12 }}>
-				{items?.filter((i) => i.deleted).length !== 0 && (
-					<Box sx={{ display: 'flex', justifyContent: 'center', m: 3 }}>
-						<Button variant='outlined' color='error' size='medium' endIcon={<DeleteSweep />} onClick={handleEmptyTrash}>
+			<div className='mx-auto max-w-5xl px-4 pt-4 pb-12'>
+				{deletedItems?.length !== 0 && (
+					<div className='mb-6 flex justify-center'>
+						<Button
+							variant='outline'
+							className='border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive'
+							onClick={() => setConfirmEmptyOpen(true)}
+							loading={emptyTrash.isLoading}
+						>
 							Empty Trash
+							<Trash2 />
 						</Button>
-					</Box>
+					</div>
 				)}
 
-				<Grid container spacing={2}>
-					{items
-						?.filter((i) => i.deleted)
-						.map((item, index) => (
-							// TODO: Change ItemCard to Renderer function to allow Grow transition/animation
-							<ItemCard index={index} key={item.id} item={item} editable />
-						))}
+				<div className='flex flex-col gap-3'>
+					{deletedItems?.map((item, index) => (
+						<ItemCard index={index} key={item.id} item={item} editable />
+					))}
 
-					{items?.filter((i) => i.deleted).length === 0 && (
-						<Box style={{ marginTop: 100, textAlign: 'center', width: '100%' }}>
-							<Typography variant='h5' gutterBottom>
-								Trash is empty!
-							</Typography>
-						</Box>
+					{deletedItems?.length === 0 && (
+						<div className='mt-24 text-center'>
+							<p className='text-xl font-medium'>Trash is empty!</p>
+						</div>
 					)}
-				</Grid>
+				</div>
 
-				{isLoading && (
-					<Box sx={{ display: 'flex', justifyContent: 'center', mt: 16 }}>
-						<CircularProgress />
-					</Box>
-				)}
-			</Container>
+				{isLoading && <ItemCardSkeletonList />}
+			</div>
+
+			<ConfirmDialog
+				open={confirmEmptyOpen}
+				onOpenChange={setConfirmEmptyOpen}
+				title='Empty Trash?'
+				description={`This action is permanent! ${deletedItems?.length === 1 ? 'The item' : `All ${deletedItems?.length} items`} in the trash will be deleted and cannot be recovered.`}
+				confirmText='Yes, Empty it'
+				destructive
+				loading={emptyTrash.isLoading}
+				onConfirm={handleEmptyTrash}
+			/>
 		</>
 	);
 }

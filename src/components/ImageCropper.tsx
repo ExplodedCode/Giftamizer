@@ -4,14 +4,13 @@ import { useDropzone } from 'react-dropzone';
 import 'cropperjs/dist/cropper.css';
 import Cropper from 'react-cropper';
 
-import { Avatar, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Paper, Typography, useMediaQuery, useTheme } from '@mui/material';
-import { AddPhotoAlternateOutlined, Clear, FileUpload } from '@mui/icons-material';
+import { ImagePlus, Upload, X } from 'lucide-react';
 
-export async function dataUrlToFile(dataUrl: string, fileName: string): Promise<File> {
-	const res: Response = await fetch(dataUrl);
-	const blob: Blob = await res.blob();
-	return new File([blob], fileName, { type: 'image/jpeg' });
-}
+import { cn, useMediaQuery } from '../lib/utils';
+import { Button } from './ui/button';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
+
+export { dataUrlToFile } from '../lib/useSupabase/utils';
 
 type ImageCropperProps = {
 	value?: string | undefined;
@@ -27,11 +26,9 @@ type ImageCropperProps = {
 };
 
 export default function ImageCropper({ value, onChange, onClick, onClose, disabled, aspectRatio, autoCropArea, square, importedImage, tour_element }: ImageCropperProps) {
-	const theme = useTheme();
-
 	const cropperRef = React.useRef(null);
 
-	const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+	const isMobile = useMediaQuery('(max-width: 599.95px)');
 
 	const [open, setOpen] = React.useState(false);
 	const [selectedimage, setSelectedImage] = React.useState(typeof value === 'string' ? value : '');
@@ -119,25 +116,39 @@ export default function ImageCropper({ value, onChange, onClick, onClose, disabl
 
 	return (
 		<>
-			<IconButton tour-element={tour_element ?? undefined} onClick={handleOpen} disabled={disabled} sx={{ borderRadius: square ? 2 : 'inherited' }}>
-				<Avatar children={<AddPhotoAlternateOutlined sx={{ fontSize: 128 }} />} src={value} sx={{ height: 196, width: 196, borderRadius: square ? 2 : 'inherited' }} />
-			</IconButton>
+			<button
+				type='button'
+				{...({ 'tour-element': tour_element ?? undefined } as object)}
+				onClick={handleOpen}
+				disabled={disabled}
+				className={cn(
+					'group flex size-[196px] cursor-pointer items-center justify-center overflow-hidden bg-muted text-muted-foreground transition-colors outline-none',
+					'hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50',
+					square ? 'rounded-xl' : 'rounded-full'
+				)}
+			>
+				{value ? <img src={value} alt='Selected' className='size-full object-cover' /> : <ImagePlus className='size-24 opacity-60 transition-opacity group-hover:opacity-90' />}
+			</button>
 
-			<Dialog open={open} onClose={handleClose} maxWidth='sm' fullWidth>
-				<DialogTitle>Select Image</DialogTitle>
-				<DialogContent>
-					<Box>
+			<Dialog open={open} onOpenChange={(next) => (next ? handleOpen() : handleClose())}>
+				<DialogContent size='default'>
+					<DialogHeader>
+						<DialogTitle>Select Image</DialogTitle>
+					</DialogHeader>
+
+					<div className='relative'>
 						{imageLoaded ? (
 							<>
-								<IconButton
+								<button
+									type='button'
 									aria-label='clear'
-									sx={{ position: 'absolute', zIndex: 1000, top: 66, right: 26 }}
+									className='absolute top-2 right-2 z-[1000] cursor-pointer rounded-full bg-black/50 p-1.5 text-white transition-colors hover:bg-black/70'
 									onClick={() => {
 										setImageLoaded(false);
 									}}
 								>
-									<Clear />
-								</IconButton>
+									<X className='size-4' />
+								</button>
 								<Cropper
 									className={square ? 'squared-crop' : 'rounded-crop'}
 									src={selectedimage}
@@ -151,33 +162,26 @@ export default function ImageCropper({ value, onChange, onClick, onClose, disabl
 								/>
 							</>
 						) : (
-							<Paper
-								sx={{
-									textAlign: 'center',
-									padding: 5,
-									cursor: 'pointer',
-								}}
+							<div
 								{...getRootProps({
 									className: 'dropzone',
 								})}
+								className='flex cursor-pointer flex-col items-center gap-3 rounded-xl border-2 border-dashed border-border p-10 text-center transition-colors hover:border-primary/50 hover:bg-accent/50'
 							>
 								<input multiple={false} {...getInputProps()} />
-								<Typography variant='body1' component='div' gutterBottom>
-									{isMobile ? 'Select an Image' : 'Select, drop or paste an Image'}
-								</Typography>
-								<FileUpload />
-							</Paper>
+								<p className='text-sm'>{isMobile ? 'Select an Image' : 'Select, drop or paste an Image'}</p>
+								<Upload className='size-6 text-muted-foreground' />
+							</div>
 						)}
-					</Box>
+					</div>
+
+					<DialogFooter>
+						<Button variant='ghost' onClick={handleClose}>
+							Cancel
+						</Button>
+						<Button onClick={handleSelectImage}>Ok</Button>
+					</DialogFooter>
 				</DialogContent>
-				<DialogActions>
-					<Button color='inherit' onClick={handleClose}>
-						Cancel
-					</Button>
-					<Button variant='contained' onClick={handleSelectImage}>
-						Ok
-					</Button>
-				</DialogActions>
 			</Dialog>
 		</>
 	);
