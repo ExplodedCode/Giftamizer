@@ -1,38 +1,8 @@
 import React from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { useSnackbar } from 'notistack';
+import { useSnackbar } from '../lib/snackbar';
 
-import { useTheme } from '@mui/material/styles';
-import {
-	Card,
-	CardContent,
-	CardMedia,
-	Typography,
-	Button,
-	Stack,
-	IconButton,
-	Chip,
-	Menu,
-	MenuItem,
-	ListItemIcon,
-	ListItemText,
-	Collapse,
-	Paper,
-	ButtonBase,
-	Tooltip,
-	Box,
-	Alert,
-	Dialog,
-	Slide,
-	useMediaQuery,
-	DialogActions,
-	ListItemAvatar,
-	Avatar,
-	ListItem,
-} from '@mui/material';
-import Grid from '@mui/material/Grid';
-import { TransitionProps } from '@mui/material/transitions';
-import { Archive, Close, Delete, DeleteForever, Edit, MoreVert, Restore, Unarchive } from '@mui/icons-material';
+import { Archive, ArchiveRestore, EllipsisVertical, History, Pencil, Trash2, X } from 'lucide-react';
 
 import ItemUpdate from '../components/ItemUpdate';
 
@@ -52,16 +22,18 @@ import {
 	useUpdateTour,
 } from '../lib/useSupabase';
 import { ItemStatuses, ItemType, MemberItemType } from '../lib/useSupabase/types';
-import HtmlTooltip from './HtmlTooltip';
 
-const Transition = React.forwardRef(function Transition(
-	props: TransitionProps & {
-		children: React.ReactElement<any, any>;
-	},
-	ref: React.Ref<unknown>
-) {
-	return <Slide direction='up' ref={ref} {...props} />;
-});
+import { cn, useMediaQuery } from '../lib/utils';
+import { Button } from './ui/button';
+import { Card } from './ui/card';
+import { Chip } from './ui/chip';
+import { Collapse } from './ui/collapse';
+import { Dialog, DialogContent } from './ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
+import { Spinner } from './ui/spinner';
+import { SimpleTooltip } from './ui/tooltip';
+import { TourHint } from './ui/tour-hint';
+import { UserAvatar } from './ui/avatar';
 
 interface VertMenuProps {
 	item: ItemType | MemberItemType;
@@ -73,16 +45,6 @@ function VertMenu({ item }: VertMenuProps) {
 	const { data: profile } = useGetProfile();
 
 	const [itemEdit, setItemEdit] = React.useState<ItemType | null>(null);
-	const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-
-	const open = Boolean(anchorEl);
-
-	const handleVertMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-		setAnchorEl(event.currentTarget);
-	};
-	const handleVertMenuClose = () => {
-		setAnchorEl(null);
-	};
 
 	const archiveItem = useArchiveItem();
 	const handleArchive = async (id: string, archive: boolean) => {
@@ -107,86 +69,71 @@ function VertMenu({ item }: VertMenuProps) {
 
 	return (
 		<>
-			<IconButton onClick={handleVertMenuOpen}>
-				<MoreVert />
-			</IconButton>
+			<DropdownMenu>
+				<DropdownMenuTrigger asChild>
+					<button
+						type='button'
+						aria-label='item menu'
+						className='flex size-9 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50'
+					>
+						<EllipsisVertical className='size-5' />
+					</button>
+				</DropdownMenuTrigger>
 
-			<Menu
-				anchorEl={anchorEl}
-				anchorOrigin={{
-					vertical: 'bottom',
-					horizontal: 'right',
-				}}
-				transformOrigin={{
-					vertical: 'top',
-					horizontal: 'right',
-				}}
-				open={open}
-				onClose={handleVertMenuClose}
-			>
-				{!item.archived && !item.deleted && (
-					<MenuItem
-						onClick={() => {
-							setItemEdit(item);
-							navigate('#item-edit'); // open dialog
-							handleVertMenuClose();
-						}}
-					>
-						<ListItemIcon>
-							<Edit fontSize='small' />
-						</ListItemIcon>
-						<ListItemText>Edit</ListItemText>
-					</MenuItem>
-				)}
-
-				{profile?.enable_archive && !item.deleted && !item.shopping_item && (
-					<MenuItem
-						onClick={() => {
-							handleArchive(item.id, !item.archived);
-							handleVertMenuClose();
-						}}
-					>
-						<ListItemIcon>{item.archived ? <Unarchive fontSize='small' /> : <Archive fontSize='small' />}</ListItemIcon>
-						<ListItemText>{item.archived ? 'Unarchive' : 'Archive'}</ListItemText>
-					</MenuItem>
-				)}
-				{!item.deleted ? (
-					<MenuItem
-						onClick={() => {
-							handleDelete(item.id, item.deleted);
-							handleVertMenuClose();
-						}}
-					>
-						<ListItemIcon>{profile?.enable_trash && !item.shopping_item ? <Delete fontSize='small' /> : <DeleteForever fontSize='small' />}</ListItemIcon>
-						<ListItemText>{profile?.enable_trash && !item.shopping_item ? 'Trash' : 'Delete'}</ListItemText>
-					</MenuItem>
-				) : (
-					<>
-						<MenuItem
+				<DropdownMenuContent align='end'>
+					{!item.archived && !item.deleted && (
+						<DropdownMenuItem
 							onClick={() => {
-								handleRestore(item.id);
-								handleVertMenuClose();
+								setItemEdit(item);
+								navigate('#item-edit'); // open dialog
 							}}
 						>
-							<ListItemIcon>
-								<Restore fontSize='small' />
-							</ListItemIcon>
-							<ListItemText>Restore</ListItemText>
-						</MenuItem>
-						<MenuItem
+							<Pencil />
+							Edit
+						</DropdownMenuItem>
+					)}
+
+					{profile?.enable_archive && !item.deleted && !item.shopping_item && (
+						<DropdownMenuItem
+							onClick={() => {
+								handleArchive(item.id, !item.archived);
+							}}
+						>
+							{item.archived ? <ArchiveRestore /> : <Archive />}
+							{item.archived ? 'Unarchive' : 'Archive'}
+						</DropdownMenuItem>
+					)}
+					{!item.deleted ? (
+						<DropdownMenuItem
 							onClick={() => {
 								handleDelete(item.id, item.deleted);
-								handleVertMenuClose();
 							}}
 						>
-							<ListItemIcon>
-								<DeleteForever fontSize='small' />
-							</ListItemIcon>
-							<ListItemText>Delete</ListItemText>
-						</MenuItem>
-					</>
-				)}
-			</Menu>
+							<Trash2 />
+							{profile?.enable_trash && !item.shopping_item ? 'Trash' : 'Delete'}
+						</DropdownMenuItem>
+					) : (
+						<>
+							<DropdownMenuItem
+								onClick={() => {
+									handleRestore(item.id);
+								}}
+							>
+								<History />
+								Restore
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								onClick={() => {
+									handleDelete(item.id, item.deleted);
+								}}
+							>
+								<Trash2 />
+								Delete
+							</DropdownMenuItem>
+						</>
+					)}
+				</DropdownMenuContent>
+			</DropdownMenu>
 
 			{itemEdit && (
 				<ItemUpdate
@@ -202,6 +149,22 @@ function VertMenu({ item }: VertMenuProps) {
 	);
 }
 
+/** Demo status chip used inside the tour legend callouts. */
+function DemoStatusButton({ variant, faded, children }: { variant: 'available' | 'planned' | 'purchased'; faded?: boolean; children: React.ReactNode }) {
+	return (
+		<span
+			className={cn(
+				'inline-flex h-7 items-center rounded-lg border px-2.5 text-xs font-medium uppercase',
+				variant === 'available' && (faded ? 'border-status-available/50 text-status-available/50' : 'border-status-available text-status-available'),
+				variant === 'planned' && (faded ? 'border-status-planned/50 text-status-planned/50' : 'border-status-planned text-status-planned'),
+				variant === 'purchased' && (faded ? 'border-status-purchased/50 text-status-purchased/50' : 'border-status-purchased text-status-purchased')
+			)}
+		>
+			{children}
+		</span>
+	);
+}
+
 interface ItemStatusProps {
 	index: number;
 	item: MemberItemType;
@@ -209,7 +172,6 @@ interface ItemStatusProps {
 	setClaimError(claimError: string | undefined): void;
 }
 function ItemStatus({ index, item, claimError, setClaimError }: ItemStatusProps) {
-	const theme = useTheme();
 	const location = useLocation();
 
 	const { enqueueSnackbar } = useSnackbar();
@@ -241,25 +203,34 @@ function ItemStatus({ index, item, claimError, setClaimError }: ItemStatusProps)
 	// user tour
 	const { data: tour } = useGetTour();
 	const updateTour = useUpdateTour();
-	const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+	const isMobile = useMediaQuery('(max-width: 599.95px)');
+
+	const claimedByOther = item.status?.user_id !== undefined && item.status?.user_id !== user.id;
+	const isDisabled = claimError !== undefined || claimedByOther;
 
 	const claimButton = () => {
+		const statusStyle = (() => {
+			switch (item.status?.status) {
+				default:
+					return claimedByOther && !claimError ? 'border-status-available/50 text-status-available/50' : 'border-status-available text-status-available hover:bg-status-available/10';
+				case ItemStatuses.planned:
+					return claimedByOther && !claimError ? 'border-status-planned/50 text-status-planned/50' : 'border-status-planned text-status-planned hover:bg-status-planned/10';
+				case ItemStatuses.unavailable:
+					return claimedByOther && !claimError ? 'border-status-purchased/50 text-status-purchased/50' : 'border-status-purchased text-status-purchased hover:bg-status-purchased/10';
+			}
+		})();
+
 		return (
-			<Button
-				className={claimError && 'error-shake'}
-				variant='outlined'
-				color={(() => {
-					switch (item.status?.status) {
-						default:
-							return 'success';
-						case ItemStatuses.planned:
-							return 'warning';
-						case ItemStatuses.unavailable:
-							return 'error';
-					}
-				})()}
-				size='small'
+			<button
+				type='button'
+				className={cn(
+					'inline-flex h-8 items-center gap-1.5 rounded-lg border px-3 text-xs font-semibold tracking-wide uppercase transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
+					statusStyle,
+					claimError && 'error-shake',
+					isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'
+				)}
 				onClick={() => {
+					if (isDisabled || updateItemStatus.isLoading) return;
 					handleUpdateItemStatus(
 						(() => {
 							switch (item.status?.status) {
@@ -273,40 +244,9 @@ function ItemStatus({ index, item, claimError, setClaimError }: ItemStatusProps)
 						})()
 					);
 				}}
-				loading={updateItemStatus.isLoading}
-				disabled={claimError !== undefined || (item.status?.user_id !== undefined && item.status?.user_id !== user.id)}
-				sx={
-					item.status?.user_id !== user.id && !claimError
-						? {
-								'&.Mui-disabled': {
-									color: (() => {
-										switch (item.status?.status) {
-											default:
-												return theme.palette.success.main + 80;
-											case ItemStatuses.planned:
-												return theme.palette.warning.main + 80;
-											case ItemStatuses.unavailable:
-												return theme.palette.error.main + 80;
-										}
-									})(),
-									border: (() => {
-										switch (item.status?.status) {
-											default:
-												return `1px solid ${theme.palette.success.main}80`;
-											case ItemStatuses.planned:
-												return `1px solid ${theme.palette.warning.main}80`;
-											case ItemStatuses.unavailable:
-												return `1px solid ${theme.palette.error.main}80`;
-										}
-									})(),
-								},
-								pointer: 'not-allowed',
-								pointerEvents: 'all',
-						  }
-						: {}
-				}
 			>
-				<span style={claimError ? { textDecoration: 'line-through' } : {}}>
+				{updateItemStatus.isLoading && <Spinner size={14} className='text-current' />}
+				<span className={cn(claimError && 'line-through')}>
 					{(() => {
 						switch (item.status?.status) {
 							default:
@@ -318,7 +258,7 @@ function ItemStatus({ index, item, claimError, setClaimError }: ItemStatusProps)
 						}
 					})()}
 				</span>
-			</Button>
+			</button>
 		);
 	};
 
@@ -328,79 +268,35 @@ function ItemStatus({ index, item, claimError, setClaimError }: ItemStatusProps)
 			location.hash === '' &&
 			location.pathname.startsWith('/groups/') &&
 			(groupTourProgress(tour ?? {}, isMobile) === 'group_member_item_status' || groupTourProgress(tour ?? {}, isMobile) === 'group_member_item_status_taken') ? (
-				<HtmlTooltip
+				<TourHint
+					placement='bottom-start'
+					open
 					title={
 						<>
 							{groupTourProgress(tour ?? {}, isMobile) === 'group_member_item_status' && (
-								<>
-									<Typography variant='h6' gutterBottom>
-										Item Claim Status:
-									</Typography>
+								<div className='flex flex-col gap-2'>
+									<p className='text-base font-semibold'>Item Claim Status:</p>
 
-									<Paper elevation={6} sx={{ p: 1 }}>
-										<Grid>
-											<Grid size={12} sx={{ mb: 1 }}>
-												<Button
-													size='small'
-													variant='outlined'
-													color='success'
-													sx={{
-														'&.Mui-disabled': {
-															border: `1px solid ${theme.palette.success.main}80`,
-															color: theme.palette.success.main,
-														},
-														pointer: 'not-allowed',
-														pointerEvents: 'all',
-													}}
-													disabled
-												>
-													Available
-												</Button>
-												<Typography sx={{ ml: 0.5, mt: 0.5, display: 'inline' }}> - Available for purchase</Typography>
-											</Grid>
-											<Grid size={12} sx={{ mb: 1 }}>
-												<Button
-													size='small'
-													variant='outlined'
-													color='warning'
-													disabled
-													sx={{
-														'&.Mui-disabled': {
-															border: `1px solid ${theme.palette.warning.main}80`,
-															color: theme.palette.warning.main,
-														},
-													}}
-												>
-													Planned
-												</Button>
-												<Typography sx={{ ml: 0.5, mt: 0.5, display: 'inline' }}> - Planned for purchase</Typography>
-											</Grid>
-											<Grid
-												size={12}
-												//  sx={{ mb: 1 }}
-											>
-												<Button
-													size='small'
-													variant='outlined'
-													color='error'
-													disabled
-													sx={{
-														'&.Mui-disabled': {
-															border: `1px solid ${theme.palette.error.main}80`,
-															color: theme.palette.error.main,
-														},
-													}}
-												>
-													Purchased
-												</Button>
-												<Typography sx={{ ml: 0.5, mt: 0.5, display: 'inline' }}> - Purchased</Typography>
-											</Grid>
-										</Grid>
-									</Paper>
-									<DialogActions>
+									<div className='flex flex-col gap-2 rounded-lg bg-card p-2.5 text-card-foreground'>
+										<div className='flex items-center gap-2'>
+											<DemoStatusButton variant='available'>Available</DemoStatusButton>
+											<span className='text-sm'>- Available for purchase</span>
+										</div>
+										<div className='flex items-center gap-2'>
+											<DemoStatusButton variant='planned'>Planned</DemoStatusButton>
+											<span className='text-sm'>- Planned for purchase</span>
+										</div>
+										<div className='flex items-center gap-2'>
+											<DemoStatusButton variant='purchased'>Purchased</DemoStatusButton>
+											<span className='text-sm'>- Purchased</span>
+										</div>
+									</div>
+
+									<div className='flex justify-end'>
 										<Button
-											variant='outlined'
-											color='inherit'
+											variant='secondary'
+											size='sm'
+											loading={updateTour.isLoading}
 											onClick={() => {
 												if (!tour?.group_member_item_status) {
 													updateTour.mutateAsync({
@@ -408,60 +304,37 @@ function ItemStatus({ index, item, claimError, setClaimError }: ItemStatusProps)
 													});
 												}
 											}}
-											loading={updateTour.isLoading}
 										>
 											Next
 										</Button>
-									</DialogActions>
-								</>
+									</div>
+								</div>
 							)}
 
 							{groupTourProgress(tour ?? {}, isMobile) === 'group_member_item_status_taken' && (
-								<>
-									<Typography variant='body1' gutterBottom>
-										Disabled Buttons will indicate that the item has been claimed by someone else.
-									</Typography>
+								<div className='flex flex-col gap-2'>
+									<p>Disabled Buttons will indicate that the item has been claimed by someone else.</p>
 
-									<Paper elevation={6} sx={{ p: 1 }}>
-										<Grid>
-											<Grid size={12} sx={{ mb: 1 }}>
-												<Button
-													size='small'
-													variant='outlined'
-													color='warning'
-													disabled
-													sx={{
-														'&.Mui-disabled': {
-															color: theme.palette.warning.main + 80,
-														},
-													}}
-												>
-													Planned
-												</Button>
-												<Typography sx={{ ml: 0.5, mt: 0.5, display: 'inline' }}> - Planned by someone else</Typography>
-											</Grid>
-											<Grid size={12}>
-												<Button
-													size='small'
-													variant='outlined'
-													color='error'
-													disabled
-													sx={{
-														'&.Mui-disabled': {
-															color: theme.palette.error.main + 80,
-														},
-													}}
-												>
-													Purchased
-												</Button>
-												<Typography sx={{ ml: 0.5, mt: 0.5, display: 'inline' }}> - Purchased by someone else</Typography>
-											</Grid>
-										</Grid>
-									</Paper>
-									<DialogActions>
+									<div className='flex flex-col gap-2 rounded-lg bg-card p-2.5 text-card-foreground'>
+										<div className='flex items-center gap-2'>
+											<DemoStatusButton variant='planned' faded>
+												Planned
+											</DemoStatusButton>
+											<span className='text-sm'>- Planned by someone else</span>
+										</div>
+										<div className='flex items-center gap-2'>
+											<DemoStatusButton variant='purchased' faded>
+												Purchased
+											</DemoStatusButton>
+											<span className='text-sm'>- Purchased by someone else</span>
+										</div>
+									</div>
+
+									<div className='flex justify-end'>
 										<Button
-											variant='outlined'
-											color='inherit'
+											variant='secondary'
+											size='sm'
+											loading={updateTour.isLoading}
 											onClick={() => {
 												if (!tour?.group_member_item_status_taken) {
 													updateTour.mutateAsync({
@@ -469,23 +342,20 @@ function ItemStatus({ index, item, claimError, setClaimError }: ItemStatusProps)
 													});
 												}
 											}}
-											loading={updateTour.isLoading}
 										>
 											Got it
 										</Button>
-									</DialogActions>
-								</>
+									</div>
+								</div>
 							)}
 						</>
 					}
-					placement='bottom-start'
-					arrow
-					open
 				>
 					{claimButton()}
-				</HtmlTooltip>
+				</TourHint>
 			) : (
-				<Tooltip
+				<SimpleTooltip
+					side='right'
 					title={(() => {
 						switch (item.status?.status) {
 							default:
@@ -496,11 +366,9 @@ function ItemStatus({ index, item, claimError, setClaimError }: ItemStatusProps)
 								return 'Mark as Available';
 						}
 					})()}
-					placement='right'
-					arrow
 				>
 					{claimButton()}
-				</Tooltip>
+				</SimpleTooltip>
 			)}
 		</>
 	);
@@ -512,8 +380,6 @@ export type ItemCardProps = {
 	editable?: boolean;
 };
 export default function ItemCard({ index, item, editable }: ItemCardProps) {
-	const theme = useTheme();
-
 	const { user } = useSupabase();
 	const { data: profile } = useGetProfile();
 
@@ -524,189 +390,164 @@ export default function ItemCard({ index, item, editable }: ItemCardProps) {
 
 	const [claimError, setClaimError] = React.useState<string | undefined>();
 
-	const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+	const isMobile = useMediaQuery('(max-width: 599.95px)');
+
+	const linkButtons = item.links?.map((link, i) => (
+		<a
+			key={`${item.id + i}-link-${i}`}
+			href={StandardizeURL(link)}
+			target='_blank'
+			rel='noreferrer'
+			className='inline-flex h-8 items-center rounded-lg px-2.5 text-xs font-medium text-sky-600 transition-colors hover:bg-sky-500/10 dark:text-sky-400'
+		>
+			{item.domains?.[i] ?? ExtractDomain(link)}
+		</a>
+	));
+
+	const customFields = item.custom_fields?.map((c) => (
+		<p key={`${item.id}-field-${c.id}`} className='text-sm text-muted-foreground'>
+			{c.name}: <b className='text-foreground'>{c.value}</b>
+		</p>
+	));
 
 	return (
 		<>
-			<Grid size={12}>
-				{!isMobile ? (
-					<Paper>
-						<Box
-							sx={{
-								p: 2,
-								margin: 'auto',
-								flexGrow: 1,
-								display: 'flex',
-							}}
-						>
-							<Grid container spacing={2} sx={{ width: '100%' }}>
-								{item.image && (
-									<Grid>
-										<ButtonBase onClick={() => setDialogImage(item.image ?? null)} sx={{ cursor: 'zoom-in' }}>
-											<img alt={item.name} src={item.image} style={{ objectFit: 'cover', width: 150, height: 150, borderRadius: 4 }} />
-										</ButtonBase>
-									</Grid>
-								)}
-								<Grid size={{ xs: 12, sm: 'grow' }} sx={{ minWidth: 0 }}>
-									<Stack direction='row' spacing={2} sx={{ justifyContent: 'space-between' }}>
-									<Box sx={{ flexGrow: 1, minWidth: 0 }}>
-										<Stack spacing={2}>
-											<Box sx={{ flexGrow: 1 }}>
-											{'profile' in item && (
-												<ListItem sx={{ p: 0 }}>
-													{item.profile && (
-														<ListItemAvatar>
-															<Avatar
-																alt={item.items_lists?.[0]?.lists.child_list ? item.items_lists?.[0]?.lists.name : item.profile.first_name}
-																src={(item.items_lists?.[0]?.lists.child_list ? item.items_lists?.[0]?.lists.image : item.profile.image) ?? '/defaultAvatar.png'}
-															/>
-														</ListItemAvatar>
-													)}
-
-													<ListItemText
-														primary={item.items_lists?.[0]?.lists.child_list ? item.items_lists?.[0]?.lists.name : `${item.profile?.first_name} ${item.profile?.last_name}`}
-													/>
-												</ListItem>
-											)}
-
-											<Typography component='div' variant='h6'>
-												{item.name}
-											</Typography>
-											<Typography variant='body1' gutterBottom>
-												{item.description}
-											</Typography>
-											{item.custom_fields?.map((c) => (
-												<Typography key={`${item.id}-field-${c.id}`} variant='body2' color='text.secondary'>
-													{c.name}: <b>{c.value}</b>
-												</Typography>
-											))}
-											{profile?.enable_lists && (
-												<Stack direction='row' useFlexGap spacing={1} sx={{ mt: 0.5, justifyContent: 'flex-start', flexWrap: 'wrap' }}>
-													{item.lists?.map((l) => (
-														<Chip key={`${item.id}-list-${l.list_id}`} label={l.list.name} size='small' clickable onClick={() => navigate(`/lists/${l.list_id}`)} />
-													))}
-												</Stack>
-											)}
-										</Box>
-										{(!editable || item.shopping_item || (item.links && item.links.length > 0)) && (
-											<Box>
-												<Stack direction='row' spacing={1} useFlexGap sx={{ justifyContent: 'flex-start', flexWrap: 'wrap' }}>
-													{(!editable || item.shopping_item) && (
-														<ItemStatus index={index} item={item as MemberItemType} claimError={claimError} setClaimError={setClaimError} />
-													)}
-
-													{item.links?.map((link, i) => (
-														<Button key={`${item.id + i}-link-${i}`} href={StandardizeURL(link)} target='_blank' color='info' size='small'>
-															{item.domains?.[i] ?? ExtractDomain(link)}
-														</Button>
-													))}
-												</Stack>
-											</Box>
-										)}
-										</Stack>
-									</Box>
-									{editable && <Box><VertMenu item={item} /></Box>}
-									</Stack>
-								</Grid>
-							</Grid>
-						</Box>
-
-						<ItemUnassignedAlert open={profile?.enable_lists && item.lists?.length === 0 && !item.shopping_item} />
-						<ItemAlert alert={claimError} setAlert={setClaimError} />
-					</Paper>
-				) : (
-					<Card>
-						{'profile' in item && (
-							<ListItem sx={{ p: 1 }}>
-								{item.profile?.image && (
-									<ListItemAvatar>
-										<Avatar src={item.profile?.image} />
-									</ListItemAvatar>
-								)}
-
-								<ListItemText primary={`${item.profile?.first_name} ${item.profile?.last_name}`} />
-							</ListItem>
+			{!isMobile ? (
+				/* ------------------------------ Desktop card ------------------------------ */
+				<Card className='overflow-hidden'>
+					<div className='flex gap-4 p-4'>
+						{item.image && (
+							<button type='button' onClick={() => setDialogImage(item.image ?? null)} className='shrink-0 cursor-zoom-in self-start outline-none focus-visible:ring-2 focus-visible:ring-ring/50'>
+								<img alt={item.name} src={item.image} className='size-[150px] rounded-lg object-cover' />
+							</button>
 						)}
 
-						{item.image && <CardMedia component='img' alt={item.name} sx={{ height: 220, cursor: 'zoom-in' }} image={item.image} onClick={() => setDialogImage(item.image ?? null)} />}
+						<div className='flex min-w-0 flex-1 flex-col gap-2'>
+							{'profile' in item && (
+								<div className='flex items-center gap-2.5'>
+									{item.profile && (
+										<UserAvatar
+											alt={item.items_lists?.[0]?.lists.child_list ? item.items_lists?.[0]?.lists.name : item.profile.first_name}
+											src={(item.items_lists?.[0]?.lists.child_list ? item.items_lists?.[0]?.lists.image : item.profile.image) ?? '/defaultAvatar.png'}
+											className='size-9'
+										/>
+									)}
+									<span className='text-sm font-medium'>
+										{item.items_lists?.[0]?.lists.child_list ? item.items_lists?.[0]?.lists.name : `${item.profile?.first_name} ${item.profile?.last_name}`}
+									</span>
+								</div>
+							)}
 
-						<CardContent>
-							<Grid container spacing={2} sx={{ justifyContent: 'flex-start' }}>
-								<Grid size={12}>
-									<Stack direction='row' sx={{ justifyContent: 'space-between' }}>
-										<Box sx={{ flexGrow: 1, minWidth: 0 }}>
-											<Typography variant='h5' component='div'>
-												{item.name}
-											</Typography>
-											<Typography gutterBottom variant='body2' color='text.secondary'>
-												{item.description}
-											</Typography>
-											{item.custom_fields?.map((c) => (
-												<Typography key={`${item.id}-field-${c.id}`} variant='body2' color='text.secondary'>
-													{c.name}: <b>{c.value}</b>
-												</Typography>
-											))}
-										</Box>
-										{editable && (
-											<Box>
-												<VertMenu item={item} />
-											</Box>
-										)}
-									</Stack>
-								</Grid>
-								{profile?.enable_lists && editable && (
-									<Grid size={12}>
-										<Stack direction='row' useFlexGap spacing={1} sx={{ justifyContent: 'flex-start', flexWrap: 'wrap' }}>
-											{item.lists?.map((l, i) => (
-												<Chip key={`${item.id + i}-list-${l.list_id}`} label={l.list.name} size='small' clickable onClick={() => navigate(`/lists/${l.list_id}`)} />
-											))}
-										</Stack>
-									</Grid>
+							<div className='flex flex-col gap-1'>
+								<p className='text-lg font-semibold'>{item.name}</p>
+								{item.description && <p className='text-sm text-muted-foreground'>{item.description}</p>}
+								{customFields}
+							</div>
+
+							{profile?.enable_lists && (item.lists?.length ?? 0) > 0 && (
+								<div className='flex flex-wrap gap-1.5'>
+									{item.lists?.map((l) => (
+										<Chip key={`${item.id}-list-${l.list_id}`} size='sm' onClick={() => navigate(`/lists/${l.list_id}`)}>
+											{l.list.name}
+										</Chip>
+									))}
+								</div>
+							)}
+
+							{(!editable || item.shopping_item || (item.links && item.links.length > 0)) && (
+								<div className='mt-auto flex flex-wrap items-center gap-2 pt-1'>
+									{(!editable || item.shopping_item) && <ItemStatus index={index} item={item as MemberItemType} claimError={claimError} setClaimError={setClaimError} />}
+
+									{linkButtons}
+								</div>
+							)}
+						</div>
+
+						{editable && (
+							<div className='shrink-0'>
+								<VertMenu item={item} />
+							</div>
+						)}
+					</div>
+
+					<ItemUnassignedAlert open={profile?.enable_lists && item.lists?.length === 0 && !item.shopping_item} />
+					<ItemAlert alert={claimError} setAlert={setClaimError} />
+				</Card>
+			) : (
+				/* ------------------------------- Mobile card ------------------------------- */
+				<Card className='overflow-hidden'>
+					{'profile' in item && (
+						<div className='flex items-center gap-2.5 p-2.5'>
+							{item.profile?.image && <UserAvatar src={item.profile?.image} alt={item.profile?.first_name} className='size-9' />}
+							<span className='text-sm font-medium'>{`${item.profile?.first_name} ${item.profile?.last_name}`}</span>
+						</div>
+					)}
+
+					{item.image && <img alt={item.name} src={item.image} className='h-[220px] w-full cursor-zoom-in object-cover' onClick={() => setDialogImage(item.image ?? null)} />}
+
+					<div className='flex flex-col gap-3 p-4'>
+						<div className='flex justify-between gap-2'>
+							<div className='min-w-0 flex-1'>
+								<p className='text-lg font-semibold'>{item.name}</p>
+								{item.description && <p className='text-sm text-muted-foreground'>{item.description}</p>}
+								{customFields}
+							</div>
+							{editable && (
+								<div className='shrink-0'>
+									<VertMenu item={item} />
+								</div>
+							)}
+						</div>
+
+						{profile?.enable_lists && editable && (item.lists?.length ?? 0) > 0 && (
+							<div className='flex flex-wrap gap-1.5'>
+								{item.lists?.map((l, i) => (
+									<Chip key={`${item.id + i}-list-${l.list_id}`} size='sm' onClick={() => navigate(`/lists/${l.list_id}`)}>
+										{l.list.name}
+									</Chip>
+								))}
+							</div>
+						)}
+
+						{(!editable || item.shopping_item || (item.links && item.links.length > 0)) && (
+							<div className='flex flex-wrap items-center gap-2'>
+								{((!editable && item.user_id !== user.id) || item.shopping_item) && (
+									<ItemStatus index={index} item={item as MemberItemType} claimError={claimError} setClaimError={setClaimError} />
 								)}
 
-								{(!editable || item.shopping_item || (item.links && item.links.length > 0)) && (
-									<Grid size={12}>
-										<Stack direction='row' spacing={1} useFlexGap sx={{ justifyContent: 'flex-start', flexWrap: 'wrap' }}>
-											{((!editable && item.user_id !== user.id) || item.shopping_item) && (
-												<ItemStatus index={index} item={item as MemberItemType} claimError={claimError} setClaimError={setClaimError} />
-											)}
+								{linkButtons}
+							</div>
+						)}
+					</div>
 
-											{item.links?.map((link, i) => (
-												<Button key={`${item.id + i}-link-${i}`} href={StandardizeURL(link)} target='_blank' color='info' size='small'>
-													{item.domains?.[i] ?? ExtractDomain(link)}
-												</Button>
-											))}
-										</Stack>
-									</Grid>
-								)}
-							</Grid>
-						</CardContent>
-						<ItemUnassignedAlert open={profile?.enable_lists && item.lists?.length === 0 && !item.shopping_item} />
-						<ItemAlert alert={claimError} setAlert={setClaimError} />
-					</Card>
-				)}
-			</Grid>
+					<ItemUnassignedAlert open={profile?.enable_lists && item.lists?.length === 0 && !item.shopping_item} />
+					<ItemAlert alert={claimError} setAlert={setClaimError} />
+				</Card>
+			)}
+
+			{/* Image lightbox */}
 			<Dialog
-				maxWidth='md'
-				fullWidth
-				slots={{ transition: Transition }}
-				onClose={() => {
-					setDialogPrevImage(dialogImage);
-					setDialogImage(null);
-				}}
 				open={dialogImage !== null}
+				onOpenChange={(open) => {
+					if (!open) {
+						setDialogPrevImage(dialogImage);
+						setDialogImage(null);
+					}
+				}}
 			>
-				<Tooltip title='Click to hide image' arrow placement='top'>
-					<img
-						src={dialogImage ?? dialogPrevImage ?? ''}
-						alt='dialog-img'
-						style={{ width: '100%', cursor: 'zoom-out' }}
-						onClick={() => {
-							setDialogPrevImage(dialogImage);
-							setDialogImage(null);
-						}}
-					/>
-				</Tooltip>
+				<DialogContent size='lg' hideCloseButton className='overflow-hidden p-0'>
+					<SimpleTooltip title='Click to hide image' side='top'>
+						<img
+							src={dialogImage ?? dialogPrevImage ?? ''}
+							alt='dialog-img'
+							className='w-full cursor-zoom-out'
+							onClick={() => {
+								setDialogPrevImage(dialogImage);
+								setDialogImage(null);
+							}}
+						/>
+					</SimpleTooltip>
+				</DialogContent>
 			</Dialog>
 		</>
 	);
@@ -718,27 +559,21 @@ interface ItemAlertProps {
 }
 function ItemAlert({ alert, setAlert }: ItemAlertProps) {
 	return (
-		<Box sx={{ width: '100%' }}>
-			<Collapse in={alert !== undefined}>
-				<Alert
-					severity='error'
-					action={
-						<IconButton
-							aria-label='close'
-							color='inherit'
-							size='small'
-							onClick={() => {
-								setAlert(undefined);
-							}}
-						>
-							<Close fontSize='inherit' />
-						</IconButton>
-					}
+		<Collapse in={alert !== undefined}>
+			<div className='flex items-center justify-between gap-2 bg-destructive/10 px-4 py-2.5 text-sm text-destructive'>
+				<span>{alert}</span>
+				<button
+					type='button'
+					aria-label='close'
+					className='cursor-pointer rounded-md p-1 transition-colors hover:bg-destructive/15'
+					onClick={() => {
+						setAlert(undefined);
+					}}
 				>
-					{alert}
-				</Alert>
-			</Collapse>
-		</Box>
+					<X className='size-4' />
+				</button>
+			</div>
+		</Collapse>
 	);
 }
 
@@ -747,12 +582,8 @@ interface ItemUnassignedAlertProps {
 }
 function ItemUnassignedAlert({ open }: ItemUnassignedAlertProps) {
 	return (
-		<Box sx={{ width: '100%' }}>
-			<Collapse in={open}>
-				<Collapse in={alert !== undefined}>
-					<Alert severity='warning'>This item is not assigned to a list!</Alert>
-				</Collapse>
-			</Collapse>
-		</Box>
+		<Collapse in={!!open}>
+			<div className='bg-status-planned/10 px-4 py-2.5 text-sm text-status-planned'>This item is not assigned to a list!</div>
+		</Collapse>
 	);
 }

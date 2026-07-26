@@ -1,41 +1,23 @@
 import React from 'react';
 
-import { useParams, Link, useLocation } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { useSupabase, useGetGroupMembers, useGetGroups, useGetMemberItems, groupTourProgress, useGetTour, useUpdateTour } from '../lib/useSupabase';
 
-import {
-	CircularProgress,
-	Link as MUILink,
-	Typography,
-	Box,
-	Breadcrumbs,
-	AppBar,
-	Toolbar,
-	Container,
-	IconButton,
-	Popover,
-	FormControlLabel,
-	FormGroup,
-	Switch,
-	Badge,
-	DialogActions,
-	DialogTitle,
-	useTheme,
-	DialogContent,
-	useMediaQuery,
-} from '@mui/material';
-import Grid from '@mui/material/Grid';
-import { FilterAlt } from '@mui/icons-material';
+import { Filter } from 'lucide-react';
 
 import NotFound from '../components/NotFound';
 import ItemCard from '../components/ItemCard';
 import { ItemStatuses, MemberItemType } from '../lib/useSupabase/types';
-import TourTooltip from '../components/TourTooltip';
-import { Button } from '@mui/material';
+import TourTooltip, { TourContent } from '../components/TourTooltip';
+
+import { cn, useMediaQuery } from '../lib/utils';
+import { Button } from '../components/ui/button';
+import { PageHeader } from '../components/ui/page-header';
+import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
+import { Spinner } from '../components/ui/spinner';
+import { LabeledSwitch } from '../components/ui/switch';
 
 export default function Member() {
-	const theme = useTheme();
-
 	const location = useLocation();
 	const { group: groupID, user: userID } = useParams();
 
@@ -48,17 +30,6 @@ export default function Member() {
 	const { data: items, isLoading: memberLoading } = useGetMemberItems(groupID!, user_id, list_id);
 
 	const [showUnavailableItems, setShowUnavailableItems] = React.useState<boolean>(false);
-
-	const [filterAnchorEl, setFilterAnchorEl] = React.useState<HTMLButtonElement | null>(null);
-	const filterOpen = Boolean(filterAnchorEl);
-
-	const handleFilterOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
-		setFilterAnchorEl(event.currentTarget);
-	};
-
-	const handleFilterClose = (event: React.MouseEvent<HTMLButtonElement>) => {
-		setFilterAnchorEl(null);
-	};
 
 	const filterItems = (item: MemberItemType) => {
 		let show = true;
@@ -76,101 +47,77 @@ export default function Member() {
 	// User tour
 	const { data: tour } = useGetTour();
 	const updateTour = useUpdateTour();
-	const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+	const isMobile = useMediaQuery('(max-width: 599.95px)');
+
+	const filterActive = !showUnavailableItems && items?.filter((i) => !i.archived && !i.deleted)?.filter(filterItems).length !== items?.length && items?.length !== 0;
 
 	return (
 		<>
 			{groupsLoading || membersLoading || memberLoading ? (
-				<Box sx={{ display: 'flex', justifyContent: 'center', mt: 16 }}>
-					<CircularProgress />
-				</Box>
+				<div className='mt-32 flex justify-center'>
+					<Spinner size={32} />
+				</div>
 			) : (
 				<>
 					{userID && groups?.find((g) => g.id === groupID && !g.my_membership[0].invite) && members?.find((m) => m.user_id === userID && !m.invite) ? (
 						<>
-							<AppBar position='static' sx={{ marginBottom: 2 }} color='default'>
-								<Toolbar variant='dense'>
-									<Breadcrumbs aria-label='breadcrumb' sx={{ flexGrow: 1 }}>
-										<MUILink underline='hover' color='inherit' component={Link} to={`/groups/${groups?.find((g) => g.id === groupID)?.id}`}>
-											{groups?.find((g) => g.id === groupID)?.name}
-										</MUILink>
-										<Typography color='text.primary'>
-											{members?.find((m) => m.user_id === userID)?.profile.first_name} {members?.find((m) => m.user_id === userID)?.profile.last_name}
-										</Typography>
-									</Breadcrumbs>
-
-									<IconButton onClick={handleFilterOpen} tour-element='group_member_item_filter'>
-										<Badge
-											color='secondary'
-											variant='dot'
-											overlap='circular'
-											invisible={!(!showUnavailableItems && items?.filter((i) => !i.archived && !i.deleted)?.filter(filterItems).length !== items?.length && items?.length !== 0)}
-										>
-											<FilterAlt />
-										</Badge>
-									</IconButton>
-
-									<Popover
-										open={filterOpen}
-										anchorEl={filterAnchorEl}
-										onClose={handleFilterClose}
-										anchorOrigin={{
-											vertical: 'bottom',
-											horizontal: 'right',
-										}}
-										transformOrigin={{
-											vertical: 'top',
-											horizontal: 'right',
-										}}
-									>
-										<Box sx={{ ml: 2, mr: 2, mt: 1, mb: 1 }}>
-											<FormGroup>
-												<FormControlLabel
-													control={<Switch checked={showUnavailableItems} onChange={(e) => setShowUnavailableItems(e.target.checked)} />}
-													label='Show Claimed Items'
-												/>
-											</FormGroup>
-										</Box>
+							<PageHeader
+								crumbs={[
+									{ label: groups?.find((g) => g.id === groupID)?.name, to: `/groups/${groups?.find((g) => g.id === groupID)?.id}` },
+									{
+										label: `${members?.find((m) => m.user_id === userID)?.profile.first_name} ${members?.find((m) => m.user_id === userID)?.profile.last_name}`,
+									},
+								]}
+								actions={
+									<Popover>
+										<PopoverTrigger asChild>
+											<button
+												type='button'
+												{...({ 'tour-element': 'group_member_item_filter' } as object)}
+												className='relative flex size-9 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50'
+											>
+												<Filter className={cn('size-5', filterActive && 'text-primary')} />
+												{filterActive && <span className='absolute top-1.5 right-1.5 size-2 rounded-full bg-destructive' />}
+											</button>
+										</PopoverTrigger>
+										<PopoverContent align='end' className='w-auto'>
+											<LabeledSwitch label='Show Claimed Items' checked={showUnavailableItems} onCheckedChange={(checked) => setShowUnavailableItems(checked === true)} />
+										</PopoverContent>
 									</Popover>
-								</Toolbar>
-							</AppBar>
+								}
+							/>
 
-							<Grid container sx={{ justifyContent: 'center' }}>
-								<Grid size={12}>
-									<Typography variant='h4' gutterBottom sx={{ mt: 4, textAlign: 'center' }}>
+							<div className='mx-auto max-w-5xl px-4'>
+								<div className='mt-8 mb-4 text-center'>
+									<h1 className='text-3xl font-semibold tracking-tight'>
 										{members?.find((m) => m.user_id === userID)?.profile.first_name} {members?.find((m) => m.user_id === userID)?.profile.last_name}
-									</Typography>
-									<Typography variant='body1' gutterBottom sx={{ textAlign: 'center', whiteSpace: 'pre-wrap' }}>
-										{members?.find((m) => m.user_id === userID)?.profile.bio}
-									</Typography>
-								</Grid>
-							</Grid>
+									</h1>
+									{members?.find((m) => m.user_id === userID)?.profile.bio && (
+										<p className='mt-2 text-muted-foreground whitespace-pre-wrap'>{members?.find((m) => m.user_id === userID)?.profile.bio}</p>
+									)}
+								</div>
 
-							<Container sx={{ paddingTop: 2, paddingBottom: 12 }}>
-								<Grid container spacing={2}>
+								<div className='flex flex-col gap-3 pb-12'>
 									{items
 										?.filter((i) => !i.archived && !i.deleted)
 										?.filter(filterItems)
 										.map((item, index) => (
-											// TODO: Change ItemCard to Renderer function to allow Grow transition/animation
 											<ItemCard index={index} key={item.id} item={item} />
 										))}
 
 									{items?.filter((i) => !i.archived && !i.deleted)?.filter(filterItems).length === 0 && (
-										<Box style={{ marginTop: 100, textAlign: 'center', width: '100%' }}>
-											<Typography variant='h5' gutterBottom>
-												No {items?.length !== 0 ? 'available ' : ''}items are shared with this group.
-											</Typography>
-										</Box>
+										<div className='mt-24 text-center'>
+											<p className='text-xl font-medium'>No {items?.length !== 0 ? 'available ' : ''}items are shared with this group.</p>
+										</div>
 									)}
-								</Grid>
+								</div>
 
 								{memberLoading && (
-									<Box sx={{ display: 'flex', justifyContent: 'center', mt: 16 }}>
-										<CircularProgress />
-									</Box>
+									<div className='mt-32 flex justify-center'>
+										<Spinner size={32} />
+									</div>
 								)}
-							</Container>
+							</div>
 
 							{!groupsLoading && !membersLoading && !memberLoading && !showUnavailableItems && items?.length !== 0 && tour && (
 								<>
@@ -179,15 +126,12 @@ export default function Member() {
 										anchorEl={document.querySelector('[tour-element="group_member_item_filter"]')}
 										placement='bottom'
 										content={
-											<>
-												<DialogTitle>Item Filter</DialogTitle>
-												<DialogContent>
-													<Typography>Some items may not be shown if they've been claimed by someone else.</Typography>
-												</DialogContent>
-												<DialogActions>
+											<TourContent title='Item Filter'>
+												<p>Some items may not be shown if they've been claimed by someone else.</p>
+												<div className='mt-1 flex justify-end'>
 													<Button
-														variant='outlined'
-														color='inherit'
+														variant='secondary'
+														size='sm'
 														onClick={() => {
 															if (!tour?.group_member_item_filter) {
 																updateTour.mutateAsync({
@@ -199,11 +143,9 @@ export default function Member() {
 													>
 														Got it
 													</Button>
-												</DialogActions>
-											</>
+												</div>
+											</TourContent>
 										}
-										backgroundColor={theme.palette.primary.main}
-										color={theme.palette.primary.contrastText}
 										mask
 										allowClick
 									/>

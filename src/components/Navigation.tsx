@@ -1,127 +1,134 @@
 import * as React from 'react';
 import { Link, useNavigate, useLocation, Location } from 'react-router-dom';
-import { SnackbarKey, useSnackbar } from 'notistack';
+import { SnackbarKey, useSnackbar } from '../lib/snackbar';
 
 import { useSupabase, useGetProfile, useGetLists, DEFAULT_LIST_ID, useGetTour, useUpdateTour, groupTourProgress, listTourProgress, shoppingTourProgress } from '../lib/useSupabase';
 import { GroupType, ListType, UserRoles } from '../lib/useSupabase/types';
 
 import { TransitionGroup } from 'react-transition-group';
-import { styled, Theme } from '@mui/material/styles';
-import {
-	AppBar,
-	Avatar,
-	BottomNavigation,
-	BottomNavigationAction,
-	Box,
-	Collapse,
-	CSSObject,
-	Divider,
-	Drawer as MuiDrawer,
-	IconButton,
-	List,
-	ListItem,
-	ListItemButton,
-	ListItemIcon,
-	ListItemText,
-	Menu,
-	MenuItem,
-	Paper,
-	Stack,
-	Toolbar,
-	Tooltip,
-	Typography,
-	CircularProgress,
-	ListItemAvatar,
-	DialogContent,
-	DialogTitle,
-	useTheme,
-} from '@mui/material';
-import { ExpandLess, ExpandMore, Archive, Delete, Group, ListAlt, Logout, ShoppingCart, Menu as MenuIcon, Podcasts, Close, Help, Settings } from '@mui/icons-material';
+import Snowfall from 'react-snowfall';
+import { Archive, ChevronDown, ChevronUp, CircleHelp, ClipboardList, LogOut, Menu, Monitor, Moon, Podcast, Settings, ShoppingCart, Sun, Trash2, Users, X } from 'lucide-react';
 
 import Notifications from './Notifications';
-
+import { GiftIcon } from './SvgIcons';
 import { useGetGroups } from '../lib/useSupabase/hooks/useGroup';
 import { useGetSupportConfigured } from '../lib/useSupabase/hooks/useSupport';
-import { GiftIcon } from './SvgIcons';
-import Snowfall from 'react-snowfall';
-import HtmlTooltip from './HtmlTooltip';
 
-const drawerWidth = 240;
+import { cn, useMediaQuery } from '../lib/utils';
+import { useTheme, type ThemePreference } from './theme/ThemeProvider';
+import { TourHint } from './ui/tour-hint';
+import { Collapse } from './ui/collapse';
+import { Chip } from './ui/chip';
+import { UserAvatar } from './ui/avatar';
+import { Spinner } from './ui/spinner';
+import { Separator } from './ui/separator';
+import { SimpleTooltip } from './ui/tooltip';
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from './ui/dropdown-menu';
 
-const openedMixin = (theme: Theme): CSSObject => ({
-	width: drawerWidth,
-	transition: theme.transitions.create('width', {
-		easing: theme.transitions.easing.sharp,
-		duration: theme.transitions.duration.enteringScreen,
-	}),
-	overflowX: 'hidden',
-});
+const SIDEBAR_OPEN = 'w-60';
+const SIDEBAR_CLOSED = 'w-16';
+const MAIN_OPEN = 'md:pl-60';
+const MAIN_CLOSED = 'md:pl-16';
 
-const closedMixin = (theme: Theme): CSSObject => ({
-	transition: theme.transitions.create('width', {
-		easing: theme.transitions.easing.sharp,
-		duration: theme.transitions.duration.leavingScreen,
-	}),
-	overflowX: 'hidden',
-	width: `calc(${theme.spacing(7)} + 1px)`,
-	[theme.breakpoints.up('sm')]: {
-		width: `calc(${theme.spacing(8)} + 1px)`,
-	},
-});
-
-const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop: string) => prop !== 'open' })(({ theme, open }) => ({
-	width: drawerWidth,
-	flexShrink: 0,
-	whiteSpace: 'nowrap',
-	boxSizing: 'border-box',
-	...(open && {
-		...openedMixin(theme),
-		'& .MuiDrawer-paper': openedMixin(theme),
-	}),
-	...(!open && {
-		...closedMixin(theme),
-		'& .MuiDrawer-paper': closedMixin(theme),
-	}),
-}));
+// Note: no `flex-1` here — inside the column-direction <nav> its 0% basis
+// applies to the height and defeats h-11. Rows that share a line with an
+// expand chevron add `flex-1` themselves (there the main axis is the width).
+function navRowClasses(selected: boolean, drawerOpen: boolean) {
+	return cn(
+		'flex h-11 shrink-0 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
+		'[&_svg]:size-5 [&_svg]:shrink-0',
+		selected ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+		!drawerOpen && 'justify-center px-0'
+	);
+}
 
 interface RenderGroupItemOptions {
 	group: GroupType;
 	location: Location;
 }
 function renderGroupItem({ group, location }: RenderGroupItemOptions) {
+	const selected = location.pathname.startsWith(`/groups/${group.id}`);
 	return (
-		<ListItemButton key={group.id} sx={{ pl: 4 }} component={Link} to={`/groups/${group.id}`} selected={location.pathname.startsWith(`/groups/${group.id}`)}>
-			<ListItemAvatar>
-				<Avatar alt={group.name} sx={{ width: 32, height: 32, bgcolor: location.pathname.startsWith(`/groups/${group.id}`) ? 'primary.main' : undefined }} src={group.image} />
-			</ListItemAvatar>
-
-			<ListItemText primary={group.name} />
-		</ListItemButton>
+		<Link
+			to={`/groups/${group.id}`}
+			className={cn(
+				'mx-2 flex h-10 items-center gap-2.5 rounded-lg py-1 pr-2 pl-6 text-sm transition-colors',
+				selected ? 'bg-primary/10 font-medium text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+			)}
+		>
+			<UserAvatar src={group.image} alt={group.name} className={cn('size-7 text-xs', !selected && '[&_[data-slot=avatar-fallback]]:bg-muted [&_[data-slot=avatar-fallback]]:text-muted-foreground')} />
+			<span className='truncate'>{group.name}</span>
+		</Link>
 	);
 }
+
 interface RenderListItemOptions {
 	list: ListType;
 	location: Location;
 }
 function renderListItem({ list, location }: RenderListItemOptions) {
+	const selected = location.pathname.startsWith(`/lists/${list.id}`);
 	return (
-		<ListItemButton key={list.id} sx={{ pl: 4 }} component={Link} to={`/lists/${list.id}`} selected={location.pathname.startsWith(`/lists/${list.id}`)}>
-			<ListItemAvatar>
-				<Avatar src={list.image} alt={list.name} sx={{ width: 32, height: 32, bgcolor: location.pathname.startsWith(`/lists/${list.id}`) ? 'primary.main' : undefined }}>
-					<ListAlt sx={{ width: 18, height: 18 }} />
-				</Avatar>
-			</ListItemAvatar>
+		<Link
+			to={`/lists/${list.id}`}
+			className={cn(
+				'mx-2 flex h-10 items-center gap-2.5 rounded-lg py-1 pr-2 pl-6 text-sm transition-colors',
+				selected ? 'bg-primary/10 font-medium text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+			)}
+		>
+			<UserAvatar
+				src={list.image}
+				alt={list.name}
+				fallback={<ClipboardList className='size-4' />}
+				className={cn('size-7 text-xs', !selected && '[&_[data-slot=avatar-fallback]]:bg-muted [&_[data-slot=avatar-fallback]]:text-muted-foreground')}
+			/>
+			<span className='truncate'>{list.name}</span>
+		</Link>
+	);
+}
 
-			<ListItemText primary={list.name} />
-		</ListItemButton>
+function ThemeToggleRow() {
+	const { theme, setTheme } = useTheme();
+
+	const options: { value: ThemePreference; icon: React.ReactNode; label: string }[] = [
+		{ value: 'light', icon: <Sun className='size-4' />, label: 'Light' },
+		{ value: 'dark', icon: <Moon className='size-4' />, label: 'Dark' },
+		{ value: 'system', icon: <Monitor className='size-4' />, label: 'System' },
+	];
+
+	return (
+		<div className='flex items-center gap-1 px-2 pb-1.5'>
+			{options.map((option) => (
+				<button
+					key={option.value}
+					type='button'
+					title={option.label}
+					onClick={() => setTheme(option.value)}
+					className={cn(
+						'flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md border px-2 py-1.5 text-xs font-medium whitespace-nowrap transition-colors [&_svg]:shrink-0',
+						theme === option.value ? 'border-primary/30 bg-primary/10 text-primary' : 'border-transparent text-muted-foreground hover:bg-accent hover:text-foreground'
+					)}
+				>
+					{option.icon}
+					{option.label}
+				</button>
+			))}
+		</div>
 	);
 }
 
 const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => {
 	const { enqueueSnackbar, closeSnackbar } = useSnackbar();
-	const theme = useTheme();
 	const navigate = useNavigate();
 	const location = useLocation();
+	const isDesktop = useMediaQuery('(min-width: 900px)');
 
 	const { client, user } = useSupabase();
 	const { data: profile, isLoading, refetch: refetchProfile } = useGetProfile();
@@ -144,38 +151,29 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 
 	const tourGroupNav = () => {
 		return (
-			<>
-				{groups?.filter((g) => !g.my_membership[0].invite).length !== 0 ? <DialogTitle>Let's explore groups!</DialogTitle> : <DialogTitle>Let's create a group!</DialogTitle>}
-
-				<DialogContent>
-					<Typography>Share your items with your friends and family.</Typography>
-				</DialogContent>
-			</>
+			<div className='flex flex-col gap-1'>
+				<p className='text-base font-semibold'>{groups?.filter((g) => !g.my_membership[0].invite).length !== 0 ? "Let's explore groups!" : "Let's create a group!"}</p>
+				<p>Share your items with your friends and family.</p>
+			</div>
 		);
 	};
 
 	const tourListNav = () => {
 		return (
-			<>
-				<DialogTitle>Let's explore lists!</DialogTitle>
-
-				<DialogContent>
-					<Typography gutterBottom>Lists give you more control over who can see specific items.</Typography>
-					<Typography>Even create separate managed lists for your kids or pets.</Typography>
-				</DialogContent>
-			</>
+			<div className='flex flex-col gap-1'>
+				<p className='text-base font-semibold'>Let's explore lists!</p>
+				<p>Lists give you more control over who can see specific items.</p>
+				<p>Even create separate managed lists for your kids or pets.</p>
+			</div>
 		);
 	};
 
 	const tourShoppingNav = () => {
 		return (
-			<>
-				<DialogTitle>Let's explore shopping!</DialogTitle>
-
-				<DialogContent>
-					<Typography>When you mark an item as planned or purchased, it will show up in shopping for easy access when you're out buying gifts!</Typography>
-				</DialogContent>
-			</>
+			<div className='flex flex-col gap-1'>
+				<p className='text-base font-semibold'>Let's explore shopping!</p>
+				<p>When you mark an item as planned or purchased, it will show up in shopping for easy access when you're out buying gifts!</p>
+			</div>
 		);
 	};
 
@@ -196,476 +194,281 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 	}, [location.pathname, location.hash, profile, navigate]);
 
 	const [drawerOpen, setDrawerOpen] = React.useState(true);
-	const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
-
 	const [groupsOpen, setGroupsOpen] = React.useState(true);
 	const [listsOpen, setListsOpen] = React.useState(true);
-
-	const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
-		setAnchorElUser(event.currentTarget);
-	};
-
-	const handleCloseUserMenu = () => {
-		setAnchorElUser(null);
-	};
 
 	const toggleDrawer = () => {
 		setDrawerOpen(!drawerOpen);
 	};
 
+	const pinnedLists = lists ? [...lists.filter((l) => l.id === DEFAULT_LIST_ID), ...lists.filter((l) => l.id !== DEFAULT_LIST_ID)].filter((l) => l.pinned === true) : [];
+	const pinnedGroups = groups?.filter((g) => g.my_membership[0].pinned === true) ?? [];
+
+	const itemsSelected = location.pathname === '/' || location.pathname === '/items';
+	const listsSelected =
+		location.pathname.startsWith('/lists') &&
+		!lists
+			?.filter((l) => l.pinned === true)
+			.map((l) => l.id)
+			.includes(location.pathname?.split('/lists/')?.[1]?.split('/')?.[0]);
+	const groupsSelected =
+		location.pathname.startsWith('/groups') &&
+		!groups
+			?.filter((g) => g.my_membership[0].pinned === true)
+			.map((g) => g.id)
+			.includes(location.pathname?.split('/groups/')?.[1]?.split('/')?.[0]);
+
+	const mobileNavValue = (() => {
+		switch (true) {
+			case location.pathname === '/' || location.pathname === '/items':
+				return 0;
+			case location.pathname.startsWith('/list'):
+				return 1;
+			case location.pathname.startsWith('/group'):
+				return 2;
+			case location.pathname.startsWith('/shopping'):
+				return 3;
+			default:
+				return -1;
+		}
+	})();
+
 	return (
-		<Box sx={{ display: 'flex' }}>
+		<div className='min-h-dvh'>
 			{(new Date().getMonth() === 10 || new Date().getMonth() === 11 || new Date().getMonth() === 0) && profile?.enable_snowfall && (
 				<div style={{ position: 'fixed', top: 0, left: 0, height: '100%', width: '100%', zIndex: 5000, pointerEvents: 'none' }}>
 					<Snowfall snowflakeCount={window.innerWidth * 0.035} />
 				</div>
 			)}
-			<AppBar position='fixed' color='primary' enableColorOnDark sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-				<Toolbar>
-					<IconButton color='inherit' aria-label='open drawer' onClick={toggleDrawer} edge='start' sx={{ mr: 2, display: { xs: 'none', sm: 'none', md: 'flex' } }}>
-						<MenuIcon />
-					</IconButton>
 
-					<Typography
-						variant='h6'
-						noWrap
-						component={Link}
-						to={profile?.home ?? '/'}
-						sx={{
-							flexGrow: 1,
-							color: 'inherit',
-							textDecoration: 'none',
-						}}
-					>
-						Giftamizer
-					</Typography>
+			{/* ------------------------------- Header ------------------------------- */}
+			<header className='fixed inset-x-0 top-0 z-40 flex h-14 items-center gap-2 border-b border-border bg-sidebar px-3'>
+				<button
+					type='button'
+					aria-label='open drawer'
+					onClick={toggleDrawer}
+					className='hidden size-9 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 md:flex'
+				>
+					<Menu className='size-5' />
+				</button>
 
-					<Box sx={{ flexGrow: 0 }}>
-						<Stack direction='row' spacing={2}>
-							{profile?.roles?.roles.includes(UserRoles.debug) && (
-								<Tooltip title='Get Realtime Channels'>
-									<IconButton
-										size='large'
-										color='inherit'
-										onClick={() => {
-											var channels = client.getChannels();
-											enqueueSnackbar(`${channels.length} Channels:`, {
-												variant: 'info',
-												action: (snackbarId: SnackbarKey | undefined) => (
-													<React.Fragment>
-														{channels.map((c) => (
-															<>
-																{c.topic}
-																<br />
-															</>
-														))}
-														<IconButton size='small' aria-label='close' color='inherit' onClick={() => closeSnackbar(snackbarId)}>
-															<Close fontSize='small' />
-														</IconButton>
-													</React.Fragment>
-												),
-											});
-											console.log(channels);
-										}}
-									>
-										<Podcasts />
-									</IconButton>
-								</Tooltip>
-							)}
+				<Link to={profile?.home ?? '/'} className='flex items-center gap-2 rounded-lg px-1.5 py-1 outline-none focus-visible:ring-2 focus-visible:ring-ring/50'>
+					<GiftIcon className='size-6 text-primary' />
+					<span className='text-lg font-semibold tracking-tight'>Giftamizer</span>
+				</Link>
 
-							<Notifications />
-							<IconButton onClick={isLoading ? undefined : handleOpenUserMenu} sx={{ p: 0 }} className='profile-icon'>
-								{isLoading ? <CircularProgress color='inherit' /> : <Avatar alt={profile?.first_name} src={profile?.image || '/defaultAvatar.png'} />}
-							</IconButton>
-						</Stack>
-						<Menu
-							sx={{ mt: '45px' }}
-							id='menu-appbar'
-							anchorEl={anchorElUser}
-							anchorOrigin={{
-								vertical: 'top',
-								horizontal: 'right',
-							}}
-							keepMounted
-							transformOrigin={{
-								vertical: 'top',
-								horizontal: 'right',
-							}}
-							open={Boolean(anchorElUser)}
-							onClose={handleCloseUserMenu}
-						>
-							<MenuItem onClick={handleCloseUserMenu} component={Link} to='/account' sx={{ display: { xs: 'flex', md: 'none' } }}>
-								<ListItemIcon>
-									<Settings fontSize='small' />
-								</ListItemIcon>
-								<Typography align='center'>User Settings</Typography>
-							</MenuItem>
+				{window.location.host !== 'giftamizer.com' && (
+					<Chip variant='festive' size='sm' className='font-semibold uppercase'>
+						Dev
+					</Chip>
+				)}
+
+				<div className='flex-1' />
+
+				<div className='flex items-center gap-1.5'>
+					{profile?.roles?.roles.includes(UserRoles.debug) && (
+						<SimpleTooltip title='Get Realtime Channels'>
+							<button
+								type='button'
+								onClick={() => {
+									var channels = client.getChannels();
+									enqueueSnackbar(`${channels.length} Channels:`, {
+										variant: 'info',
+										action: (snackbarId: SnackbarKey | undefined) => (
+											<React.Fragment>
+												{channels.map((c) => (
+													<>
+														{c.topic}
+														<br />
+													</>
+												))}
+												<button type='button' aria-label='close' className='cursor-pointer rounded-md p-1 hover:bg-accent' onClick={() => closeSnackbar(snackbarId)}>
+													<X className='size-4' />
+												</button>
+											</React.Fragment>
+										),
+									});
+									console.log(channels);
+								}}
+								className='flex size-9 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50'
+							>
+								<Podcast className='size-5' />
+							</button>
+						</SimpleTooltip>
+					)}
+
+					<Notifications />
+
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild disabled={isLoading}>
+							<button type='button' className='profile-icon flex cursor-pointer items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring/50'>
+								{isLoading ? <Spinner size={28} /> : <UserAvatar src={profile?.image || '/defaultAvatar.png'} alt={profile?.first_name} className='size-9' />}
+							</button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align='end' sideOffset={8} className='w-64'>
+							<DropdownMenuLabel className='text-xs font-normal text-muted-foreground'>Theme</DropdownMenuLabel>
+							<ThemeToggleRow />
+							<DropdownMenuSeparator />
+
+							<DropdownMenuItem asChild className='md:hidden'>
+								<Link to='/account'>
+									<Settings />
+									User Settings
+								</Link>
+							</DropdownMenuItem>
 
 							{profile?.enable_archive && (
-								<MenuItem onClick={handleCloseUserMenu} component={Link} to='/archive' sx={{ display: { xs: 'flex', md: 'none' } }}>
-									<ListItemIcon>
-										<Archive fontSize='small' />
-									</ListItemIcon>
-									<Typography align='center'>Archive</Typography>
-								</MenuItem>
+								<DropdownMenuItem asChild className='md:hidden'>
+									<Link to='/archive'>
+										<Archive />
+										Archive
+									</Link>
+								</DropdownMenuItem>
 							)}
 							{profile?.enable_trash && (
-								<MenuItem onClick={handleCloseUserMenu} component={Link} to='/trash' sx={{ display: { xs: 'flex', md: 'none' } }}>
-									<ListItemIcon>
-										<Delete fontSize='small' />
-									</ListItemIcon>
-									<Typography align='center'>Trash</Typography>
-								</MenuItem>
+								<DropdownMenuItem asChild className='md:hidden'>
+									<Link to='/trash'>
+										<Trash2 />
+										Trash
+									</Link>
+								</DropdownMenuItem>
 							)}
 
-							<MenuItem
+							<DropdownMenuItem
 								onClick={() => {
-									handleCloseUserMenu();
 									client.auth.signOut();
 									navigate('/signin');
 								}}
 							>
-								<ListItemIcon>
-									<Logout fontSize='small' />
-								</ListItemIcon>
-								<Typography align='center'>Logout</Typography>
-							</MenuItem>
+								<LogOut />
+								Logout
+							</DropdownMenuItem>
 
 							{supportConfigured && (
 								<>
-									<Divider sx={{ display: { xs: 'block', md: 'none' } }} />
-									<MenuItem onClick={handleCloseUserMenu} component={Link} to='/support' sx={{ display: { xs: 'flex', md: 'none' } }}>
-										<ListItemIcon>
-											<Help fontSize='small' />
-										</ListItemIcon>
-										<Typography align='center'>Support</Typography>
-									</MenuItem>
+									<DropdownMenuSeparator className='md:hidden' />
+									<DropdownMenuItem asChild className='md:hidden'>
+										<Link to='/support'>
+											<CircleHelp />
+											Support
+										</Link>
+									</DropdownMenuItem>
 								</>
 							)}
-						</Menu>
-					</Box>
-				</Toolbar>
-			</AppBar>
-			<Drawer variant='permanent' open={drawerOpen} sx={{ display: { xs: 'none', md: 'flex' } }}>
-				<Toolbar />
-				<Box>
-					<List>
-						<ListItem disablePadding>
-							<ListItemButton component={Link} to='/items' selected={location.pathname === '/' || location.pathname === '/items'}>
-								<ListItemIcon sx={{ mr: 1 }}>
-									<GiftIcon color={location.pathname === '/' || location.pathname === '/items' ? 'primary' : undefined} />
-								</ListItemIcon>
-								<ListItemText primary='Items' sx={{ overflow: 'hidden' }} />
-							</ListItemButton>
-						</ListItem>
-						{profile?.enable_lists && lists && (
-							<>
-								<ListItem disablePadding>
-									<HtmlTooltip
-										sx={{ display: { xs: 'none', md: 'flex' } }}
-										title={tourListNav()}
-										arrow
-										open={tourStart && listTourProgress(tour ?? {}) === 'list_tour_start' && location.hash === ''}
-										placement='right-start'
-									>
-										<ListItemButton
-											component={Link}
-											to='/lists'
-											selected={
-												location.pathname.startsWith('/lists') &&
-												!lists
-													?.filter((l) => l.pinned === true)
-													.map((l) => l.id)
-													.includes(location.pathname?.split('/lists/')?.[1]?.split('/')?.[0])
-											}
-											onClick={() => {
-												if (!tour?.list_nav) {
-													updateTour.mutateAsync({
-														list_nav: true,
-													});
-												}
-											}}
-										>
-											<ListItemIcon sx={{ mr: 1 }}>
-												<ListAlt color={location.pathname === '/lists' ? 'primary' : undefined} />
-											</ListItemIcon>
-											<ListItemText primary='Lists' sx={{ overflow: 'hidden' }} />
-										</ListItemButton>
-									</HtmlTooltip>
-									{drawerOpen &&
-										lists &&
-										[...lists?.filter((l) => l.id === DEFAULT_LIST_ID)!, ...lists?.filter((l) => l.id !== DEFAULT_LIST_ID)!]?.filter((l) => l.pinned === true)?.length > 0 && (
-											<IconButton
-												onClick={(e) => {
-													e.preventDefault();
-													setListsOpen(!listsOpen);
-												}}
-												sx={{
-													borderRadius: 0,
-													height: 48,
-													width: 48,
-													backgroundColor: location.pathname === '/lists' || location.pathname === '/lists/' ? theme.palette.primary.main : undefined,
-													opacity: 0.16,
-												}}
-											>
-												{listsOpen ? <ExpandLess fontSize='small' /> : <ExpandMore fontSize='small' />}
-											</IconButton>
-										)}
-								</ListItem>
-								<Collapse in={listsOpen && drawerOpen} timeout='auto' unmountOnExit>
-									<List component='div' disablePadding>
-										<TransitionGroup>
-											{[...lists?.filter((l) => l.id === DEFAULT_LIST_ID)!, ...lists?.filter((l) => l.id !== DEFAULT_LIST_ID)!]
-												?.filter((l) => l.pinned === true)
-												.map((list, index) => (
-													<Collapse key={list.id}>{renderListItem({ list, location })}</Collapse>
-												))}
-										</TransitionGroup>
-									</List>
-								</Collapse>
-							</>
-						)}
-						<ListItem disablePadding>
-							<HtmlTooltip
-								sx={{ display: { xs: 'none', md: 'flex' } }}
-								title={tourGroupNav()}
-								arrow
-								open={tourStart && groupTourProgress(tour ?? {}, false) === 'group_nav' && groups?.filter((g) => g.my_membership[0].invite).length === 0 && location.hash === ''}
-								placement='right-start'
-							>
-								<ListItemButton
-									component={Link}
-									to='/groups'
-									selected={
-										location.pathname.startsWith('/groups') &&
-										!groups
-											?.filter((g) => g.my_membership[0].pinned === true)
-											.map((g) => g.id)
-											.includes(location.pathname?.split('/groups/')?.[1]?.split('/')?.[0])
-									}
-									onClick={() => {
-										if (!tour?.group_nav) {
-											updateTour.mutateAsync({
-												group_nav: true,
-											});
-										}
-									}}
-								>
-									<ListItemIcon sx={{ mr: 1 }}>
-										<Group color={location.pathname === '/groups' ? 'primary' : undefined} />
-									</ListItemIcon>
-									<ListItemText primary='Groups' sx={{ overflow: 'hidden' }} />
-								</ListItemButton>
-							</HtmlTooltip>
-							{drawerOpen && groups && groups?.filter((g) => g.my_membership[0].pinned === true)?.length > 0 && (
-								<IconButton
-									onClick={(e) => {
-										e.preventDefault();
-										setGroupsOpen(!groupsOpen);
-									}}
-									sx={{
-										borderRadius: 0,
-										height: 48,
-										width: 48,
-										backgroundColor: location.pathname === '/groups' || location.pathname === '/groups/' ? theme.palette.primary.main : undefined,
-										opacity: 0.16,
-									}}
-								>
-									{groupsOpen ? <ExpandLess fontSize='small' /> : <ExpandMore fontSize='small' />}
-								</IconButton>
-							)}
-						</ListItem>
-						<Collapse in={groupsOpen && drawerOpen} timeout='auto' unmountOnExit>
-							<List component='div' disablePadding>
-								<TransitionGroup>
-									{groups
-										?.filter((g) => g.my_membership[0].pinned === true)
-										.map((group, index) => (
-											<Collapse key={group.id}>{renderGroupItem({ group, location })}</Collapse>
-										))}
-								</TransitionGroup>
-							</List>
-						</Collapse>
-					</List>
-					<Divider />
-					<List>
-						<ListItem disablePadding>
-							<HtmlTooltip
-								sx={{ display: { xs: 'none', md: 'flex' } }}
-								title={tourShoppingNav()}
-								arrow
-								open={tourStart && shoppingTourProgress(tour ?? {}) === 'shopping_nav' && location.hash === ''}
-								placement='right-start'
-							>
-								<ListItemButton
-									component={Link}
-									to='/shopping'
-									selected={location.pathname === '/shopping'}
-									onClick={() => {
-										if (!tour?.shopping_nav) {
-											updateTour.mutateAsync({
-												shopping_nav: true,
-											});
-										}
-									}}
-								>
-									<ListItemIcon sx={{ mr: 1 }}>
-										<ShoppingCart color={location.pathname === '/shopping' ? 'primary' : undefined} />
-									</ListItemIcon>
-									<ListItemText primary='Shopping List' sx={{ overflow: 'hidden' }} />
-								</ListItemButton>
-							</HtmlTooltip>
-						</ListItem>
-					</List>
-					{(profile?.enable_archive || profile?.enable_trash) && (
+						</DropdownMenuContent>
+					</DropdownMenu>
+				</div>
+			</header>
+
+			{/* ------------------------------- Sidebar ------------------------------ */}
+			<aside
+				className={cn(
+					'fixed top-14 bottom-0 left-0 z-30 hidden flex-col overflow-x-hidden border-r border-sidebar-border bg-sidebar pt-2 whitespace-nowrap transition-[width] duration-200 ease-in-out md:flex',
+					drawerOpen ? SIDEBAR_OPEN : SIDEBAR_CLOSED
+				)}
+			>
+				<nav className='flex flex-col gap-0.5 px-2'>
+					<Link to='/items' className={navRowClasses(itemsSelected, drawerOpen)}>
+						<GiftIcon />
+						{drawerOpen && <span className='truncate'>Items</span>}
+					</Link>
+
+					{profile?.enable_lists && lists && (
 						<>
-							<Divider />
-							<List>
-								{profile?.enable_archive && (
-									<ListItem disablePadding>
-										<ListItemButton component={Link} to='/archive' selected={location.pathname === '/archive'}>
-											<ListItemIcon sx={{ mr: 1 }}>
-												<Archive color={location.pathname === '/archive' ? 'primary' : undefined} />
-											</ListItemIcon>
-											<ListItemText primary='Archive' sx={{ overflow: 'hidden' }} />
-										</ListItemButton>
-									</ListItem>
+							<div className='flex items-center'>
+								<TourHint title={tourListNav()} placement='right-start' open={isDesktop && tourStart && listTourProgress(tour ?? {}) === 'list_tour_start' && location.hash === ''}>
+									<Link
+										to='/lists'
+										className={cn(navRowClasses(!!listsSelected, drawerOpen), 'min-w-0 flex-1')}
+										onClick={() => {
+											if (!tour?.list_nav) {
+												updateTour.mutateAsync({
+													list_nav: true,
+												});
+											}
+										}}
+									>
+										<ClipboardList />
+										{drawerOpen && <span className='truncate'>Lists</span>}
+									</Link>
+								</TourHint>
+								{drawerOpen && pinnedLists.length > 0 && (
+									<button
+										type='button'
+										onClick={(e) => {
+											e.preventDefault();
+											setListsOpen(!listsOpen);
+										}}
+										className='flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground'
+									>
+										{listsOpen ? <ChevronUp className='size-4' /> : <ChevronDown className='size-4' />}
+									</button>
 								)}
-								{profile?.enable_trash && (
-									<ListItem disablePadding>
-										<ListItemButton component={Link} to='/trash' selected={location.pathname === '/trash'}>
-											<ListItemIcon sx={{ mr: 1 }}>
-												<Delete color={location.pathname === '/trash' ? 'primary' : undefined} />
-											</ListItemIcon>
-											<ListItemText primary='Trash' sx={{ overflow: 'hidden' }} />
-										</ListItemButton>
-									</ListItem>
-								)}
-							</List>
+							</div>
+							<Collapse in={listsOpen && drawerOpen} unmountOnExit>
+								<div className='flex flex-col gap-0.5 py-0.5'>
+									<TransitionGroup component={null}>
+										{pinnedLists.map((list) => (
+											<Collapse key={list.id}>{renderListItem({ list, location })}</Collapse>
+										))}
+									</TransitionGroup>
+								</div>
+							</Collapse>
 						</>
 					)}
 
-					<Box sx={{ position: 'absolute', bottom: 0, width: '100%' }}>
-						{supportConfigured && (
-							<>
-								<List>
-									<ListItem disablePadding>
-										<ListItemButton component={Link} to='/support' selected={location.pathname === '/support'}>
-											<ListItemIcon sx={{ mr: 1 }}>
-												<Help color={location.pathname === '/support' ? 'primary' : undefined} />
-											</ListItemIcon>
-											<ListItemText primary='Support' sx={{ overflow: 'hidden' }} />
-										</ListItemButton>
-									</ListItem>
-								</List>
-								<Divider />
-							</>
-						)}
-						<List>
-							<ListItem disablePadding>
-								<ListItemButton component={Link} to='/account' selected={location.pathname === '/account'}>
-									<ListItemIcon sx={{ mr: 1 }}>
-										<Settings color={location.pathname === '/account' ? 'primary' : undefined} />
-									</ListItemIcon>
-									<ListItemText primary='Settings' sx={{ overflow: 'hidden' }} />
-								</ListItemButton>
-							</ListItem>
-						</List>
-					</Box>
-				</Box>
-			</Drawer>
-			<Box component='main' sx={{ flexGrow: 1 }}>
-				<Toolbar />
-				<Box sx={{ mb: 4 }}>{children}</Box>
-			</Box>
-			<Paper sx={{ position: 'fixed', bottom: 0, left: 0, right: 0, display: { xs: 'block', md: 'none' } }} elevation={3}>
-				<BottomNavigation
-					showLabels
-					value={(() => {
-						switch (true) {
-							case location.pathname === '/' || location.pathname === '/items':
-								return 0;
-							case location.pathname.startsWith('/list'):
-								return 1;
-							case location.pathname.startsWith('/group'):
-								return 2;
-							case location.pathname.startsWith('/shopping'):
-								return 3;
-							default:
-								return -1;
-						}
-					})()}
-					onChange={(event, newValue) => {
-						// setMobileNav(newValue);
-						switch (newValue) {
-							case 0:
-								navigate('/items');
-								break;
-							case 1:
-								navigate('/lists');
-								break;
-							case 2:
-								navigate('/groups');
-								break;
-							case 3:
-								navigate('/shopping');
-								break;
-						}
-					}}
-				>
-					<BottomNavigationAction label='Items' icon={<GiftIcon />} />
-					{profile?.enable_lists && (
-						<HtmlTooltip
-							sx={{ display: { xs: 'block', md: 'none' } }}
-							title={tourListNav()}
-							arrow
-							open={tourStart && listTourProgress(tour ?? {}) === 'list_tour_start' && location.hash === ''}
-							placement='top'
+					<div className='flex items-center'>
+						<TourHint
+							title={tourGroupNav()}
+							placement='right-start'
+							open={isDesktop && tourStart && groupTourProgress(tour ?? {}, false) === 'group_nav' && groups?.filter((g) => g.my_membership[0].invite).length === 0 && location.hash === ''}
 						>
-							<BottomNavigationAction
-								label='Lists'
-								icon={<ListAlt />}
+							<Link
+								to='/groups'
+								className={cn(navRowClasses(!!groupsSelected, drawerOpen), 'min-w-0 flex-1')}
 								onClick={() => {
-									if (!tour?.list_nav) {
+									if (!tour?.group_nav) {
 										updateTour.mutateAsync({
-											list_nav: true,
+											group_nav: true,
 										});
 									}
 								}}
-							/>
-						</HtmlTooltip>
-					)}
+							>
+								<Users />
+								{drawerOpen && <span className='truncate'>Groups</span>}
+							</Link>
+						</TourHint>
+						{drawerOpen && pinnedGroups.length > 0 && (
+							<button
+								type='button'
+								onClick={(e) => {
+									e.preventDefault();
+									setGroupsOpen(!groupsOpen);
+								}}
+								className='flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground'
+							>
+								{groupsOpen ? <ChevronUp className='size-4' /> : <ChevronDown className='size-4' />}
+							</button>
+						)}
+					</div>
+					<Collapse in={groupsOpen && drawerOpen} unmountOnExit>
+						<div className='flex flex-col gap-0.5 py-0.5'>
+							<TransitionGroup component={null}>
+								{pinnedGroups.map((group) => (
+									<Collapse key={group.id}>{renderGroupItem({ group, location })}</Collapse>
+								))}
+							</TransitionGroup>
+						</div>
+					</Collapse>
+				</nav>
 
-					<HtmlTooltip
-						sx={{ display: { xs: 'block', md: 'none' } }}
-						title={tourGroupNav()}
-						arrow
-						open={tourStart && groupTourProgress(tour ?? {}, false) === 'group_nav' && groups?.filter((g) => g.my_membership[0].invite).length === 0 && location.hash === ''}
-						placement='top'
-					>
-						<BottomNavigationAction
-							label='Groups'
-							icon={<Group />}
-							onClick={() => {
-								if (!tour?.group_nav) {
-									updateTour.mutateAsync({
-										group_nav: true,
-									});
-								}
-							}}
-						/>
-					</HtmlTooltip>
+				<Separator className='my-2' />
 
-					<HtmlTooltip
-						sx={{ display: { xs: 'block', md: 'none' } }}
-						title={tourShoppingNav()}
-						arrow
-						open={tourStart && shoppingTourProgress(tour ?? {}) === 'shopping_nav' && location.hash === ''}
-						placement='top'
-					>
-						<BottomNavigationAction
-							label='Shopping'
-							icon={<ShoppingCart />}
+				<nav className='flex flex-col gap-0.5 px-2'>
+					<TourHint title={tourShoppingNav()} placement='right-start' open={isDesktop && tourStart && shoppingTourProgress(tour ?? {}) === 'shopping_nav' && location.hash === ''}>
+						<Link
+							to='/shopping'
+							className={navRowClasses(location.pathname === '/shopping', drawerOpen)}
 							onClick={() => {
 								if (!tour?.shopping_nav) {
 									updateTour.mutateAsync({
@@ -673,11 +476,141 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 									});
 								}
 							}}
-						/>
-					</HtmlTooltip>
-				</BottomNavigation>
-			</Paper>
-		</Box>
+						>
+							<ShoppingCart />
+							{drawerOpen && <span className='truncate'>Shopping List</span>}
+						</Link>
+					</TourHint>
+				</nav>
+
+				{(profile?.enable_archive || profile?.enable_trash) && (
+					<>
+						<Separator className='my-2' />
+						<nav className='flex flex-col gap-0.5 px-2'>
+							{profile?.enable_archive && (
+								<Link to='/archive' className={navRowClasses(location.pathname === '/archive', drawerOpen)}>
+									<Archive />
+									{drawerOpen && <span className='truncate'>Archive</span>}
+								</Link>
+							)}
+							{profile?.enable_trash && (
+								<Link to='/trash' className={navRowClasses(location.pathname === '/trash', drawerOpen)}>
+									<Trash2 />
+									{drawerOpen && <span className='truncate'>Trash</span>}
+								</Link>
+							)}
+						</nav>
+					</>
+				)}
+
+				<div className='mt-auto flex flex-col pb-2'>
+					{supportConfigured && (
+						<>
+							<nav className='flex flex-col gap-0.5 px-2'>
+								<Link to='/support' className={navRowClasses(location.pathname === '/support', drawerOpen)}>
+									<CircleHelp />
+									{drawerOpen && <span className='truncate'>Support</span>}
+								</Link>
+							</nav>
+							<Separator className='my-2' />
+						</>
+					)}
+					<nav className='flex flex-col gap-0.5 px-2'>
+						<Link to='/account' className={navRowClasses(location.pathname === '/account', drawerOpen)}>
+							<Settings />
+							{drawerOpen && <span className='truncate'>Settings</span>}
+						</Link>
+					</nav>
+				</div>
+			</aside>
+
+			{/* -------------------------------- Main -------------------------------- */}
+			<main className={cn('pt-14 pb-20 transition-[padding] duration-200 ease-in-out md:pb-8', drawerOpen ? MAIN_OPEN : MAIN_CLOSED)}>{children}</main>
+
+			{/* ---------------------------- Mobile bottom nav ---------------------------- */}
+			<nav className='fixed inset-x-0 bottom-0 z-40 flex h-16 items-stretch border-t border-border bg-sidebar md:hidden'>
+				<button
+					type='button'
+					onClick={() => navigate('/items')}
+					className={cn(
+						'flex flex-1 cursor-pointer flex-col items-center justify-center gap-0.5 text-xs font-medium transition-colors [&_svg]:size-5',
+						mobileNavValue === 0 ? 'text-primary' : 'text-muted-foreground'
+					)}
+				>
+					<GiftIcon />
+					Items
+				</button>
+
+				{profile?.enable_lists && (
+					<TourHint title={tourListNav()} placement='top' open={!isDesktop && tourStart && listTourProgress(tour ?? {}) === 'list_tour_start' && location.hash === ''}>
+						<button
+							type='button'
+							onClick={() => {
+								if (!tour?.list_nav) {
+									updateTour.mutateAsync({
+										list_nav: true,
+									});
+								}
+								navigate('/lists');
+							}}
+							className={cn(
+								'flex flex-1 cursor-pointer flex-col items-center justify-center gap-0.5 text-xs font-medium transition-colors [&_svg]:size-5',
+								mobileNavValue === 1 ? 'text-primary' : 'text-muted-foreground'
+							)}
+						>
+							<ClipboardList />
+							Lists
+						</button>
+					</TourHint>
+				)}
+
+				<TourHint
+					title={tourGroupNav()}
+					placement='top'
+					open={!isDesktop && tourStart && groupTourProgress(tour ?? {}, false) === 'group_nav' && groups?.filter((g) => g.my_membership[0].invite).length === 0 && location.hash === ''}
+				>
+					<button
+						type='button'
+						onClick={() => {
+							if (!tour?.group_nav) {
+								updateTour.mutateAsync({
+									group_nav: true,
+								});
+							}
+							navigate('/groups');
+						}}
+						className={cn(
+							'flex flex-1 cursor-pointer flex-col items-center justify-center gap-0.5 text-xs font-medium transition-colors [&_svg]:size-5',
+							mobileNavValue === 2 ? 'text-primary' : 'text-muted-foreground'
+						)}
+					>
+						<Users />
+						Groups
+					</button>
+				</TourHint>
+
+				<TourHint title={tourShoppingNav()} placement='top' open={!isDesktop && tourStart && shoppingTourProgress(tour ?? {}) === 'shopping_nav' && location.hash === ''}>
+					<button
+						type='button'
+						onClick={() => {
+							if (!tour?.shopping_nav) {
+								updateTour.mutateAsync({
+									shopping_nav: true,
+								});
+							}
+							navigate('/shopping');
+						}}
+						className={cn(
+							'flex flex-1 cursor-pointer flex-col items-center justify-center gap-0.5 text-xs font-medium transition-colors [&_svg]:size-5',
+							mobileNavValue === 3 ? 'text-primary' : 'text-muted-foreground'
+						)}
+					>
+						<ShoppingCart />
+						Shopping
+					</button>
+				</TourHint>
+			</nav>
+		</div>
 	);
 };
 

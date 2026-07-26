@@ -1,16 +1,20 @@
-import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
+import * as React from 'react';
 
-export function GiftIcon(props: SvgIconProps) {
+import { cn } from '../lib/utils';
+
+type SvgIconProps = React.SVGProps<SVGSVGElement>;
+
+export function GiftIcon({ className, ...props }: SvgIconProps) {
 	return (
-		<SvgIcon {...props} viewBox='0 0 800 800'>
+		<svg viewBox='0 0 800 800' fill='currentColor' className={cn('size-6 shrink-0', className)} aria-hidden {...props}>
 			<path d='M314.6,155.9l45.4,77.2h-1.7h-93.9c-28.8,0-52.2-23.3-52.2-52.2s23.3-52.2,52.2-52.2h2.9 C286.7,128.8,304.8,139.1,314.6,155.9z M149.6,180.9c0,18.8,4.6,36.5,12.5,52.2h-54.2c-23.1,0-41.7,18.6-41.7,41.7v83.5 c0,23.1,18.6,41.7,41.7,41.7h584.2c23.1,0,41.7-18.6,41.7-41.7v-83.5c0-23.1-18.6-41.7-41.7-41.7h-54.2c8-15.6,12.5-33.4,12.5-52.2 c0-63.4-51.4-114.7-114.7-114.7h-2.9c-41.6,0-80.2,22-101.3,57.9L400,177.7l-31.4-53.5c-21.1-36-59.7-58-101.3-58h-2.9 C201,66.2,149.6,117.6,149.6,180.9z M587.8,180.9c0,28.8-23.3,52.2-52.2,52.2h-93.9H440l45.4-77.2c9.9-16.8,27.9-27.1,47.3-27.1h2.9 C564.4,128.8,587.8,152.1,587.8,180.9z M107.9,441.7v229.5c0,34.6,28,62.6,62.6,62.6h187.8V441.7H107.9z M441.7,733.8h187.8 c34.6,0,62.6-28,62.6-62.6V441.7H441.7V733.8z' />
-		</SvgIcon>
+		</svg>
 	);
 }
 
-export function GoogleIcon(props: SvgIconProps) {
+export function GoogleIcon({ className, ...props }: SvgIconProps) {
 	return (
-		<SvgIcon {...props} viewBox='0 0 256 262'>
+		<svg viewBox='0 0 256 262' className={cn('size-6 shrink-0', className)} aria-hidden {...props}>
 			<path
 				fill='#4285F4'
 				d='M255.878 133.451c0-10.734-.871-18.567-2.756-26.69H130.55v48.448h71.947c-1.45 12.04-9.283 30.172-26.69 42.356l-.244 1.622 38.755 30.023 2.685.268c24.659-22.774 38.875-56.282 38.875-96.027'
@@ -27,6 +31,6 @@ export function GoogleIcon(props: SvgIconProps) {
 				fill='#EB4335'
 				d='M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0 79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251'
 			/>
-		</SvgIcon>
+		</svg>
 	);
 }

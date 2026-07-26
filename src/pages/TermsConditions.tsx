@@ -2,26 +2,27 @@ import React from 'react';
 
 import { Link } from 'react-router-dom';
 
-import { AppBar, Toolbar, Typography, Button, Container } from '@mui/material';
-
 import Copyright from './Copyright';
+import { GiftIcon } from '../components/SvgIcons';
+import { Button } from '../components/ui/button';
 
-function Landing() {
+function TermsConditions() {
 	return (
-		<div style={{ flexGrow: 1 }}>
-			<AppBar position='static' color='primary' enableColorOnDark>
-				<Toolbar>
-					<Typography variant='h5' style={{ flexGrow: 1 }}>
-						Giftamizer
-					</Typography>
-					<Button component={Link} to='/signin' color='inherit'>
-						Sign In
+		<div className='min-h-dvh bg-background'>
+			<header className='sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-sm'>
+				<div className='mx-auto flex h-16 max-w-4xl items-center justify-between px-4'>
+					<Link to='/' className='flex items-center gap-2'>
+						<GiftIcon className='size-7 text-primary' />
+						<span className='text-xl font-semibold tracking-tight'>Giftamizer</span>
+					</Link>
+					<Button variant='ghost' asChild>
+						<Link to='/signin'>Sign In</Link>
 					</Button>
-				</Toolbar>
-			</AppBar>
+				</div>
+			</header>
 
-			<Container style={{ paddingTop: 20, marginBottom: 96 }}>
-				<strong>Terms &amp; Conditions</strong>
+			<div className='mx-auto max-w-4xl px-4 pt-8 pb-16 text-sm leading-relaxed [&_a]:text-primary [&_a]:underline-offset-4 hover:[&_a]:underline [&_li]:my-1 [&_p]:my-3 [&_strong]:font-semibold [&_strong]:text-foreground [&_ul]:my-3 [&_ul]:list-disc [&_ul]:pl-6'>
+				<h1 className='mb-4 text-2xl font-bold tracking-tight'>Terms &amp; Conditions</h1>
 				<p>
 					By downloading or using the app, these terms will automatically apply to you – you should make sure therefore that you read them carefully before using the app. You’re not allowed
 					to copy, or modify the app, any part of the app, or our trademarks in any way. You’re not allowed to attempt to extract the source code of the app, and you also shouldn’t try to
@@ -88,13 +89,13 @@ function Landing() {
 					<strong>Contact Us</strong>
 				</p>
 				<p>If you have any questions or suggestions about my Terms and Conditions, do not hesitate to contact me at evan@trowbridge.tech.</p>
-			</Container>
-			<br />
-			<br />
-			<br />
-			<Copyright />
+			</div>
+
+			<div className='border-t border-border'>
+				<Copyright />
+			</div>
 		</div>
 	);
 }
 
-export default Landing;
+export default TermsConditions;

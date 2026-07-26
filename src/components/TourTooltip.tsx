@@ -1,100 +1,7 @@
 import * as React from 'react';
 
 import { Mask } from '@reactour/mask';
-
-import { Paper } from '@mui/material';
-import MuiPopper, { PopperPlacementType, PopperProps as MuiPopperProps } from '@mui/material/Popper';
-import { styled } from '@mui/material/styles';
-
-export interface PopperProps extends MuiPopperProps {
-	mask?: boolean;
-	backgroundColor?: string;
-}
-
-const Popper = styled(MuiPopper)<PopperProps>(({ theme, mask, backgroundColor }) => ({
-	zIndex: 100000,
-
-	'& > div': {
-		position: 'relative',
-	},
-	'&[data-popper-placement*="bottom"]': {
-		'& > div': {
-			marginTop: mask ? 14 : 8,
-		},
-		'& .MuiPopper-arrow': {
-			top: 0,
-			left: 0,
-			marginTop: '-0.9em',
-			width: '3em',
-			height: '1em',
-			'&::before': {
-				borderWidth: '0 1em 1em 1em',
-				borderColor: `transparent transparent ${backgroundColor ? backgroundColor : theme.palette.mode === 'light' ? '#ffffff' : '#383838'} transparent`,
-			},
-		},
-	},
-	'&[data-popper-placement*="top"]': {
-		'& > div': {
-			marginBottom: mask ? 14 : 8,
-		},
-		'& .MuiPopper-arrow': {
-			bottom: 0,
-			left: 0,
-			marginBottom: '-0.9em',
-			width: '3em',
-			height: '1em',
-			'&::before': {
-				borderWidth: '1em 1em 0 1em',
-				borderColor: `${backgroundColor ? backgroundColor : theme.palette.mode === 'light' ? '#ffffff' : '#383838'} transparent transparent transparent`,
-			},
-		},
-	},
-	'&[data-popper-placement*="right"]': {
-		'& > div': {
-			marginLeft: mask ? 14 : 8,
-		},
-		'& .MuiPopper-arrow': {
-			left: 0,
-			marginLeft: '-0.9em',
-			height: '3em',
-			width: '1em',
-			'&::before': {
-				borderWidth: '1em 1em 1em 0',
-				borderColor: `transparent ${backgroundColor ? backgroundColor : theme.palette.mode === 'light' ? '#ffffff' : '#383838'} transparent transparent`,
-			},
-		},
-	},
-	'&[data-popper-placement*="left"]': {
-		'& > div': {
-			marginRight: mask ? 14 : 8,
-		},
-		'& .MuiPopper-arrow': {
-			right: 0,
-			marginRight: '-0.9em',
-			height: '3em',
-			width: '1em',
-			'&::before': {
-				borderWidth: '1em 0 1em 1em',
-				borderColor: `transparent transparent transparent ${backgroundColor ? backgroundColor : theme.palette.mode === 'light' ? '#ffffff' : '#383838'}`,
-			},
-		},
-	},
-}));
-
-const Arrow = styled('div')({
-	position: 'absolute',
-	fontSize: 7,
-	width: '3em',
-	height: '3em',
-	'&::before': {
-		content: '""',
-		margin: 'auto',
-		display: 'block',
-		width: 0,
-		height: 0,
-		borderStyle: 'solid',
-	},
-});
+import { useFloating, offset, flip, shift, arrow, autoUpdate, FloatingArrow, FloatingPortal, type Placement } from '@floating-ui/react';
 
 type RectType = {
 	bottom: number;
@@ -110,7 +17,7 @@ type RectType = {
 interface Props {
 	open: boolean;
 	anchorEl?: Element | null;
-	placement?: PopperPlacementType;
+	placement?: Placement;
 	content: React.ReactElement;
 	allowClick?: boolean;
 	mask?: boolean;
@@ -119,9 +26,22 @@ interface Props {
 	color?: string;
 }
 
+/**
+ * Guided-tour callout anchored to a `[tour-element="..."]` DOM node, with an
+ * optional @reactour/mask spotlight. Same prop surface as the old MUI-Popper
+ * version; positioning now via @floating-ui/react.
+ */
 export default function TourTooltip({ open, anchorEl, placement = 'top', content, allowClick = false, mask = false, backgroundColor, color }: Props) {
-	const [arrowRef, setArrowRef] = React.useState(null);
+	const arrowRef = React.useRef<SVGSVGElement | null>(null);
 	const [rect, setRect] = React.useState<RectType | undefined>();
+
+	const { refs, floatingStyles, context } = useFloating({
+		open,
+		placement,
+		whileElementsMounted: autoUpdate,
+		middleware: [offset(mask ? 14 : 10), flip({ padding: 8 }), shift({ padding: 8, crossAxis: true }), arrow({ element: arrowRef })],
+		elements: { reference: anchorEl ?? undefined },
+	});
 
 	React.useEffect(() => {
 		if (anchorEl) {
@@ -129,9 +49,14 @@ export default function TourTooltip({ open, anchorEl, placement = 'top', content
 		}
 	}, [anchorEl]);
 
+	const bg = backgroundColor ?? 'var(--primary)';
+	const fg = color ?? 'var(--primary-foreground)';
+
+	if (!open || !anchorEl || rect === undefined) return null;
+
 	return (
 		<>
-			{open && mask && rect && (
+			{mask && rect && (
 				<Mask
 					sizes={rect}
 					styles={{
@@ -148,62 +73,28 @@ export default function TourTooltip({ open, anchorEl, placement = 'top', content
 				/>
 			)}
 
-			<Popper
-				open={open && rect !== undefined}
-				mask={mask}
-				backgroundColor={backgroundColor}
-				color={color}
-				anchorEl={anchorEl}
-				placement={placement}
-				disablePortal={false}
-				modifiers={[
-					{
-						name: 'flip',
-						enabled: true,
-						options: {
-							altBoundary: true,
-							rootBoundary: 'document',
-							padding: 8,
-						},
-					},
-					{
-						name: 'preventOverflow',
-						enabled: true,
-						options: {
-							altAxis: true,
-							altBoundary: true,
-							tether: true,
-							rootBoundary: 'document',
-							padding: 8,
-						},
-					},
-					{
-						name: 'arrow',
-						enabled: true,
-						options: {
-							element: arrowRef,
-						},
-					},
-				]}
-			>
-				<div>
-					<Arrow
-						// @ts-ignore
-						ref={setArrowRef}
-						className='MuiPopper-arrow'
-					/>
-					<Paper
-						elevation={12}
-						sx={{
-							maxWidth: 400,
-							backgroundColor: backgroundColor ? backgroundColor : undefined,
-							color: color ? color : undefined,
-						}}
-					>
+			<FloatingPortal>
+				{/* pointerEvents must be forced: Radix's dismissable layer sets
+				    `pointer-events: none` on <body> while a modal Dialog or menu is
+				    open, which would otherwise make the tour's own buttons dead for
+				    every step anchored inside a dialog. */}
+				<div ref={refs.setFloating} style={{ ...floatingStyles, zIndex: 100000, pointerEvents: 'auto' }}>
+					<div className='max-w-[400px] rounded-xl p-4 text-sm shadow-xl' style={{ backgroundColor: bg, color: fg }}>
 						{content}
-					</Paper>
+					</div>
+					<FloatingArrow ref={arrowRef} context={context} width={18} height={9} style={{ fill: bg }} />
 				</div>
-			</Popper>
+			</FloatingPortal>
 		</>
+	);
+}
+
+/** Standard title/body layout for tour callout content. */
+export function TourContent({ title, children }: { title: React.ReactNode; children?: React.ReactNode }) {
+	return (
+		<div className='flex flex-col gap-1.5'>
+			<p className='text-base font-semibold'>{title}</p>
+			{children && <div className='flex flex-col gap-1'>{children}</div>}
+		</div>
 	);
 }

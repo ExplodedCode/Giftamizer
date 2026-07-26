@@ -1,12 +1,10 @@
 import React from 'react';
-import { useSnackbar } from 'notistack';
+import { useSnackbar } from '../lib/snackbar';
 
 import { useGetItems } from '../lib/useSupabase';
 
-import { Container, Typography, Box, CircularProgress } from '@mui/material';
-import Grid from '@mui/material/Grid';
-
 import ItemCard from '../components/ItemCard';
+import { Spinner } from '../components/ui/spinner';
 
 export default function ItemArchive() {
 	const { enqueueSnackbar } = useSnackbar();
@@ -21,30 +19,27 @@ export default function ItemArchive() {
 
 	return (
 		<>
-			<Container sx={{ paddingTop: 2, paddingBottom: 12 }}>
-				<Grid container spacing={2}>
+			<div className='mx-auto max-w-5xl px-4 pt-4 pb-12'>
+				<div className='flex flex-col gap-3'>
 					{items
 						?.filter((i) => i.archived)
 						.map((item, index) => (
-							// TODO: Change ItemCard to Renderer function to allow Grow transition/animation
 							<ItemCard index={index} key={item.id} item={item} editable />
 						))}
 
 					{items?.filter((i) => i.archived).length === 0 && (
-						<Box style={{ marginTop: 100, textAlign: 'center', width: '100%' }}>
-							<Typography variant='h5' gutterBottom>
-								Archive is empty!
-							</Typography>
-						</Box>
+						<div className='mt-24 text-center'>
+							<p className='text-xl font-medium'>Archive is empty!</p>
+						</div>
 					)}
-				</Grid>
+				</div>
 
 				{isLoading && (
-					<Box sx={{ display: 'flex', justifyContent: 'center', mt: 16 }}>
-						<CircularProgress />
-					</Box>
+					<div className='mt-32 flex justify-center'>
+						<Spinner size={32} />
+					</div>
 				)}
-			</Container>
+			</div>
 		</>
 	);
 }

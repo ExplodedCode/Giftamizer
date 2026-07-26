@@ -1,13 +1,13 @@
 import React from 'react';
-import { useSnackbar } from 'notistack';
+import { useSnackbar } from '../lib/snackbar';
 
 import { useEmptyTrash, useGetItems } from '../lib/useSupabase';
 
-import { Container, Typography, Box, CircularProgress, Button } from '@mui/material';
-import Grid from '@mui/material/Grid';
-import { DeleteSweep } from '@mui/icons-material';
+import { Trash2 } from 'lucide-react';
 
 import ItemCard from '../components/ItemCard';
+import { Button } from '../components/ui/button';
+import { Spinner } from '../components/ui/spinner';
 
 export default function ItemsTrash() {
 	const { enqueueSnackbar } = useSnackbar();
@@ -29,38 +29,36 @@ export default function ItemsTrash() {
 
 	return (
 		<>
-			<Container sx={{ paddingTop: 2, paddingBottom: 12 }}>
+			<div className='mx-auto max-w-5xl px-4 pt-4 pb-12'>
 				{items?.filter((i) => i.deleted).length !== 0 && (
-					<Box sx={{ display: 'flex', justifyContent: 'center', m: 3 }}>
-						<Button variant='outlined' color='error' size='medium' endIcon={<DeleteSweep />} onClick={handleEmptyTrash}>
+					<div className='mb-6 flex justify-center'>
+						<Button variant='outline' className='border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive' onClick={handleEmptyTrash}>
 							Empty Trash
+							<Trash2 />
 						</Button>
-					</Box>
+					</div>
 				)}
 
-				<Grid container spacing={2}>
+				<div className='flex flex-col gap-3'>
 					{items
 						?.filter((i) => i.deleted)
 						.map((item, index) => (
-							// TODO: Change ItemCard to Renderer function to allow Grow transition/animation
 							<ItemCard index={index} key={item.id} item={item} editable />
 						))}
 
 					{items?.filter((i) => i.deleted).length === 0 && (
-						<Box style={{ marginTop: 100, textAlign: 'center', width: '100%' }}>
-							<Typography variant='h5' gutterBottom>
-								Trash is empty!
-							</Typography>
-						</Box>
+						<div className='mt-24 text-center'>
+							<p className='text-xl font-medium'>Trash is empty!</p>
+						</div>
 					)}
-				</Grid>
+				</div>
 
 				{isLoading && (
-					<Box sx={{ display: 'flex', justifyContent: 'center', mt: 16 }}>
-						<CircularProgress />
-					</Box>
+					<div className='mt-32 flex justify-center'>
+						<Spinner size={32} />
+					</div>
 				)}
-			</Container>
+			</div>
 		</>
 	);
 }

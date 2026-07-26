@@ -1,25 +1,13 @@
 import * as React from 'react';
 
-import {
-	Avatar,
-	Box,
-	Button,
-	CircularProgress,
-	Dialog,
-	DialogContent,
-	DialogTitle,
-	IconButton,
-	List,
-	ListItemAvatar,
-	ListItemButton,
-	ListItemText,
-	TextField,
-	Typography,
-} from '@mui/material';
-import { Close, SwapHoriz } from '@mui/icons-material';
+import { ArrowLeftRight } from 'lucide-react';
 
 import { useSupabase } from '../lib/useSupabase';
 import { getDevAdminClient } from '../lib/useSupabase/devAdminClient';
+
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Input } from './ui/input';
+import { Spinner } from './ui/spinner';
 
 type SwitchableProfile = {
 	user_id: string;
@@ -31,9 +19,9 @@ type SwitchableProfile = {
 // DEV ONLY testing dashboard: lets you jump between any seeded account
 // without knowing its password, using the service role key to mint a
 // magic-link OTP and immediately redeem it on the app's own client. See
-// devAdminClient.ts for why this is safe to leave wired up - react-scripts
-// strips this component (and the service role key it needs) out of
-// production builds.
+// devAdminClient.ts for why this is safe to leave wired up - Vite strips
+// this component (and the service role key it needs) out of production
+// builds via import.meta.env.PROD dead-code elimination.
 export default function DevAccountSwitcher() {
 	const { client, user } = useSupabase();
 
@@ -44,7 +32,7 @@ export default function DevAccountSwitcher() {
 	const [switchingTo, setSwitchingTo] = React.useState<string | null>(null);
 	const [error, setError] = React.useState<string | null>(null);
 
-	if (process.env.NODE_ENV === 'production') return null;
+	if (import.meta.env.PROD) return null;
 
 	const handleOpen = async () => {
 		setOpen(true);
@@ -104,73 +92,60 @@ export default function DevAccountSwitcher() {
 
 	return (
 		<>
-			<Button
-				variant='contained'
-				color='warning'
-				size='small'
-				startIcon={<SwapHoriz />}
+			<button
+				type='button'
 				onClick={handleOpen}
-				sx={{
-					position: 'absolute',
-					top: 8,
-					left: '50%',
-					transform: 'translateX(-50%)',
-					zIndex: (theme) => theme.zIndex.modal + 1,
-					boxShadow: 3,
+				className='fixed top-2 left-1/2 z-[1400] flex -translate-x-1/2 cursor-pointer items-center gap-1.5 rounded-lg bg-festive px-3 py-1.5 text-xs font-semibold text-festive-foreground shadow-md transition-all outline-none hover:brightness-105 focus-visible:ring-2 focus-visible:ring-ring/50'
+			>
+				<ArrowLeftRight className='size-3.5' />
+				SWITCH USER
+			</button>
+
+			<Dialog
+				open={open}
+				onOpenChange={(next) => {
+					if (!next) handleClose();
 				}}
 			>
-				Switch User
-			</Button>
+				<DialogContent size='sm' dismissible={!switchingTo}>
+					<DialogHeader>
+						<DialogTitle>Switch Test Account</DialogTitle>
+					</DialogHeader>
 
-			<Dialog open={open} onClose={handleClose} fullWidth maxWidth='xs'>
-				<DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-					Switch Test Account
-					<IconButton onClick={handleClose} disabled={!!switchingTo}>
-						<Close />
-					</IconButton>
-				</DialogTitle>
-				<DialogContent>
-					<TextField
-						fullWidth
-						size='small'
-						placeholder='Search by name or email'
-						value={search}
-						onChange={(e) => setSearch(e.target.value)}
-						sx={{ mb: 2 }}
-						autoFocus
-					/>
+					<Input placeholder='Search by name or email' value={search} onChange={(e) => setSearch(e.target.value)} autoFocus />
 
-					{error && (
-						<Typography color='error' variant='body2' sx={{ mb: 2 }}>
-							{error}
-						</Typography>
-					)}
+					{error && <p className='text-sm text-destructive'>{error}</p>}
 
 					{loading ? (
-						<Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-							<CircularProgress size={28} />
-						</Box>
+						<div className='flex justify-center p-4'>
+							<Spinner size={28} />
+						</div>
 					) : (
-						<List dense>
+						<div className='flex max-h-[50vh] flex-col overflow-y-auto'>
 							{filtered.map((profile) => {
 								const isCurrent = profile.user_id === user?.id;
 								return (
-									<ListItemButton key={profile.user_id} disabled={isCurrent || !!switchingTo} onClick={() => handleSwitch(profile)}>
-										<ListItemAvatar>
-											<Avatar sx={{ bgcolor: 'primary.main' }}>{(profile.first_name?.[0] ?? '?').toUpperCase()}</Avatar>
-										</ListItemAvatar>
-										<ListItemText primary={`${profile.first_name} ${profile.last_name}${isCurrent ? ' (current)' : ''}`} secondary={profile.email} />
-										{switchingTo === profile.user_id && <CircularProgress size={20} />}
-									</ListItemButton>
+									<button
+										type='button'
+										key={profile.user_id}
+										disabled={isCurrent || !!switchingTo}
+										onClick={() => handleSwitch(profile)}
+										className='flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50'
+									>
+										<span className='flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-medium text-primary-foreground'>
+											{(profile.first_name?.[0] ?? '?').toUpperCase()}
+										</span>
+										<span className='flex min-w-0 flex-1 flex-col'>
+											<span className='truncate text-sm font-medium'>{`${profile.first_name} ${profile.last_name}${isCurrent ? ' (current)' : ''}`}</span>
+											<span className='truncate text-xs text-muted-foreground'>{profile.email}</span>
+										</span>
+										{switchingTo === profile.user_id && <Spinner size={18} />}
+									</button>
 								);
 							})}
 
-							{filtered.length === 0 && (
-								<Typography variant='body2' sx={{ textAlign: 'center', p: 2 }}>
-									No users found
-								</Typography>
-							)}
-						</List>
+							{filtered.length === 0 && <p className='p-4 text-center text-sm text-muted-foreground'>No users found</p>}
+						</div>
 					)}
 				</DialogContent>
 			</Dialog>

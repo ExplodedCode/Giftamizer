@@ -1,35 +1,30 @@
 import { Link } from 'react-router-dom';
 
-import { Link as MUILink } from '@mui/material';
-import Typography from '@mui/material/Typography';
-
 export default function Copyright() {
 	return (
-		<>
-			<Typography variant='body2' color='textSecondary' align='center'>
+		<footer className='flex flex-col items-center gap-2 py-6 text-sm text-muted-foreground'>
+			<p>
 				{'Copyright © '}
-				<MUILink component={Link} to='/' color='inherit'>
+				<Link to='/' className='transition-colors hover:text-foreground'>
 					Giftamizer
-				</MUILink>{' '}
+				</Link>{' '}
 				{new Date().getFullYear()}
 				{'.'}
-			</Typography>
+			</p>
 
-			<br />
-
-			<Typography variant='body2' color='textSecondary' align='center'>
-				<MUILink component={Link} to='/terms' color='inherit'>
+			<p className='flex items-center gap-2'>
+				<Link to='/terms' className='transition-colors hover:text-foreground'>
 					Terms
-				</MUILink>
-				{' - '}
-				<MUILink component={Link} to='/policy' color='inherit'>
+				</Link>
+				{'-'}
+				<Link to='/policy' className='transition-colors hover:text-foreground'>
 					Policy
-				</MUILink>
-				{' - '}
-				<MUILink href='https://github.com/ExplodedCode/Giftamizer/issues' target='_blank' color='inherit'>
+				</Link>
+				{'-'}
+				<a href='https://github.com/ExplodedCode/Giftamizer/issues' target='_blank' rel='noreferrer' className='transition-colors hover:text-foreground'>
 					Support
-				</MUILink>
-			</Typography>
-		</>
+				</a>
+			</p>
+		</footer>
 	);
 }

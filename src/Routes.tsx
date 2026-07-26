@@ -4,10 +4,10 @@ import { Link, Navigate, Route, Routes, useLocation, useSearchParams } from 'rea
 // Google Analytics
 import ReactGA from 'react-ga4';
 
-import { useSnackbar } from 'notistack';
+import { useSnackbar } from './lib/snackbar';
 import { useGetProfile, useGetSystem, useSupabase } from './lib/useSupabase';
 
-import { Backdrop, Box, CircularProgress, Link as MUILink, Typography } from '@mui/material';
+import { Backdrop } from './components/ui/spinner';
 
 import Landing from './pages/Landing';
 import SignIn from './pages/SignIn';
@@ -72,9 +72,7 @@ export default function AppRoutes() {
 	return (
 		<>
 			{user === undefined ? (
-				<Backdrop sx={{ color: '#fff', zIndex: 1000 }} open={true}>
-					<CircularProgress color='inherit' />
-				</Backdrop>
+				<Backdrop open={true} />
 			) : (
 				<Routes>
 						<Route
@@ -255,21 +253,17 @@ export default function AppRoutes() {
 							element={
 								user ? (
 									<ProtectedRoute>
-										<Typography variant='h5' gutterBottom style={{ marginTop: 100, textAlign: 'center' }}>
-											Page not found!
-										</Typography>
+										<p className='mt-24 text-center text-xl font-medium'>Page not found!</p>
 									</ProtectedRoute>
 								) : (
 									<>
-										<Typography variant='h5' gutterBottom style={{ marginTop: 100, textAlign: 'center' }}>
-											Page not found!
-										</Typography>
+										<p className='mt-24 mb-2 text-center text-xl font-medium'>Page not found!</p>
 
-										<Typography variant='body1' style={{ textAlign: 'center' }}>
-											<MUILink component={Link} to='/groups'>
+										<p className='text-center text-sm'>
+											<Link to='/groups' className='text-primary underline-offset-4 hover:underline'>
 												Go Back
-											</MUILink>
-										</Typography>
+											</Link>
+										</p>
 									</>
 								)
 							}
@@ -328,17 +322,11 @@ const MaintenanceProvider: React.FC<{ children: React.JSX.Element }> = ({ childr
 
 function MaintenanceMessage() {
 	return (
-		<Box sx={{ ml: 8, mt: 8 }}>
-			<Typography variant='h3' sx={{ fontWeight: 'bold' }} gutterBottom>
-				We'll be back soon!
-			</Typography>
-			<Typography variant='h5' gutterBottom>
-				Sorry for the inconvenience but we're performing some maintenance at the moment. We'll be back online shortly!
-			</Typography>
-			<Typography variant='h5' sx={{ ml: 1.5 }}>
-				— Development Team
-			</Typography>
-		</Box>
+		<div className='mx-auto mt-16 flex max-w-2xl flex-col gap-3 px-8'>
+			<h1 className='text-4xl font-bold tracking-tight'>We'll be back soon!</h1>
+			<p className='text-xl text-muted-foreground'>Sorry for the inconvenience but we're performing some maintenance at the moment. We'll be back online shortly!</p>
+			<p className='ml-3 text-xl text-muted-foreground'>— Development Team</p>
+		</div>
 	);
 }
 

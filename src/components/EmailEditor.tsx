@@ -2,11 +2,14 @@ import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useGetProfile, useSupabase, validateEmail } from '../lib/useSupabase';
-import { useSnackbar } from 'notistack';
+import { useSnackbar } from '../lib/snackbar';
 
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControl, IconButton, InputAdornment, InputLabel, OutlinedInput, TextField } from '@mui/material';
-import Grid from '@mui/material/Grid';
-import { Close, Edit, SyncAlt } from '@mui/icons-material';
+import { ArrowRightLeft, Pencil, X } from 'lucide-react';
+
+import { Button } from './ui/button';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
+import { FormField } from './ui/form-field';
+import { Input } from './ui/input';
 
 export default function EmailEditor() {
 	const { enqueueSnackbar, closeSnackbar } = useSnackbar();
@@ -44,9 +47,9 @@ export default function EmailEditor() {
 				autoHideDuration: null,
 				action: (key) => (
 					<>
-						<IconButton aria-label='close' size='small' onClick={() => closeSnackbar(key)}>
-							<Close />
-						</IconButton>
+						<button type='button' aria-label='close' className='cursor-pointer rounded-md p-1 opacity-70 hover:opacity-100' onClick={() => closeSnackbar(key)}>
+							<X className='size-4' />
+						</button>
 					</>
 				),
 			});
@@ -58,66 +61,55 @@ export default function EmailEditor() {
 	return (
 		<>
 			{/* Email Field with Edit Action */}
-			<FormControl fullWidth>
-				<InputLabel htmlFor='component-outlined'>Email</InputLabel>
-				<OutlinedInput
-					id='component-outlined'
-					value={profile?.email ?? ''}
-					label='Email'
-					disabled
-					endAdornment={
-						<InputAdornment position='end'>
-							<Divider sx={{ height: 28, m: 0.5, display: { xs: 'inherit', sm: 'none' } }} orientation='vertical' />
-							<IconButton sx={{ display: { xs: 'block', sm: 'none' } }} color='primary' edge='end' onClick={() => navigate('#my-account-email')}>
-								<Edit />
-							</IconButton>
-							<Button variant='contained' sx={{ display: { xs: 'none', sm: 'inherit' } }} endIcon={<Edit />} onClick={() => navigate('#my-account-email')}>
-								Change email
-							</Button>
-						</InputAdornment>
-					}
-				/>
-			</FormControl>
+			<FormField label='Email'>
+				<div className='flex items-center gap-2'>
+					<Input value={profile?.email ?? ''} disabled className='flex-1' />
+					<Button onClick={() => navigate('#my-account-email')} className='shrink-0'>
+						<span className='hidden sm:inline'>Change email</span>
+						<Pencil />
+					</Button>
+				</div>
+			</FormField>
 
 			{/* Popup Dialog with Email Updater */}
-			<Dialog open={open} onClose={handleClose} maxWidth='sm' fullWidth>
-				<DialogTitle>Update Profile Email</DialogTitle>
+			<Dialog
+				open={open}
+				onOpenChange={(next) => {
+					if (!next) handleClose();
+				}}
+			>
 				<DialogContent>
-					<Box sx={{ paddingTop: 1 }}>
-						<Grid container spacing={2}>
-							<Grid size={12}>
-								<TextField required label='New Email' placeholder={profile?.email} value={email} onChange={(e) => setEmail(e.target.value)} error={!validateEmail(email)} fullWidth />
-							</Grid>
-							<Grid size={12}>
-								<TextField
-									required
-									label='Confirm New Email'
-									placeholder={profile?.email}
-									value={emailConfirm}
-									onChange={(e) => setEmailConfirm(e.target.value)}
-									error={!validateEmail(emailConfirm) || email !== emailConfirm}
-									fullWidth
-								/>
-							</Grid>
-						</Grid>
-					</Box>
-				</DialogContent>
-				<DialogActions>
-					<Button color='inherit' onClick={handleClose}>
-						Cancel
-					</Button>
+					<DialogHeader>
+						<DialogTitle>Update Profile Email</DialogTitle>
+					</DialogHeader>
 
-					<Button
-						onClick={handleUpdateEmail}
-						endIcon={<SyncAlt />}
-						disabled={!(validateEmail(email) && validateEmail(emailConfirm) && email === emailConfirm)}
-						loading={loading}
-						loadingPosition='end'
-						variant='contained'
-					>
-						Update Email
-					</Button>
-				</DialogActions>
+					<div className='flex flex-col gap-4'>
+						<FormField label='New Email' required error={!validateEmail(email)}>
+							<Input required placeholder={profile?.email} value={email} onChange={(e) => setEmail(e.target.value)} aria-invalid={!validateEmail(email)} />
+						</FormField>
+
+						<FormField label='Confirm New Email' required error={!validateEmail(emailConfirm) || email !== emailConfirm}>
+							<Input
+								required
+								placeholder={profile?.email}
+								value={emailConfirm}
+								onChange={(e) => setEmailConfirm(e.target.value)}
+								aria-invalid={!validateEmail(emailConfirm) || email !== emailConfirm}
+							/>
+						</FormField>
+					</div>
+
+					<DialogFooter>
+						<Button variant='ghost' onClick={handleClose}>
+							Cancel
+						</Button>
+
+						<Button onClick={handleUpdateEmail} disabled={!(validateEmail(email) && validateEmail(emailConfirm) && email === emailConfirm)} loading={loading}>
+							Update Email
+							<ArrowRightLeft />
+						</Button>
+					</DialogFooter>
+				</DialogContent>
 			</Dialog>
 		</>
 	);

@@ -1,7 +1,9 @@
-import { Autocomplete, CircularProgress, TextField } from '@mui/material';
-
 import { useGetLists } from '../lib/useSupabase';
 import { ListType } from '../lib/useSupabase/types';
+
+import { MultiCombobox } from './ui/combobox';
+import { FormField } from './ui/form-field';
+import { Spinner } from './ui/spinner';
 
 type ListSelectorProps = {
 	value?: ListType[];
@@ -15,26 +17,26 @@ export default function ListSelector({ value, onChange, disabled }: ListSelector
 	const listTypeSelected = value?.length === 0 ? undefined : value?.[0]?.child_list ? 'child' : 'list';
 
 	return lists ? (
-		<Autocomplete
-			value={value as ListType[]}
-			onChange={(event: any, value: ListType[]) => {
-				if (onChange) onChange(value);
-			}}
-			fullWidth
-			multiple
-			options={lists}
-			isOptionEqualToValue={(option, value) => option.id === value.id}
-			getOptionDisabled={(option) =>
-				// prevent bad assignments
-				// only allow one child list to be selected
-				// only allow lists if a list is selected
-				listTypeSelected === undefined ? false : listTypeSelected === 'list' && option?.child_list ? true : listTypeSelected === 'child' && value?.[0].id !== option.id ? true : false
-			}
-			getOptionLabel={(option) => option.name}
-			renderInput={(params) => <TextField {...params} label='Lists' />}
-			disabled={disabled}
-		/>
+		<FormField label='Lists'>
+			<MultiCombobox<ListType>
+				value={(value as ListType[]) ?? []}
+				onChange={(v) => {
+					if (onChange) onChange(v);
+				}}
+				options={lists}
+				getOptionKey={(option) => option.id}
+				getOptionLabel={(option) => option.name}
+				getOptionDisabled={(option) =>
+					// prevent bad assignments
+					// only allow one child list to be selected
+					// only allow lists if a list is selected
+					listTypeSelected === undefined ? false : listTypeSelected === 'list' && option?.child_list ? true : listTypeSelected === 'child' && value?.[0].id !== option.id ? true : false
+				}
+				placeholder='Select lists...'
+				disabled={disabled}
+			/>
+		</FormField>
 	) : (
-		<CircularProgress />
+		<Spinner />
 	);
 }

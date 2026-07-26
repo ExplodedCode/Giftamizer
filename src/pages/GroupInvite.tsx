@@ -1,11 +1,13 @@
 import * as React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useSnackbar } from 'notistack';
+import { useSnackbar } from '../lib/snackbar';
 
 import { FakeDelay, useSupabase } from '../lib/useSupabase';
 
-import { CssBaseline, Paper, Box, Avatar, Typography, Button, Backdrop, CircularProgress, CardMedia, AvatarGroup, Tooltip, Link as MUILink, Stack } from '@mui/material';
-import Grid from '@mui/material/Grid';
+import { Button } from '../components/ui/button';
+import { Backdrop } from '../components/ui/spinner';
+import { SimpleTooltip } from '../components/ui/tooltip';
+import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 
 type GroupInvite = {
 	name: string;
@@ -22,7 +24,7 @@ type Users = {
 };
 
 var randomImage = Math.floor(Math.random() * 10) + 1;
-export default function SignIn() {
+export default function GroupInvitePage() {
 	const navigate = useNavigate();
 	const { enqueueSnackbar } = useSnackbar();
 	const { client, user } = useSupabase();
@@ -62,98 +64,74 @@ export default function SignIn() {
 		}
 	};
 
+	const alreadyJoined = invite?.members.find((u) => u.user_id === user?.id) !== undefined;
+
 	return (
 		<>
 			{!invite ? (
-				<Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={true}>
-					<CircularProgress color='inherit' />
-				</Backdrop>
+				<Backdrop open={true} />
 			) : (
-				<>
-					<Grid container component='main' sx={{ height: '100vh' }}>
-						<CssBaseline />
-						<Grid
-							size={{ xs: false, sm: 4, md: 7 }}
-							sx={{
-								backgroundImage: 'url(/images/signin/' + randomImage + '.jpg)',
-								backgroundRepeat: 'no-repeat',
-								backgroundColor: (t) => (t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.grey[900]),
-								backgroundSize: 'cover',
-								backgroundPosition: 'center',
-							}}
-						/>
-						<Grid size={{ xs: 12, sm: 8, md: 5 }} component={Paper} elevation={6} square>
-							<Box
-								sx={{
-									my: 8,
-									mx: 4,
-									display: 'flex',
-									flexDirection: 'column',
-									alignItems: 'center',
+				<div className='flex min-h-dvh'>
+					{/* Hero image side */}
+					<div
+						className='hidden bg-cover bg-center sm:block sm:w-1/3 md:w-7/12'
+						style={{ backgroundImage: 'url(/images/signin/' + randomImage + '.jpg)' }}
+					/>
+
+					{/* Invite panel */}
+					<div className='flex w-full flex-col items-center bg-card px-6 py-16 sm:w-2/3 md:w-5/12'>
+						<div className='flex size-[150px] items-center justify-center overflow-hidden rounded-3xl bg-primary'>
+							{invite.image ? (
+								<img src={invite.image} alt={invite.name} className='size-full object-cover' />
+							) : (
+								<span className='text-8xl font-medium text-primary-foreground'>{Array.from(String(invite.name).toUpperCase())[0]}</span>
+							)}
+						</div>
+
+						<p className='mt-4 text-sm text-muted-foreground'>You've been invited to join</p>
+						<h1 className='text-2xl font-semibold tracking-tight'>{invite.name}</h1>
+
+						<div className='mt-3 flex items-center -space-x-2'>
+							{invite.members.slice(0, 4).map((member) => (
+								<SimpleTooltip key={member.user_id} title={member.first_name}>
+									<Avatar className='ring-2 ring-card'>
+										{member.image && <AvatarImage src={member.image} alt={member.first_name} />}
+										<AvatarFallback>{Array.from(String(member.first_name).toUpperCase())[0]}</AvatarFallback>
+									</Avatar>
+								</SimpleTooltip>
+							))}
+							{invite.members.length > 4 && (
+								<div className='flex size-10 items-center justify-center rounded-full bg-muted text-sm font-medium text-muted-foreground ring-2 ring-card'>
+									+{invite.members.length - 4}
+								</div>
+							)}
+						</div>
+
+						<div className='mt-8 flex w-full max-w-sm flex-col gap-3'>
+							<Button
+								className='w-full'
+								disabled={!user || alreadyJoined}
+								onClick={() => {
+									acceptInvite();
 								}}
 							>
-								<CardMedia
-									sx={{
-										height: 150,
-										width: 150,
-										fontSize: 96,
-										lineHeight: 1.7,
-										textAlign: 'center',
-										backgroundColor: '#5cb660',
-										color: '#fff',
-										borderRadius: '25%',
-									}}
-									image={invite.image}
-								>
-									{invite.image_token ? '' : Array.from(String(invite.name).toUpperCase())[0]}
-								</CardMedia>
+								{alreadyJoined ? 'Already Joined' : 'Accept Invite'}
+							</Button>
 
-								<Typography variant='body1' color='GrayText' sx={{ mt: 1 }}>
-									You've been invited to join
-								</Typography>
+							{!user && (
+								<Button variant='outline' className='w-full' onClick={() => navigate(`/signin?redirectTo=${window.location.pathname}`)}>
+									Login or Create Account
+								</Button>
+							)}
+						</div>
 
-								<Typography variant='h5'>{invite.name}</Typography>
-
-								<Box sx={{ mt: 1, maxWidth: 500 }}>
-									<AvatarGroup max={4}>
-										{invite.members.map((member) => (
-											<Tooltip key={member.user_id} title={member.first_name} arrow>
-												<Avatar alt={member.first_name} src={member.image} sx={{ backgroundColor: 'primary.main' }}>
-													{Array.from(String(member.first_name).toUpperCase())[0]}
-												</Avatar>
-											</Tooltip>
-										))}
-									</AvatarGroup>
-								</Box>
-
-								<Stack spacing={2} direction='column' sx={{ width: '100%', mt: 4 }}>
-									<Button
-										variant='contained'
-										fullWidth
-										disabled={!user || invite.members.find((u) => u.user_id === user?.id) !== undefined}
-										onClick={() => {
-											acceptInvite();
-										}}
-									>
-										{invite.members.find((u) => u.user_id === user?.id) !== undefined ? 'Already Joined' : 'Accept Invite'}
-									</Button>
-
-									{!user && (
-										<Button variant='outlined' fullWidth onClick={() => navigate(`/signin?redirectTo=${window.location.pathname}`)}>
-											Login or Create Account
-										</Button>
-									)}
-								</Stack>
-
-								{user && invite.members.find((u) => u.user_id === user?.id) !== undefined && (
-									<MUILink component={Link} to={`/groups/${groupID}`} variant='body2' sx={{ mt: 2 }}>
-										Open Group
-									</MUILink>
-								)}
-							</Box>
-						</Grid>
-					</Grid>
-				</>
+						{user && alreadyJoined && (
+							<Link to={`/groups/${groupID}`} className='mt-4 text-sm text-primary underline-offset-4 hover:underline'>
+								Open Group
+							</Link>
+						)}
+					</div>
+				</div>
 			)}
 		</>
 	);

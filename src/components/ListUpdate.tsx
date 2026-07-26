@@ -4,15 +4,19 @@ import { useLocation } from 'react-router-dom';
 import { listTourProgress, useGetGroups, useGetTour, useUpdateLists, useUpdateTour } from '../lib/useSupabase/hooks';
 import { GroupType, ListType } from '../lib/useSupabase/types';
 
-import { useSnackbar } from 'notistack';
+import { useSnackbar } from '../lib/snackbar';
 
-import { Dialog, DialogTitle, DialogContent, Button, TextField, DialogContentText, Stack, useMediaQuery, useTheme, DialogActions, Typography } from '@mui/material';
-import Grid from '@mui/material/Grid';
-import { Save } from '@mui/icons-material';
+import { Save } from 'lucide-react';
 
 import GroupSelector from './GroupSelector';
 import ImageCropper from './ImageCropper';
 import TourTooltip from './TourTooltip';
+
+import { Button } from './ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
+import { FormField } from './ui/form-field';
+import { Input } from './ui/input';
+import { Textarea } from './ui/textarea';
 
 type ListUpdateProps = {
 	list: ListType | null;
@@ -20,7 +24,6 @@ type ListUpdateProps = {
 };
 
 export default function ListUpdate({ list, onClose }: ListUpdateProps) {
-	const theme = useTheme();
 	const { enqueueSnackbar } = useSnackbar();
 	const location = useLocation();
 
@@ -76,59 +79,53 @@ export default function ListUpdate({ list, onClose }: ListUpdateProps) {
 
 	return (
 		<>
-			<Dialog open={list !== null && open} onClose={updateLists.isLoading ? undefined : onClose} maxWidth='sm' fullScreen={useMediaQuery(theme.breakpoints.down('md'))}>
-				<DialogTitle>Edit List</DialogTitle>
-				<DialogContent>
-					<Grid container spacing={2}>
-						<Grid size={12}>
-							<DialogContentText>Organize your wishlist into categories, making it easier for others to find the perfect gift for you.</DialogContentText>
-						</Grid>
+			<Dialog
+				open={list !== null && open}
+				onOpenChange={(next) => {
+					if (!next && !updateLists.isLoading) onClose();
+				}}
+			>
+				<DialogContent fullScreenOnMobile dismissible={!updateLists.isLoading}>
+					<DialogHeader>
+						<DialogTitle>Edit List</DialogTitle>
+						<DialogDescription>Organize your wishlist into categories, making it easier for others to find the perfect gift for you.</DialogDescription>
+					</DialogHeader>
+
+					<div className='flex flex-col gap-4'>
 						{childList && (
-							<Grid size={12}>
+							<div className='flex justify-center'>
 								<ImageCropper value={image} onChange={setImage} aspectRatio={1} />
-							</Grid>
+							</div>
 						)}
-						<Grid size={12}>
-							<TextField fullWidth label='Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} disabled={updateLists.isLoading} />
-						</Grid>
-						<Grid size={12}>
-							<GroupSelector
-								groups={groups?.filter((g) => g.my_membership[0].invite === false) as Omit<GroupType, 'image_token' | 'my_membership'>[]}
-								value={selectedGroups}
-								onChange={setSelectedGroups}
-								disabled={updateLists.isLoading}
-							/>
-						</Grid>
+
+						<FormField label='Name' required>
+							<Input required value={name} onChange={(e) => setName(e.target.value)} disabled={updateLists.isLoading} />
+						</FormField>
+
+						<GroupSelector
+							groups={groups?.filter((g) => g.my_membership[0].invite === false) as Omit<GroupType, 'image_token' | 'my_membership'>[]}
+							value={selectedGroups}
+							onChange={setSelectedGroups}
+							disabled={updateLists.isLoading}
+						/>
 
 						{childList && (
-							<Grid size={12}>
-								<TextField
-									fullWidth
-									multiline
-									minRows={3}
-									maxRows={7}
-									label='Bio'
-									variant='outlined'
-									slotProps={{ htmlInput: { maxLength: 250 } }}
-									value={bio}
-									onChange={(e) => setBio(e.target.value)}
-									helperText={`${bio?.length} / 250`}
-								/>
-							</Grid>
+							<FormField label='Bio' helperText={`${bio?.length} / 250`}>
+								<Textarea rows={3} maxLength={250} value={bio} onChange={(e) => setBio(e.target.value)} />
+							</FormField>
 						)}
 
-						<Grid size={12}>
-							<Stack direction='row' spacing={2} sx={{ justifyContent: 'flex-end' }}>
-								<Button color='inherit' onClick={onClose} disabled={updateLists.isLoading}>
-									Cancel
-								</Button>
+						<div className='flex justify-end gap-2'>
+							<Button variant='ghost' onClick={onClose} disabled={updateLists.isLoading}>
+								Cancel
+							</Button>
 
-								<Button onClick={handleSave} disabled={name.trim().length === 0} endIcon={<Save />} loading={updateLists.isLoading} loadingPosition='end' variant='contained'>
-									Save
-								</Button>
-							</Stack>
-						</Grid>
-					</Grid>
+							<Button onClick={handleSave} disabled={name.trim().length === 0} loading={updateLists.isLoading}>
+								Save
+								<Save />
+							</Button>
+						</div>
+					</div>
 				</DialogContent>
 			</Dialog>
 
@@ -139,14 +136,12 @@ export default function ListUpdate({ list, onClose }: ListUpdateProps) {
 						anchorEl={document.querySelector('[tour-element="list_group_assign"]')}
 						placement='top'
 						content={
-							<>
-								<DialogContent>
-									<Typography gutterBottom>Assign your list to a group here.</Typography>
-								</DialogContent>
-								<DialogActions>
+							<div>
+								<p>Assign your list to a group here.</p>
+								<div className='mt-1 flex justify-end'>
 									<Button
-										variant='outlined'
-										color='inherit'
+										variant='secondary'
+										size='sm'
 										onClick={() => {
 											updateTour.mutateAsync({
 												list_group_assign: true,
@@ -156,11 +151,9 @@ export default function ListUpdate({ list, onClose }: ListUpdateProps) {
 									>
 										Got it
 									</Button>
-								</DialogActions>
-							</>
+								</div>
+							</div>
 						}
-						backgroundColor={theme.palette.primary.main}
-						color={theme.palette.primary.contrastText}
 						allowClick
 					/>
 				</>

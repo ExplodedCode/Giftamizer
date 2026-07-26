@@ -1,4 +1,4 @@
-import { SnackbarAction, VariantType } from 'notistack';
+import { SnackbarAction, VariantType } from './lib/snackbar';
 
 export type SnackbarAlert = {
 	text: string;

@@ -1,5 +1,7 @@
-import { Autocomplete, TextField } from '@mui/material';
 import { GroupType } from '../lib/useSupabase/types';
+
+import { MultiCombobox } from './ui/combobox';
+import { FormField } from './ui/form-field';
 
 type GroupSelectorProps = {
 	groups: Omit<GroupType, 'image_token' | 'my_membership'>[];
@@ -10,19 +12,19 @@ type GroupSelectorProps = {
 
 export default function GroupSelector({ groups, value, onChange, disabled }: GroupSelectorProps) {
 	return (
-		<Autocomplete
-			tour-element='list_group_assign'
-			value={value as Omit<GroupType, 'image_token' | 'my_membership'>[]}
-			onChange={(event: any, value: Omit<GroupType, 'image_token' | 'my_membership'>[]) => {
-				if (onChange) onChange(value);
-			}}
-			fullWidth
-			multiple
-			options={groups}
-			isOptionEqualToValue={(option, value) => option.id === value.id}
-			getOptionLabel={(option) => option.name}
-			renderInput={(params) => <TextField {...params} label='Groups' />}
-			disabled={disabled}
-		/>
+		<FormField label='Groups'>
+			<MultiCombobox<Omit<GroupType, 'image_token' | 'my_membership'>>
+				tourElement='list_group_assign'
+				value={(value as Omit<GroupType, 'image_token' | 'my_membership'>[]) ?? []}
+				onChange={(v) => {
+					if (onChange) onChange(v);
+				}}
+				options={groups ?? []}
+				getOptionKey={(option) => option.id}
+				getOptionLabel={(option) => option.name}
+				placeholder='Select groups...'
+				disabled={disabled}
+			/>
+		</FormField>
 	);
 }

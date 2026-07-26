@@ -1,33 +1,16 @@
 import React from 'react';
 
-import { Link, NavigateFunction, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { NavigateFunction, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { UseMutationResult } from '@tanstack/react-query';
-import { TransitionGroup } from 'react-transition-group';
 
 import { groupTourProgress, useGetGroups, useGetTour, useUpdateTour } from '../lib/useSupabase';
 import { GroupType, TourSteps } from '../lib/useSupabase/types';
 
-import {
-	Container,
-	Card,
-	CardActionArea,
-	CardContent,
-	CardMedia,
-	Typography,
-	AppBar,
-	Breadcrumbs,
-	Link as MUILink,
-	Toolbar,
-	Grow,
-	Box,
-	CircularProgress,
-	DialogTitle,
-	useTheme,
-} from '@mui/material';
-import Grid from '@mui/material/Grid';
-
 import GroupCreate from '../components/GroupCreate';
 import TourTooltip from '../components/TourTooltip';
+
+import { PageHeader } from '../components/ui/page-header';
+import { Spinner } from '../components/ui/spinner';
 
 interface RenderGroupProps {
 	index: number;
@@ -39,48 +22,37 @@ interface RenderGroupProps {
 }
 function RenderGroup({ index, group, navigate, tour, updateTour }: RenderGroupProps) {
 	return (
-		<Grid tour-element={index === 0 ? 'group_card' : undefined} key={group.id} size="grow" sx={{ maxWidth: { xs: '100%', sm: 250 }, minWidth: { xs: '100%', sm: 250 }, margin: 1 }}>
-			<Card sx={{ height: '100%' }}>
-				<CardActionArea
-					sx={{ height: '100%', display: 'grid', alignItems: 'start' }}
-					onClick={() => {
-						navigate(`/groups/${group.id}`);
-						if (!tour?.group_card) {
-							updateTour.mutateAsync({
-								group_card: true,
-							});
-						}
-					}}
-				>
-					<CardMedia
-						sx={{
-							height: 250,
-							width: { xs: 'calc(100vw - 48px)', sm: 250 },
-							fontSize: 150,
-							lineHeight: 1.7,
-							textAlign: 'center',
-							backgroundColor: '#5cb660',
-							color: '#fff',
-						}}
-						image={group.image}
-					>
-						{group.image ? '' : Array.from(String(group.name).toUpperCase())[0]}
-					</CardMedia>
+		<div {...({ 'tour-element': index === 0 ? 'group_card' : undefined } as object)} className='w-full sm:w-[250px]'>
+			<button
+				type='button'
+				onClick={() => {
+					navigate(`/groups/${group.id}`);
+					if (!tour?.group_card) {
+						updateTour.mutateAsync({
+							group_card: true,
+						});
+					}
+				}}
+				className='group block w-full animate-in cursor-pointer overflow-hidden rounded-xl border border-border bg-card text-left shadow-xs backdrop-blur-none transition-all outline-none fade-in zoom-in-95 fill-mode-backwards hover:shadow-md hover:ring-2 hover:ring-primary/40 focus-visible:ring-2 focus-visible:ring-ring'
+				style={{ animationDelay: `${index * 25}ms` }}
+			>
+				<div className='flex h-[250px] w-full items-center justify-center overflow-hidden bg-primary'>
+					{group.image ? (
+						<img src={group.image} alt={group.name} className='size-full object-cover transition-transform duration-300 group-hover:scale-105' />
+					) : (
+						<span className='text-[150px] leading-none font-medium text-primary-foreground'>{Array.from(String(group.name).toUpperCase())[0]}</span>
+					)}
+				</div>
 
-					<CardContent>
-						<Typography variant='h5' component='h2'>
-							{group.name}
-						</Typography>
-					</CardContent>
-				</CardActionArea>
-			</Card>
-		</Grid>
+				<div className='p-4'>
+					<p className='truncate text-lg font-semibold'>{group.name}</p>
+				</div>
+			</button>
+		</div>
 	);
 }
 
 export default function Groups() {
-	const theme = useTheme();
-
 	const navigate = useNavigate();
 	const location = useLocation();
 	const { group: groupID, user: userID } = useParams();
@@ -89,64 +61,44 @@ export default function Groups() {
 
 	//
 	// User tour
-	// const addGroupFab = React.useRef(null);
 	const [showTour, setShowTour] = React.useState<boolean>(false);
 	const { data: tour } = useGetTour();
 	const updateTour = useUpdateTour();
 
+	React.useEffect(() => {
+		if (!isLoading) {
+			setTimeout(() => {
+				setShowTour(true);
+			}, 400);
+		}
+	}, [isLoading]);
+
 	return (
 		<>
-			<AppBar position='static' sx={{ marginBottom: 2 }} color='default'>
-				<Toolbar variant='dense'>
-					<Breadcrumbs aria-label='breadcrumb' sx={{ flexGrow: 1 }}>
-						{!userID && !groupID && <Typography color='text.primary'>Groups</Typography>}
+			<PageHeader crumbs={!userID && groupID ? [{ label: 'Groups', to: '/groups' }, { label: groups?.find((g) => g.id === groupID)?.name }] : [{ label: 'Groups' }]} />
 
-						{!userID && groupID && (
-							<MUILink underline='hover' color='inherit' component={Link} to='/groups'>
-								Groups
-							</MUILink>
-						)}
-
-						{groupID && <Typography color='text.primary'>{groups?.find((g) => g.id === groupID)?.name}</Typography>}
-					</Breadcrumbs>
-				</Toolbar>
-			</AppBar>
-
-			<Container sx={{ paddingBottom: 12 }}>
-				<TransitionGroup component={Grid} container sx={{ justifyContent: 'center' }}>
+			<div className='mx-auto max-w-6xl px-4 pt-4 pb-12'>
+				<div className='flex flex-wrap justify-center gap-4'>
 					{groups
 						?.filter((g) => !g.my_membership[0].invite)
 						.map((group, index) => (
-							<Grow
-								key={group.id}
-								style={{ transitionDelay: `${index * 25}ms` }}
-								addEndListener={() => {
-									setTimeout(() => {
-										setShowTour(true);
-									}, 400);
-								}}
-							>
-								{RenderGroup({ index: index, group: group, navigate: navigate, tour: tour, updateTour: updateTour })}
-							</Grow>
+							<RenderGroup key={group.id} index={index} group={group} navigate={navigate} tour={tour} updateTour={updateTour} />
 						))}
-				</TransitionGroup>
+				</div>
+
 				{groups?.filter((g) => !g.my_membership[0].invite)?.length === 0 && (
-					<Box style={{ marginTop: 100, textAlign: 'center', width: '100%' }}>
-						<Typography variant='h5' gutterBottom>
-							You don't have any groups!
-						</Typography>
-						<Typography variant='body1' gutterBottom>
-							Create or join a group with your friends and family.
-						</Typography>
-					</Box>
+					<div className='mt-24 text-center'>
+						<p className='mb-1 text-xl font-medium'>You don't have any groups!</p>
+						<p className='text-muted-foreground'>Create or join a group with your friends and family.</p>
+					</div>
 				)}
 
 				{isLoading && (
-					<Box sx={{ display: 'flex', justifyContent: 'center', mt: 16 }}>
-						<CircularProgress />
-					</Box>
+					<div className='mt-32 flex justify-center'>
+						<Spinner size={32} />
+					</div>
 				)}
-			</Container>
+			</div>
 
 			<GroupCreate />
 
@@ -156,13 +108,7 @@ export default function Groups() {
 						open={groupTourProgress(tour, false) === 'group_card'}
 						anchorEl={document.querySelector('[tour-element="group_card"]')}
 						placement='bottom'
-						content={
-							<>
-								<DialogTitle>Open the Group to view the members!</DialogTitle>
-							</>
-						}
-						backgroundColor={theme.palette.primary.main}
-						color={theme.palette.primary.contrastText}
+						content={<p className='text-base font-semibold'>Open the Group to view the members!</p>}
 						mask
 						allowClick
 					/>

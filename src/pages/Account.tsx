@@ -1,44 +1,45 @@
 import * as React from 'react';
 
-import { useSnackbar } from 'notistack';
+import { useSnackbar } from '../lib/snackbar';
+import { useDebouncedCallback } from 'use-debounce';
 
-import {
-	Alert,
-	AlertTitle,
-	AppBar,
-	Breadcrumbs,
-	Button,
-	Container,
-	Dialog,
-	DialogActions,
-	DialogContent,
-	DialogTitle,
-	Divider,
-	Link as MUILink,
-	Stack,
-	TextField,
-	Toolbar,
-	Typography,
-	CircularProgress,
-	FormControl,
-	FormControlLabel,
-	FormGroup,
-	FormHelperText,
-	Switch,
-	debounce,
-} from '@mui/material';
-import Grid from '@mui/material/Grid';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { TriangleAlert } from 'lucide-react';
 
 import { useGetProfile, useSupabase, useUpdateProfile, useUpdateTour } from '../lib/useSupabase';
 import EmailEditor from '../components/EmailEditor';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
 import ImageCropper from '../components/ImageCropper';
 import HomeSelector from '../components/HomeSelector';
+
+import { Button } from '../components/ui/button';
+import { ConfirmDialog } from '../components/ui/confirm-dialog';
+import { FormField } from '../components/ui/form-field';
+import { Input } from '../components/ui/input';
+import { PageHeader } from '../components/ui/page-header';
+import { Separator } from '../components/ui/separator';
+import { Spinner } from '../components/ui/spinner';
+import { Switch } from '../components/ui/switch';
+import { Textarea } from '../components/ui/textarea';
 
 export interface GroupsWithoutCoOwner {
 	id: string;
 	name: string;
 	owner_count: number;
+}
+
+function SettingRow({ label, helper, checked, onCheckedChange }: { label: React.ReactNode; helper?: React.ReactNode; checked: boolean; onCheckedChange: (checked: boolean) => void }) {
+	const id = React.useId();
+	return (
+		<div className='flex flex-col gap-1'>
+			<div className='flex items-center gap-2.5'>
+				<Switch id={id} checked={checked} onCheckedChange={onCheckedChange} />
+				<label htmlFor={id} className='cursor-pointer text-sm font-medium select-none'>
+					{label}
+				</label>
+			</div>
+			{helper && <p className='text-xs text-muted-foreground'>{helper}</p>}
+		</div>
+	);
 }
 
 export default function Account() {
@@ -180,7 +181,7 @@ export default function Account() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [updateProfile.mutateAsync, enqueueSnackbar]);
 
-	const debouncedFlush = React.useMemo(() => debounce(flushSave, 800), [flushSave]);
+	const debouncedFlush = useDebouncedCallback(flushSave, 800);
 
 	// Text fields debounce while the user is typing
 	React.useEffect(() => {
@@ -227,316 +228,234 @@ export default function Account() {
 
 	return (
 		<>
-			<AppBar position='static' sx={{ marginBottom: 2 }} color='default'>
-				<Toolbar variant='dense'>
-					<Breadcrumbs aria-label='breadcrumb' sx={{ flexGrow: 1 }}>
-						<Typography color='text.primary'>My Account</Typography>
-					</Breadcrumbs>
-
-					{saveStatus === 'saving' && (
-						<Stack direction='row' spacing={1} sx={{ alignItems: 'center' }}>
-							<CircularProgress size={16} />
-							<Typography variant='body2' color='text.secondary'>
+			<PageHeader
+				crumbs={[{ label: 'My Account' }]}
+				actions={
+					<>
+						{saveStatus === 'saving' && (
+							<span className='flex items-center gap-1.5 text-sm text-muted-foreground'>
+								<Spinner size={14} />
 								Saving...
-							</Typography>
-						</Stack>
-					)}
-					{saveStatus === 'saved' && (
-						<Typography variant='body2' color='text.secondary'>
-							Saved
-						</Typography>
-					)}
-				</Toolbar>
-			</AppBar>
+							</span>
+						)}
+						{saveStatus === 'saved' && <span className='text-sm text-muted-foreground'>Saved</span>}
+					</>
+				}
+			/>
 
-			<Container maxWidth='md' sx={{ pb: 12 }}>
-				<Grid container spacing={2}>
-					<Grid size={12}>
-						<ImageCropper value={image} onChange={setImage} aspectRatio={1} />
-						<Typography variant='h6' gutterBottom>
-							Account Settings
-						</Typography>
-						<Grid container spacing={2}>
-							<Grid size={{ xs: 12, sm: 6 }}>
-								<TextField fullWidth label='First Name' variant='outlined' value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
-							</Grid>
-							<Grid size={{ xs: 12, sm: 6 }}>
-								<TextField fullWidth label='Last Name' variant='outlined' value={lastName} onChange={(e) => setLastName(e.target.value)} required />
-							</Grid>
-						</Grid>
-					</Grid>
-					<Grid size={12}>
-						<TextField
-							fullWidth
-							multiline
-							minRows={3}
-							maxRows={7}
-							label='Bio'
-							variant='outlined'
-							slotProps={{ htmlInput: { maxLength: 250 } }}
-							value={bio}
-							onChange={(e) => setBio(e.target.value)}
-							helperText={`${bio.length} / 250`}
-						/>
-					</Grid>
+			<div className='mx-auto flex max-w-3xl flex-col gap-6 px-4 pt-6 pb-12'>
+				<div className='flex flex-col gap-4'>
+					<ImageCropper value={image} onChange={setImage} aspectRatio={1} />
 
-					<Grid size={12}>
-						<HomeSelector value={home} onChange={setHome} />
-					</Grid>
+					<h2 className='text-lg font-semibold'>Account Settings</h2>
 
-					{user.app_metadata.provider === 'email' && (
-						<Grid size={12}>
-							<EmailEditor />
-						</Grid>
-					)}
+					<div className='grid gap-4 sm:grid-cols-2'>
+						<FormField label='First Name' required>
+							<Input value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+						</FormField>
+						<FormField label='Last Name' required>
+							<Input value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+						</FormField>
+					</div>
 
-					<Grid size={12}>
-						<Divider />
-					</Grid>
+					<FormField label='Bio' helperText={`${bio.length} / 250`}>
+						<Textarea rows={3} maxLength={250} value={bio} onChange={(e) => setBio(e.target.value)} />
+					</FormField>
 
-					<Grid size={12}>
-						<Typography variant='h6' gutterBottom>
-							Features
-						</Typography>
-						<FormControl component='fieldset' variant='standard'>
-							<FormGroup>
-								<FormControlLabel
-									control={
-										<Switch
-											checked={enableLists}
-											onChange={(e) => {
-												const checked = e.target.checked;
-												setEnableLists(checked);
+					<HomeSelector value={home} onChange={setHome} />
 
-												if (checked) {
-													updateTour.mutateAsync({
-														list_tour_start: true,
-													});
-												} else if (location.pathname.startsWith('/lists')) {
-													navigate('/');
-												}
-											}}
-										/>
-									}
-									label='Lists'
-								/>
-								<FormHelperText>
-									Allows you to create item lists and assign them to groups. <i>Even create seperate managed lists for your kids or pets</i>
-								</FormHelperText>
-							</FormGroup>
-						</FormControl>
-					</Grid>
-					<Grid size={12}>
-						<FormControl component='fieldset' variant='standard'>
-							<FormGroup>
-								<FormControlLabel
-									control={
-										<Switch
-											checked={enableTrash}
-											onChange={(e) => {
-												const checked = e.target.checked;
-												setEnableTrash(checked);
+					{user.app_metadata.provider === 'email' && <EmailEditor />}
+				</div>
 
-												if (!checked && location.pathname.startsWith('/trash')) navigate('/');
-											}}
-										/>
-									}
-									label='Trash Can'
-								/>
-								<FormHelperText>Recover deleted items</FormHelperText>
-							</FormGroup>
-						</FormControl>
-					</Grid>
-					<Grid size={12}>
-						<FormControl component='fieldset' variant='standard'>
-							<FormGroup>
-								<FormControlLabel
-									control={
-										<Switch
-											checked={enableArchive}
-											onChange={(e) => {
-												const checked = e.target.checked;
-												setEnableArchive(checked);
+				<Separator />
 
-												if (!checked && location.pathname.startsWith('/archive')) navigate('/');
-											}}
-										/>
-									}
-									label='Item Archive'
-								/>
-								<FormHelperText>Hide items from groups without deleting them.</FormHelperText>
-							</FormGroup>
-						</FormControl>
-					</Grid>
+				<div className='flex flex-col gap-4'>
+					<h2 className='text-lg font-semibold'>Features</h2>
+
+					<SettingRow
+						label='Lists'
+						helper={
+							<>
+								Allows you to create item lists and assign them to groups. <i>Even create seperate managed lists for your kids or pets</i>
+							</>
+						}
+						checked={enableLists}
+						onCheckedChange={(checked) => {
+							setEnableLists(checked);
+
+							if (checked) {
+								updateTour.mutateAsync({
+									list_tour_start: true,
+								});
+							} else if (location.pathname.startsWith('/lists')) {
+								navigate('/');
+							}
+						}}
+					/>
+
+					<SettingRow
+						label='Trash Can'
+						helper='Recover deleted items'
+						checked={enableTrash}
+						onCheckedChange={(checked) => {
+							setEnableTrash(checked);
+
+							if (!checked && location.pathname.startsWith('/trash')) navigate('/');
+						}}
+					/>
+
+					<SettingRow
+						label='Item Archive'
+						helper='Hide items from groups without deleting them.'
+						checked={enableArchive}
+						onCheckedChange={(checked) => {
+							setEnableArchive(checked);
+
+							if (!checked && location.pathname.startsWith('/archive')) navigate('/');
+						}}
+					/>
 
 					{(new Date().getMonth() === 10 || new Date().getMonth() === 11 || new Date().getMonth() === 0) && (
-						<Grid size={12}>
-							<FormControl component='fieldset' variant='standard'>
-								<FormGroup>
-									<FormControlLabel control={<Switch checked={enableSnowFall} onChange={(e) => setEnableSnowFall(e.target.checked)} />} label='Snow Fall ❄️' />
-									<FormHelperText>Only available Nov-Jan.</FormHelperText>
-								</FormGroup>
-							</FormControl>
-						</Grid>
+						<SettingRow label='Snow Fall ❄️' helper='Only available Nov-Jan.' checked={enableSnowFall} onCheckedChange={(checked) => setEnableSnowFall(checked)} />
 					)}
+				</div>
 
-					<Grid size={12}>
-						<Divider />
-					</Grid>
+				<Separator />
 
-					<Grid size={12}>
-						<Typography variant='h6' gutterBottom>
-							Email Settings
-						</Typography>
-						<FormControl component='fieldset' variant='standard'>
-							<FormGroup>
-								<FormControlLabel control={<Switch checked={emailPromotional} onChange={(e) => setEmailPromotional(e.target.checked)} />} label='Promotional' />
-								<FormHelperText>New products and feature updates, as well as occasional company announcements and maintenance downtimes</FormHelperText>
-							</FormGroup>
-						</FormControl>
-					</Grid>
-					<Grid size={12}>
-						<FormControl component='fieldset' variant='standard'>
-							<FormGroup>
-								<FormControlLabel control={<Switch checked={emailInvites} onChange={(e) => setEmailInvites(e.target.checked)} />} label='Invites' />
-								<FormHelperText>Get notified when someone invites you to a new group</FormHelperText>
-							</FormGroup>
-						</FormControl>
-					</Grid>
+				<div className='flex flex-col gap-4'>
+					<h2 className='text-lg font-semibold'>Email Settings</h2>
 
-					<Grid size={12}>
-						<Divider />
-					</Grid>
+					<SettingRow
+						label='Promotional'
+						helper='New products and feature updates, as well as occasional company announcements and maintenance downtimes'
+						checked={emailPromotional}
+						onCheckedChange={(checked) => setEmailPromotional(checked)}
+					/>
 
-					<Grid size={12}>
-						<Typography variant='h5' gutterBottom>
-							Danger Zone
-						</Typography>
-						<Alert severity='error'>
-							<AlertTitle>Delete Account</AlertTitle>
+					<SettingRow label='Invites' helper='Get notified when someone invites you to a new group' checked={emailInvites} onCheckedChange={(checked) => setEmailInvites(checked)} />
+				</div>
 
-							<Grid container spacing={2}>
-								{groupsWithoutCoOwner && groupsWithoutCoOwner.length > 0 ? (
-									<>
-										<Grid size={12}>
-											<Typography variant='body1'>
-												Your account is currently an owner of {groupsWithoutCoOwner.length > 1 ? 'these groups' : 'this group'}:{' '}
-												{groupsWithoutCoOwner.map((g, i) => (
-													<React.Fragment key={i}>
-														<MUILink component={Link} to={`/groups/${g.id}#group-settings`}>
-															{g.name}
-														</MUILink>
-														{i !== groupsWithoutCoOwner.length - 1 && ', '}
-													</React.Fragment>
-												))}
-											</Typography>
-										</Grid>
-										<Grid size={12}>
-											<Typography variant='body1'>
-												You must add another owner or delete {groupsWithoutCoOwner.length > 1 ? 'these groups' : 'this group'} before you can delete your account.
-											</Typography>
-										</Grid>
-									</>
-								) : (
-									<Grid size={12}>
-										<Typography variant='body1'>
-											<b>This action is permanent! All user data will be deleted.</b>
-										</Typography>
-									</Grid>
-								)}
-								<Grid size={12}>
-									<Button variant='outlined' color='error' disabled={!groupsWithoutCoOwner || groupsWithoutCoOwner.length > 0} onClick={() => navigate('#my-account-delete')}>
-										Delete My Account
-									</Button>
-								</Grid>
-							</Grid>
-						</Alert>
-					</Grid>
+				<Separator />
 
-					<Grid size={12}>
-						<Divider />
-					</Grid>
+				<div className='flex flex-col gap-3'>
+					<h2 className='text-xl font-semibold'>Danger Zone</h2>
 
-					<Grid size={12}>
-						<Typography variant='h6' gutterBottom>
-							Support
-						</Typography>
-						<Typography variant='body1'>
-							If you're experiencing any issues or just have a question, please <Link to='/support'>contact us</Link>.
-						</Typography>
-					</Grid>
+					<div className='flex flex-col gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4'>
+						<p className='flex items-center gap-2 font-semibold text-destructive'>
+							<TriangleAlert className='size-4' />
+							Delete Account
+						</p>
 
-					<Grid size={12}>
-						<MUILink
-							sx={{
-								cursor: 'pointer',
-							}}
-							onClick={() => {
-								updateTour.mutateAsync({
-									item_create_fab: false,
-									item_name: false,
-									item_url: false,
-									item_more_links: false,
-									item_custom_fields: false,
-									item_image: false,
-									item_create_btn: false,
+						{groupsWithoutCoOwner && groupsWithoutCoOwner.length > 0 ? (
+							<>
+								<p className='text-sm'>
+									Your account is currently an owner of {groupsWithoutCoOwner.length > 1 ? 'these groups' : 'this group'}:{' '}
+									{groupsWithoutCoOwner.map((g, i) => (
+										<React.Fragment key={i}>
+											<Link to={`/groups/${g.id}#group-settings`} className='text-primary underline-offset-4 hover:underline'>
+												{g.name}
+											</Link>
+											{i !== groupsWithoutCoOwner.length - 1 && ', '}
+										</React.Fragment>
+									))}
+								</p>
+								<p className='text-sm'>You must add another owner or delete {groupsWithoutCoOwner.length > 1 ? 'these groups' : 'this group'} before you can delete your account.</p>
+							</>
+						) : (
+							<p className='text-sm font-bold'>This action is permanent! All user data will be deleted.</p>
+						)}
 
-									group_invite_nav: false,
-									group_invite_button: false,
+						<div>
+							<Button
+								variant='outline'
+								className='border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive'
+								disabled={!groupsWithoutCoOwner || groupsWithoutCoOwner.length > 0}
+								onClick={() => navigate('#my-account-delete')}
+							>
+								Delete My Account
+							</Button>
+						</div>
+					</div>
+				</div>
 
-									group_nav: false,
-									group_create_fab: false,
-									group_create_name: false,
-									group_create_image: false,
-									group_create: false,
-									group_card: false,
-									group_settings: false,
-									group_pin: false,
-									group_member_card: false,
-									group_member_item_status: false,
-									group_member_item_status_taken: false,
-									group_member_item_filter: false,
+				<Separator />
 
-									group_settings_add_people: false,
-									group_settings_permissions: false,
+				<div className='flex flex-col gap-2'>
+					<h2 className='text-lg font-semibold'>Support</h2>
+					<p className='text-sm'>
+						If you're experiencing any issues or just have a question, please{' '}
+						<Link to='/support' className='text-primary underline-offset-4 hover:underline'>
+							contact us
+						</Link>
+						.
+					</p>
+				</div>
 
-									list_tour_start: false,
-									list_nav: false,
-									list_intro: false,
-									list_menu: false,
-									list_edit: false,
-									list_group_assign: false,
+				<button
+					type='button'
+					className='cursor-pointer self-start text-sm text-primary underline-offset-4 hover:underline'
+					onClick={() => {
+						updateTour.mutateAsync({
+							item_create_fab: false,
+							item_name: false,
+							item_url: false,
+							item_more_links: false,
+							item_custom_fields: false,
+							item_image: false,
+							item_create_btn: false,
 
-									shopping_nav: false,
-									shopping_filter: false,
-									shopping_item: false,
-								});
+							group_invite_nav: false,
+							group_invite_button: false,
 
-								navigate('/');
-							}}
-						>
-							Reset User Tour
-						</MUILink>
-					</Grid>
-				</Grid>
-			</Container>
+							group_nav: false,
+							group_create_fab: false,
+							group_create_name: false,
+							group_create_image: false,
+							group_create: false,
+							group_card: false,
+							group_settings: false,
+							group_pin: false,
+							group_member_card: false,
+							group_member_item_status: false,
+							group_member_item_status_taken: false,
+							group_member_item_filter: false,
 
-			<Dialog open={deleteOpen} onClose={() => navigate('#')}>
-				<DialogTitle>Delete Account</DialogTitle>
-				<DialogContent>
-					<Typography variant='body1'>
-						<b>This action is permanent! All user data will be deleted.</b>
-					</Typography>
-				</DialogContent>
-				<DialogActions>
-					<Button color='inherit' onClick={() => navigate('#')}>
-						Cancel
-					</Button>
-					<Button color='error' variant='contained' onClick={handleDelete} disabled={!groupsWithoutCoOwner || groupsWithoutCoOwner.length > 0}>
-						Yes Delete my Account
-					</Button>
-				</DialogActions>
-			</Dialog>
+							group_settings_add_people: false,
+							group_settings_permissions: false,
+
+							list_tour_start: false,
+							list_nav: false,
+							list_intro: false,
+							list_menu: false,
+							list_edit: false,
+							list_group_assign: false,
+
+							shopping_nav: false,
+							shopping_filter: false,
+							shopping_item: false,
+						});
+
+						navigate('/');
+					}}
+				>
+					Reset User Tour
+				</button>
+			</div>
+
+			<ConfirmDialog
+				open={deleteOpen}
+				onOpenChange={(next) => {
+					if (!next) navigate('#');
+				}}
+				title='Delete Account'
+				description={<b>This action is permanent! All user data will be deleted.</b>}
+				confirmText='Yes Delete my Account'
+				destructive
+				onConfirm={() => {
+					// same guard as the old dialog's disabled confirm button
+					if (groupsWithoutCoOwner && groupsWithoutCoOwner.length === 0) handleDelete();
+				}}
+			/>
 		</>
 	);
 }

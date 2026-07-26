@@ -2,18 +2,19 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 import { groupTourProgress, useCreateGroup, useGetGroups, useGetTour, useUpdateTour } from '../lib/useSupabase';
-import { useSnackbar } from 'notistack';
+import { useSnackbar } from '../lib/snackbar';
 
-import { useTheme } from '@mui/material/styles';
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Fab, Stack, TextField, Typography, useMediaQuery } from '@mui/material';
-import Grid from '@mui/material/Grid';
-import { Add, GroupAdd } from '@mui/icons-material';
+import { Plus, UserPlus } from 'lucide-react';
 
 import ImageCropper from './ImageCropper';
-import TourTooltip from './TourTooltip';
+import TourTooltip, { TourContent } from './TourTooltip';
+
+import { Button } from './ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
+import { FormField } from './ui/form-field';
+import { Input } from './ui/input';
 
 export default function GroupCreate() {
-	const theme = useTheme();
 	const { enqueueSnackbar } = useSnackbar();
 	const navigate = useNavigate();
 	const location = useLocation();
@@ -95,10 +96,10 @@ export default function GroupCreate() {
 
 	return (
 		<>
-			<Fab
-				tour-element='group_create_fab'
+			<button
+				type='button'
+				{...({ 'tour-element': 'group_create_fab' } as object)}
 				ref={addGroupFab}
-				color='primary'
 				aria-label='add'
 				onClick={() => {
 					navigate('#new-group');
@@ -109,19 +110,25 @@ export default function GroupCreate() {
 						});
 					}
 				}}
-				sx={{ position: 'fixed', bottom: { xs: 64, md: 16 }, right: { xs: 8, md: 16 } }}
+				className='fixed right-2 bottom-20 z-30 flex size-14 cursor-pointer items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg transition-all outline-none hover:bg-primary-hover hover:shadow-xl focus-visible:ring-2 focus-visible:ring-ring/50 active:scale-95 md:right-4 md:bottom-4'
 			>
-				<GroupAdd />
-			</Fab>
+				<UserPlus className='size-6' />
+			</button>
 
-			<Dialog open={open} onClose={handleClose} maxWidth='sm' fullScreen={useMediaQuery(theme.breakpoints.down('md'))}>
-				<DialogTitle>Create Group</DialogTitle>
-				<DialogContent>
-					<Grid container spacing={2}>
-						<Grid size={12}>
-							<DialogContentText>Share your gift lists with your friends and family.</DialogContentText>
-						</Grid>
-						<Grid size={12}>
+			<Dialog
+				open={open}
+				onOpenChange={(next) => {
+					if (!next) handleClose();
+				}}
+			>
+				<DialogContent fullScreenOnMobile>
+					<DialogHeader>
+						<DialogTitle>Create Group</DialogTitle>
+						<DialogDescription>Share your gift lists with your friends and family.</DialogDescription>
+					</DialogHeader>
+
+					<div className='flex flex-col gap-4'>
+						<div className='flex justify-center'>
 							<ImageCropper
 								onClick={() => {
 									setImageDialogOpen(true);
@@ -139,30 +146,23 @@ export default function GroupCreate() {
 								onChange={setImage}
 								aspectRatio={1}
 							/>
-						</Grid>
-						<Grid size={12}>
-							<TextField tour-element='group_create_name' fullWidth label='Group Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} />
-						</Grid>
-						<Grid size={12}>
-							<Stack direction='row' spacing={2} sx={{ justifyContent: 'flex-end' }}>
-								<Button color='inherit' onClick={handleClose}>
-									Cancel
-								</Button>
+						</div>
 
-								<Button
-									tour-element='group_create'
-									onClick={handleCreate}
-									endIcon={<Add />}
-									loading={createGroup.isLoading}
-									disabled={name.trim().length <= 0}
-									loadingPosition='end'
-									variant='contained'
-								>
-									Create
-								</Button>
-							</Stack>
-						</Grid>
-					</Grid>
+						<FormField label='Group Name' required>
+							<Input {...({ 'tour-element': 'group_create_name' } as object)} required value={name} onChange={(e) => setName(e.target.value)} />
+						</FormField>
+
+						<div className='flex justify-end gap-2'>
+							<Button variant='ghost' onClick={handleClose}>
+								Cancel
+							</Button>
+
+							<Button {...({ 'tour-element': 'group_create' } as object)} onClick={handleCreate} loading={createGroup.isLoading} disabled={name.trim().length <= 0}>
+								Create
+								<Plus />
+							</Button>
+						</div>
+					</div>
 				</DialogContent>
 			</Dialog>
 
@@ -176,15 +176,14 @@ export default function GroupCreate() {
 						anchorEl={document.querySelector('[tour-element="group_create_fab"]')}
 						placement='top-end'
 						content={
-							<>
-								<DialogTitle>Create new groups here!</DialogTitle>
-								<DialogActions>
-									<Button color='inherit' onClick={skipTour} loading={updateTour.isLoading}>
+							<TourContent title='Create new groups here!'>
+								<div className='mt-1 flex justify-end gap-2'>
+									<Button variant='ghost' size='sm' className='text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground' onClick={skipTour} loading={updateTour.isLoading}>
 										Skip Group Tour
 									</Button>
 									<Button
-										variant='outlined'
-										color='inherit'
+										variant='secondary'
+										size='sm'
 										onClick={() => {
 											if (!tour?.group_create_fab) {
 												updateTour.mutateAsync({
@@ -200,11 +199,9 @@ export default function GroupCreate() {
 									>
 										Next
 									</Button>
-								</DialogActions>
-							</>
+								</div>
+							</TourContent>
 						}
-						backgroundColor={theme.palette.primary.main}
-						color={theme.palette.primary.contrastText}
 						mask
 						allowClick
 					/>
@@ -218,14 +215,12 @@ export default function GroupCreate() {
 						anchorEl={document.querySelector('[tour-element="group_create_name"]')}
 						placement='top'
 						content={
-							<>
-								<DialogContent>
-									<Typography>Give your group a name.</Typography>
-								</DialogContent>
-								<DialogActions>
+							<div>
+								<p>Give your group a name.</p>
+								<div className='mt-1 flex justify-end'>
 									<Button
-										variant='outlined'
-										color='inherit'
+										variant='secondary'
+										size='sm'
 										onClick={() => {
 											updateTour.mutateAsync({
 												group_create_name: true,
@@ -235,11 +230,9 @@ export default function GroupCreate() {
 									>
 										Next
 									</Button>
-								</DialogActions>
-							</>
+								</div>
+							</div>
 						}
-						backgroundColor={theme.palette.primary.main}
-						color={theme.palette.primary.contrastText}
 						allowClick
 						mask
 					/>
@@ -249,14 +242,12 @@ export default function GroupCreate() {
 						anchorEl={document.querySelector('[tour-element="group_create_image"]')}
 						placement='bottom'
 						content={
-							<>
-								<DialogContent>
-									<Typography>Add a picture of you & your friends or family!</Typography>
-								</DialogContent>
-								<DialogActions>
+							<div>
+								<p>Add a picture of you & your friends or family!</p>
+								<div className='mt-1 flex justify-end'>
 									<Button
-										variant='outlined'
-										color='inherit'
+										variant='secondary'
+										size='sm'
 										onClick={() => {
 											updateTour.mutateAsync({
 												group_create_image: true,
@@ -266,11 +257,9 @@ export default function GroupCreate() {
 									>
 										Next
 									</Button>
-								</DialogActions>
-							</>
+								</div>
+							</div>
 						}
-						backgroundColor={theme.palette.primary.main}
-						color={theme.palette.primary.contrastText}
 					/>
 
 					<TourTooltip
@@ -278,14 +267,12 @@ export default function GroupCreate() {
 						anchorEl={document.querySelector('[tour-element="group_create"]')}
 						placement='top'
 						content={
-							<>
-								<DialogContent>
-									<Typography>When you have everything ready, click Create to add the item.</Typography>
-								</DialogContent>
-								<DialogActions>
+							<div>
+								<p>When you have everything ready, click Create to add the item.</p>
+								<div className='mt-1 flex justify-end'>
 									<Button
-										variant='outlined'
-										color='inherit'
+										variant='secondary'
+										size='sm'
 										onClick={() => {
 											updateTour.mutateAsync({
 												group_create: true,
@@ -295,11 +282,9 @@ export default function GroupCreate() {
 									>
 										Got it
 									</Button>
-								</DialogActions>
-							</>
+								</div>
+							</div>
 						}
-						backgroundColor={theme.palette.primary.main}
-						color={theme.palette.primary.contrastText}
 					/>
 				</>
 			)}
