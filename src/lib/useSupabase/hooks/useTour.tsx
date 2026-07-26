@@ -122,6 +122,16 @@ export function groupSettingsTourProgress(tour: TourSteps) {
 	return null;
 }
 
+/** Every step of the list tour marked done. `list_tour_start` stays set so the tour reads as begun-then-finished, not un-started. */
+export const SKIP_LIST_TOUR: TourSteps = {
+	list_tour_start: true,
+	list_nav: true,
+	list_intro: true,
+	list_menu: true,
+	list_edit: true,
+	list_group_assign: true,
+};
+
 export function listTourProgress(tour: TourSteps) {
 	if (!tour.list_tour_start && !tour.list_nav) return 'list_tour_not_started';
 	if (tour.list_tour_start && !tour.list_nav) return 'list_tour_start';

@@ -13,6 +13,7 @@ import {
 	listTourProgress,
 	shoppingTourProgress,
 	SKIP_GROUP_TOUR,
+	SKIP_LIST_TOUR,
 	SKIP_SHOPPING_TOUR,
 } from '../lib/useSupabase';
 import { GroupType, ListType, UserRoles } from '../lib/useSupabase/types';
@@ -181,12 +182,22 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 		);
 	};
 
+	const handleSkipListTour = () => {
+		updateTour.mutateAsync(SKIP_LIST_TOUR);
+	};
+
 	const tourListNav = () => {
 		return (
 			<div className='flex flex-col gap-1'>
 				<p className='text-base font-semibold'>Let's explore lists!</p>
 				<p>Lists give you more control over who can see specific items.</p>
 				<p>Even create separate managed lists for your kids or pets.</p>
+
+				<div className='mt-1 flex justify-end'>
+					<TourSkipButton onClick={handleSkipListTour} loading={updateTour.isLoading}>
+						Skip List Tour
+					</TourSkipButton>
+				</div>
 			</div>
 		);
 	};

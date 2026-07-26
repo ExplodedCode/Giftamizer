@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { useDeleteList, useGetLists, DEFAULT_LIST_ID, useGetTour, useUpdateTour, listTourProgress } from '../lib/useSupabase/hooks';
+import { useDeleteList, useGetLists, DEFAULT_LIST_ID, useGetTour, useUpdateTour, listTourProgress, SKIP_LIST_TOUR } from '../lib/useSupabase/hooks';
 import { ListType, TourSteps } from '../lib/useSupabase/types';
 
 import { useSnackbar } from '../lib/snackbar';
@@ -12,7 +12,7 @@ import { Baby, ClipboardList, EllipsisVertical, Pencil, Trash2, TriangleAlert } 
 
 import ListCreate from '../components/ListCreate';
 import ListUpdate from '../components/ListUpdate';
-import TourTooltip, { TourContent } from '../components/TourTooltip';
+import TourTooltip, { TourContent, TourSkipButton } from '../components/TourTooltip';
 
 import { Button } from '../components/ui/button';
 import { Chip } from '../components/ui/chip';
@@ -195,6 +195,10 @@ export default function Lists() {
 		}
 	}, [isLoading]);
 
+	const handleSkipListTour = () => {
+		updateTour.mutateAsync(SKIP_LIST_TOUR);
+	};
+
 	return (
 		<>
 			<PageHeader crumbs={[{ label: 'Lists' }]} />
@@ -205,9 +209,11 @@ export default function Lists() {
 						<TourContent title='Get Started with Lists!'>
 							<p>Lists allow you to have more control over who can see specific items. Even create seperate managed lists for your kids or pets.</p>
 
-							<div className='mt-1 rounded-lg bg-status-planned/20 p-3 text-sm'>
+							{/* Opaque card surface: a translucent status tint would blend into the primary
+							    background behind it and read as plain green. */}
+							<div className='mt-1 rounded-lg bg-card p-3 text-sm text-card-foreground'>
 								<p className='mb-1 flex items-center gap-1.5 font-bold'>
-									<TriangleAlert className='size-4' />
+									<TriangleAlert className='size-4 text-status-planned' />
 									Item Assignment
 								</p>
 								<p>
@@ -215,7 +221,10 @@ export default function Lists() {
 								</p>
 							</div>
 
-							<div className='mt-2 flex justify-end'>
+							<div className='mt-2 flex justify-end gap-2'>
+								<TourSkipButton onClick={handleSkipListTour} loading={updateTour.isLoading}>
+									Skip List Tour
+								</TourSkipButton>
 								<Button
 									variant='secondary'
 									size='sm'
