@@ -8,7 +8,8 @@ export default defineConfig({
 	envPrefix: ['VITE_', 'REACT_APP_'],
 	server: {
 		port: 3001,
-		open: false,
+		open: true,
+		allowedHosts: ['localhost', '192.168.1.30', '4f28-174-49-173-205.ngrok-free.app'],
 	},
 	build: {
 		// nginx Dockerfile copies /app/build — keep CRA's output path

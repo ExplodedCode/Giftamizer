@@ -61,25 +61,6 @@ export default function GroupCreate() {
 	const { data: tour } = useGetTour();
 	const updateTour = useUpdateTour();
 
-	const skipTour = async () => {
-		updateTour.mutateAsync({
-			group_nav: true,
-			group_create_fab: true,
-			group_create_name: true,
-			group_create_image: true,
-			group_create: true,
-			group_card: true,
-			group_settings: true,
-			group_pin: true,
-			group_member_card: true,
-			group_member_item_status: true,
-			group_member_item_status_taken: true,
-			group_member_item_filter: true,
-			group_settings_add_people: true,
-			group_settings_permissions: true,
-		});
-	};
-
 	React.useEffect(() => {
 		if (addGroupFab.current) setFabLoaded(true);
 	}, [addGroupFab]);
@@ -177,10 +158,7 @@ export default function GroupCreate() {
 						placement='top-end'
 						content={
 							<TourContent title='Create new groups here!'>
-								<div className='mt-1 flex justify-end gap-2'>
-									<Button variant='ghost' size='sm' className='text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground' onClick={skipTour} loading={updateTour.isLoading}>
-										Skip Group Tour
-									</Button>
+								<div className='mt-1 flex justify-end'>
 									<Button
 										variant='secondary'
 										size='sm'

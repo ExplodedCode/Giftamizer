@@ -9,6 +9,7 @@ import { useGetGroups, useAcceptGroupInvite, useDeclineGroupInvite, useGetTour }
 import { GroupType } from '../lib/useSupabase/types';
 
 import { Button } from './ui/button';
+import { ConfirmDialog } from './ui/confirm-dialog';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { Spinner } from './ui/spinner';
 import { UserAvatar } from './ui/avatar';
@@ -57,73 +58,95 @@ const InvitesDialog: React.ForwardRefRenderFunction<InvitesDialogRefs> = (props,
 			});
 	};
 
+	const [declineGroup, setDeclineGroup] = React.useState<GroupType | null>(null);
+
 	const declineGroupInvite = useDeclineGroupInvite();
 	const handleDecline = async (group_id: string) => {
-		declineGroupInvite.mutateAsync(group_id).catch((err) => {
-			enqueueSnackbar(`Unable to reject group invite! ${err.message}`, { variant: 'error' });
-		});
+		declineGroupInvite
+			.mutateAsync(group_id)
+			.then(() => {
+				setDeclineGroup(null);
+			})
+			.catch((err) => {
+				enqueueSnackbar(`Unable to reject group invite! ${err.message}`, { variant: 'error' });
+			});
 	};
 
 	return (
-		<Dialog
-			open={open}
-			onOpenChange={(next) => {
-				if (!next) handleClose();
-			}}
-		>
-			<DialogContent fullScreenOnMobile>
-				<DialogHeader>
-					<DialogTitle>Group Invitations</DialogTitle>
-				</DialogHeader>
+		<>
+			<Dialog
+				open={open && declineGroup === null}
+				onOpenChange={(next) => {
+					if (!next) handleClose();
+				}}
+			>
+				<DialogContent fullScreenOnMobile>
+					<DialogHeader>
+						<DialogTitle>Group Invitations</DialogTitle>
+					</DialogHeader>
 
-				<div className='flex flex-col'>
-					{groups
-						?.filter((g) => g.my_membership[0].invite)
-						.map((group, i) => (
-							<React.Fragment key={group.id}>
-								<div className='flex items-center gap-3 py-2.5'>
-									<UserAvatar src={group.image} alt={group.name} fallback={Array.from(String(group.name).toUpperCase())[0]} />
+					<div className='flex flex-col'>
+						{groups
+							?.filter((g) => g.my_membership[0].invite)
+							.map((group, i) => (
+								<React.Fragment key={group.id}>
+									<div className='flex items-center gap-3 py-2.5'>
+										<UserAvatar src={group.image} alt={group.name} fallback={Array.from(String(group.name).toUpperCase())[0]} />
 
-									<div className='min-w-0 flex-1'>
-										<p className='truncate text-sm font-medium'>{group.name}</p>
-										<p className='text-sm text-muted-foreground'>{moment(group.my_membership[0].created_at).fromNow()}</p>
+										<div className='min-w-0 flex-1'>
+											<p className='truncate text-sm font-medium'>{group.name}</p>
+											<p className='text-sm text-muted-foreground'>{moment(group.my_membership[0].created_at).fromNow()}</p>
+										</div>
+
+										<div className='flex shrink-0 items-center gap-2'>
+											<button
+												type='button'
+												aria-label='decline'
+												onClick={() => setDeclineGroup(group)}
+												disabled={acceptGroupInvite.isLoading || declineGroupInvite.isLoading}
+												className='flex size-9 cursor-pointer items-center justify-center rounded-lg text-destructive transition-colors outline-none hover:bg-destructive/10 focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50'
+											>
+												{declineGroupInvite.isLoading ? <Spinner size={18} className='text-destructive' /> : <X className='size-5' />}
+											</button>
+											<button
+												type='button'
+												aria-label='accept'
+												onClick={() => handleAccept(group)}
+												disabled={acceptGroupInvite.isLoading || declineGroupInvite.isLoading}
+												className='flex size-9 cursor-pointer items-center justify-center rounded-lg text-primary transition-colors outline-none hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50'
+											>
+												{acceptGroupInvite.isLoading ? <Spinner size={18} /> : <Check className='size-5' />}
+											</button>
+										</div>
 									</div>
+									{i !== (groups?.filter((g) => g.my_membership[0].invite).length || 0) - 1 && <div className='h-px bg-border' />}
+								</React.Fragment>
+							))}
 
-									<div className='flex shrink-0 items-center gap-2'>
-										<button
-											type='button'
-											aria-label='decline'
-											onClick={() => handleDecline(group.id)}
-											disabled={acceptGroupInvite.isLoading || declineGroupInvite.isLoading}
-											className='flex size-9 cursor-pointer items-center justify-center rounded-lg text-destructive transition-colors outline-none hover:bg-destructive/10 focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50'
-										>
-											{declineGroupInvite.isLoading ? <Spinner size={18} className='text-destructive' /> : <X className='size-5' />}
-										</button>
-										<button
-											type='button'
-											aria-label='accept'
-											onClick={() => handleAccept(group)}
-											disabled={acceptGroupInvite.isLoading || declineGroupInvite.isLoading}
-											className='flex size-9 cursor-pointer items-center justify-center rounded-lg text-primary transition-colors outline-none hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50'
-										>
-											{acceptGroupInvite.isLoading ? <Spinner size={18} /> : <Check className='size-5' />}
-										</button>
-									</div>
-								</div>
-								{i !== (groups?.filter((g) => g.my_membership[0].invite).length || 0) - 1 && <div className='h-px bg-border' />}
-							</React.Fragment>
-						))}
+						{groups?.filter((g) => g.my_membership[0].invite).length === 0 && <p className='py-8 text-center text-muted-foreground'>No Group Invitations</p>}
+					</div>
 
-					{groups?.filter((g) => g.my_membership[0].invite).length === 0 && <p className='py-8 text-center text-muted-foreground'>No Group Invitations</p>}
-				</div>
+					<DialogFooter>
+						<Button variant='ghost' onClick={handleClose}>
+							Close
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 
-				<DialogFooter>
-					<Button variant='ghost' onClick={handleClose}>
-						Close
-					</Button>
-				</DialogFooter>
-			</DialogContent>
-		</Dialog>
+			<ConfirmDialog
+				open={declineGroup !== null}
+				onOpenChange={(next) => {
+					if (!next) setDeclineGroup(null);
+				}}
+				title={`Decline invitation to ${declineGroup?.name}?`}
+				description='You will need a new invitation from a group owner to join later.'
+				confirmText='Yes, Decline it'
+				destructive
+				loading={declineGroupInvite.isLoading}
+				onConfirm={() => handleDecline(declineGroup!.id)}
+			/>
+		</>
 	);
 };
 

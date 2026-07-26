@@ -2,7 +2,19 @@ import * as React from 'react';
 import { Link, useNavigate, useLocation, Location } from 'react-router-dom';
 import { SnackbarKey, useSnackbar } from '../lib/snackbar';
 
-import { useSupabase, useGetProfile, useGetLists, DEFAULT_LIST_ID, useGetTour, useUpdateTour, groupTourProgress, listTourProgress, shoppingTourProgress } from '../lib/useSupabase';
+import {
+	useSupabase,
+	useGetProfile,
+	useGetLists,
+	DEFAULT_LIST_ID,
+	useGetTour,
+	useUpdateTour,
+	groupTourProgress,
+	listTourProgress,
+	shoppingTourProgress,
+	SKIP_GROUP_TOUR,
+	SKIP_SHOPPING_TOUR,
+} from '../lib/useSupabase';
 import { GroupType, ListType, UserRoles } from '../lib/useSupabase/types';
 
 import { TransitionGroup } from 'react-transition-group';
@@ -10,6 +22,7 @@ import Snowfall from 'react-snowfall';
 import { Archive, ChevronDown, ChevronUp, CircleHelp, ClipboardList, LogOut, Menu, Monitor, Moon, Podcast, Settings, ShoppingCart, Sun, Trash2, Users, X } from 'lucide-react';
 
 import Notifications from './Notifications';
+import { TourSkipButton } from './TourTooltip';
 import { GiftIcon } from './SvgIcons';
 import { useGetGroups } from '../lib/useSupabase/hooks/useGroup';
 import { useGetSupportConfigured } from '../lib/useSupabase/hooks/useSupport';
@@ -149,11 +162,21 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 		}, 1500);
 	}, []);
 
+	const handleSkipGroupTour = () => {
+		updateTour.mutateAsync(SKIP_GROUP_TOUR);
+	};
+
 	const tourGroupNav = () => {
 		return (
 			<div className='flex flex-col gap-1'>
 				<p className='text-base font-semibold'>{groups?.filter((g) => !g.my_membership[0].invite).length !== 0 ? "Let's explore groups!" : "Let's create a group!"}</p>
 				<p>Share your items with your friends and family.</p>
+
+				<div className='mt-1 flex justify-end'>
+					<TourSkipButton onClick={handleSkipGroupTour} loading={updateTour.isLoading}>
+						Skip Group Tour
+					</TourSkipButton>
+				</div>
 			</div>
 		);
 	};
@@ -168,11 +191,21 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 		);
 	};
 
+	const handleSkipShoppingTour = () => {
+		updateTour.mutateAsync(SKIP_SHOPPING_TOUR);
+	};
+
 	const tourShoppingNav = () => {
 		return (
 			<div className='flex flex-col gap-1'>
 				<p className='text-base font-semibold'>Let's explore shopping!</p>
 				<p>When you mark an item as planned or purchased, it will show up in shopping for easy access when you're out buying gifts!</p>
+
+				<div className='mt-1 flex justify-end'>
+					<TourSkipButton onClick={handleSkipShoppingTour} loading={updateTour.isLoading}>
+						Skip Shopping Tour
+					</TourSkipButton>
+				</div>
 			</div>
 		);
 	};

@@ -17,6 +17,7 @@ import TourTooltip, { TourContent } from '../components/TourTooltip';
 import { Button } from '../components/ui/button';
 import { Chip } from '../components/ui/chip';
 import { Collapse } from '../components/ui/collapse';
+import { ConfirmDialog } from '../components/ui/confirm-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../components/ui/dropdown-menu';
 import { PageHeader } from '../components/ui/page-header';
 import { Spinner } from '../components/ui/spinner';
@@ -38,6 +39,7 @@ function RenderListItem({ index, list, handleListEdit, tour, updateTour }: Rende
 	const deleteList = useDeleteList();
 
 	const [open, setOpen] = React.useState(false);
+	const [confirmDeleteOpen, setConfirmDeleteOpen] = React.useState(false);
 
 	const handleOpenChange = (next: boolean) => {
 		setOpen(next);
@@ -50,9 +52,14 @@ function RenderListItem({ index, list, handleListEdit, tour, updateTour }: Rende
 	};
 
 	const handleDelete = async (id: string) => {
-		await deleteList.mutateAsync(id).catch((err) => {
-			enqueueSnackbar(`Unable to delete list! ${err.message}`, { variant: 'error' });
-		});
+		await deleteList
+			.mutateAsync(id)
+			.then(() => {
+				setConfirmDeleteOpen(false);
+			})
+			.catch((err) => {
+				enqueueSnackbar(`Unable to delete list! ${err.message}`, { variant: 'error' });
+			});
 	};
 
 	//
@@ -137,7 +144,7 @@ function RenderListItem({ index, list, handleListEdit, tour, updateTour }: Rende
 
 					<DropdownMenuItem
 						onClick={() => {
-							handleDelete(list.id);
+							setConfirmDeleteOpen(true);
 						}}
 						disabled={list.id === DEFAULT_LIST_ID} // don't allow delete of default list
 					>
@@ -146,6 +153,17 @@ function RenderListItem({ index, list, handleListEdit, tour, updateTour }: Rende
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
+
+			<ConfirmDialog
+				open={confirmDeleteOpen}
+				onOpenChange={setConfirmDeleteOpen}
+				title={`Delete ${list.name} List?`}
+				description={`This action is permanent! Items assigned to this list will be unassigned${list.groups.length > 0 ? `, and the list will be removed from ${list.groups.length === 1 ? 'its group' : 'its groups'}` : ''}.`}
+				confirmText='Yes, Delete it'
+				destructive
+				loading={deleteList.isLoading}
+				onConfirm={() => handleDelete(list.id)}
+			/>
 		</div>
 	);
 }

@@ -79,6 +79,24 @@ export function groupInviteTourProgress(tour: TourSteps) {
 	return null;
 }
 
+/** Every step of the group tour - including its group-settings leg - marked done. */
+export const SKIP_GROUP_TOUR: TourSteps = {
+	group_nav: true,
+	group_create_fab: true,
+	group_create_name: true,
+	group_create_image: true,
+	group_create: true,
+	group_card: true,
+	group_settings: true,
+	group_pin: true,
+	group_member_card: true,
+	group_member_item_status: true,
+	group_member_item_status_taken: true,
+	group_member_item_filter: true,
+	group_settings_add_people: true,
+	group_settings_permissions: true,
+};
+
 export function groupTourProgress(tour: TourSteps, isMobile: boolean) {
 	if (!tour.item_create_fab) return 'item_create_fab';
 	if (!tour.group_nav) return 'group_nav';
@@ -115,6 +133,13 @@ export function listTourProgress(tour: TourSteps) {
 
 	return null;
 }
+
+/** Every step of the shopping tour marked done - backs the callouts' "Skip tour" buttons. */
+export const SKIP_SHOPPING_TOUR: TourSteps = {
+	shopping_nav: true,
+	shopping_filter: true,
+	shopping_item: true,
+};
 
 export function shoppingTourProgress(tour: TourSteps) {
 	if (!tour.group_member_item_filter) return 'group_member_item_filter';

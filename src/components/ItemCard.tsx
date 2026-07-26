@@ -28,6 +28,7 @@ import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Chip } from './ui/chip';
 import { Collapse } from './ui/collapse';
+import { ConfirmDialog } from './ui/confirm-dialog';
 import { Dialog, DialogContent } from './ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { Spinner } from './ui/spinner';
@@ -45,6 +46,7 @@ function VertMenu({ item }: VertMenuProps) {
 	const { data: profile } = useGetProfile();
 
 	const [itemEdit, setItemEdit] = React.useState<ItemType | null>(null);
+	const [confirmDeleteOpen, setConfirmDeleteOpen] = React.useState(false);
 
 	const archiveItem = useArchiveItem();
 	const handleArchive = async (id: string, archive: boolean) => {
@@ -54,10 +56,25 @@ function VertMenu({ item }: VertMenuProps) {
 	};
 
 	const deleteItem = useDeleteItem();
+	// Mirrors the branch in useDeleteItem: this is the only combination that moves the item to the
+	// recoverable trash, every other case destroys it and needs a confirmation first.
+	const movesToTrash = !!profile?.enable_trash && !item.deleted && item.shopping_item === null;
 	const handleDelete = async (id: string, deleted: boolean) => {
-		await deleteItem.mutateAsync({ id: id, deleted: deleted, shopping_item: item.shopping_item !== null }).catch((err) => {
-			enqueueSnackbar(`Unable to delete item! ${err.message}`, { variant: 'error' });
-		});
+		await deleteItem
+			.mutateAsync({ id: id, deleted: deleted, shopping_item: item.shopping_item !== null })
+			.then(() => {
+				setConfirmDeleteOpen(false);
+			})
+			.catch((err) => {
+				enqueueSnackbar(`Unable to delete item! ${err.message}`, { variant: 'error' });
+			});
+	};
+	const requestDelete = () => {
+		if (movesToTrash) {
+			handleDelete(item.id, item.deleted);
+		} else {
+			setConfirmDeleteOpen(true);
+		}
 	};
 
 	const restoreItem = useRestoreItem();
@@ -104,13 +121,9 @@ function VertMenu({ item }: VertMenuProps) {
 						</DropdownMenuItem>
 					)}
 					{!item.deleted ? (
-						<DropdownMenuItem
-							onClick={() => {
-								handleDelete(item.id, item.deleted);
-							}}
-						>
+						<DropdownMenuItem onClick={requestDelete}>
 							<Trash2 />
-							{profile?.enable_trash && !item.shopping_item ? 'Trash' : 'Delete'}
+							{movesToTrash ? 'Trash' : 'Delete'}
 						</DropdownMenuItem>
 					) : (
 						<>
@@ -122,11 +135,7 @@ function VertMenu({ item }: VertMenuProps) {
 								<History />
 								Restore
 							</DropdownMenuItem>
-							<DropdownMenuItem
-								onClick={() => {
-									handleDelete(item.id, item.deleted);
-								}}
-							>
+							<DropdownMenuItem onClick={requestDelete}>
 								<Trash2 />
 								Delete
 							</DropdownMenuItem>
@@ -134,6 +143,17 @@ function VertMenu({ item }: VertMenuProps) {
 					)}
 				</DropdownMenuContent>
 			</DropdownMenu>
+
+			<ConfirmDialog
+				open={confirmDeleteOpen}
+				onOpenChange={setConfirmDeleteOpen}
+				title={`Delete ${item.name}?`}
+				description={`This action is permanent! ${item.deleted ? 'This item will be removed from the trash and cannot be recovered.' : 'This item cannot be recovered.'}`}
+				confirmText='Yes, Delete it'
+				destructive
+				loading={deleteItem.isLoading}
+				onConfirm={() => handleDelete(item.id, item.deleted)}
+			/>
 
 			{itemEdit && (
 				<ItemUpdate

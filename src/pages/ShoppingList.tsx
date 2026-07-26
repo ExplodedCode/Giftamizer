@@ -1,11 +1,11 @@
 import React from 'react';
 import { useSnackbar } from '../lib/snackbar';
 
-import { shoppingTourProgress, useClaimedItems, useGetTour, useUpdateTour } from '../lib/useSupabase';
+import { shoppingTourProgress, useClaimedItems, useGetTour, useUpdateTour, SKIP_SHOPPING_TOUR } from '../lib/useSupabase';
 
 import ItemCard from '../components/ItemCard';
 import { ItemStatuses, MemberItemType } from '../lib/useSupabase/types';
-import TourTooltip from '../components/TourTooltip';
+import TourTooltip, { TourSkipButton } from '../components/TourTooltip';
 import { useLocation } from 'react-router-dom';
 import ItemCreate from '../components/ItemCreate';
 
@@ -44,6 +44,10 @@ export default function ShoppingList() {
 	// user tour
 	const { data: tour } = useGetTour();
 	const updateTour = useUpdateTour();
+
+	const handleSkipTour = () => {
+		updateTour.mutateAsync(SKIP_SHOPPING_TOUR);
+	};
 
 	return (
 		<>
@@ -90,7 +94,10 @@ export default function ShoppingList() {
 							content={
 								<div>
 									<p>Purchased items are filtered out here.</p>
-									<div className='mt-1 flex justify-end'>
+									<div className='mt-1 flex justify-end gap-2'>
+										<TourSkipButton onClick={handleSkipTour} loading={updateTour.isLoading}>
+											Skip Shopping Tour
+										</TourSkipButton>
 										<Button
 											variant='secondary'
 											size='sm'

@@ -3,6 +3,8 @@ import * as React from 'react';
 import { Mask } from '@reactour/mask';
 import { useFloating, offset, flip, shift, arrow, autoUpdate, FloatingArrow, FloatingPortal, type Placement } from '@floating-ui/react';
 
+import { Button } from './ui/button';
+
 type RectType = {
 	bottom: number;
 	height: number;
@@ -96,5 +98,14 @@ export function TourContent({ title, children }: { title: React.ReactNode; child
 			<p className='text-base font-semibold'>{title}</p>
 			{children && <div className='flex flex-col gap-1'>{children}</div>}
 		</div>
+	);
+}
+
+/** Dismisses the rest of a tour. Styled for the callout's primary background, where `ghost` would be invisible. */
+export function TourSkipButton({ onClick, loading, children }: { onClick: () => void; loading?: boolean; children: React.ReactNode }) {
+	return (
+		<Button variant='ghost' size='sm' className='text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground' onClick={onClick} loading={loading}>
+			{children}
+		</Button>
 	);
 }
