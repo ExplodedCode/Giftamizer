@@ -8,8 +8,8 @@ import { useCreateList, useGetGroups } from '../lib/useSupabase/hooks';
 import { useSnackbar } from 'notistack';
 
 import { useTheme } from '@mui/material/styles';
-import { Button, Dialog, DialogContent, DialogContentText, DialogTitle, Fab, FormControl, FormControlLabel, FormHelperText, Grid, Stack, Switch, TextField, useMediaQuery } from '@mui/material';
-import LoadingButton from '@mui/lab/LoadingButton';
+import { Button, Dialog, DialogContent, DialogContentText, DialogTitle, Fab, FormControl, FormControlLabel, FormHelperText, Stack, Switch, TextField, useMediaQuery } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { Add, PlaylistAdd } from '@mui/icons-material';
 import GroupSelector from './GroupSelector';
 import ImageCropper from './ImageCropper';
@@ -66,18 +66,18 @@ export default function CreateList() {
 				<DialogTitle>Create List</DialogTitle>
 				<DialogContent>
 					<Grid container spacing={2}>
-						<Grid item xs={12}>
+						<Grid size={12}>
 							<DialogContentText>Organize your wishlist into categories, making it easier for others to find the perfect gift for you.</DialogContentText>
 						</Grid>
 						{childList && (
-							<Grid item xs={12}>
+							<Grid size={12}>
 								<ImageCropper value={image} onChange={setImage} aspectRatio={1} />
 							</Grid>
 						)}
-						<Grid item xs={12}>
+						<Grid size={12}>
 							<TextField fullWidth label='Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} disabled={createList.isLoading} />
 						</Grid>
-						<Grid item xs={12}>
+						<Grid size={12}>
 							<GroupSelector
 								groups={groups?.filter((g) => g.my_membership[0].invite === false) as Omit<GroupType, 'image_token' | 'my_membership'>[]}
 								value={selectedGroups}
@@ -85,7 +85,7 @@ export default function CreateList() {
 								disabled={createList.isLoading}
 							/>
 						</Grid>
-						<Grid item xs={12}>
+						<Grid size={12}>
 							<FormControl component='fieldset' variant='standard'>
 								<FormControlLabel
 									control={<Switch checked={childList} onChange={(e) => setChildList(e.target.checked)} disabled={createList.isLoading} />}
@@ -95,7 +95,7 @@ export default function CreateList() {
 							</FormControl>
 						</Grid>
 						{childList && (
-							<Grid item xs={12}>
+							<Grid size={12}>
 								<TextField
 									fullWidth
 									multiline
@@ -103,7 +103,7 @@ export default function CreateList() {
 									maxRows={7}
 									label='Bio'
 									variant='outlined'
-									inputProps={{ maxLength: 250 }}
+									slotProps={{ htmlInput: { maxLength: 250 } }}
 									value={bio}
 									onChange={(e) => setBio(e.target.value)}
 									helperText={`${bio.length} / 250`}
@@ -111,15 +111,15 @@ export default function CreateList() {
 							</Grid>
 						)}
 
-						<Grid item xs={12}>
-							<Stack direction='row' justifyContent='flex-end' spacing={2}>
+						<Grid size={12}>
+							<Stack direction='row' spacing={2} sx={{ justifyContent: 'flex-end' }}>
 								<Button color='inherit' onClick={handleClose} disabled={createList.isLoading}>
 									Cancel
 								</Button>
 
-								<LoadingButton onClick={handleCreate} disabled={name.trim().length === 0} endIcon={<Add />} loading={createList.isLoading} loadingPosition='end' variant='contained'>
+								<Button onClick={handleCreate} disabled={name.trim().length === 0} endIcon={<Add />} loading={createList.isLoading} loadingPosition='end' variant='contained'>
 									Create
-								</LoadingButton>
+								</Button>
 							</Stack>
 						</Grid>
 					</Grid>

@@ -3,19 +3,10 @@ import { EditorState } from 'draft-js';
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
 import FormatItalicIcon from '@mui/icons-material/FormatItalic';
 import FormatUnderlinedIcon from '@mui/icons-material/FormatUnderlined';
-import StrikethroughIcon from '@mui/icons-material/StrikethroughS';
-import HighlightIcon from '@mui/icons-material/Highlight';
 import TitleIcon from '@mui/icons-material/Title';
-import InsertLinkIcon from '@mui/icons-material/InsertLink';
 import PhotoLibraryIcon from '@mui/icons-material/PhotoLibrary';
 import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
-import FormatQuoteIcon from '@mui/icons-material/FormatQuote';
-import CodeIcon from '@mui/icons-material/Code';
-import FormatClearIcon from '@mui/icons-material/FormatClear';
-import SaveIcon from '@mui/icons-material/Save';
-import UndoIcon from '@mui/icons-material/Undo';
-import RedoIcon from '@mui/icons-material/Redo';
 import ToolbarButton from './ToolbarButton';
 import { getSelectionInfo } from '../utils';
 
@@ -35,7 +26,7 @@ export type TToolbarComponentProps = {
 export type TCustomControl = {
 	id?: string;
 	name: string;
-	icon?: JSX.Element;
+	icon?: React.JSX.Element;
 	type: TControlType;
 	component?: FunctionComponent<TToolbarComponentProps>;
 	inlineStyle?: React.CSSProperties;
@@ -49,7 +40,7 @@ type TStyleType = {
 	name: TToolbarControl | string;
 	label: string;
 	style: string;
-	icon?: JSX.Element;
+	icon?: React.JSX.Element;
 	component?: FunctionComponent<TToolbarComponentProps>;
 	type: TControlType;
 	active?: boolean;

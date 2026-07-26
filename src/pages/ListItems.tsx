@@ -4,11 +4,11 @@ import { useSnackbar } from 'notistack';
 
 import { useGetItems, useGetLists, useSetListPin } from '../lib/useSupabase';
 
-import { Container, Grid, Typography, Box, CircularProgress, Link as MUILink, AppBar, Breadcrumbs, Toolbar, Checkbox, Tooltip } from '@mui/material';
+import { Container, Typography, Box, CircularProgress, Link as MUILink, AppBar, Breadcrumbs, Toolbar, Checkbox, Tooltip } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { PushPin, PushPinOutlined } from '@mui/icons-material';
 
 import ItemCreate from '../components/ItemCreate';
-import ListItemEditor from '../components/ListItemEditor';
 import ItemCard from '../components/ItemCard';
 import NotFound from '../components/NotFound';
 

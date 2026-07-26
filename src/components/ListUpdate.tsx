@@ -6,9 +6,9 @@ import { GroupType, ListType } from '../lib/useSupabase/types';
 
 import { useSnackbar } from 'notistack';
 
-import { Dialog, DialogTitle, DialogContent, Button, TextField, DialogContentText, Grid, Stack, useMediaQuery, useTheme, DialogActions, Typography } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, Button, TextField, DialogContentText, Stack, useMediaQuery, useTheme, DialogActions, Typography } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { Save } from '@mui/icons-material';
-import { LoadingButton } from '@mui/lab';
 
 import GroupSelector from './GroupSelector';
 import ImageCropper from './ImageCropper';
@@ -80,18 +80,18 @@ export default function ListUpdate({ list, onClose }: ListUpdateProps) {
 				<DialogTitle>Edit List</DialogTitle>
 				<DialogContent>
 					<Grid container spacing={2}>
-						<Grid item xs={12}>
+						<Grid size={12}>
 							<DialogContentText>Organize your wishlist into categories, making it easier for others to find the perfect gift for you.</DialogContentText>
 						</Grid>
 						{childList && (
-							<Grid item xs={12}>
+							<Grid size={12}>
 								<ImageCropper value={image} onChange={setImage} aspectRatio={1} />
 							</Grid>
 						)}
-						<Grid item xs={12}>
+						<Grid size={12}>
 							<TextField fullWidth label='Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} disabled={updateLists.isLoading} />
 						</Grid>
-						<Grid item xs={12}>
+						<Grid size={12}>
 							<GroupSelector
 								groups={groups?.filter((g) => g.my_membership[0].invite === false) as Omit<GroupType, 'image_token' | 'my_membership'>[]}
 								value={selectedGroups}
@@ -101,7 +101,7 @@ export default function ListUpdate({ list, onClose }: ListUpdateProps) {
 						</Grid>
 
 						{childList && (
-							<Grid item xs={12}>
+							<Grid size={12}>
 								<TextField
 									fullWidth
 									multiline
@@ -109,7 +109,7 @@ export default function ListUpdate({ list, onClose }: ListUpdateProps) {
 									maxRows={7}
 									label='Bio'
 									variant='outlined'
-									inputProps={{ maxLength: 250 }}
+									slotProps={{ htmlInput: { maxLength: 250 } }}
 									value={bio}
 									onChange={(e) => setBio(e.target.value)}
 									helperText={`${bio?.length} / 250`}
@@ -117,15 +117,15 @@ export default function ListUpdate({ list, onClose }: ListUpdateProps) {
 							</Grid>
 						)}
 
-						<Grid item xs={12}>
-							<Stack direction='row' justifyContent='flex-end' spacing={2}>
+						<Grid size={12}>
+							<Stack direction='row' spacing={2} sx={{ justifyContent: 'flex-end' }}>
 								<Button color='inherit' onClick={onClose} disabled={updateLists.isLoading}>
 									Cancel
 								</Button>
 
-								<LoadingButton onClick={handleSave} disabled={name.trim().length === 0} endIcon={<Save />} loading={updateLists.isLoading} loadingPosition='end' variant='contained'>
+								<Button onClick={handleSave} disabled={name.trim().length === 0} endIcon={<Save />} loading={updateLists.isLoading} loadingPosition='end' variant='contained'>
 									Save
-								</LoadingButton>
+								</Button>
 							</Stack>
 						</Grid>
 					</Grid>
@@ -144,7 +144,7 @@ export default function ListUpdate({ list, onClose }: ListUpdateProps) {
 									<Typography gutterBottom>Assign your list to a group here.</Typography>
 								</DialogContent>
 								<DialogActions>
-									<LoadingButton
+									<Button
 										variant='outlined'
 										color='inherit'
 										onClick={() => {
@@ -155,7 +155,7 @@ export default function ListUpdate({ list, onClose }: ListUpdateProps) {
 										loading={updateTour.isLoading}
 									>
 										Got it
-									</LoadingButton>
+									</Button>
 								</DialogActions>
 							</>
 						}

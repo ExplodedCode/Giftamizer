@@ -4,7 +4,6 @@ import { useSnackbar } from 'notistack';
 
 import { useQueryClient } from '@tanstack/react-query';
 import {
-	useSupabase,
 	useDeleteGroup,
 	useGetGroupMembers,
 	GROUPS_QUERY_KEY,
@@ -33,7 +32,6 @@ import {
 	Divider,
 	FormControl,
 	FormControlLabel,
-	Grid,
 	IconButton,
 	List,
 	ListItem,
@@ -49,7 +47,7 @@ import {
 	Typography,
 	useMediaQuery,
 } from '@mui/material';
-import LoadingButton from '@mui/lab/LoadingButton';
+import Grid from '@mui/material/Grid';
 import { Share, Delete, DeleteForever, Email, EscalatorWarning, Logout, Save, Send, Settings } from '@mui/icons-material';
 
 import UserSearch from './UserSearch';
@@ -137,7 +135,6 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 
 	const { group: groupID } = useParams();
 
-	const { user } = useSupabase();
 	const { data: profile } = useGetProfile();
 
 	const queryClient = useQueryClient();
@@ -367,22 +364,22 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 				<DialogTitle>Group Settings</DialogTitle>
 				<DialogContent>
 					<Grid container spacing={2}>
-						<Grid item xs={12}>
+						<Grid size={12}>
 							<DialogContentText>Share your gift lists with your friends and family.</DialogContentText>
 
 							<Grid container spacing={2}>
-								<Grid item xs={12}>
+								<Grid size={12}>
 									<ImageCropper value={image} onChange={setImage} aspectRatio={1} disabled={!owner} />
 								</Grid>
-								<Grid item xs={12}>
+								<Grid size={12}>
 									<TextField label='Group Name' variant='outlined' fullWidth value={name} onChange={(e) => setName(e.target.value)} disabled={!owner} />
 								</Grid>
 								{owner && (
 									<>
-										<Grid item xs>
+										<Grid size="grow">
 											<UserSearch selectedInviteUsers={selectedInviteUsers} setSelectedInviteUsers={setSelectedInviteUsers} members={members!} disabled={!owner} />
 										</Grid>
-										<Grid item>
+										<Grid>
 											<FormControl fullWidth tour-element='group_settings_permissions'>
 												<Select value={inviteUsersOwner ? 1 : 0} onChange={(e) => setInviteUsersOwner(e.target.value === 1 ? true : false)} disabled={!owner}>
 													<MenuItem value={0}>Member</MenuItem>
@@ -393,7 +390,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 									</>
 								)}
 
-								<Grid item xs={12}>
+								<Grid size={12}>
 									<FormControlLabel
 										control={<Switch checked={inviteLink} onChange={(e) => setInviteLink(e.target.checked)} />}
 										label='Join by Link'
@@ -408,8 +405,10 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 												variant='outlined'
 												size='small'
 												fullWidth
-												InputLabelProps={{
-													shrink: true,
+												slotProps={{
+													inputLabel: {
+														shrink: true,
+													},
 												}}
 												disabled
 												value={inviteURL.replace(`${window.location.protocol}//`, '')}
@@ -425,7 +424,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 								</Grid>
 
 								{owner && secretSanta?.status === SecretSantaStatus.Off && (
-									<Grid item xs={12}>
+									<Grid size={12}>
 										<Button variant='contained' disabled={changed} onClick={handleSecretSantaEnable}>
 											Enable Secret Santa
 										</Button>
@@ -433,7 +432,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 								)}
 
 								{selectedInviteUsers.length === 0 && (
-									<Grid item xs={12}>
+									<Grid size={12}>
 										<Typography variant='h6' gutterBottom>
 											People with access
 										</Typography>
@@ -467,24 +466,24 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 							</Grid>
 						</Grid>
 
-						<Grid item xs={12}>
+						<Grid size={12}>
 							<Grid container spacing={2}>
-								<Grid item xs>
-									<Stack direction='row' spacing={1} useFlexGap flexWrap='wrap'>
+								<Grid size="grow">
+									<Stack direction='row' spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
 										{owner && (
-											<LoadingButton onClick={handleDeleteOpen} endIcon={<Delete />} loading={membersLoading} loadingPosition='end' variant='contained' color='error'>
+											<Button onClick={handleDeleteOpen} endIcon={<Delete />} loading={membersLoading} loadingPosition='end' variant='contained' color='error'>
 												Delete
-											</LoadingButton>
+											</Button>
 										)}
 
 										{!changed && (members?.filter((m) => m.owner).length !== 0 || !owner) && (
-											<LoadingButton onClick={handleLeaveOpen} endIcon={<Logout />} loading={leaveGroup.isLoading} loadingPosition='end' variant='contained' color='error'>
+											<Button onClick={handleLeaveOpen} endIcon={<Logout />} loading={leaveGroup.isLoading} loadingPosition='end' variant='contained' color='error'>
 												Leave Group
-											</LoadingButton>
+											</Button>
 										)}
 
 										{secretSanta?.status === SecretSantaStatus.On && owner && (
-											<Grid item xs={12}>
+											<Grid size={12}>
 												<Button onClick={handleSecretSantaOpen} variant='contained' color='error' endIcon={<Delete />} disabled={changed}>
 													Secret Santa
 												</Button>
@@ -492,15 +491,15 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 										)}
 									</Stack>
 								</Grid>
-								<Grid item>
-									<Stack direction='row' justifyContent='flex-end' spacing={2}>
+								<Grid>
+									<Stack direction='row' spacing={2} sx={{ justifyContent: 'flex-end' }}>
 										<Button color='inherit' onClick={handleClose}>
 											Cancel
 										</Button>
 										{owner && (
 											<>
 												{selectedInviteUsers.length === 0 ? (
-													<LoadingButton
+													<Button
 														onClick={handleSave}
 														endIcon={<Save />}
 														loading={membersLoading || updateGroup.isLoading}
@@ -509,9 +508,9 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 														disabled={!changed || name.trim().length <= 0}
 													>
 														Save
-													</LoadingButton>
+													</Button>
 												) : (
-													<LoadingButton
+													<Button
 														onClick={handleInvite}
 														endIcon={<Send />}
 														loading={membersLoading || inviteToGroup.isLoading}
@@ -519,7 +518,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 														variant='contained'
 													>
 														Invite
-													</LoadingButton>
+													</Button>
 												)}
 											</>
 										)}
@@ -542,9 +541,9 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 					<Button color='inherit' onClick={handleDeleteClose}>
 						Cancel
 					</Button>
-					<LoadingButton onClick={() => handleDelete(groupID!)} endIcon={<DeleteForever />} color='error' loading={deleteGroup.isLoading} loadingPosition='end' variant='contained'>
+					<Button onClick={() => handleDelete(groupID!)} endIcon={<DeleteForever />} color='error' loading={deleteGroup.isLoading} loadingPosition='end' variant='contained'>
 						Yes, Delete it
-					</LoadingButton>
+					</Button>
 				</DialogActions>
 			</Dialog>
 
@@ -557,9 +556,9 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 					<Button color='inherit' onClick={handleLeaveClose}>
 						Cancel
 					</Button>
-					<LoadingButton onClick={() => handleLeave(groupID!)} endIcon={<Logout />} color='error' loading={leaveGroup.isLoading} loadingPosition='end' variant='contained'>
+					<Button onClick={() => handleLeave(groupID!)} endIcon={<Logout />} color='error' loading={leaveGroup.isLoading} loadingPosition='end' variant='contained'>
 						Yes, Leave it
-					</LoadingButton>
+					</Button>
 				</DialogActions>
 			</Dialog>
 
@@ -577,9 +576,9 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 					<Button color='inherit' onClick={handleSecretSantaClose}>
 						Cancel
 					</Button>
-					<LoadingButton onClick={() => handleSecretSantaRemove()} endIcon={<Delete />} color='error' loading={leaveGroup.isLoading} loadingPosition='end' variant='contained'>
+					<Button onClick={() => handleSecretSantaRemove()} endIcon={<Delete />} color='error' loading={leaveGroup.isLoading} loadingPosition='end' variant='contained'>
 						Remove
-					</LoadingButton>
+					</Button>
 				</DialogActions>
 			</Dialog>
 
@@ -595,7 +594,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 									<Typography>Invite existing Giftamizer users or send anyone an invite via email.</Typography>
 								</DialogContent>
 								<DialogActions>
-									<LoadingButton
+									<Button
 										variant='outlined'
 										color='inherit'
 										onClick={() => {
@@ -606,7 +605,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 										loading={updateTour.isLoading}
 									>
 										Next
-									</LoadingButton>
+									</Button>
 								</DialogActions>
 							</>
 						}
@@ -626,7 +625,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 									<Typography>Owners can manage groups settings and members.</Typography>
 								</DialogContent>
 								<DialogActions>
-									<LoadingButton
+									<Button
 										variant='outlined'
 										color='inherit'
 										onClick={() => {
@@ -637,7 +636,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 										loading={updateTour.isLoading}
 									>
 										Got it
-									</LoadingButton>
+									</Button>
 								</DialogActions>
 							</>
 						}

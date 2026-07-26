@@ -1,21 +1,15 @@
-import React, { FunctionComponent, useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { useSnackbar } from 'notistack';
-
-import axios from 'axios';
 
 import {
 	Container,
-	Grid,
 	Typography,
 	Box,
 	CircularProgress,
 	AppBar,
 	Breadcrumbs,
 	Toolbar,
-	FormGroup,
 	FormControlLabel,
-	Checkbox,
-	DialogActions,
 	DialogContent,
 	useTheme,
 	Stack,
@@ -27,27 +21,18 @@ import {
 	DialogContentText,
 	DialogTitle,
 	FormControl,
-	FormHelperText,
-	Switch,
 	TextField,
-	Popover,
-	IconButton,
 	Paper,
 	RadioGroup,
 	Radio,
 } from '@mui/material';
-import { makeStyles } from '@mui/styles';
+import Grid from '@mui/material/Grid';
 
-import TourTooltip from '../components/TourTooltip';
-import { LoadingButton } from '@mui/lab';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useCreateIssue, useGetIssues } from '../lib/useSupabase/hooks/useSupport';
 import { ButtonBase } from '@mui/material';
-import { Add, AttachFile, Backup, Close, Done } from '@mui/icons-material';
-import GroupSelector from '../components/GroupSelector';
-import ImageCropper from '../components/ImageCropper';
-import { GroupType } from '../lib/useSupabase/types';
-import MUIRichTextEditor, { TAsyncAtomicBlockResponse, TMUIRichTextEditorRef } from '../components/src/MUIRichTextEditor';
+import { Add } from '@mui/icons-material';
+import MUIRichTextEditor from '../components/src/MUIRichTextEditor';
 import { convertToRaw } from 'draft-js';
 import draftToMarkdown from '../components/src/MUIRichTextEditor/draft-to-markdown';
 import { useGetProfile } from '../lib/useSupabase';
@@ -59,7 +44,7 @@ export default function ShoppingList() {
 
 	const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-	const { data: issues, isLoading, refetch } = useGetIssues();
+	const { data: issues, isLoading } = useGetIssues();
 	const { data: profile } = useGetProfile();
 
 	const createIssue = useCreateIssue();
@@ -125,7 +110,7 @@ export default function ShoppingList() {
 
 				<Grid container spacing={1}>
 					{issues?.map((issue, index) => (
-						<Grid item xs={12} key={issue.id}>
+						<Grid size={12} key={issue.id}>
 							<ButtonBase sx={{ width: '100%', textAlign: 'left', borderRadius: 2, display: 'block' }} href={issue.html_url} target='_blank'>
 								<Box
 									sx={{
@@ -196,10 +181,10 @@ export default function ShoppingList() {
 				<DialogTitle>Create Issues or Requests</DialogTitle>
 				<DialogContent>
 					<Grid container spacing={2}>
-						<Grid item xs={12}>
+						<Grid size={12}>
 							<DialogContentText>Please provide a title and description for your issue or request.</DialogContentText>
 						</Grid>
-						<Grid item xs={12} sm={6}>
+						<Grid size={{ xs: 12, sm: 6 }}>
 							<FormControl component='fieldset' fullWidth>
 								<RadioGroup row name='issueType' value={type} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setType(e.target.value as 'issue' | 'request')}>
 									<FormControlLabel value='issue' control={<Radio />} label='Issue' />
@@ -208,10 +193,10 @@ export default function ShoppingList() {
 								</RadioGroup>
 							</FormControl>
 						</Grid>
-						<Grid item xs={12}>
+						<Grid size={12}>
 							<TextField fullWidth label='Title' variant='outlined' required value={title} onChange={(e) => setTitle(e.target.value)} disabled={createIssue.isLoading} />
 						</Grid>
-						<Grid item xs={12}>
+						<Grid size={12}>
 							<Paper variant='elevation' elevation={2} sx={{ px: 1 }}>
 								<MUIRichTextEditor
 									label='Description...'
@@ -223,13 +208,13 @@ export default function ShoppingList() {
 								/>
 							</Paper>
 						</Grid>
-						<Grid item xs={12}>
-							<Stack direction='row' justifyContent='flex-end' spacing={2}>
+						<Grid size={12}>
+							<Stack direction='row' spacing={2} sx={{ justifyContent: 'flex-end' }}>
 								<Button color='inherit' onClick={handleClose} disabled={createIssue.isLoading}>
 									Cancel
 								</Button>
 
-								<LoadingButton
+								<Button
 									onClick={handleCreate}
 									disabled={title.trim().length === 0 || body.trim().length === 0}
 									endIcon={<Add />}
@@ -238,7 +223,7 @@ export default function ShoppingList() {
 									variant='contained'
 								>
 									Create
-								</LoadingButton>
+								</Button>
 							</Stack>
 						</Grid>
 					</Grid>

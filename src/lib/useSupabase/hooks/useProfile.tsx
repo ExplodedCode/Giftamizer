@@ -33,7 +33,7 @@ export const useGetProfile = () => {
 			//#region Download avatar for social provider logins
 			await client.auth.getSession().then(async ({ data: sessionData, error }) => {
 				if (!profile.avatar_token && profile.avatar_token !== -1) {
-					user.app_metadata.providers.every(async (provider: string) => {
+					user.app_metadata.providers?.every(async (provider: string) => {
 						let img;
 						if (provider === 'google') {
 							const url = `${user.identities?.find((i) => i.provider === 'google')?.identity_data?.avatar_url.split('=')[0]}=s512`;

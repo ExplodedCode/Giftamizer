@@ -26,10 +26,10 @@ export const useGetLists = () => {
 			const signedUrls = await getSignedUrls(
 				client,
 				'lists',
-				data.filter((l) => l.avatar_token).map((l) => `${l.id}`)
+				data.filter((l: any) => l.avatar_token).map((l: any) => `${l.id}`)
 			);
 
-			return data.map((l) => {
+			return data.map((l: any) => {
 				// @ts-ignore
 				return { ...l, image: l.avatar_token ? signedUrls[`${l.id}`] : undefined };
 			}) as ListType[];
@@ -138,7 +138,7 @@ export const useUpdateLists = () => {
 			const { data: listsData, error: ListsError } = await client.from('lists_groups').select('*').eq('list_id', list.id).eq('user_id', user.id);
 			if (ListsError) throw ListsError;
 			for (let group of list.groups) {
-				if (!listsData?.find((l) => l.group_id === group.id)) {
+				if (!listsData?.find((l: any) => l.group_id === group.id)) {
 					const { error } = await client.from('lists_groups').upsert({
 						list_id: list.id,
 						group_id: group.id,

@@ -71,9 +71,9 @@ export const useGetMemberItems = (group_id: string, user_id: string, list_id?: s
 				const signedUrls = await getSignedUrls(
 					client,
 					'items',
-					res.data.filter((i) => i.image_token).map((i) => `${i.id}`)
+					res.data.filter((i: any) => i.image_token).map((i: any) => ``)
 				);
-				return res.data.map((i) => {
+				return res.data.map((i: any) => {
 					// @ts-ignore
 					return { ...i, image: i.image_token ? signedUrls[`${i.id}`] : undefined };
 				}) as MemberItemType[];
@@ -106,9 +106,9 @@ export const useGetMemberItems = (group_id: string, user_id: string, list_id?: s
 				const signedUrls = await getSignedUrls(
 					client,
 					'items',
-					res.data.filter((i) => i.image_token).map((i) => `${i.id}`)
+					res.data.filter((i: any) => i.image_token).map((i: any) => ``)
 				);
-				return res.data.map((i) => {
+				return res.data.map((i: any) => {
 					// @ts-ignore
 					return { ...i, image: i.image_token ? signedUrls[`${i.id}`] : undefined };
 				}) as MemberItemType[];

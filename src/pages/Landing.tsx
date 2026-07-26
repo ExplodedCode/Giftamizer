@@ -2,7 +2,8 @@ import React from 'react';
 
 import { Link } from 'react-router-dom';
 
-import { AppBar, Toolbar, Typography, Button, Container, Grid, Card, CardHeader, Avatar, Divider } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Container, Card, CardHeader, Avatar, Divider } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { green, red, blue, orange } from '@mui/material/colors';
 
 import Copyright from './Copyright';
@@ -25,8 +26,8 @@ function Landing() {
 
 			<Container sx={{ paddingTop: { xs: 2.5, md: 10 }, mb: 6 }}>
 				<Grid container spacing={3}>
-					<Grid container item sm={12} md={6} spacing={3}>
-						<Grid item xs={12}>
+					<Grid container size={{ sm: 12, md: 6 }} spacing={3}>
+						<Grid size={12}>
 							<Typography variant='h4'>Giftamizer</Typography>
 							<Typography variant='h6'>An easier way to organize your gifts.</Typography>
 							<Button component={Link} to='/signup' variant='contained' size='large' color='primary' style={{ marginTop: 48 }}>
@@ -34,8 +35,8 @@ function Landing() {
 							</Button>
 						</Grid>
 					</Grid>
-					<Grid container item sm={12} md={6} spacing={3} direction='row'>
-						<Grid item xs={12} sm={6}>
+					<Grid container size={{ sm: 12, md: 6 }} spacing={3} direction='row'>
+						<Grid size={{ xs: 12, sm: 6 }}>
 							<Card>
 								<CardHeader
 									avatar={
@@ -48,7 +49,7 @@ function Landing() {
 								/>
 							</Card>
 						</Grid>
-						<Grid item xs={12} sm={6}>
+						<Grid size={{ xs: 12, sm: 6 }}>
 							<Card>
 								<CardHeader
 									avatar={
@@ -61,7 +62,7 @@ function Landing() {
 								/>
 							</Card>
 						</Grid>
-						<Grid item xs={12} sm={6}>
+						<Grid size={{ xs: 12, sm: 6 }}>
 							<Card>
 								<CardHeader
 									avatar={
@@ -74,7 +75,7 @@ function Landing() {
 								/>
 							</Card>
 						</Grid>
-						<Grid item xs={12} sm={6}>
+						<Grid size={{ xs: 12, sm: 6 }}>
 							<Card>
 								<CardHeader
 									avatar={
@@ -89,8 +90,8 @@ function Landing() {
 						</Grid>
 					</Grid>
 				</Grid>
-				<Grid container item sm={12} spacing={3} justifyContent='center' sx={{ mt: 16, mb: 8 }}>
-					<Grid item xs={12} sm={10} md={8}>
+				<Grid container size={{ sm: 12 }} spacing={3} sx={{ mt: 16, mb: 8, justifyContent: 'center' }}>
+					<Grid size={{ xs: 12, sm: 10, md: 8 }}>
 						<Typography variant='h4' style={{ marginBottom: 24 }} align='center'>
 							Giving just got a whole lot better.
 						</Typography>
@@ -100,16 +101,16 @@ function Landing() {
 							and invite them to share with you!
 						</Typography>
 					</Grid>
-					<Grid container item sm={12} spacing={3} direction='row' style={{ marginTop: 32 }}>
-						<Grid item xs={12}>
+					<Grid container size={{ sm: 12 }} spacing={3} direction='row' style={{ marginTop: 32 }}>
+						<Grid size={12}>
 							<Typography variant='h5' align='center'>
 								Features
 							</Typography>
 						</Grid>
-						<Grid item xs={12}>
+						<Grid size={12}>
 							<Divider />
 						</Grid>
-						<Grid item sm={12} md={6}>
+						<Grid size={{ sm: 12, md: 6 }}>
 							<Card>
 								<CardHeader
 									avatar={
@@ -122,7 +123,7 @@ function Landing() {
 								/>
 							</Card>
 						</Grid>
-						<Grid item sm={12} md={6}>
+						<Grid size={{ sm: 12, md: 6 }}>
 							<Card>
 								<CardHeader
 									avatar={
@@ -135,7 +136,7 @@ function Landing() {
 								/>
 							</Card>
 						</Grid>
-						<Grid item sm={12} md={6}>
+						<Grid size={{ sm: 12, md: 6 }}>
 							<Card>
 								<CardHeader
 									avatar={
@@ -148,7 +149,7 @@ function Landing() {
 								/>
 							</Card>
 						</Grid>
-						<Grid item sm={12} md={6}>
+						<Grid size={{ sm: 12, md: 6 }}>
 							<Card>
 								<CardHeader
 									avatar={

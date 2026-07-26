@@ -1,25 +1,24 @@
 import React, { FunctionComponent } from 'react'
-import { createStyles, withStyles, WithStyles } from '@mui/styles'
-import { Theme } from '@mui/material/styles'
+import { css } from '@emotion/css'
+import { useTheme } from '@mui/material/styles'
 
-const styles = ({ palette }: Theme) => createStyles({
-    root: {
-        fontStyle: "italic",
-        color: palette.grey[800],
-        borderLeft: `4px solid ${palette.grey.A100}`
-    }
-})
-
-interface IBlockquoteProps extends WithStyles<typeof styles> {
+interface IBlockquoteProps {
     children?: React.ReactNode
 }
 
 const Blockquote: FunctionComponent<IBlockquoteProps> = (props) => {
+    const { palette } = useTheme()
+    const rootClass = css({
+        fontStyle: "italic",
+        color: palette.grey[800],
+        borderLeft: `4px solid ${palette.grey.A100}`
+    })
+
     return (
-        <div className={props.classes.root}>
+        <div className={rootClass}>
             {props.children}
         </div>
     )
 }
 
-export default withStyles(styles, { withTheme: true })(Blockquote)
+export default Blockquote

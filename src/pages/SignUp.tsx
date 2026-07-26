@@ -6,7 +6,8 @@ import { signInWithGoogle, useSupabase, validateEmail } from '../lib/useSupabase
 import { useSnackbar } from 'notistack';
 
 import { GoogleIcon } from '../components/SvgIcons';
-import { Grid, CssBaseline, Paper, Box, Avatar, Typography, Stack, IconButton, TextField, Button, Stepper, Step, StepLabel, Link as MUILink } from '@mui/material';
+import { CssBaseline, Paper, Box, Avatar, Typography, Stack, IconButton, TextField, Button, Stepper, Step, StepLabel, Link as MUILink } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { LockOutlined } from '@mui/icons-material';
 
 var randomImage = Math.floor(Math.random() * 10) + 1;
@@ -75,10 +76,7 @@ export default function SignUp() {
 		<Grid container component='main' sx={{ height: '100vh' }}>
 			<CssBaseline />
 			<Grid
-				item
-				xs={false}
-				sm={4}
-				md={7}
+				size={{ xs: false, sm: 4, md: 7 }}
 				sx={{
 					backgroundImage: 'url(/images/signin/' + randomImage + '.jpg)',
 					backgroundRepeat: 'no-repeat',
@@ -87,7 +85,7 @@ export default function SignUp() {
 					backgroundPosition: 'center',
 				}}
 			/>
-			<Grid item xs={12} sm={8} md={5} component={Paper} elevation={6} square>
+			<Grid size={{ xs: 12, sm: 8, md: 5 }} component={Paper} elevation={6} square>
 				<Box
 					sx={{
 						py: 8,
@@ -221,7 +219,7 @@ export default function SignUp() {
 						</Box>
 
 						<Grid container>
-							<Grid item>
+							<Grid>
 								<MUILink component={Link} to={`/signin${window.location.search}${window.location.hash}`} variant='body2'>
 									Already have an account? Login
 								</MUILink>

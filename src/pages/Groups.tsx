@@ -13,7 +13,6 @@ import {
 	CardActionArea,
 	CardContent,
 	CardMedia,
-	Grid,
 	Typography,
 	AppBar,
 	Breadcrumbs,
@@ -25,6 +24,7 @@ import {
 	DialogTitle,
 	useTheme,
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 
 import GroupCreate from '../components/GroupCreate';
 import TourTooltip from '../components/TourTooltip';
@@ -39,7 +39,7 @@ interface RenderGroupProps {
 }
 function RenderGroup({ index, group, navigate, tour, updateTour }: RenderGroupProps) {
 	return (
-		<Grid tour-element={index === 0 ? 'group_card' : undefined} key={group.id} item xs sx={{ maxWidth: { xs: '100%', sm: 250 }, margin: 1 }}>
+		<Grid tour-element={index === 0 ? 'group_card' : undefined} key={group.id} size="grow" sx={{ maxWidth: { xs: '100%', sm: 250 }, minWidth: { xs: '100%', sm: 250 }, margin: 1 }}>
 			<Card sx={{ height: '100%' }}>
 				<CardActionArea
 					sx={{ height: '100%', display: 'grid', alignItems: 'start' }}
@@ -113,7 +113,7 @@ export default function Groups() {
 			</AppBar>
 
 			<Container sx={{ paddingBottom: 12 }}>
-				<TransitionGroup component={Grid} container justifyContent='center'>
+				<TransitionGroup component={Grid} container sx={{ justifyContent: 'center' }}>
 					{groups
 						?.filter((g) => !g.my_membership[0].invite)
 						.map((group, index) => (

@@ -1,14 +1,14 @@
 import React, { FunctionComponent } from 'react'
-import { Paper, List, ListItem } from '@mui/material'
-import { createStyles, withStyles, WithStyles } from '@mui/styles'
+import { Paper, List, ListItemButton } from '@mui/material'
+import { css } from '@emotion/css'
 
 export type TAutocompleteItem = {
     keys: string[]
     value: any
-    content: string | JSX.Element
+    content: string | React.JSX.Element
 }
 
-interface TAutocompleteProps extends WithStyles<typeof styles> {
+interface TAutocompleteProps {
     items: TAutocompleteItem[]
     top: number
     left: number
@@ -16,15 +16,14 @@ interface TAutocompleteProps extends WithStyles<typeof styles> {
     onClick: (selectedIndex: number) => void
 }
 
-const styles = () => createStyles({
-    container: {
-        minWidth: "200px",
-        position: "absolute",
-        zIndex: 10
-    },
-    item: {
-        cursor: "pointer"
-    }
+const containerClass = css({
+    minWidth: "200px",
+    position: "absolute",
+    zIndex: 10
+})
+
+const itemClass = css({
+    cursor: "pointer"
 })
 
 const Autocomplete: FunctionComponent<TAutocompleteProps> = (props) => {
@@ -32,26 +31,25 @@ const Autocomplete: FunctionComponent<TAutocompleteProps> = (props) => {
         return null
     }
 
-    const { classes } = props
     return (
-        <Paper className={classes.container} style={{
+        <Paper className={containerClass} style={{
             top: props.top,
             left: props.left
         }}>
             <List dense={true}>
                 {props.items.map((item, index) => (
-                    <ListItem
+                    <ListItemButton
                         key={index}
-                        className={classes.item}
+                        className={itemClass}
                         selected={index === props.selectedIndex}
                         onClick={() => props.onClick(index)}
                     >
                         {item.content}
-                    </ListItem>
+                    </ListItemButton>
                 ))}
             </List>
         </Paper>
     )
 }
 
-export default withStyles(styles, { withTheme: true })(Autocomplete)
+export default Autocomplete

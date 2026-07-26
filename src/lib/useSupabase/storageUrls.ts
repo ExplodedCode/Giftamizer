@@ -20,7 +20,7 @@ export async function getSignedUrls(client: SupabaseClient, bucket: string, path
 
 	const map: Record<string, string | undefined> = {};
 	data.forEach((entry) => {
-		if (entry.path) map[entry.path] = entry.error ? undefined : entry.signedUrl;
+		if (entry.path) map[entry.path] = entry.error ? undefined : entry.signedUrl ?? undefined;
 	});
 	return map;
 }

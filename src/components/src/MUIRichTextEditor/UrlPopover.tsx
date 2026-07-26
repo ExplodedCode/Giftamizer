@@ -3,16 +3,10 @@ import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
 import Popover from '@mui/material/Popover';
 import TextField from '@mui/material/TextField';
-import { createStyles, withStyles, WithStyles } from '@mui/styles';
-import { Theme } from '@mui/material/styles';
-import ButtonGroup from '@mui/material/ButtonGroup';
-import InsertPhotoIcon from '@mui/icons-material/InsertPhoto';
-import MovieIcon from '@mui/icons-material/Movie';
+import { css } from '@emotion/css';
+import { useTheme } from '@mui/material/styles';
 import CheckIcon from '@mui/icons-material/Check';
-import DeleteIcon from '@mui/icons-material/DeleteOutline';
-import FormatAlignCenter from '@mui/icons-material/FormatAlignCenter';
-import FormatAlignLeft from '@mui/icons-material/FormatAlignLeft';
-import FormatAlignRight from '@mui/icons-material/FormatAlignRight';
+import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import axios from 'axios';
 import CircularProgress from '@mui/material/CircularProgress';
 
@@ -28,25 +22,23 @@ export type TUrlData = {
 	type?: TMediaType;
 };
 
-interface IUrlPopoverStateProps extends WithStyles<typeof styles> {
+interface IUrlPopoverStateProps {
 	anchor?: HTMLElement;
 	data?: TUrlData;
 	isMedia?: boolean;
 	onConfirm: (isMedia?: boolean, ...args: any) => void;
 }
 
-const styles = ({ spacing }: Theme) =>
-	createStyles({
-		linkPopover: {
-			padding: spacing(2, 2, 2, 2),
-			maxWidth: 250,
-		},
-		linkTextField: {
-			width: '100%',
-		},
+const UrlPopover: FunctionComponent<IUrlPopoverStateProps> = (props) => {
+	const { spacing } = useTheme();
+	const linkPopoverClass = css({
+		padding: spacing(2, 2, 2, 2),
+		maxWidth: 250,
+	});
+	const linkTextFieldClass = css({
+		width: '100%',
 	});
 
-const UrlPopover: FunctionComponent<IUrlPopoverStateProps> = (props) => {
 	const [data, setData] = useState<TUrlData>(
 		props.data || {
 			url: undefined,
@@ -70,8 +62,6 @@ const UrlPopover: FunctionComponent<IUrlPopoverStateProps> = (props) => {
 	}, [props.isMedia]);
 
 	const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-	const { classes } = props;
 
 	const onSizeChange = (value: any, prop: 'width' | 'height') => {
 		if (value === '') {
@@ -134,19 +124,21 @@ const UrlPopover: FunctionComponent<IUrlPopoverStateProps> = (props) => {
 			}}
 			onClose={() => props.onConfirm(props.isMedia, data.url, data.width, data.height, data.alignment, data.type)}
 		>
-			<div className={classes.linkPopover}>
+			<div className={linkPopoverClass}>
 				<Grid container spacing={1}>
-					<Grid container item xs spacing={1}>
+					<Grid container size="grow" spacing={1}>
 						{props.data?.url !== undefined && (
-							<Grid item xs={12}>
+							<Grid size={12}>
 								<TextField
-									className={classes.linkTextField}
+									className={linkTextFieldClass}
 									onChange={(event) => setData({ ...data, url: event.target.value })}
 									label='URL'
 									defaultValue={props.data && props.data.url}
 									// autoFocus={true}
-									InputLabelProps={{
-										shrink: true,
+									slotProps={{
+										inputLabel: {
+											shrink: true,
+										},
 									}}
 									disabled={loading}
 								/>
@@ -165,7 +157,7 @@ const UrlPopover: FunctionComponent<IUrlPopoverStateProps> = (props) => {
 									</ButtonGroup>
 								</Grid> */}
 								{data.type === 'image' && (
-									<Grid item xs={12}>
+									<Grid size={12}>
 										<input type='file' accept='image/*' style={{ display: 'none' }} ref={fileInputRef} onChange={handleFileChange} disabled={loading} />
 										<Button fullWidth variant='outlined' size='small' onClick={handleSelectImage} disabled={loading}>
 											Select Image
@@ -173,24 +165,28 @@ const UrlPopover: FunctionComponent<IUrlPopoverStateProps> = (props) => {
 										{loading && <CircularProgress size={24} style={{ position: 'absolute', right: 16, top: 8 }} />}
 									</Grid>
 								)}
-								<Grid item xs={6}>
+								<Grid size={6}>
 									<TextField
 										onChange={(event) => onSizeChange(event.target.value, 'width')}
 										value={data.width || ''}
 										label='Width'
-										InputLabelProps={{
-											shrink: true,
+										slotProps={{
+											inputLabel: {
+												shrink: true,
+											},
 										}}
 										disabled={loading}
 									/>
 								</Grid>
-								<Grid item xs={6}>
+								<Grid size={6}>
 									<TextField
 										onChange={(event) => onSizeChange(event.target.value, 'height')}
 										value={data.height || ''}
 										label='Height'
-										InputLabelProps={{
-											shrink: true,
+										slotProps={{
+											inputLabel: {
+												shrink: true,
+											},
 										}}
 										disabled={loading}
 									/>
@@ -211,7 +207,7 @@ const UrlPopover: FunctionComponent<IUrlPopoverStateProps> = (props) => {
 							</>
 						) : null}
 					</Grid>
-					<Grid container item xs={12} direction='row' justifyContent='flex-end'>
+					<Grid container size={12} direction='row' sx={{ justifyContent: 'flex-end' }}>
 						{props.data && props.data.url ? (
 							<Button onClick={() => props.onConfirm(props.isMedia, '')} disabled={loading}>
 								<DeleteIcon />
@@ -227,4 +223,4 @@ const UrlPopover: FunctionComponent<IUrlPopoverStateProps> = (props) => {
 	);
 };
 
-export default withStyles(styles, { withTheme: true })(UrlPopover);
+export default UrlPopover;

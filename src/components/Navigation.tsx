@@ -117,7 +117,7 @@ function renderListItem({ list, location }: RenderListItemOptions) {
 	);
 }
 
-const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
+const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => {
 	const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 	const theme = useTheme();
 	const navigate = useNavigate();
@@ -298,7 +298,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 								<ListItemIcon>
 									<Settings fontSize='small' />
 								</ListItemIcon>
-								<Typography textAlign='center'>User Settings</Typography>
+								<Typography align='center'>User Settings</Typography>
 							</MenuItem>
 
 							{profile?.enable_archive && (
@@ -306,7 +306,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 									<ListItemIcon>
 										<Archive fontSize='small' />
 									</ListItemIcon>
-									<Typography textAlign='center'>Archive</Typography>
+									<Typography align='center'>Archive</Typography>
 								</MenuItem>
 							)}
 							{profile?.enable_trash && (
@@ -314,7 +314,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 									<ListItemIcon>
 										<Delete fontSize='small' />
 									</ListItemIcon>
-									<Typography textAlign='center'>Trash</Typography>
+									<Typography align='center'>Trash</Typography>
 								</MenuItem>
 							)}
 
@@ -328,7 +328,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 								<ListItemIcon>
 									<Logout fontSize='small' />
 								</ListItemIcon>
-								<Typography textAlign='center'>Logout</Typography>
+								<Typography align='center'>Logout</Typography>
 							</MenuItem>
 
 							{supportConfigured && (
@@ -338,7 +338,7 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 										<ListItemIcon>
 											<Help fontSize='small' />
 										</ListItemIcon>
-										<Typography textAlign='center'>Support</Typography>
+										<Typography align='center'>Support</Typography>
 									</MenuItem>
 								</>
 							)}
@@ -352,10 +352,10 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 					<List>
 						<ListItem disablePadding>
 							<ListItemButton component={Link} to='/items' selected={location.pathname === '/' || location.pathname === '/items'}>
-								<ListItemIcon>
+								<ListItemIcon sx={{ mr: 1 }}>
 									<GiftIcon color={location.pathname === '/' || location.pathname === '/items' ? 'primary' : undefined} />
 								</ListItemIcon>
-								<ListItemText primary='Items' />
+								<ListItemText primary='Items' sx={{ overflow: 'hidden' }} />
 							</ListItemButton>
 						</ListItem>
 						{profile?.enable_lists && lists && (
@@ -386,10 +386,10 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 												}
 											}}
 										>
-											<ListItemIcon>
+											<ListItemIcon sx={{ mr: 1 }}>
 												<ListAlt color={location.pathname === '/lists' ? 'primary' : undefined} />
 											</ListItemIcon>
-											<ListItemText primary='Lists' />
+											<ListItemText primary='Lists' sx={{ overflow: 'hidden' }} />
 										</ListItemButton>
 									</HtmlTooltip>
 									{drawerOpen &&
@@ -451,10 +451,10 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 										}
 									}}
 								>
-									<ListItemIcon>
+									<ListItemIcon sx={{ mr: 1 }}>
 										<Group color={location.pathname === '/groups' ? 'primary' : undefined} />
 									</ListItemIcon>
-									<ListItemText primary='Groups' />
+									<ListItemText primary='Groups' sx={{ overflow: 'hidden' }} />
 								</ListItemButton>
 							</HtmlTooltip>
 							{drawerOpen && groups && groups?.filter((g) => g.my_membership[0].pinned === true)?.length > 0 && (
@@ -509,10 +509,10 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 										}
 									}}
 								>
-									<ListItemIcon>
+									<ListItemIcon sx={{ mr: 1 }}>
 										<ShoppingCart color={location.pathname === '/shopping' ? 'primary' : undefined} />
 									</ListItemIcon>
-									<ListItemText primary='Shopping List' />
+									<ListItemText primary='Shopping List' sx={{ overflow: 'hidden' }} />
 								</ListItemButton>
 							</HtmlTooltip>
 						</ListItem>
@@ -524,20 +524,20 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 								{profile?.enable_archive && (
 									<ListItem disablePadding>
 										<ListItemButton component={Link} to='/archive' selected={location.pathname === '/archive'}>
-											<ListItemIcon>
+											<ListItemIcon sx={{ mr: 1 }}>
 												<Archive color={location.pathname === '/archive' ? 'primary' : undefined} />
 											</ListItemIcon>
-											<ListItemText primary='Archive' />
+											<ListItemText primary='Archive' sx={{ overflow: 'hidden' }} />
 										</ListItemButton>
 									</ListItem>
 								)}
 								{profile?.enable_trash && (
 									<ListItem disablePadding>
 										<ListItemButton component={Link} to='/trash' selected={location.pathname === '/trash'}>
-											<ListItemIcon>
+											<ListItemIcon sx={{ mr: 1 }}>
 												<Delete color={location.pathname === '/trash' ? 'primary' : undefined} />
 											</ListItemIcon>
-											<ListItemText primary='Trash' />
+											<ListItemText primary='Trash' sx={{ overflow: 'hidden' }} />
 										</ListItemButton>
 									</ListItem>
 								)}
@@ -551,10 +551,10 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 								<List>
 									<ListItem disablePadding>
 										<ListItemButton component={Link} to='/support' selected={location.pathname === '/support'}>
-											<ListItemIcon>
+											<ListItemIcon sx={{ mr: 1 }}>
 												<Help color={location.pathname === '/support' ? 'primary' : undefined} />
 											</ListItemIcon>
-											<ListItemText primary='Support' />
+											<ListItemText primary='Support' sx={{ overflow: 'hidden' }} />
 										</ListItemButton>
 									</ListItem>
 								</List>
@@ -564,10 +564,10 @@ const Navigation: React.FC<{ children: JSX.Element }> = ({ children }) => {
 						<List>
 							<ListItem disablePadding>
 								<ListItemButton component={Link} to='/account' selected={location.pathname === '/account'}>
-									<ListItemIcon>
+									<ListItemIcon sx={{ mr: 1 }}>
 										<Settings color={location.pathname === '/account' ? 'primary' : undefined} />
 									</ListItemIcon>
-									<ListItemText primary='Settings' />
+									<ListItemText primary='Settings' sx={{ overflow: 'hidden' }} />
 								</ListItemButton>
 							</ListItem>
 						</List>

@@ -4,8 +4,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useGetProfile, useSupabase, validateEmail } from '../lib/useSupabase';
 import { useSnackbar } from 'notistack';
 
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControl, Grid, IconButton, InputAdornment, InputLabel, OutlinedInput, TextField } from '@mui/material';
-import LoadingButton from '@mui/lab/LoadingButton';
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControl, IconButton, InputAdornment, InputLabel, OutlinedInput, TextField } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { Close, Edit, SyncAlt } from '@mui/icons-material';
 
 export default function EmailEditor() {
@@ -85,10 +85,10 @@ export default function EmailEditor() {
 				<DialogContent>
 					<Box sx={{ paddingTop: 1 }}>
 						<Grid container spacing={2}>
-							<Grid item xs={12}>
+							<Grid size={12}>
 								<TextField required label='New Email' placeholder={profile?.email} value={email} onChange={(e) => setEmail(e.target.value)} error={!validateEmail(email)} fullWidth />
 							</Grid>
-							<Grid item xs={12}>
+							<Grid size={12}>
 								<TextField
 									required
 									label='Confirm New Email'
@@ -107,7 +107,7 @@ export default function EmailEditor() {
 						Cancel
 					</Button>
 
-					<LoadingButton
+					<Button
 						onClick={handleUpdateEmail}
 						endIcon={<SyncAlt />}
 						disabled={!(validateEmail(email) && validateEmail(emailConfirm) && email === emailConfirm)}
@@ -116,7 +116,7 @@ export default function EmailEditor() {
 						variant='contained'
 					>
 						Update Email
-					</LoadingButton>
+					</Button>
 				</DialogActions>
 			</Dialog>
 		</>

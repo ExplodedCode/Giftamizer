@@ -4,7 +4,8 @@ import { useSupabase, FakeDelay } from '../lib/useSupabase';
 import { getSignedUrls } from '../lib/useSupabase/storageUrls';
 import { Profile } from '../lib/useSupabase/types';
 
-import { Autocomplete, Avatar, CircularProgress, debounce, Grid, TextField, Typography } from '@mui/material';
+import { Autocomplete, Avatar, CircularProgress, debounce, TextField, Typography } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { Mail } from '@mui/icons-material';
 
 type UserSearchProps = {
@@ -88,8 +89,8 @@ export default function UserSearch(props: UserSearchProps) {
 				renderOption={(props, option: Profile) => {
 					return (
 						<li {...props}>
-							<Grid container alignItems='center'>
-								<Grid item>
+							<Grid container sx={{ alignItems: 'center' }}>
+								<Grid>
 									{option.user_id ? (
 										<Avatar sizes='small' src={option.image} alt={`${option.first_name} ${option.last_name}`} sx={{ mr: 1, bgcolor: 'primary.main' }} />
 									) : (
@@ -98,7 +99,7 @@ export default function UserSearch(props: UserSearchProps) {
 										</Avatar>
 									)}
 								</Grid>
-								<Grid item xs>
+								<Grid size="grow">
 									<Typography variant='body2'>
 										{option.first_name} {option.last_name}
 									</Typography>
@@ -118,14 +119,17 @@ export default function UserSearch(props: UserSearchProps) {
 						{...params}
 						label={props.label ?? 'Select User'}
 						required={props.required}
-						InputProps={{
-							...params.InputProps,
-							endAdornment: (
-								<React.Fragment>
-									{loading ? <CircularProgress color='inherit' size={20} /> : null}
-									{params.InputProps.endAdornment}
-								</React.Fragment>
-							),
+						slotProps={{
+							...params.slotProps,
+							input: {
+								...params.slotProps.input,
+								endAdornment: (
+									<React.Fragment>
+										{loading ? <CircularProgress color='inherit' size={20} /> : null}
+										{params.slotProps.input.endAdornment}
+									</React.Fragment>
+								),
+							},
 						}}
 					/>
 				)}

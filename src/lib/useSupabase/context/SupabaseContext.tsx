@@ -20,7 +20,7 @@ export const SupabaseContext = React.createContext<SupabaseContextType>({
  * ```
  */
 
-export const SupabaseContextProvider: React.FC<{ client: SupabaseClient; children: JSX.Element }> = ({ client, children }) => {
+export const SupabaseContextProvider: React.FC<{ client: SupabaseClient; children: React.JSX.Element }> = ({ client, children }) => {
 	const [user, setUser] = React.useState<User | null | undefined>();
 	const queryClient = useQueryClient();
 

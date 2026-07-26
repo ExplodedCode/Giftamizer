@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { useSupabase } from './useSupabase';
-import { SystemType } from '../types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 const ISSUES_QUERY_KEY = ['issues'];

@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link, Navigate, Route, Routes, useLocation, useSearchParams } from 'react-router-dom';
-import { LastLocationProvider } from 'react-router-dom-last-location';
 
 // Google Analytics
 import ReactGA from 'react-ga4';
@@ -77,8 +76,7 @@ export default function AppRoutes() {
 					<CircularProgress color='inherit' />
 				</Backdrop>
 			) : (
-				<LastLocationProvider>
-					<Routes>
+				<Routes>
 						<Route
 							path='/'
 							element={
@@ -277,13 +275,12 @@ export default function AppRoutes() {
 							}
 						/>
 					</Routes>
-				</LastLocationProvider>
 			)}
 		</>
 	);
 }
 
-const ProtectedRoute: React.FC<{ children: JSX.Element }> = ({ children }) => {
+const ProtectedRoute: React.FC<{ children: React.JSX.Element }> = ({ children }) => {
 	const { user, client } = useSupabase();
 
 	const { data: profile } = useGetProfile();
@@ -312,7 +309,7 @@ const ProtectedRoute: React.FC<{ children: JSX.Element }> = ({ children }) => {
 	);
 };
 
-const MaintenanceProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
+const MaintenanceProvider: React.FC<{ children: React.JSX.Element }> = ({ children }) => {
 	const { client } = useSupabase();
 
 	const { data: system, refetch: refetchSystem } = useGetSystem();

@@ -7,7 +7,6 @@ import {
 	Card,
 	CardContent,
 	CardMedia,
-	Grid,
 	Typography,
 	Button,
 	Stack,
@@ -31,9 +30,9 @@ import {
 	Avatar,
 	ListItem,
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { TransitionProps } from '@mui/material/transitions';
 import { Archive, Close, Delete, DeleteForever, Edit, MoreVert, Restore, Unarchive } from '@mui/icons-material';
-import { LoadingButton } from '@mui/lab';
 
 import ItemUpdate from '../components/ItemUpdate';
 
@@ -246,7 +245,7 @@ function ItemStatus({ index, item, claimError, setClaimError }: ItemStatusProps)
 
 	const claimButton = () => {
 		return (
-			<LoadingButton
+			<Button
 				className={claimError && 'error-shake'}
 				variant='outlined'
 				color={(() => {
@@ -319,7 +318,7 @@ function ItemStatus({ index, item, claimError, setClaimError }: ItemStatusProps)
 						}
 					})()}
 				</span>
-			</LoadingButton>
+			</Button>
 		);
 	};
 
@@ -340,7 +339,7 @@ function ItemStatus({ index, item, claimError, setClaimError }: ItemStatusProps)
 
 									<Paper elevation={6} sx={{ p: 1 }}>
 										<Grid>
-											<Grid item xs={12} sx={{ mb: 1 }}>
+											<Grid size={12} sx={{ mb: 1 }}>
 												<Button
 													size='small'
 													variant='outlined'
@@ -359,7 +358,7 @@ function ItemStatus({ index, item, claimError, setClaimError }: ItemStatusProps)
 												</Button>
 												<Typography sx={{ ml: 0.5, mt: 0.5, display: 'inline' }}> - Available for purchase</Typography>
 											</Grid>
-											<Grid item xs={12} sx={{ mb: 1 }}>
+											<Grid size={12} sx={{ mb: 1 }}>
 												<Button
 													size='small'
 													variant='outlined'
@@ -377,8 +376,7 @@ function ItemStatus({ index, item, claimError, setClaimError }: ItemStatusProps)
 												<Typography sx={{ ml: 0.5, mt: 0.5, display: 'inline' }}> - Planned for purchase</Typography>
 											</Grid>
 											<Grid
-												item
-												xs={12}
+												size={12}
 												//  sx={{ mb: 1 }}
 											>
 												<Button
@@ -400,7 +398,7 @@ function ItemStatus({ index, item, claimError, setClaimError }: ItemStatusProps)
 										</Grid>
 									</Paper>
 									<DialogActions>
-										<LoadingButton
+										<Button
 											variant='outlined'
 											color='inherit'
 											onClick={() => {
@@ -413,7 +411,7 @@ function ItemStatus({ index, item, claimError, setClaimError }: ItemStatusProps)
 											loading={updateTour.isLoading}
 										>
 											Next
-										</LoadingButton>
+										</Button>
 									</DialogActions>
 								</>
 							)}
@@ -426,7 +424,7 @@ function ItemStatus({ index, item, claimError, setClaimError }: ItemStatusProps)
 
 									<Paper elevation={6} sx={{ p: 1 }}>
 										<Grid>
-											<Grid item xs={12} sx={{ mb: 1 }}>
+											<Grid size={12} sx={{ mb: 1 }}>
 												<Button
 													size='small'
 													variant='outlined'
@@ -442,7 +440,7 @@ function ItemStatus({ index, item, claimError, setClaimError }: ItemStatusProps)
 												</Button>
 												<Typography sx={{ ml: 0.5, mt: 0.5, display: 'inline' }}> - Planned by someone else</Typography>
 											</Grid>
-											<Grid item xs={12}>
+											<Grid size={12}>
 												<Button
 													size='small'
 													variant='outlined'
@@ -461,7 +459,7 @@ function ItemStatus({ index, item, claimError, setClaimError }: ItemStatusProps)
 										</Grid>
 									</Paper>
 									<DialogActions>
-										<LoadingButton
+										<Button
 											variant='outlined'
 											color='inherit'
 											onClick={() => {
@@ -474,7 +472,7 @@ function ItemStatus({ index, item, claimError, setClaimError }: ItemStatusProps)
 											loading={updateTour.isLoading}
 										>
 											Got it
-										</LoadingButton>
+										</Button>
 									</DialogActions>
 								</>
 							)}
@@ -530,7 +528,7 @@ export default function ItemCard({ index, item, editable }: ItemCardProps) {
 
 	return (
 		<>
-			<Grid item xs={12}>
+			<Grid size={12}>
 				{!isMobile ? (
 					<Paper>
 						<Box
@@ -541,17 +539,19 @@ export default function ItemCard({ index, item, editable }: ItemCardProps) {
 								display: 'flex',
 							}}
 						>
-							<Grid container spacing={2}>
+							<Grid container spacing={2} sx={{ width: '100%' }}>
 								{item.image && (
-									<Grid item>
+									<Grid>
 										<ButtonBase onClick={() => setDialogImage(item.image ?? null)} sx={{ cursor: 'zoom-in' }}>
 											<img alt={item.name} src={item.image} style={{ objectFit: 'cover', width: 150, height: 150, borderRadius: 4 }} />
 										</ButtonBase>
 									</Grid>
 								)}
-								<Grid item xs={12} sm container>
-									<Grid item xs container direction='column' spacing={2}>
-										<Grid item xs>
+								<Grid size={{ xs: 12, sm: 'grow' }} sx={{ minWidth: 0 }}>
+									<Stack direction='row' spacing={2} sx={{ justifyContent: 'space-between' }}>
+									<Box sx={{ flexGrow: 1, minWidth: 0 }}>
+										<Stack spacing={2}>
+											<Box sx={{ flexGrow: 1 }}>
 											{'profile' in item && (
 												<ListItem sx={{ p: 0 }}>
 													{item.profile && (
@@ -581,16 +581,16 @@ export default function ItemCard({ index, item, editable }: ItemCardProps) {
 												</Typography>
 											))}
 											{profile?.enable_lists && (
-												<Stack direction='row' justifyContent='flex-start' useFlexGap flexWrap='wrap' spacing={1} sx={{ mt: 0.5 }}>
+												<Stack direction='row' useFlexGap spacing={1} sx={{ mt: 0.5, justifyContent: 'flex-start', flexWrap: 'wrap' }}>
 													{item.lists?.map((l) => (
 														<Chip key={`${item.id}-list-${l.list_id}`} label={l.list.name} size='small' clickable onClick={() => navigate(`/lists/${l.list_id}`)} />
 													))}
 												</Stack>
 											)}
-										</Grid>
+										</Box>
 										{(!editable || item.shopping_item || (item.links && item.links.length > 0)) && (
-											<Grid item>
-												<Stack direction='row' justifyContent='flex-start' spacing={1} useFlexGap flexWrap='wrap'>
+											<Box>
+												<Stack direction='row' spacing={1} useFlexGap sx={{ justifyContent: 'flex-start', flexWrap: 'wrap' }}>
 													{(!editable || item.shopping_item) && (
 														<ItemStatus index={index} item={item as MemberItemType} claimError={claimError} setClaimError={setClaimError} />
 													)}
@@ -601,10 +601,12 @@ export default function ItemCard({ index, item, editable }: ItemCardProps) {
 														</Button>
 													))}
 												</Stack>
-											</Grid>
+											</Box>
 										)}
-									</Grid>
-									<Grid item>{editable && <VertMenu item={item} />}</Grid>
+										</Stack>
+									</Box>
+									{editable && <Box><VertMenu item={item} /></Box>}
+									</Stack>
 								</Grid>
 							</Grid>
 						</Box>
@@ -629,28 +631,32 @@ export default function ItemCard({ index, item, editable }: ItemCardProps) {
 						{item.image && <CardMedia component='img' alt={item.name} sx={{ height: 220, cursor: 'zoom-in' }} image={item.image} onClick={() => setDialogImage(item.image ?? null)} />}
 
 						<CardContent>
-							<Grid container justifyContent='flex-start' spacing={2}>
-								<Grid item xs>
-									<Typography variant='h5' component='div'>
-										{item.name}
-									</Typography>
-									<Typography gutterBottom variant='body2' color='text.secondary'>
-										{item.description}
-									</Typography>
-									{item.custom_fields?.map((c) => (
-										<Typography key={`${item.id}-field-${c.id}`} variant='body2' color='text.secondary'>
-											{c.name}: <b>{c.value}</b>
-										</Typography>
-									))}
+							<Grid container spacing={2} sx={{ justifyContent: 'flex-start' }}>
+								<Grid size={12}>
+									<Stack direction='row' sx={{ justifyContent: 'space-between' }}>
+										<Box sx={{ flexGrow: 1, minWidth: 0 }}>
+											<Typography variant='h5' component='div'>
+												{item.name}
+											</Typography>
+											<Typography gutterBottom variant='body2' color='text.secondary'>
+												{item.description}
+											</Typography>
+											{item.custom_fields?.map((c) => (
+												<Typography key={`${item.id}-field-${c.id}`} variant='body2' color='text.secondary'>
+													{c.name}: <b>{c.value}</b>
+												</Typography>
+											))}
+										</Box>
+										{editable && (
+											<Box>
+												<VertMenu item={item} />
+											</Box>
+										)}
+									</Stack>
 								</Grid>
-								{editable && (
-									<Grid item>
-										<VertMenu item={item} />
-									</Grid>
-								)}
 								{profile?.enable_lists && editable && (
-									<Grid item xs={12}>
-										<Stack direction='row' justifyContent='flex-start' useFlexGap flexWrap='wrap' spacing={1}>
+									<Grid size={12}>
+										<Stack direction='row' useFlexGap spacing={1} sx={{ justifyContent: 'flex-start', flexWrap: 'wrap' }}>
 											{item.lists?.map((l, i) => (
 												<Chip key={`${item.id + i}-list-${l.list_id}`} label={l.list.name} size='small' clickable onClick={() => navigate(`/lists/${l.list_id}`)} />
 											))}
@@ -659,8 +665,8 @@ export default function ItemCard({ index, item, editable }: ItemCardProps) {
 								)}
 
 								{(!editable || item.shopping_item || (item.links && item.links.length > 0)) && (
-									<Grid item xs={12}>
-										<Stack direction='row' justifyContent='flex-start' spacing={1} useFlexGap flexWrap='wrap'>
+									<Grid size={12}>
+										<Stack direction='row' spacing={1} useFlexGap sx={{ justifyContent: 'flex-start', flexWrap: 'wrap' }}>
 											{((!editable && item.user_id !== user.id) || item.shopping_item) && (
 												<ItemStatus index={index} item={item as MemberItemType} claimError={claimError} setClaimError={setClaimError} />
 											)}
@@ -683,7 +689,7 @@ export default function ItemCard({ index, item, editable }: ItemCardProps) {
 			<Dialog
 				maxWidth='md'
 				fullWidth
-				TransitionComponent={Transition}
+				slots={{ transition: Transition }}
 				onClose={() => {
 					setDialogPrevImage(dialogImage);
 					setDialogImage(null);

@@ -6,7 +6,6 @@ import { signInWithGoogle, useSupabase, validateEmail } from '../lib/useSupabase
 
 import { GoogleIcon } from '../components/SvgIcons';
 import {
-	Grid,
 	CssBaseline,
 	Paper,
 	Box,
@@ -23,8 +22,8 @@ import {
 	DialogActions,
 	Link as MUILink,
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { LockOutlined } from '@mui/icons-material';
-import { LoadingButton } from '@mui/lab';
 
 var randomImage = Math.floor(Math.random() * 10) + 1;
 
@@ -111,10 +110,7 @@ export default function SignIn() {
 			<Grid container component='main' sx={{ height: '100vh' }}>
 				<CssBaseline />
 				<Grid
-					item
-					xs={false}
-					sm={4}
-					md={7}
+					size={{ xs: false, sm: 4, md: 7 }}
 					sx={{
 						backgroundImage: 'url(/images/signin/' + randomImage + '.jpg)',
 						backgroundRepeat: 'no-repeat',
@@ -123,7 +119,7 @@ export default function SignIn() {
 						backgroundPosition: 'center',
 					}}
 				/>
-				<Grid item xs={12} sm={8} md={5} component={Paper} elevation={6} square>
+				<Grid size={{ xs: 12, sm: 8, md: 5 }} component={Paper} elevation={6} square>
 					<Box
 						sx={{
 							py: 8,
@@ -188,7 +184,7 @@ export default function SignIn() {
 								Sign in
 							</Button>
 							<Grid container>
-								<Grid item xs>
+								<Grid size="grow">
 									<MUILink
 										component='button'
 										variant='body2'
@@ -200,7 +196,7 @@ export default function SignIn() {
 									</MUILink>
 								</Grid>
 
-								<Grid item>
+								<Grid>
 									<MUILink component={Link} to={`/signup${window.location.search}${window.location.hash}`} variant='body2'>
 										Don't have an account? Create Account
 									</MUILink>
@@ -233,7 +229,7 @@ export default function SignIn() {
 					>
 						Cancel
 					</Button>
-					<LoadingButton
+					<Button
 						onClick={() => {
 							handlePasswordReset();
 						}}
@@ -241,7 +237,7 @@ export default function SignIn() {
 						loading={passwordResetLoading}
 					>
 						Send Reset
-					</LoadingButton>
+					</Button>
 				</DialogActions>
 			</Dialog>
 		</>

@@ -5,8 +5,8 @@ import { groupTourProgress, useCreateGroup, useGetGroups, useGetTour, useUpdateT
 import { useSnackbar } from 'notistack';
 
 import { useTheme } from '@mui/material/styles';
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Fab, Grid, Stack, TextField, Typography, useMediaQuery } from '@mui/material';
-import LoadingButton from '@mui/lab/LoadingButton';
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Fab, Stack, TextField, Typography, useMediaQuery } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { Add, GroupAdd } from '@mui/icons-material';
 
 import ImageCropper from './ImageCropper';
@@ -118,10 +118,10 @@ export default function GroupCreate() {
 				<DialogTitle>Create Group</DialogTitle>
 				<DialogContent>
 					<Grid container spacing={2}>
-						<Grid item xs={12}>
+						<Grid size={12}>
 							<DialogContentText>Share your gift lists with your friends and family.</DialogContentText>
 						</Grid>
-						<Grid item xs={12}>
+						<Grid size={12}>
 							<ImageCropper
 								onClick={() => {
 									setImageDialogOpen(true);
@@ -140,16 +140,16 @@ export default function GroupCreate() {
 								aspectRatio={1}
 							/>
 						</Grid>
-						<Grid item xs={12}>
+						<Grid size={12}>
 							<TextField tour-element='group_create_name' fullWidth label='Group Name' variant='outlined' required value={name} onChange={(e) => setName(e.target.value)} />
 						</Grid>
-						<Grid item xs={12}>
-							<Stack direction='row' justifyContent='flex-end' spacing={2}>
+						<Grid size={12}>
+							<Stack direction='row' spacing={2} sx={{ justifyContent: 'flex-end' }}>
 								<Button color='inherit' onClick={handleClose}>
 									Cancel
 								</Button>
 
-								<LoadingButton
+								<Button
 									tour-element='group_create'
 									onClick={handleCreate}
 									endIcon={<Add />}
@@ -159,7 +159,7 @@ export default function GroupCreate() {
 									variant='contained'
 								>
 									Create
-								</LoadingButton>
+								</Button>
 							</Stack>
 						</Grid>
 					</Grid>
@@ -179,10 +179,10 @@ export default function GroupCreate() {
 							<>
 								<DialogTitle>Create new groups here!</DialogTitle>
 								<DialogActions>
-									<LoadingButton color='inherit' onClick={skipTour} loading={updateTour.isLoading}>
+									<Button color='inherit' onClick={skipTour} loading={updateTour.isLoading}>
 										Skip Group Tour
-									</LoadingButton>
-									<LoadingButton
+									</Button>
+									<Button
 										variant='outlined'
 										color='inherit'
 										onClick={() => {
@@ -199,7 +199,7 @@ export default function GroupCreate() {
 										loading={updateTour.isLoading}
 									>
 										Next
-									</LoadingButton>
+									</Button>
 								</DialogActions>
 							</>
 						}
@@ -223,7 +223,7 @@ export default function GroupCreate() {
 									<Typography>Give your group a name.</Typography>
 								</DialogContent>
 								<DialogActions>
-									<LoadingButton
+									<Button
 										variant='outlined'
 										color='inherit'
 										onClick={() => {
@@ -234,7 +234,7 @@ export default function GroupCreate() {
 										loading={updateTour.isLoading}
 									>
 										Next
-									</LoadingButton>
+									</Button>
 								</DialogActions>
 							</>
 						}
@@ -254,7 +254,7 @@ export default function GroupCreate() {
 									<Typography>Add a picture of you & your friends or family!</Typography>
 								</DialogContent>
 								<DialogActions>
-									<LoadingButton
+									<Button
 										variant='outlined'
 										color='inherit'
 										onClick={() => {
@@ -265,7 +265,7 @@ export default function GroupCreate() {
 										loading={updateTour.isLoading}
 									>
 										Next
-									</LoadingButton>
+									</Button>
 								</DialogActions>
 							</>
 						}
@@ -283,7 +283,7 @@ export default function GroupCreate() {
 									<Typography>When you have everything ready, click Create to add the item.</Typography>
 								</DialogContent>
 								<DialogActions>
-									<LoadingButton
+									<Button
 										variant='outlined'
 										color='inherit'
 										onClick={() => {
@@ -294,7 +294,7 @@ export default function GroupCreate() {
 										loading={updateTour.isLoading}
 									>
 										Got it
-									</LoadingButton>
+									</Button>
 								</DialogActions>
 							</>
 						}
