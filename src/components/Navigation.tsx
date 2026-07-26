@@ -38,14 +38,7 @@ import { UserAvatar } from './ui/avatar';
 import { Spinner } from './ui/spinner';
 import { Separator } from './ui/separator';
 import { SimpleTooltip } from './ui/tooltip';
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from './ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 
 const SIDEBAR_OPEN = 'w-60';
 const SIDEBAR_CLOSED = 'w-16';
@@ -60,7 +53,7 @@ function navRowClasses(selected: boolean, drawerOpen: boolean) {
 		'flex h-11 shrink-0 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
 		'[&_svg]:size-5 [&_svg]:shrink-0',
 		selected ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-		!drawerOpen && 'justify-center px-0'
+		!drawerOpen && 'justify-center px-0',
 	);
 }
 
@@ -75,10 +68,14 @@ function renderGroupItem({ group, location }: RenderGroupItemOptions) {
 			to={`/groups/${group.id}`}
 			className={cn(
 				'mx-2 flex h-10 items-center gap-2.5 rounded-lg py-1 pr-2 pl-6 text-sm transition-colors',
-				selected ? 'bg-primary/10 font-medium text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+				selected ? 'bg-primary/10 font-medium text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground',
 			)}
 		>
-			<UserAvatar src={group.image} alt={group.name} className={cn('size-7 text-xs', !selected && '[&_[data-slot=avatar-fallback]]:bg-muted [&_[data-slot=avatar-fallback]]:text-muted-foreground')} />
+			<UserAvatar
+				src={group.image}
+				alt={group.name}
+				className={cn('size-7 text-xs', !selected && '[&_[data-slot=avatar-fallback]]:bg-muted [&_[data-slot=avatar-fallback]]:text-muted-foreground')}
+			/>
 			<span className='truncate'>{group.name}</span>
 		</Link>
 	);
@@ -95,7 +92,7 @@ function renderListItem({ list, location }: RenderListItemOptions) {
 			to={`/lists/${list.id}`}
 			className={cn(
 				'mx-2 flex h-10 items-center gap-2.5 rounded-lg py-1 pr-2 pl-6 text-sm transition-colors',
-				selected ? 'bg-primary/10 font-medium text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+				selected ? 'bg-primary/10 font-medium text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground',
 			)}
 		>
 			<UserAvatar
@@ -128,7 +125,7 @@ function ThemeToggleRow() {
 					onClick={() => setTheme(option.value)}
 					className={cn(
 						'flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md border px-2 py-1.5 text-xs font-medium whitespace-nowrap transition-colors [&_svg]:shrink-0',
-						theme === option.value ? 'border-primary/30 bg-primary/10 text-primary' : 'border-transparent text-muted-foreground hover:bg-accent hover:text-foreground'
+						theme === option.value ? 'border-primary/30 bg-primary/10 text-primary' : 'border-transparent text-muted-foreground hover:bg-accent hover:text-foreground',
 					)}
 				>
 					{option.icon}
@@ -224,11 +221,7 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 	};
 
 	const groupNavHint =
-		activeTourLeg === 'group' &&
-		tourStart &&
-		groupTourProgress(tour ?? {}, false) === 'group_nav' &&
-		groups?.filter((g) => g.my_membership[0].invite).length === 0 &&
-		location.hash === '';
+		activeTourLeg === 'group' && tourStart && groupTourProgress(tour ?? {}, false) === 'group_nav' && groups?.filter((g) => g.my_membership[0].invite).length === 0 && location.hash === '';
 	const listNavHint = activeTourLeg === 'list' && tourStart && listTourProgress(tour ?? {}) === 'list_tour_start' && location.hash === '';
 	const shoppingNavHint = activeTourLeg === 'shopping' && tourStart && shoppingTourProgress(tour ?? {}) === 'shopping_nav' && location.hash === '';
 
@@ -419,7 +412,7 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 			<aside
 				className={cn(
 					'fixed top-14 bottom-0 left-0 z-30 hidden flex-col overflow-x-hidden border-r border-sidebar-border bg-sidebar pt-2 whitespace-nowrap transition-[width] duration-200 ease-in-out md:flex',
-					drawerOpen ? SIDEBAR_OPEN : SIDEBAR_CLOSED
+					drawerOpen ? SIDEBAR_OPEN : SIDEBAR_CLOSED,
 				)}
 			>
 				<nav className='flex flex-col gap-0.5 px-2'>
@@ -460,7 +453,9 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 									</button>
 								)}
 							</div>
-							<Collapse in={listsOpen && drawerOpen} unmountOnExit>
+							{/* Gated on pin count too — an always-mounted collapse leaves an empty
+							    py-0.5 row (plus the nav's gap on both sides) between the nav items. */}
+							<Collapse in={listsOpen && drawerOpen && pinnedLists.length > 0} unmountOnExit>
 								<div className='flex flex-col gap-0.5 py-0.5'>
 									<TransitionGroup component={null}>
 										{pinnedLists.map((list) => (
@@ -502,7 +497,7 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 							</button>
 						)}
 					</div>
-					<Collapse in={groupsOpen && drawerOpen} unmountOnExit>
+					<Collapse in={groupsOpen && drawerOpen && pinnedGroups.length > 0} unmountOnExit>
 						<div className='flex flex-col gap-0.5 py-0.5'>
 							<TransitionGroup component={null}>
 								{pinnedGroups.map((group) => (
@@ -585,7 +580,7 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 					onClick={() => navigate('/items')}
 					className={cn(
 						'flex flex-1 cursor-pointer flex-col items-center justify-center gap-0.5 text-xs font-medium transition-colors [&_svg]:size-5',
-						mobileNavValue === 0 ? 'text-primary' : 'text-muted-foreground'
+						mobileNavValue === 0 ? 'text-primary' : 'text-muted-foreground',
 					)}
 				>
 					<GiftIcon />
@@ -606,7 +601,7 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 							}}
 							className={cn(
 								'flex flex-1 cursor-pointer flex-col items-center justify-center gap-0.5 text-xs font-medium transition-colors [&_svg]:size-5',
-								mobileNavValue === 1 ? 'text-primary' : 'text-muted-foreground'
+								mobileNavValue === 1 ? 'text-primary' : 'text-muted-foreground',
 							)}
 						>
 							<ClipboardList />
@@ -628,7 +623,7 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 						}}
 						className={cn(
 							'flex flex-1 cursor-pointer flex-col items-center justify-center gap-0.5 text-xs font-medium transition-colors [&_svg]:size-5',
-							mobileNavValue === 2 ? 'text-primary' : 'text-muted-foreground'
+							mobileNavValue === 2 ? 'text-primary' : 'text-muted-foreground',
 						)}
 					>
 						<Users />
@@ -649,7 +644,7 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 						}}
 						className={cn(
 							'flex flex-1 cursor-pointer flex-col items-center justify-center gap-0.5 text-xs font-medium transition-colors [&_svg]:size-5',
-							mobileNavValue === 3 ? 'text-primary' : 'text-muted-foreground'
+							mobileNavValue === 3 ? 'text-primary' : 'text-muted-foreground',
 						)}
 					>
 						<ShoppingCart />
