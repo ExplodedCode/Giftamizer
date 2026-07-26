@@ -3,7 +3,7 @@ import { useSnackbar } from '../lib/snackbar';
 
 import { shoppingTourProgress, useClaimedItems, useGetTour, useUpdateTour, useActiveTourLeg, SKIP_SHOPPING_TOUR } from '../lib/useSupabase';
 
-import ItemCard from '../components/ItemCard';
+import ItemCard, { ItemCardSkeletonList } from '../components/ItemCard';
 import { ItemStatuses, MemberItemType } from '../lib/useSupabase/types';
 import TourTooltip, { TourSkipButton } from '../components/TourTooltip';
 import { useLocation } from 'react-router-dom';
@@ -12,7 +12,6 @@ import ItemCreate from '../components/ItemCreate';
 import { Button } from '../components/ui/button';
 import { LabeledCheckbox } from '../components/ui/checkbox';
 import { PageHeader } from '../components/ui/page-header';
-import { Spinner } from '../components/ui/spinner';
 
 export default function ShoppingList() {
 	const { enqueueSnackbar } = useSnackbar();
@@ -78,11 +77,7 @@ export default function ShoppingList() {
 					)}
 				</div>
 
-				{isLoading && (
-					<div className='mt-32 flex justify-center'>
-						<Spinner size={32} />
-					</div>
-				)}
+				{isLoading && <ItemCardSkeletonList />}
 
 				<ItemCreate shoppingItem />
 

@@ -3,8 +3,7 @@ import { useSnackbar } from '../lib/snackbar';
 
 import { useGetItems } from '../lib/useSupabase';
 
-import ItemCard from '../components/ItemCard';
-import { Spinner } from '../components/ui/spinner';
+import ItemCard, { ItemCardSkeletonList } from '../components/ItemCard';
 
 export default function ItemArchive() {
 	const { enqueueSnackbar } = useSnackbar();
@@ -34,11 +33,7 @@ export default function ItemArchive() {
 					)}
 				</div>
 
-				{isLoading && (
-					<div className='mt-32 flex justify-center'>
-						<Spinner size={32} />
-					</div>
-				)}
+				{isLoading && <ItemCardSkeletonList />}
 			</div>
 		</>
 	);

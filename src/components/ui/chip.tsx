@@ -22,7 +22,7 @@ const chipVariants = cva('inline-flex max-w-full items-center gap-1.5 rounded-fu
 			default: 'h-7 px-3 text-xs',
 		},
 		clickable: {
-			true: 'cursor-pointer hover:opacity-80',
+			true: 'cursor-pointer outline-none hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring/50',
 			false: '',
 		},
 	},

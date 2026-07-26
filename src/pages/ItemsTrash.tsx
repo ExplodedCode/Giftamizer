@@ -5,10 +5,9 @@ import { useEmptyTrash, useGetItems } from '../lib/useSupabase';
 
 import { Trash2 } from 'lucide-react';
 
-import ItemCard from '../components/ItemCard';
+import ItemCard, { ItemCardSkeletonList } from '../components/ItemCard';
 import { Button } from '../components/ui/button';
 import { ConfirmDialog } from '../components/ui/confirm-dialog';
-import { Spinner } from '../components/ui/spinner';
 
 export default function ItemsTrash() {
 	const { enqueueSnackbar } = useSnackbar();
@@ -66,11 +65,7 @@ export default function ItemsTrash() {
 					)}
 				</div>
 
-				{isLoading && (
-					<div className='mt-32 flex justify-center'>
-						<Spinner size={32} />
-					</div>
-				)}
+				{isLoading && <ItemCardSkeletonList />}
 			</div>
 
 			<ConfirmDialog

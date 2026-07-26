@@ -6,7 +6,7 @@ import { useSupabase, useGetGroupMembers, useGetGroups, useGetMemberItems, group
 import { Filter } from 'lucide-react';
 
 import NotFound from '../components/NotFound';
-import ItemCard from '../components/ItemCard';
+import ItemCard, { ItemCardSkeletonList } from '../components/ItemCard';
 import { ItemStatuses, MemberItemType } from '../lib/useSupabase/types';
 import TourTooltip, { TourContent } from '../components/TourTooltip';
 
@@ -14,7 +14,6 @@ import { cn, useMediaQuery } from '../lib/utils';
 import { Button } from '../components/ui/button';
 import { PageHeader } from '../components/ui/page-header';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
-import { Spinner } from '../components/ui/spinner';
 import { LabeledSwitch } from '../components/ui/switch';
 
 export default function Member() {
@@ -55,8 +54,8 @@ export default function Member() {
 	return (
 		<>
 			{groupsLoading || membersLoading || memberLoading ? (
-				<div className='mt-32 flex justify-center'>
-					<Spinner size={32} />
+				<div className='mx-auto max-w-5xl px-4 pt-4 pb-12'>
+					<ItemCardSkeletonList />
 				</div>
 			) : (
 				<>
@@ -113,11 +112,6 @@ export default function Member() {
 									)}
 								</div>
 
-								{memberLoading && (
-									<div className='mt-32 flex justify-center'>
-										<Spinner size={32} />
-									</div>
-								)}
 							</div>
 
 							{!groupsLoading && !membersLoading && !memberLoading && !showUnavailableItems && items?.length !== 0 && tour && activeTourLeg === 'group' && (

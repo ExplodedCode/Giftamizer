@@ -7,7 +7,7 @@ import { useGetItems, useGetLists, useSetListPin } from '../lib/useSupabase';
 import { Pin } from 'lucide-react';
 
 import ItemCreate from '../components/ItemCreate';
-import ItemCard from '../components/ItemCard';
+import ItemCard, { ItemCardSkeletonList } from '../components/ItemCard';
 import NotFound from '../components/NotFound';
 
 import { cn } from '../lib/utils';
@@ -34,8 +34,8 @@ export default function ListItems() {
 	return (
 		<>
 			{loadingLists || isLoading ? (
-				<div className='mt-32 flex justify-center'>
-					<Spinner size={32} />
+				<div className='mx-auto max-w-5xl px-4 pt-4 pb-12'>
+					<ItemCardSkeletonList />
 				</div>
 			) : (
 				<>
@@ -79,12 +79,6 @@ export default function ListItems() {
 										</div>
 									)}
 								</div>
-
-								{isLoading && (
-									<div className='mt-32 flex justify-center'>
-										<Spinner size={32} />
-									</div>
-								)}
 							</div>
 
 							<ItemCreate defaultList={lists.find((l) => l.id === listID)!} />
