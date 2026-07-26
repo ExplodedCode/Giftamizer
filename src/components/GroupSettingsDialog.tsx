@@ -406,7 +406,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 
 						{owner && secretSanta?.status === SecretSantaStatus.Off && (
 							<div>
-								<Button disabled={changed} onClick={handleSecretSantaEnable}>
+								<Button disabled={changed} loading={updateGroup.isLoading} onClick={handleSecretSantaEnable}>
 									Enable Secret Santa
 								</Button>
 							</div>
@@ -527,15 +527,15 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 				title='Remove Secret Santa from the group?'
 				description={
 					<>
-						Are you sure you want to secret santa this group?
+						Are you sure you want to remove Secret Santa from this group?
 						<br />
 						<br />
-						This effects to all group members.
+						The drawing will be deleted for all group members.
 					</>
 				}
 				confirmText='Remove'
 				destructive
-				loading={leaveGroup.isLoading}
+				loading={updateGroup.isLoading}
 				onConfirm={() => handleSecretSantaRemove()}
 			/>
 

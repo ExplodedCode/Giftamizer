@@ -13,6 +13,7 @@ import SecretSantaSetup from './SecretSantaSetup';
 import { Button } from './ui/button';
 import { Chip } from './ui/chip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Spinner } from './ui/spinner';
 import { UserAvatar } from './ui/avatar';
 
 interface SecretSantaProps {
@@ -54,6 +55,15 @@ export default function SecretSanta({ group, members }: SecretSantaProps) {
 			});
 	};
 
+	const handleClose = React.useCallback(() => {
+		navigate('#');
+
+		setAllowCreate(false);
+		setEventName('');
+		setEventDate(moment());
+		setDrawing(undefined);
+	}, [navigate]);
+
 	const enabledSecretSanta = async (drawings: SecretSantaDrawings) => {
 		setLoading(true);
 		await updateGroup
@@ -63,7 +73,7 @@ export default function SecretSanta({ group, members }: SecretSantaProps) {
 					secret_santa: {
 						...group.secret_santa,
 						status: SecretSantaStatus.On,
-						name: eventName,
+						name: eventName.trim(),
 						date: eventDate?.format('LL') ?? '',
 						drawing: drawings,
 					},
@@ -87,13 +97,8 @@ export default function SecretSanta({ group, members }: SecretSantaProps) {
 					}
 				}
 
-				navigate('#');
 				setLoading(false);
-				setAllowCreate(false);
-
-				setEventName('');
-				setEventDate(moment());
-				setDrawing(undefined);
+				handleClose();
 			})
 			.catch((err) => {
 				enqueueSnackbar(`Unable to update group! ${err.message}`, { variant: 'error' });
@@ -102,6 +107,8 @@ export default function SecretSanta({ group, members }: SecretSantaProps) {
 	};
 
 	React.useEffect(() => {
+		let active = true;
+
 		const getMyMembership = async () => {
 			const { data, error } = await client
 				.from('group_members')
@@ -122,27 +129,43 @@ export default function SecretSanta({ group, members }: SecretSantaProps) {
 				.eq('user_id', user.id)
 				.eq('group_id', group.id)
 				.single();
-			if (error) {
+
+			if (!active) return;
+
+			if (error || !data) {
 				enqueueSnackbar(`Unable to get your membership for Secret Santa!`, { variant: 'error' });
+				setMyMembership(undefined);
+				return;
 			}
 
-			let membership = data as unknown as Member;
-			membership = {
+			const membership = data as unknown as Member;
+			const image = membership.profile.avatar_token ? await getSignedUrl(client, 'avatars', `${user.id}`) : '';
+
+			if (!active) return;
+
+			setMyMembership({
 				...membership,
 				profile: {
 					...membership.profile,
 					// @ts-ignore
-					image: membership.profile.avatar_token ? await getSignedUrl(client, 'avatars', `${user.id}`) : '',
+					image: image,
 				},
-			};
-			setMyMembership(membership);
+			});
 		};
 
 		getMyMembership();
-	}, [client, enqueueSnackbar, user, group]);
+
+		return () => {
+			active = false;
+		};
+	}, [client, enqueueSnackbar, user, group.id]);
+
+	// The members list handed down by the page is a fresh array on every render;
+	// everything below reads from this memo so the setup wizard stays stable.
+	const allMembers = React.useMemo(() => (myMembership ? [myMembership, ...members] : members), [myMembership, members]);
 
 	const drawingChip = (uid: string, clickable: boolean = true) => {
-		let member = [myMembership!, ...members].find((m) => m.user_id === uid);
+		let member = allMembers.find((m) => m.user_id === uid);
 		let name = `${member?.profile.first_name} ${member?.profile.last_name}`.trim();
 
 		return (
@@ -192,7 +215,7 @@ export default function SecretSanta({ group, members }: SecretSantaProps) {
 
 							for (const drawing in group.secret_santa.drawing) {
 								if (drawing !== user.id && drawing.startsWith(user.id)) {
-									let listMember = [myMembership!, ...members].find((m) => m.user_id === drawing);
+									let listMember = allMembers.find((m) => m.user_id === drawing);
 
 									listDrawings.push(
 										<div className='mt-3' key={drawing}>
@@ -212,7 +235,7 @@ export default function SecretSanta({ group, members }: SecretSantaProps) {
 			<Dialog
 				open={group.my_membership[0].owner && open}
 				onOpenChange={(next) => {
-					if (!next) navigate('#');
+					if (!next) handleClose();
 				}}
 			>
 				<DialogContent fullScreenOnMobile>
@@ -220,35 +243,41 @@ export default function SecretSanta({ group, members }: SecretSantaProps) {
 						<DialogTitle>Draw names for your Secret Santa gift exchange!</DialogTitle>
 					</DialogHeader>
 
-					<div className='flex flex-col gap-4'>
-						<SecretSantaSetup
-							members={[myMembership!, ...members]}
-							eventName={eventName}
-							setEventName={setEventName}
-							eventDate={eventDate}
-							setEventDate={setEventDate}
-							setDrawing={setDrawing}
-							setAllowCreate={setAllowCreate}
-						/>
+					{myMembership ? (
+						<div className='flex flex-col gap-4'>
+							<SecretSantaSetup
+								members={allMembers}
+								eventName={eventName}
+								setEventName={setEventName}
+								eventDate={eventDate}
+								setEventDate={setEventDate}
+								setDrawing={setDrawing}
+								setAllowCreate={setAllowCreate}
+							/>
 
-						<div className='flex justify-end gap-2'>
-							<Button variant='ghost' onClick={() => navigate('#')}>
-								Cancel
-							</Button>
+							<div className='flex justify-end gap-2'>
+								<Button variant='ghost' onClick={handleClose} disabled={updateGroup.isLoading}>
+									Cancel
+								</Button>
 
-							<Button
-								{...({ 'tour-element': 'group_create' } as object)}
-								onClick={() => {
-									if (drawing) enabledSecretSanta(drawing);
-								}}
-								loading={updateGroup.isLoading}
-								disabled={!allowCreate}
-							>
-								Draw Names
-								<Shuffle />
-							</Button>
+								<Button
+									{...({ 'tour-element': 'group_create' } as object)}
+									onClick={() => {
+										if (drawing) enabledSecretSanta(drawing);
+									}}
+									loading={updateGroup.isLoading}
+									disabled={!allowCreate || !drawing}
+								>
+									Draw Names
+									<Shuffle />
+								</Button>
+							</div>
 						</div>
-					</div>
+					) : (
+						<div className='flex justify-center py-10'>
+							<Spinner size={32} />
+						</div>
+					)}
 				</DialogContent>
 			</Dialog>
 		</>

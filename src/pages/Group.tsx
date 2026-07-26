@@ -92,6 +92,9 @@ export default function Group() {
 
 	const pinned = groups?.find((g) => g.id === groupID)?.my_membership[0].pinned;
 
+	// Memoized so children (Secret Santa) get a stable array reference.
+	const visibleMembers = React.useMemo(() => members?.filter((m) => !m.invite) ?? [], [members]);
+
 	return (
 		<>
 			{groupsLoading || membersLoading ? (
@@ -132,17 +135,15 @@ export default function Group() {
 							<ListUnassignedAlert open={profile?.enable_lists && lists?.filter((l) => !l.child_list && l.groups.find((g) => g.id === groupID)).length === 0} />
 
 							<div className='mx-auto max-w-6xl px-4 pt-4 pb-12'>
-								{members?.filter((m) => !m.invite).length! > 1 && <SecretSanta group={groups?.find((g) => g.id === groupID)!} members={members?.filter((m) => !m.invite) ?? []} />}
+								{visibleMembers.length > 1 && <SecretSanta group={groups?.find((g) => g.id === groupID)!} members={visibleMembers} />}
 
 								<div className='flex flex-wrap justify-center gap-4'>
-									{members
-										?.filter((m) => !m.invite)
-										.map((member, index) => (
-											<RenderMember key={member.user_id} index={index} member={member} navigate={navigate} tour={tour} updateTour={updateTour} />
-										))}
+									{visibleMembers.map((member, index) => (
+										<RenderMember key={member.user_id} index={index} member={member} navigate={navigate} tour={tour} updateTour={updateTour} />
+									))}
 								</div>
 
-								{members?.filter((m) => !m.invite).length === 0 && (!groupsLoading || !membersLoading) && (
+								{visibleMembers.length === 0 && (!groupsLoading || !membersLoading) && (
 									<p className='mt-24 text-center text-xl font-medium'>This group has no members, invite some friends and family!</p>
 								)}
 							</div>
