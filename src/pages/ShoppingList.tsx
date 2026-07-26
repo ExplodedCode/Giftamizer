@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSnackbar } from '../lib/snackbar';
 
-import { shoppingTourProgress, useClaimedItems, useGetTour, useUpdateTour, SKIP_SHOPPING_TOUR } from '../lib/useSupabase';
+import { shoppingTourProgress, useClaimedItems, useGetTour, useUpdateTour, useActiveTourLeg, SKIP_SHOPPING_TOUR } from '../lib/useSupabase';
 
 import ItemCard from '../components/ItemCard';
 import { ItemStatuses, MemberItemType } from '../lib/useSupabase/types';
@@ -44,6 +44,7 @@ export default function ShoppingList() {
 	// user tour
 	const { data: tour } = useGetTour();
 	const updateTour = useUpdateTour();
+	const activeTourLeg = useActiveTourLeg();
 
 	const handleSkipTour = () => {
 		updateTour.mutateAsync(SKIP_SHOPPING_TOUR);
@@ -85,7 +86,7 @@ export default function ShoppingList() {
 
 				<ItemCreate shoppingItem />
 
-				{tour && (
+				{tour && activeTourLeg === 'shopping' && (
 					<>
 						<TourTooltip
 							open={shoppingTourProgress(tour) === 'shopping_filter' && location.hash === ''}
@@ -93,7 +94,7 @@ export default function ShoppingList() {
 							placement='bottom'
 							content={
 								<div>
-									<p>Purchased items are filtered out here.</p>
+									<p>Everything you've marked as planned or purchased lands here. Items you've already bought are hidden until you turn this on.</p>
 									<div className='mt-1 flex justify-end gap-2'>
 										<TourSkipButton onClick={handleSkipTour} loading={updateTour.isLoading}>
 											Skip Shopping Tour
@@ -108,7 +109,7 @@ export default function ShoppingList() {
 											}}
 											loading={updateTour.isLoading}
 										>
-											Got it
+											Next
 										</Button>
 									</div>
 								</div>
@@ -118,10 +119,10 @@ export default function ShoppingList() {
 						<TourTooltip
 							open={shoppingTourProgress(tour) === 'shopping_item' && location.hash === ''}
 							anchorEl={document.querySelector('[tour-element="shopping_item_create_fab"]')}
-							placement='bottom'
+							placement='top-end'
 							content={
 								<div>
-									<p>Add items you plan on getting for other people even if they don't have it on their list.</p>
+									<p>Buying something that isn't on anyone's list? Add it here and it'll be tracked alongside the rest.</p>
 									<div className='mt-1 flex justify-end'>
 										<Button
 											variant='secondary'
@@ -138,6 +139,8 @@ export default function ShoppingList() {
 									</div>
 								</div>
 							}
+							mask
+							allowClick
 						/>
 					</>
 				)}

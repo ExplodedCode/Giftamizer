@@ -11,6 +11,7 @@ import {
 	FakeDelay,
 	StandardizeURL,
 	groupTourProgress,
+	useActiveTourLeg,
 	useArchiveItem,
 	useDeleteItem,
 	useGetProfile,
@@ -223,6 +224,7 @@ function ItemStatus({ index, item, claimError, setClaimError }: ItemStatusProps)
 	// user tour
 	const { data: tour } = useGetTour();
 	const updateTour = useUpdateTour();
+	const activeTourLeg = useActiveTourLeg();
 	const isMobile = useMediaQuery('(max-width: 599.95px)');
 
 	const claimedByOther = item.status?.user_id !== undefined && item.status?.user_id !== user.id;
@@ -287,6 +289,7 @@ function ItemStatus({ index, item, claimError, setClaimError }: ItemStatusProps)
 			{index === 0 &&
 			location.hash === '' &&
 			location.pathname.startsWith('/groups/') &&
+			activeTourLeg === 'group' &&
 			(groupTourProgress(tour ?? {}, isMobile) === 'group_member_item_status' || groupTourProgress(tour ?? {}, isMobile) === 'group_member_item_status_taken') ? (
 				<TourHint
 					placement='bottom-start'
@@ -295,20 +298,21 @@ function ItemStatus({ index, item, claimError, setClaimError }: ItemStatusProps)
 						<>
 							{groupTourProgress(tour ?? {}, isMobile) === 'group_member_item_status' && (
 								<div className='flex flex-col gap-2'>
-									<p className='text-base font-semibold'>Item Claim Status:</p>
+									<p className='text-base font-semibold'>Claim an item</p>
+									<p>Click the status button to cycle it, so nobody buys the same gift twice.</p>
 
 									<div className='flex flex-col gap-2 rounded-lg bg-card p-2.5 text-card-foreground'>
 										<div className='flex items-center gap-2'>
 											<DemoStatusButton variant='available'>Available</DemoStatusButton>
-											<span className='text-sm'>- Available for purchase</span>
+											<span className='text-sm'>— nobody has claimed it</span>
 										</div>
 										<div className='flex items-center gap-2'>
 											<DemoStatusButton variant='planned'>Planned</DemoStatusButton>
-											<span className='text-sm'>- Planned for purchase</span>
+											<span className='text-sm'>— you intend to buy it</span>
 										</div>
 										<div className='flex items-center gap-2'>
 											<DemoStatusButton variant='purchased'>Purchased</DemoStatusButton>
-											<span className='text-sm'>- Purchased</span>
+											<span className='text-sm'>— you've bought it</span>
 										</div>
 									</div>
 
@@ -333,20 +337,20 @@ function ItemStatus({ index, item, claimError, setClaimError }: ItemStatusProps)
 
 							{groupTourProgress(tour ?? {}, isMobile) === 'group_member_item_status_taken' && (
 								<div className='flex flex-col gap-2'>
-									<p>Disabled Buttons will indicate that the item has been claimed by someone else.</p>
+									<p>A faded, unclickable button means someone else got there first.</p>
 
 									<div className='flex flex-col gap-2 rounded-lg bg-card p-2.5 text-card-foreground'>
 										<div className='flex items-center gap-2'>
 											<DemoStatusButton variant='planned' faded>
 												Planned
 											</DemoStatusButton>
-											<span className='text-sm'>- Planned by someone else</span>
+											<span className='text-sm'>— someone else plans to buy it</span>
 										</div>
 										<div className='flex items-center gap-2'>
 											<DemoStatusButton variant='purchased' faded>
 												Purchased
 											</DemoStatusButton>
-											<span className='text-sm'>- Purchased by someone else</span>
+											<span className='text-sm'>— someone else already bought it</span>
 										</div>
 									</div>
 

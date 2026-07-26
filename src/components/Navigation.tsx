@@ -12,6 +12,7 @@ import {
 	groupTourProgress,
 	listTourProgress,
 	shoppingTourProgress,
+	useActiveTourLeg,
 	SKIP_GROUP_TOUR,
 	SKIP_LIST_TOUR,
 	SKIP_SHOPPING_TOUR,
@@ -155,6 +156,7 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 	// user tour
 	const { data: tour } = useGetTour();
 	const updateTour = useUpdateTour();
+	const activeTourLeg = useActiveTourLeg();
 	const [tourStart, setTourStart] = React.useState<boolean>(false);
 
 	React.useEffect(() => {
@@ -171,7 +173,7 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 		return (
 			<div className='flex flex-col gap-1'>
 				<p className='text-base font-semibold'>{groups?.filter((g) => !g.my_membership[0].invite).length !== 0 ? "Let's explore groups!" : "Let's create a group!"}</p>
-				<p>Share your items with your friends and family.</p>
+				<p>Groups are how your items reach your friends and family.</p>
 
 				<div className='mt-1 flex justify-end'>
 					<TourSkipButton onClick={handleSkipGroupTour} loading={updateTour.isLoading}>
@@ -186,12 +188,12 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 		updateTour.mutateAsync(SKIP_LIST_TOUR);
 	};
 
+	// Kept short on purpose - the Lists page opens with the full explanation.
 	const tourListNav = () => {
 		return (
 			<div className='flex flex-col gap-1'>
-				<p className='text-base font-semibold'>Let's explore lists!</p>
-				<p>Lists give you more control over who can see specific items.</p>
-				<p>Even create separate managed lists for your kids or pets.</p>
+				<p className='text-base font-semibold'>Lists are on!</p>
+				<p>Open Lists to choose who sees which items.</p>
 
 				<div className='mt-1 flex justify-end'>
 					<TourSkipButton onClick={handleSkipListTour} loading={updateTour.isLoading}>
@@ -209,8 +211,8 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 	const tourShoppingNav = () => {
 		return (
 			<div className='flex flex-col gap-1'>
-				<p className='text-base font-semibold'>Let's explore shopping!</p>
-				<p>When you mark an item as planned or purchased, it will show up in shopping for easy access when you're out buying gifts!</p>
+				<p className='text-base font-semibold'>Last stop: your shopping list</p>
+				<p>Every item you mark as planned or purchased collects here, ready for when you're actually out buying gifts.</p>
 
 				<div className='mt-1 flex justify-end'>
 					<TourSkipButton onClick={handleSkipShoppingTour} loading={updateTour.isLoading}>
@@ -220,6 +222,15 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 			</div>
 		);
 	};
+
+	const groupNavHint =
+		activeTourLeg === 'group' &&
+		tourStart &&
+		groupTourProgress(tour ?? {}, false) === 'group_nav' &&
+		groups?.filter((g) => g.my_membership[0].invite).length === 0 &&
+		location.hash === '';
+	const listNavHint = activeTourLeg === 'list' && tourStart && listTourProgress(tour ?? {}) === 'list_tour_start' && location.hash === '';
+	const shoppingNavHint = activeTourLeg === 'shopping' && tourStart && shoppingTourProgress(tour ?? {}) === 'shopping_nav' && location.hash === '';
 
 	React.useEffect(() => {
 		client
@@ -420,7 +431,7 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 					{profile?.enable_lists && lists && (
 						<>
 							<div className='flex items-center'>
-								<TourHint title={tourListNav()} placement='right-start' open={isDesktop && tourStart && listTourProgress(tour ?? {}) === 'list_tour_start' && location.hash === ''}>
+								<TourHint title={tourListNav()} placement='right-start' open={isDesktop && listNavHint}>
 									<Link
 										to='/lists'
 										className={cn(navRowClasses(!!listsSelected, drawerOpen), 'min-w-0 flex-1')}
@@ -462,11 +473,7 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 					)}
 
 					<div className='flex items-center'>
-						<TourHint
-							title={tourGroupNav()}
-							placement='right-start'
-							open={isDesktop && tourStart && groupTourProgress(tour ?? {}, false) === 'group_nav' && groups?.filter((g) => g.my_membership[0].invite).length === 0 && location.hash === ''}
-						>
+						<TourHint title={tourGroupNav()} placement='right-start' open={isDesktop && groupNavHint}>
 							<Link
 								to='/groups'
 								className={cn(navRowClasses(!!groupsSelected, drawerOpen), 'min-w-0 flex-1')}
@@ -509,7 +516,7 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 				<Separator className='my-2' />
 
 				<nav className='flex flex-col gap-0.5 px-2'>
-					<TourHint title={tourShoppingNav()} placement='right-start' open={isDesktop && tourStart && shoppingTourProgress(tour ?? {}) === 'shopping_nav' && location.hash === ''}>
+					<TourHint title={tourShoppingNav()} placement='right-start' open={isDesktop && shoppingNavHint}>
 						<Link
 							to='/shopping'
 							className={navRowClasses(location.pathname === '/shopping', drawerOpen)}
@@ -586,7 +593,7 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 				</button>
 
 				{profile?.enable_lists && (
-					<TourHint title={tourListNav()} placement='top' open={!isDesktop && tourStart && listTourProgress(tour ?? {}) === 'list_tour_start' && location.hash === ''}>
+					<TourHint title={tourListNav()} placement='top' open={!isDesktop && listNavHint}>
 						<button
 							type='button'
 							onClick={() => {
@@ -608,11 +615,7 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 					</TourHint>
 				)}
 
-				<TourHint
-					title={tourGroupNav()}
-					placement='top'
-					open={!isDesktop && tourStart && groupTourProgress(tour ?? {}, false) === 'group_nav' && groups?.filter((g) => g.my_membership[0].invite).length === 0 && location.hash === ''}
-				>
+				<TourHint title={tourGroupNav()} placement='top' open={!isDesktop && groupNavHint}>
 					<button
 						type='button'
 						onClick={() => {
@@ -633,7 +636,7 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 					</button>
 				</TourHint>
 
-				<TourHint title={tourShoppingNav()} placement='top' open={!isDesktop && tourStart && shoppingTourProgress(tour ?? {}) === 'shopping_nav' && location.hash === ''}>
+				<TourHint title={tourShoppingNav()} placement='top' open={!isDesktop && shoppingNavHint}>
 					<button
 						type='button'
 						onClick={() => {

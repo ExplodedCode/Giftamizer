@@ -5,12 +5,12 @@ import { useSnackbar } from '../lib/snackbar';
 
 import { Link2, Plus, ShoppingCart, Trash2 } from 'lucide-react';
 
-import { useSupabase, useCreateItem, useGetProfile, ExtractURLFromText, useUpdateTour, itemTourProgress, useGetTour, useGetItems } from '../lib/useSupabase';
+import { useSupabase, useCreateItem, useGetProfile, ExtractURLFromText, useUpdateTour, itemTourProgress, useGetTour, useGetItems, SKIP_ITEM_TOUR } from '../lib/useSupabase';
 import { CustomField, ListType, Profile } from '../lib/useSupabase/types';
 
 import ListSelector from './ListSelector';
 import ImageCropper from './ImageCropper';
-import TourTooltip, { TourContent } from './TourTooltip';
+import TourTooltip, { TourContent, TourSkipButton } from './TourTooltip';
 import UserSearchSingle from './UserSearchSingle';
 
 import { cn } from '../lib/utils';
@@ -60,6 +60,11 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 				shopping_item: selectedUser?.user_id ?? null,
 			})
 			.then(() => {
+				// The item exists now, so the tour has nothing left to demonstrate.
+				// Retiring it here rather than in handleClose keeps a plain cancel
+				// (or a stray dialog dismiss) from silently ending the tour.
+				if (itemTourProgress(tour ?? {}, profile?.enable_lists) !== null) skipTour();
+
 				handleClose();
 			})
 			.catch((err) => {
@@ -81,10 +86,6 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 		setSelectedUser(undefined);
 
 		navigate('#'); // close dialog
-
-		if (itemTourProgress(tour ?? {}) !== null) {
-			skipTour();
-		}
 	};
 
 	const [metaImage, setMetaImage] = React.useState<string | undefined>();
@@ -136,15 +137,7 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 	const updateTour = useUpdateTour();
 
 	const skipTour = async () => {
-		updateTour.mutateAsync({
-			item_create_fab: true,
-			item_name: true,
-			item_url: true,
-			item_more_links: true,
-			item_custom_fields: true,
-			item_image: true,
-			item_create_btn: true,
-		});
+		updateTour.mutateAsync(SKIP_ITEM_TOUR);
 	};
 
 	React.useEffect(() => {
@@ -163,20 +156,15 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 
 	const welcomeTourContent = (
 		<TourContent title='Welcome to Giftamizer!'>
-			<p>
-				{items?.length === 0 && `Let's create your first item! `}
-				By default items are shared to all of your groups.
-			</p>
+			<p>Items are the gifts you'd like to receive — everyone in your groups can see them.</p>
 			{!profile?.enable_lists && (
-				<>
-					<p className='opacity-80'>For more control over who can see specific items, enable lists in the settings.</p>
-					<p className='opacity-80'>You can even create separate managed lists for your kids or pets.</p>
-				</>
+				<p className='opacity-80'>Want finer control over who sees what? Turn on Lists in your settings — you can even keep separate lists for your kids or pets.</p>
 			)}
-			<div className='mt-1 flex'>
-				<Button variant='secondary' size='sm' onClick={skipTour} loading={updateTour.isLoading}>
+			<p className='font-medium'>Use the + button to add {items?.length === 0 ? 'your first item' : 'an item'}.</p>
+			<div className='mt-1 flex justify-end'>
+				<TourSkipButton onClick={skipTour} loading={updateTour.isLoading}>
 					Skip Item Tour
-				</Button>
+				</TourSkipButton>
 			</div>
 		</TourContent>
 	);
@@ -284,7 +272,7 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 						{shoppingItem && <UserSearchSingle selectedUser={selectedUser} setSelectedUser={setSelectedUser} label='Gift For' required />}
 
 						<FormField label='Name' required>
-							<Input {...({ 'tour-element': 'item_name' } as object)} required value={name} onChange={(e) => setName(e.target.value)} maxLength={100} />
+							<Input required value={name} onChange={(e) => setName(e.target.value)} maxLength={100} />
 						</FormField>
 
 						<FormField label='Description'>
@@ -318,16 +306,9 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 										<SimpleTooltip title={index === 0 ? 'Add another URL' : 'Remove URL'} side='left'>
 											<button
 												type='button'
-												{...({ 'tour-element': index === 0 ? 'item_more_links' : undefined } as object)}
 												onClick={() => {
 													if (index === 0) {
 														setLinks([...links, '']);
-
-														if (!tour?.item_more_links) {
-															updateTour.mutateAsync({
-																item_more_links: true,
-															});
-														}
 													} else {
 														setLinks(links.filter((l, i) => i !== index));
 													}
@@ -382,7 +363,7 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 							</div>
 						))}
 
-						{profile?.enable_lists && !shoppingItem && <ListSelector value={lists} onChange={(v) => setLists(v)} />}
+						{profile?.enable_lists && !shoppingItem && <ListSelector tourElement='item_list_assign' value={lists} onChange={(v) => setLists(v)} />}
 
 						<div className='flex items-center justify-between gap-2'>
 							<Button
@@ -425,92 +406,74 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 			</Dialog>
 
 			{fabLoaded && !imageDialogOpen && tour && (
-				<>
-					<TourTooltip
-						open={itemTourProgress(tour) === 'item_create_fab' && location.hash === ''}
-						anchorEl={document.querySelector('[tour-element="item_create_fab"]')}
-						placement='top-end'
-						content={welcomeTourContent}
-						mask
-						allowClick
-					/>
-				</>
+				<TourTooltip
+					open={itemTourProgress(tour, profile?.enable_lists) === 'item_create_fab' && location.hash === ''}
+					anchorEl={document.querySelector('[tour-element="item_create_fab"]')}
+					placement='top-end'
+					content={welcomeTourContent}
+					mask
+					allowClick
+				/>
 			)}
 
+			{/* Steps follow the form top to bottom. The name field is deliberately
+			    un-toured: its label already says what it is. */}
 			{fabLoaded && dialogOpenedTour && !imageDialogOpen && tour && (
 				<>
 					<TourTooltip
-						open={itemTourProgress(tour) === 'item_create_fab' && location.hash === ''}
-						anchorEl={document.querySelector('[tour-element="item_create_fab"]')}
-						placement='top-end'
-						content={welcomeTourContent}
-						mask
-						allowClick
-					/>
-					<TourTooltip
-						open={itemTourProgress(tour) === 'item_name' && location.hash === '#create-item'}
-						anchorEl={document.querySelector('[tour-element="item_name"]')}
-						placement='bottom'
-						content={
-							<div>
-								<p>Give your item a name.</p>
-								{tourNextButton('item_name')}
-							</div>
-						}
-						allowClick
-						mask
-					/>
-					<TourTooltip
-						open={itemTourProgress(tour) === 'item_image' && location.hash === '#create-item'}
+						open={itemTourProgress(tour, profile?.enable_lists) === 'item_image' && location.hash === '#create-item'}
 						anchorEl={document.querySelector('[tour-element="item_image"]')}
 						placement='bottom'
 						content={
 							<div>
-								<p>A picture is worth a thousand words! Add images to your items so your friends know exactly what you want.</p>
+								<p>A picture is worth a thousand words. Add one so your friends know exactly what you want.</p>
 								{tourNextButton('item_image')}
 							</div>
 						}
 					/>
 					<TourTooltip
-						open={itemTourProgress(tour) === 'item_url' && location.hash === '#create-item'}
+						open={itemTourProgress(tour, profile?.enable_lists) === 'item_url' && location.hash === '#create-item'}
 						anchorEl={document.querySelector('[tour-element="item_url"]')}
 						placement='top'
 						content={
-							<TourContent title='Add links to you items!'>
-								<p>If the URL is supported, Giftamizer will automatically fill in the item details.</p>
+							<TourContent title='Paste a link, skip the typing'>
+								<p>For supported stores, Giftamizer fills in the name, picture, description and price for you.</p>
+								<p className='opacity-80'>Use the link button to add up to five links for the same item.</p>
 								{tourNextButton('item_url')}
 							</TourContent>
 						}
 					/>
 					<TourTooltip
-						open={itemTourProgress(tour) === 'item_more_links' && location.hash === '#create-item'}
-						anchorEl={document.querySelector('[tour-element="item_more_links"]')}
-						placement='top'
-						content={
-							<div>
-								<p>You can even add multiple links!</p>
-								{tourNextButton('item_more_links')}
-							</div>
-						}
-					/>
-					<TourTooltip
-						open={itemTourProgress(tour) === 'item_custom_fields' && location.hash === '#create-item'}
+						open={itemTourProgress(tour, profile?.enable_lists) === 'item_custom_fields' && location.hash === '#create-item'}
 						anchorEl={document.querySelector('[tour-element="item_custom_fields"]')}
 						placement='top'
 						content={
 							<TourContent title='Custom Fields'>
-								<p>Provide more information about a specific product.</p>
+								<p>Add any detail that matters — size, color, or model number.</p>
 								{tourNextButton('item_custom_fields')}
 							</TourContent>
 						}
 					/>
+					{profile?.enable_lists && !shoppingItem && (
+						<TourTooltip
+							open={itemTourProgress(tour, profile?.enable_lists) === 'item_list_assign' && location.hash === '#create-item'}
+							anchorEl={document.querySelector('[tour-element="item_list_assign"]')}
+							placement='top'
+							content={
+								<TourContent title='Choose which lists get this item'>
+									<p>An item is only visible to a group if it's on a list you've shared with that group.</p>
+									{tourNextButton('item_list_assign')}
+								</TourContent>
+							}
+						/>
+					)}
 					<TourTooltip
-						open={itemTourProgress(tour) === 'item_create_btn' && location.hash === '#create-item'}
+						open={itemTourProgress(tour, profile?.enable_lists) === 'item_create_btn' && location.hash === '#create-item'}
 						anchorEl={document.querySelector('[tour-element="item_create_btn"]')}
 						placement='top'
 						content={
 							<div>
-								<p>When you have everything ready, click Create to add the item.</p>
+								<p>That's everything — create the item. You can edit or delete it any time from your items page.</p>
 								{tourNextButton('item_create_btn', 'Got it')}
 							</div>
 						}

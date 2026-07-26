@@ -397,11 +397,10 @@ export default function Account() {
 					onClick={() => {
 						updateTour.mutateAsync({
 							item_create_fab: false,
-							item_name: false,
-							item_url: false,
-							item_more_links: false,
-							item_custom_fields: false,
 							item_image: false,
+							item_url: false,
+							item_custom_fields: false,
+							item_list_assign: false,
 							item_create_btn: false,
 
 							group_invite_nav: false,
@@ -409,9 +408,7 @@ export default function Account() {
 
 							group_nav: false,
 							group_create_fab: false,
-							group_create_name: false,
 							group_create_image: false,
-							group_create: false,
 							group_card: false,
 							group_settings: false,
 							group_pin: false,
@@ -422,12 +419,14 @@ export default function Account() {
 
 							group_settings_add_people: false,
 							group_settings_permissions: false,
+							group_settings_secret_santa: false,
 
-							list_tour_start: false,
+							// `list_tour_start` gates the whole list leg on the Lists
+							// feature being on, so it tracks the toggle rather than reset.
+							list_tour_start: enableLists,
 							list_nav: false,
 							list_intro: false,
 							list_menu: false,
-							list_edit: false,
 							list_group_assign: false,
 
 							shopping_nav: false,

@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { useParams, useNavigate, NavigateFunction, useLocation } from 'react-router-dom';
-import { groupTourProgress, useGetGroupMembers, useGetGroups, useGetLists, useGetProfile, useGetTour, useSetGroupPin, useUpdateTour } from '../lib/useSupabase';
+import { groupTourProgress, useActiveTourLeg, useGetGroupMembers, useGetGroups, useGetLists, useGetProfile, useGetTour, useSetGroupPin, useUpdateTour } from '../lib/useSupabase';
 import { UseMutationResult } from '@tanstack/react-query';
 import { Member, TourSteps } from '../lib/useSupabase/types';
 
@@ -82,6 +82,7 @@ export default function Group() {
 	const [showTour, setShowTour] = React.useState<boolean>(false);
 	const { data: tour } = useGetTour();
 	const updateTour = useUpdateTour();
+	const activeTourLeg = useActiveTourLeg();
 	const isMobile = useMediaQuery('(max-width: 899.95px)');
 
 	React.useEffect(() => {
@@ -148,7 +149,7 @@ export default function Group() {
 								)}
 							</div>
 
-							{groups && showTour && tour && (
+							{groups && showTour && tour && activeTourLeg === 'group' && (
 								<>
 									<TourTooltip
 										open={groupTourProgress(tour, isMobile) === 'group_settings' && location.hash === ''}
@@ -156,7 +157,11 @@ export default function Group() {
 										placement='bottom-end'
 										content={
 											<div>
-												<p>{groups?.find((g) => g.id === groupID)?.my_membership[0].owner ? 'Manage your group members and settings here.' : 'Manage your group here.'}</p>
+												<p>
+													{groups?.find((g) => g.id === groupID)?.my_membership[0].owner
+														? 'Invite people, set who can manage the group, and start a Secret Santa in here.'
+														: 'Group details and your membership live in here.'}
+												</p>
 												<div className='mt-1 flex justify-end'>
 													<Button
 														variant='secondary'
@@ -181,7 +186,7 @@ export default function Group() {
 										placement='bottom-end'
 										content={
 											<div>
-												<p>Pin groups to the side navigation.</p>
+												<p>Pin this group to the sidebar so it's one click away.</p>
 												<div className='mt-1 flex justify-end'>
 													<Button
 														variant='secondary'
@@ -205,7 +210,7 @@ export default function Group() {
 										open={groupTourProgress(tour, isMobile) === 'group_member_card' && location.hash === ''}
 										anchorEl={document.querySelector('[tour-element="group_member_card"]')}
 										placement='bottom'
-										content={<p className='text-base font-semibold'>View items your friends and family shared!</p>}
+										content={<p className='text-base font-semibold'>Open someone to see the items they've shared.</p>}
 										mask
 										allowClick
 									/>

@@ -9,9 +9,11 @@ type ListSelectorProps = {
 	value?: ListType[];
 	onChange?: (value: ListType[]) => void;
 	disabled?: boolean;
+	/** Forwarded as the tour-element DOM attribute for the guided tour. */
+	tourElement?: string;
 };
 
-export default function ListSelector({ value, onChange, disabled }: ListSelectorProps) {
+export default function ListSelector({ value, onChange, disabled, tourElement }: ListSelectorProps) {
 	const { data: lists } = useGetLists();
 
 	const listTypeSelected = value?.length === 0 ? undefined : value?.[0]?.child_list ? 'child' : 'list';
@@ -19,6 +21,7 @@ export default function ListSelector({ value, onChange, disabled }: ListSelector
 	return lists ? (
 		<FormField label='Lists'>
 			<MultiCombobox<ListType>
+				tourElement={tourElement}
 				value={(value as ListType[]) ?? []}
 				onChange={(v) => {
 					if (onChange) onChange(v);

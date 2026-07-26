@@ -22,7 +22,7 @@ import { Baby, LogOut, Mail, Save, Send, Settings, Share2, Trash2 } from 'lucide
 
 import UserSearch from './UserSearch';
 import ImageCropper from './ImageCropper';
-import TourTooltip from './TourTooltip';
+import TourTooltip, { TourContent } from './TourTooltip';
 
 import { useMediaQuery } from '../lib/utils';
 import { Button } from './ui/button';
@@ -211,11 +211,14 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 		setSelectedInviteUsers([]);
 		if (changed) refetchMembers();
 
-		if (!tour?.group_settings || !tour?.group_settings_add_people || !tour?.group_settings_permissions) {
+		// Every step of this leg anchors to an owner-only control, so closing the
+		// dialog retires the whole leg rather than stalling members on it.
+		if (!tour?.group_settings || !tour?.group_settings_add_people || !tour?.group_settings_permissions || !tour?.group_settings_secret_santa) {
 			updateTour.mutateAsync({
 				group_settings: true,
 				group_settings_add_people: true,
 				group_settings_permissions: true,
+				group_settings_secret_santa: true,
 			});
 		}
 	};
@@ -405,7 +408,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 						</div>
 
 						{owner && secretSanta?.status === SecretSantaStatus.Off && (
-							<div>
+							<div {...({ 'tour-element': 'group_settings_secret_santa' } as object)} className='w-fit'>
 								<Button disabled={changed} loading={updateGroup.isLoading} onClick={handleSecretSantaEnable}>
 									Enable Secret Santa
 								</Button>
@@ -547,7 +550,7 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 						placement='top'
 						content={
 							<div>
-								<p>Invite existing Giftamizer users or send anyone an invite via email.</p>
+								<p>Search for people already on Giftamizer, or type an email address to invite someone new.</p>
 								<div className='mt-1 flex justify-end'>
 									<Button
 										variant='secondary'
@@ -572,9 +575,13 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 						anchorEl={document.querySelector('[tour-element="group_settings_permissions"]')}
 						placement='top'
 						content={
-							<div>
-								<p>Members can only view other member and either items.</p>
-								<p>Owners can manage groups settings and members.</p>
+							<div className='flex flex-col gap-1'>
+								<p>
+									<b>Members</b> can see everyone in the group and the items they've shared.
+								</p>
+								<p>
+									<b>Owners</b> can do that plus rename the group, invite people, and manage everyone's access.
+								</p>
 								<div className='mt-1 flex justify-end'>
 									<Button
 										variant='secondary'
@@ -586,10 +593,36 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 										}}
 										loading={updateTour.isLoading}
 									>
-										Got it
+										Next
 									</Button>
 								</div>
 							</div>
+						}
+						mask
+					/>
+
+					<TourTooltip
+						open={groupSettingsTourProgress(tour) === 'group_settings_secret_santa'}
+						anchorEl={document.querySelector('[tour-element="group_settings_secret_santa"]')}
+						placement='top'
+						content={
+							<TourContent title='Secret Santa'>
+								<p>Draw names for the group and everyone gets one person to shop for — each member only sees their own assignment.</p>
+								<div className='mt-1 flex justify-end'>
+									<Button
+										variant='secondary'
+										size='sm'
+										onClick={() => {
+											updateTour.mutateAsync({
+												group_settings_secret_santa: true,
+											});
+										}}
+										loading={updateTour.isLoading}
+									>
+										Got it
+									</Button>
+								</div>
+							</TourContent>
 						}
 						mask
 					/>

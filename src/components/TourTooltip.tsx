@@ -79,8 +79,13 @@ export default function TourTooltip({ open, anchorEl, placement = 'top', content
 				{/* pointerEvents must be forced: Radix's dismissable layer sets
 				    `pointer-events: none` on <body> while a modal Dialog or menu is
 				    open, which would otherwise make the tour's own buttons dead for
-				    every step anchored inside a dialog. */}
-				<div ref={refs.setFloating} style={{ ...floatingStyles, zIndex: 100000, pointerEvents: 'auto' }}>
+				    every step anchored inside a dialog.
+
+				    data-tour-callout marks this subtree for `isTourCalloutEvent` in
+				    ui/dialog.tsx. FloatingPortal mounts us on <body>, so without it
+				    Radix reads a click on our own buttons as an outside interaction
+				    and dismisses the dialog the step is anchored inside. */}
+				<div data-tour-callout='' ref={refs.setFloating} style={{ ...floatingStyles, zIndex: 100000, pointerEvents: 'auto' }}>
 					<div className='max-w-[400px] rounded-xl p-4 text-sm shadow-xl' style={{ backgroundColor: bg, color: fg }}>
 						{content}
 					</div>

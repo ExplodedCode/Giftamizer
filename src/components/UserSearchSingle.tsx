@@ -74,7 +74,6 @@ export default function UserSearchSingle(props: UserSearchProps) {
 	return (
 		<FormField label={props.label ?? 'Select User'} required={props.required}>
 			<Combobox<Profile>
-				tourElement='group_settings_add_people'
 				disabled={props.disabled}
 				value={props.selectedUser ?? null}
 				onChange={(newValue) => {

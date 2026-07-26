@@ -3,7 +3,7 @@ import React from 'react';
 import { NavigateFunction, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { UseMutationResult } from '@tanstack/react-query';
 
-import { groupTourProgress, useGetGroups, useGetTour, useUpdateTour } from '../lib/useSupabase';
+import { groupTourProgress, useActiveTourLeg, useGetGroups, useGetTour, useUpdateTour } from '../lib/useSupabase';
 import { GroupType, TourSteps } from '../lib/useSupabase/types';
 
 import GroupCreate from '../components/GroupCreate';
@@ -64,6 +64,7 @@ export default function Groups() {
 	const [showTour, setShowTour] = React.useState<boolean>(false);
 	const { data: tour } = useGetTour();
 	const updateTour = useUpdateTour();
+	const activeTourLeg = useActiveTourLeg();
 
 	React.useEffect(() => {
 		if (!isLoading) {
@@ -102,13 +103,13 @@ export default function Groups() {
 
 			<GroupCreate />
 
-			{groups && groups?.filter((g) => g.my_membership[0].invite).length === 0 && showTour && tour && location.hash === '' && (
+			{groups && groups?.filter((g) => g.my_membership[0].invite).length === 0 && showTour && tour && activeTourLeg === 'group' && location.hash === '' && (
 				<>
 					<TourTooltip
 						open={groupTourProgress(tour, false) === 'group_card'}
 						anchorEl={document.querySelector('[tour-element="group_card"]')}
 						placement='bottom'
-						content={<p className='text-base font-semibold'>Open the Group to view the members!</p>}
+						content={<p className='text-base font-semibold'>Open a group to see who's in it.</p>}
 						mask
 						allowClick
 					/>

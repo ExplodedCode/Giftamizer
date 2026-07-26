@@ -22,6 +22,18 @@ function DialogOverlay({ className, ...props }: React.ComponentProps<typeof Dial
 	);
 }
 
+/**
+ * True when a Radix "outside interaction" actually originated inside a guided-tour
+ * callout. Tour callouts are portaled onto <body> (TourTooltip via floating-ui's
+ * FloatingPortal, TourHint via a Radix Popover portal), so a click on their own
+ * Next/Skip buttons reads as outside any dialog the step is anchored inside — and
+ * would dismiss it out from under the tour.
+ */
+function isTourCalloutEvent(originalEvent: Event) {
+	const target = originalEvent.target;
+	return target instanceof Element && target.closest('[data-tour-callout]') !== null;
+}
+
 type DialogContentProps = React.ComponentProps<typeof DialogPrimitive.Content> & {
 	/**
 	 * When false, the dialog cannot be dismissed via Esc / outside click and the
@@ -36,15 +48,38 @@ type DialogContentProps = React.ComponentProps<typeof DialogPrimitive.Content> &
 	size?: 'sm' | 'default' | 'lg' | 'xl';
 };
 
-function DialogContent({ className, children, dismissible = true, fullScreenOnMobile = false, hideCloseButton = false, size = 'default', ...props }: DialogContentProps) {
+// The dismiss handlers are destructured out of `props` rather than read off it:
+// `{...props}` is spread last onto Content, so leaving them in would let a call
+// site's own handler replace the composed one below.
+function DialogContent({
+	className,
+	children,
+	dismissible = true,
+	fullScreenOnMobile = false,
+	hideCloseButton = false,
+	size = 'default',
+	onEscapeKeyDown,
+	onPointerDownOutside,
+	onInteractOutside,
+	...props
+}: DialogContentProps) {
 	return (
 		<DialogPortal>
 			<DialogOverlay />
 			<DialogPrimitive.Content
 				data-slot='dialog-content'
-				onEscapeKeyDown={dismissible ? props.onEscapeKeyDown : (e) => e.preventDefault()}
-				onPointerDownOutside={dismissible ? props.onPointerDownOutside : (e) => e.preventDefault()}
-				onInteractOutside={dismissible ? props.onInteractOutside : (e) => e.preventDefault()}
+				onEscapeKeyDown={(event) => {
+					if (!dismissible) return event.preventDefault();
+					onEscapeKeyDown?.(event);
+				}}
+				onPointerDownOutside={(event) => {
+					if (isTourCalloutEvent(event.detail.originalEvent) || !dismissible) return event.preventDefault();
+					onPointerDownOutside?.(event);
+				}}
+				onInteractOutside={(event) => {
+					if (isTourCalloutEvent(event.detail.originalEvent) || !dismissible) return event.preventDefault();
+					onInteractOutside?.(event);
+				}}
 				className={cn(
 					'fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-full -translate-x-1/2 -translate-y-1/2 flex-col gap-4 overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-lg',
 					'data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95',

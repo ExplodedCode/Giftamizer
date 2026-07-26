@@ -42,12 +42,10 @@ export default function GroupCreate() {
 		setName('');
 		navigate('#'); // close dialog
 
-		if (!tour?.group_create_fab || !tour?.group_create_name || !tour?.group_create_image || !tour?.group_create) {
+		if (!tour?.group_create_fab || !tour?.group_create_image) {
 			updateTour.mutateAsync({
 				group_create_fab: true,
-				group_create_name: true,
 				group_create_image: true,
-				group_create: true,
 			});
 		}
 	};
@@ -130,7 +128,7 @@ export default function GroupCreate() {
 						</div>
 
 						<FormField label='Group Name' required>
-							<Input {...({ 'tour-element': 'group_create_name' } as object)} required value={name} onChange={(e) => setName(e.target.value)} />
+							<Input required value={name} onChange={(e) => setName(e.target.value)} />
 						</FormField>
 
 						<div className='flex justify-end gap-2'>
@@ -138,7 +136,7 @@ export default function GroupCreate() {
 								Cancel
 							</Button>
 
-							<Button {...({ 'tour-element': 'group_create' } as object)} onClick={handleCreate} loading={createGroup.isLoading} disabled={name.trim().length <= 0}>
+							<Button onClick={handleCreate} loading={createGroup.isLoading} disabled={name.trim().length <= 0}>
 								Create
 								<Plus />
 							</Button>
@@ -150,14 +148,12 @@ export default function GroupCreate() {
 			{fabLoaded && groups?.filter((g) => g.my_membership[0].invite).length === 0 && tour && (
 				<>
 					<TourTooltip
-						open={
-							(groupTourProgress(tour, false) === 'group_create_fab' && location.hash === '') ||
-							(groupTourProgress(tour, false) === 'group_create_fab' && !tour.group_nav && location.pathname === '/groups' && location.hash === '')
-						}
+						open={groupTourProgress(tour, false) === 'group_create_fab' && location.hash === ''}
 						anchorEl={document.querySelector('[tour-element="group_create_fab"]')}
 						placement='top-end'
 						content={
-							<TourContent title='Create new groups here!'>
+							<TourContent title='Start a group here'>
+								<p>A group is a circle of people — family, friends, coworkers — who can see each other's items.</p>
 								<div className='mt-1 flex justify-end'>
 									<Button
 										variant='secondary'
@@ -167,9 +163,7 @@ export default function GroupCreate() {
 												updateTour.mutateAsync({
 													group_nav: true,
 													group_create_fab: true,
-													group_create_name: true,
 													group_create_image: true,
-													group_create: true,
 												});
 											}
 										}}
@@ -186,85 +180,32 @@ export default function GroupCreate() {
 				</>
 			)}
 
-			{fabLoaded && dialogOpenedTour && groups?.filter((g) => g.my_membership[0].invite).length === 0 && tour && location.hash === '#new-group' && (
-				<>
-					<TourTooltip
-						open={groupTourProgress(tour, false) === 'group_create_name'}
-						anchorEl={document.querySelector('[tour-element="group_create_name"]')}
-						placement='top'
-						content={
-							<div>
-								<p>Give your group a name.</p>
-								<div className='mt-1 flex justify-end'>
-									<Button
-										variant='secondary'
-										size='sm'
-										onClick={() => {
-											updateTour.mutateAsync({
-												group_create_name: true,
-											});
-										}}
-										loading={updateTour.isLoading}
-									>
-										Next
-									</Button>
-								</div>
+			{/* The name field needs no callout - its label says what it is. */}
+			{fabLoaded && dialogOpenedTour && !imageDialogOpen && groups?.filter((g) => g.my_membership[0].invite).length === 0 && tour && location.hash === '#new-group' && (
+				<TourTooltip
+					open={groupTourProgress(tour, false) === 'group_create_image'}
+					anchorEl={document.querySelector('[tour-element="group_create_image"]')}
+					placement='bottom'
+					content={
+						<div>
+							<p>Add a photo of you and your family or friends so the group is easy to spot.</p>
+							<div className='mt-1 flex justify-end'>
+								<Button
+									variant='secondary'
+									size='sm'
+									onClick={() => {
+										updateTour.mutateAsync({
+											group_create_image: true,
+										});
+									}}
+									loading={updateTour.isLoading}
+								>
+									Got it
+								</Button>
 							</div>
-						}
-						allowClick
-						mask
-					/>
-
-					<TourTooltip
-						open={groupTourProgress(tour, false) === 'group_create_image'}
-						anchorEl={document.querySelector('[tour-element="group_create_image"]')}
-						placement='bottom'
-						content={
-							<div>
-								<p>Add a picture of you & your friends or family!</p>
-								<div className='mt-1 flex justify-end'>
-									<Button
-										variant='secondary'
-										size='sm'
-										onClick={() => {
-											updateTour.mutateAsync({
-												group_create_image: true,
-											});
-										}}
-										loading={updateTour.isLoading}
-									>
-										Next
-									</Button>
-								</div>
-							</div>
-						}
-					/>
-
-					<TourTooltip
-						open={groupTourProgress(tour, false) === 'group_create' && !imageDialogOpen}
-						anchorEl={document.querySelector('[tour-element="group_create"]')}
-						placement='top'
-						content={
-							<div>
-								<p>When you have everything ready, click Create to add the item.</p>
-								<div className='mt-1 flex justify-end'>
-									<Button
-										variant='secondary'
-										size='sm'
-										onClick={() => {
-											updateTour.mutateAsync({
-												group_create: true,
-											});
-										}}
-										loading={updateTour.isLoading}
-									>
-										Got it
-									</Button>
-								</div>
-							</div>
-						}
-					/>
-				</>
+						</div>
+					}
+				/>
 			)}
 		</>
 	);

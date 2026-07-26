@@ -10,7 +10,7 @@ import { Save } from 'lucide-react';
 
 import GroupSelector from './GroupSelector';
 import ImageCropper from './ImageCropper';
-import TourTooltip from './TourTooltip';
+import TourTooltip, { TourContent } from './TourTooltip';
 
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
@@ -130,33 +130,31 @@ export default function ListUpdate({ list, onClose }: ListUpdateProps) {
 			</Dialog>
 
 			{showTour && open && tour && groups && (
-				<>
-					<TourTooltip
-						open={listTourProgress(tour ?? {}) === 'list_group_assign'}
-						anchorEl={document.querySelector('[tour-element="list_group_assign"]')}
-						placement='top'
-						content={
-							<div>
-								<p>Assign your list to a group here.</p>
-								<div className='mt-1 flex justify-end'>
-									<Button
-										variant='secondary'
-										size='sm'
-										onClick={() => {
-											updateTour.mutateAsync({
-												list_group_assign: true,
-											});
-										}}
-										loading={updateTour.isLoading}
-									>
-										Got it
-									</Button>
-								</div>
+				<TourTooltip
+					open={listTourProgress(tour ?? {}) === 'list_group_assign'}
+					anchorEl={document.querySelector('[tour-element="list_group_assign"]')}
+					placement='top'
+					content={
+						<TourContent title='Pick the groups for this list'>
+							<p>Everyone in the groups you choose here can see the items on this list. Leave it empty and the list stays private to you.</p>
+							<div className='mt-1 flex justify-end'>
+								<Button
+									variant='secondary'
+									size='sm'
+									onClick={() => {
+										updateTour.mutateAsync({
+											list_group_assign: true,
+										});
+									}}
+									loading={updateTour.isLoading}
+								>
+									Got it
+								</Button>
 							</div>
-						}
-						allowClick
-					/>
-				</>
+						</TourContent>
+					}
+					allowClick
+				/>
 			)}
 		</>
 	);

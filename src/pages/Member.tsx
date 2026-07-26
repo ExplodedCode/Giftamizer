@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { useParams, useLocation } from 'react-router-dom';
-import { useSupabase, useGetGroupMembers, useGetGroups, useGetMemberItems, groupTourProgress, useGetTour, useUpdateTour } from '../lib/useSupabase';
+import { useSupabase, useGetGroupMembers, useGetGroups, useGetMemberItems, groupTourProgress, useActiveTourLeg, useGetTour, useUpdateTour } from '../lib/useSupabase';
 
 import { Filter } from 'lucide-react';
 
@@ -47,6 +47,7 @@ export default function Member() {
 	// User tour
 	const { data: tour } = useGetTour();
 	const updateTour = useUpdateTour();
+	const activeTourLeg = useActiveTourLeg();
 	const isMobile = useMediaQuery('(max-width: 599.95px)');
 
 	const filterActive = !showUnavailableItems && items?.filter((i) => !i.archived && !i.deleted)?.filter(filterItems).length !== items?.length && items?.length !== 0;
@@ -119,7 +120,7 @@ export default function Member() {
 								)}
 							</div>
 
-							{!groupsLoading && !membersLoading && !memberLoading && !showUnavailableItems && items?.length !== 0 && tour && (
+							{!groupsLoading && !membersLoading && !memberLoading && !showUnavailableItems && items?.length !== 0 && tour && activeTourLeg === 'group' && (
 								<>
 									<TourTooltip
 										open={groupTourProgress(tour, isMobile) === 'group_member_item_filter' && location.hash === ''}
@@ -127,7 +128,7 @@ export default function Member() {
 										placement='bottom'
 										content={
 											<TourContent title='Item Filter'>
-												<p>Some items may not be shown if they've been claimed by someone else.</p>
+												<p>Items already claimed by someone else are hidden. Turn on "Show Claimed Items" here if you want to see them anyway.</p>
 												<div className='mt-1 flex justify-end'>
 													<Button
 														variant='secondary'

@@ -33,6 +33,7 @@ function TourHint({ title, open, placement = 'bottom', children, className }: To
 			<PopoverPrimitive.Anchor asChild>{children}</PopoverPrimitive.Anchor>
 			<PopoverPrimitive.Portal>
 				<PopoverPrimitive.Content
+					data-tour-callout=''
 					side={side}
 					align={align}
 					sideOffset={8}

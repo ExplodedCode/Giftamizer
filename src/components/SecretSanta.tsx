@@ -261,7 +261,6 @@ export default function SecretSanta({ group, members }: SecretSantaProps) {
 								</Button>
 
 								<Button
-									{...({ 'tour-element': 'group_create' } as object)}
 									onClick={() => {
 										if (drawing) enabledSecretSanta(drawing);
 									}}

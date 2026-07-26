@@ -2,7 +2,7 @@ import * as React from 'react';
 import { SnackbarKey, useSnackbar } from '../lib/snackbar';
 import moment from 'moment';
 
-import { groupInviteTourProgress, itemTourProgress, useGetGroups, useGetTour, useSupabase, useUpdateTour } from '../lib/useSupabase';
+import { groupInviteTourProgress, useActiveTourLeg, useGetGroups, useGetTour, useSupabase, useUpdateTour } from '../lib/useSupabase';
 import { NotificationType } from '../lib/useSupabase/types';
 
 import { TransitionGroup } from 'react-transition-group';
@@ -96,6 +96,7 @@ export default function Notifications() {
 	// user tour
 	const { data: tour } = useGetTour();
 	const updateTour = useUpdateTour();
+	const activeTourLeg = useActiveTourLeg();
 
 	React.useEffect(() => {
 		const getNotifications = async () => {
@@ -203,7 +204,11 @@ export default function Notifications() {
 					<div className='flex items-center justify-between border-b border-border px-3 py-2'>
 						<p className='text-sm font-semibold'>Notifications</p>
 						<NotificationBadge count={inviteCount}>
-							<TourHint title='Open Group Invites' placement='bottom-end' open={groupInviteTourProgress(tour ?? {}) === 'group_invite_button' && open}>
+							<TourHint
+								title={<p className='font-semibold'>Review your invites here.</p>}
+								placement='bottom-end'
+								open={activeTourLeg === 'group_invite' && groupInviteTourProgress(tour ?? {}) === 'group_invite_button' && open}
+							>
 								<Button
 									variant='outline'
 									size='sm'
@@ -245,13 +250,13 @@ export default function Notifications() {
 
 			<InvitesDialog ref={invitesDialogRef} />
 
-			{!groupsLoading && tour && itemTourProgress(tour) === null && location.hash === '' && groups?.filter((g) => g.my_membership[0].invite).length !== 0 && (
+			{!groupsLoading && tour && activeTourLeg === 'group_invite' && location.hash === '' && (
 				<>
 					<TourTooltip
 						open={groupInviteTourProgress(tour) === 'group_invite_nav'}
 						anchorEl={document.querySelector('[tour-element="group_invite_nav"]')}
 						placement='bottom'
-						content={<TourContent title="You've been invited to a group!">Accept or decline group invites in the notification menu.</TourContent>}
+						content={<TourContent title="You've been invited to a group!">Open your notifications to accept or decline.</TourContent>}
 						mask
 						allowClick
 					/>
