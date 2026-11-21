@@ -23,9 +23,11 @@ type ImageCropperProps = {
 	square?: boolean;
 	importedImage?: string | undefined;
 	tour_element?: string;
+	/** Overrides the trigger button's sizing classes (default is a fixed 196px square). */
+	className?: string;
 };
 
-export default function ImageCropper({ value, onChange, onClick, onClose, disabled, aspectRatio, autoCropArea, square, importedImage, tour_element }: ImageCropperProps) {
+export default function ImageCropper({ value, onChange, onClick, onClose, disabled, aspectRatio, autoCropArea, square, importedImage, tour_element, className }: ImageCropperProps) {
 	const cropperRef = React.useRef(null);
 
 	const isMobile = useMediaQuery('(max-width: 599.95px)');
@@ -124,7 +126,8 @@ export default function ImageCropper({ value, onChange, onClick, onClose, disabl
 				className={cn(
 					'group flex size-[196px] cursor-pointer items-center justify-center overflow-hidden bg-muted text-muted-foreground transition-colors outline-none',
 					'hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50',
-					square ? 'rounded-xl' : 'rounded-full'
+					square ? 'rounded-xl' : 'rounded-full',
+					className
 				)}
 			>
 				{value ? <img src={value} alt='Selected' className='size-full object-cover' /> : <ImagePlus className='size-24 opacity-60 transition-opacity group-hover:opacity-90' />}

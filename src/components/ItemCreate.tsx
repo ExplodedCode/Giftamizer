@@ -6,10 +6,10 @@ import { useSnackbar } from '../lib/snackbar';
 import { Link2, Plus, ShoppingCart, Trash2 } from 'lucide-react';
 
 import { useSupabase, useCreateItem, useGetProfile, ExtractURLFromText, useUpdateTour, itemTourProgress, useGetTour, useGetItems, SKIP_ITEM_TOUR } from '../lib/useSupabase';
-import { CustomField, ListType, Profile } from '../lib/useSupabase/types';
+import { CustomField, ItemImageDraft, ListType, Profile } from '../lib/useSupabase/types';
 
 import ListSelector from './ListSelector';
-import ImageCropper from './ImageCropper';
+import ItemImagesInput, { MAX_ITEM_IMAGES, useRemoteImageImport } from './ItemImagesInput';
 import TourTooltip, { TourContent, TourSkipButton } from './TourTooltip';
 import UserSearchSingle from './UserSearchSingle';
 
@@ -33,8 +33,9 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 
 	const open = location.hash === '#create-item';
 
-	const [image, setImage] = React.useState<string | undefined>();
+	const [images, setImages] = React.useState<ItemImageDraft[]>([]);
 	const [availableImages, setAvailableImages] = React.useState<string[]>([]);
+	const importRemoteImage = useRemoteImageImport(setImages);
 	const [name, setName] = React.useState('');
 	const [description, setDescription] = React.useState('');
 	const [links, setLinks] = React.useState<string[]>(['']);
@@ -51,7 +52,7 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 	const handleCreate = async () => {
 		createItem
 			.mutateAsync({
-				image: image,
+				images: images,
 				name: name.trim(),
 				description: description,
 				links: links.map((l) => l.trim()).filter((l) => l.trim().length !== 0),
@@ -73,8 +74,7 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 	};
 
 	const handleClose = async () => {
-		setImage(undefined);
-		setMetaImage(undefined);
+		setImages([]);
 		setAvailableImages([]);
 
 		setName('');
@@ -88,7 +88,6 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 		navigate('#'); // close dialog
 	};
 
-	const [metaImage, setMetaImage] = React.useState<string | undefined>();
 	const [metaLoading, setMetaloading] = React.useState(false);
 	const getUrlMetadata = async (url: string) => {
 		const { data, error } = await client.functions.invoke('url-metadata', {
@@ -107,8 +106,8 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 			if (data?.title) setName(data?.title);
 			if (data?.description) setDescription(data?.description);
 			if (data?.images) {
-				setImage(data?.images[0]);
-				setMetaImage(data?.images[0]);
+				// Only auto-add the top scraped image if the user hasn't already picked any.
+				if (data.images[0]) importRemoteImage(data.images[0], { onlyIfEmpty: true, silent: true });
 				setAvailableImages(data?.images);
 			}
 
@@ -226,46 +225,42 @@ export default function ItemCreate({ defaultList, shoppingItem }: ItemCreateProp
 					</DialogHeader>
 
 					<div className='flex flex-col gap-4'>
-						<div className='flex justify-center'>
-							<ImageCropper
-								onClick={() => {
-									setImageDialogOpen(true);
-									if (!tour?.item_image) {
-										updateTour.mutateAsync({
-											item_image: true,
-										});
-									}
-								}}
-								onClose={() => {
-									setImageDialogOpen(false);
-								}}
-								tour_element='item_image'
-								value={image}
-								onChange={setImage}
-								square
-								importedImage={metaImage}
-							/>
-						</div>
+						<ItemImagesInput
+							value={images}
+							onChange={setImages}
+							tourElement='item_image'
+							onDialogOpenChange={(dialogOpen) => {
+								setImageDialogOpen(dialogOpen);
+								if (dialogOpen && !tour?.item_image) {
+									updateTour.mutateAsync({
+										item_image: true,
+									});
+								}
+							}}
+						/>
 
 						<Collapse in={availableImages.length > 0}>
 							<div className='flex gap-2 overflow-x-auto py-1'>
-								{availableImages.map((img, index) => (
-									<SimpleTooltip key={index} title='Use this image'>
-										<button
-											type='button'
-											onClick={() => {
-												setImage(img);
-												setMetaImage(img);
-											}}
-											className={cn(
-												'size-[100px] shrink-0 cursor-pointer overflow-hidden rounded-full border-2 transition-colors',
-												image === img ? 'border-primary' : 'border-border hover:border-primary/60'
-											)}
-										>
-											<img src={img} alt={`Image-${index}`} className='size-full object-cover' />
-										</button>
-									</SimpleTooltip>
-								))}
+								{availableImages.map((img, index) => {
+									const added = images.some((i) => i.source === img);
+									return (
+										<SimpleTooltip key={index} title={added ? 'Already added' : 'Add this image'}>
+											<button
+												type='button'
+												onClick={() => {
+													if (added || images.length >= MAX_ITEM_IMAGES) return;
+													importRemoteImage(img);
+												}}
+												className={cn(
+													'size-[100px] shrink-0 cursor-pointer overflow-hidden rounded-full border-2 transition-colors',
+													added ? 'border-primary' : 'border-border hover:border-primary/60'
+												)}
+											>
+												<img src={img} alt={`Image-${index}`} className='size-full object-cover' />
+											</button>
+										</SimpleTooltip>
+									);
+								})}
 							</div>
 						</Collapse>
 

@@ -75,10 +75,31 @@ export interface MemberType {
 	};
 }
 
+export interface ItemImage {
+	id: string;
+	url?: string;
+	position: number;
+}
+
+/** Shape of an image while it's being edited in ItemImagesInput, before being
+ * saved: `id` is only present for an already-persisted image, and `url` is
+ * either its signed URL (unchanged), a fresh `data:` URL (new/re-cropped), or
+ * '' for a persisted image whose signed URL failed to load (kept in the draft
+ * so saving other edits doesn't delete it). `source` is the scraped remote URL
+ * a `data:` image was imported from, used only to mark it "already added".
+ * `tempId` is a client-only identity for a not-yet-persisted image (React key,
+ * drag tracking) - never sent to the DB. */
+export interface ItemImageDraft {
+	id?: string;
+	tempId?: string;
+	url: string;
+	source?: string;
+}
+
 export interface ItemType {
 	id: string;
 	user_id: string;
-	image?: string;
+	images?: ItemImage[];
 	name: string;
 	description: string;
 	links?: string[];
