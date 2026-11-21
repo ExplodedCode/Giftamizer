@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { Baby, ClipboardList, ExternalLink, Gift, X } from 'lucide-react';
+import { Baby, ChevronLeft, ChevronRight, ClipboardList, ExternalLink, Gift, Images, X } from 'lucide-react';
 
 import ItemCardMenu from './ItemCardMenu';
 import ItemStatus from './ItemStatus';
@@ -29,8 +29,10 @@ export default function ItemCard({ index, item, editable }: ItemCardProps) {
 
 	const navigate = useNavigate();
 
-	const [dialogImage, setDialogImage] = React.useState<string | null>(null);
-	const [dialogPrevImage, setDialogPrevImage] = React.useState<string | null>(null);
+	// Only images whose signed URL resolved - an unresolved/ghost one shouldn't hide the thumbnail or inflate the count.
+	const images = (item.images ?? []).filter((img) => img.url);
+	const [galleryOpen, setGalleryOpen] = React.useState(false);
+	const [galleryIndex, setGalleryIndex] = React.useState(0);
 
 	const [itemEdit, setItemEdit] = React.useState<ItemType | null>(null);
 
@@ -92,14 +94,24 @@ export default function ItemCard({ index, item, editable }: ItemCardProps) {
 						/>
 					)}
 
-					{item.image ? (
+					{images[0]?.url ? (
 						<button
 							type='button'
 							aria-label={`View image of ${item.name}`}
-							onClick={() => setDialogImage(item.image ?? null)}
+							onClick={() => {
+								setGalleryIndex(0);
+								setGalleryOpen(true);
+							}}
 							className='relative z-10 size-24 shrink-0 cursor-zoom-in self-start overflow-hidden rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring/50 sm:size-30'
 						>
-							<img alt={item.name} src={item.image} loading='lazy' decoding='async' className='size-full object-cover' />
+							<img alt={item.name} src={images[0].url} loading='lazy' decoding='async' className='size-full object-cover' />
+
+							{images.length > 1 && (
+								<span className='absolute right-1 bottom-1 flex items-center gap-0.5 rounded-full bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white'>
+									<Images className='size-3' />
+									{images.length}
+								</span>
+							)}
 						</button>
 					) : (
 						/* Keeps the left rail constant so every title starts at the same x — the strongest
@@ -175,26 +187,41 @@ export default function ItemCard({ index, item, editable }: ItemCardProps) {
 
 			{/* Image lightbox */}
 			<Dialog
-				open={dialogImage !== null}
+				open={galleryOpen}
 				onOpenChange={(open) => {
-					if (!open) {
-						setDialogPrevImage(dialogImage);
-						setDialogImage(null);
-					}
+					if (!open) setGalleryOpen(false);
 				}}
 			>
 				<DialogContent size='lg' hideCloseButton className='overflow-hidden p-0'>
-					<SimpleTooltip title='Click to hide image' side='top'>
-						<img
-							src={dialogImage ?? dialogPrevImage ?? ''}
-							alt={item.name}
-							className='w-full cursor-zoom-out'
-							onClick={() => {
-								setDialogPrevImage(dialogImage);
-								setDialogImage(null);
-							}}
-						/>
-					</SimpleTooltip>
+					<div className='relative'>
+						<SimpleTooltip title='Click to hide image' side='top'>
+							<img src={images[galleryIndex]?.url ?? ''} alt={item.name} className='w-full cursor-zoom-out' onClick={() => setGalleryOpen(false)} />
+						</SimpleTooltip>
+
+						{images.length > 1 && (
+							<>
+								<button
+									type='button'
+									aria-label='Previous image'
+									onClick={() => setGalleryIndex((i) => (i - 1 + images.length) % images.length)}
+									className='absolute top-1/2 left-2 -translate-y-1/2 cursor-pointer rounded-full bg-black/50 p-1.5 text-white transition-colors hover:bg-black/70'
+								>
+									<ChevronLeft className='size-5' />
+								</button>
+								<button
+									type='button'
+									aria-label='Next image'
+									onClick={() => setGalleryIndex((i) => (i + 1) % images.length)}
+									className='absolute top-1/2 right-2 -translate-y-1/2 cursor-pointer rounded-full bg-black/50 p-1.5 text-white transition-colors hover:bg-black/70'
+								>
+									<ChevronRight className='size-5' />
+								</button>
+								<span className='absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-2 py-0.5 text-xs text-white'>
+									{galleryIndex + 1} / {images.length}
+								</span>
+							</>
+						)}
+					</div>
 				</DialogContent>
 			</Dialog>
 

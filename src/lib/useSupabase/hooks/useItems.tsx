@@ -1,14 +1,117 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 // Google Analytics
 import ReactGA from 'react-ga4';
 
 import { useSupabase } from './useSupabase';
-import { ItemStatuses, ItemType, MemberItemType } from '../types';
+import { ItemImage, ItemImageDraft, ItemStatuses, ItemType, MemberItemType } from '../types';
 import { dataUrlToFile } from '../utils';
 import { useGetProfile } from './useProfile';
 import { CLAIMED_ITEMS_QUERY_KEY } from './useMember';
-import { getSignedUrl, getSignedUrls } from '../storageUrls';
+import { getSignedUrl, getSignedUrls, collectItemImagePaths, resolveItemImages } from '../storageUrls';
+
+const MAX_ITEM_IMAGES = 6;
+
+// Diffs the dialog's draft images[] against what's persisted (`existing`,
+// pass [] for a brand-new item) and applies storage uploads/item_images
+// inserts/deletes/position updates to bring the DB in line. Shared by
+// useCreateItem and useUpdateItems.
+async function syncItemImages(client: SupabaseClient, itemId: string, userId: string, draft: ItemImageDraft[], existing: ItemImage[]): Promise<ItemImage[]> {
+	// A draft with no id is a brand-new image, which only has bytes to upload if
+	// it's a data: URL. Anything else (e.g. a bare remote URL) would insert an
+	// item_images row with no storage object behind it, so never persist those.
+	const draftImages = draft.filter((img) => img.id || img.url?.startsWith('data:')).slice(0, MAX_ITEM_IMAGES);
+
+	// Persisted images are only deleted when the user removed them from the
+	// draft. Ones whose signed URL failed to load stay in the draft with url ''
+	// and are left untouched here (no upload, same row, position updated only).
+	const keepIds = new Set(draftImages.filter((img) => img.id).map((img) => img.id));
+	const removed = existing.filter((img) => !keepIds.has(img.id));
+	const existingPositionById = new Map(existing.map((img) => [img.id, img.position]));
+
+	const planned = draftImages.map((img, position) => ({
+		img,
+		position,
+		isNew: !img.id,
+		id: img.id ?? crypto.randomUUID(),
+		hasUpload: !!img.url?.startsWith('data:'),
+	}));
+	const newRows = planned.filter((p) => p.isNew).map((p) => ({ id: p.id, item_id: itemId, user_id: userId, position: p.position }));
+
+	// Ordered so that a failure part-way leaves the existing data intact:
+	//   1. upload files (nothing in the DB changes yet),
+	//   2. insert new rows / update positions,
+	//   3. delete removed rows LAST (this is the irreversible step - the
+	//      on_item_image_delete trigger also removes their files).
+	// If anything throws, the new images this call created are cleaned up so a
+	// retry doesn't leave orphaned files/rows behind or duplicate images.
+	const uploadedNewPaths: string[] = [];
+	let insertedNewRows = false;
+
+	try {
+		// Freshly picked, or an existing image the user re-cropped - either way
+		// (re)upload to this id's path (upsert covers the re-crop case).
+		const uploads = await Promise.allSettled(
+			planned
+				.filter((p) => p.hasUpload)
+				.map(async (p) => {
+					const path = `${itemId}/${p.id}`;
+					const { error } = await client.storage.from('items').upload(path, await dataUrlToFile(p.img.url, 'image'), {
+						cacheControl: '3600',
+						upsert: true,
+					});
+					if (error) throw error;
+					if (p.isNew) uploadedNewPaths.push(path);
+				})
+		);
+		const failedUpload = uploads.find((u): u is PromiseRejectedResult => u.status === 'rejected');
+		if (failedUpload) throw failedUpload.reason;
+
+		if (newRows.length > 0) {
+			const { error } = await client.from('item_images').insert(newRows);
+			if (error) throw error;
+			insertedNewRows = true;
+		}
+
+		const positionUpdates = await Promise.all(
+			planned
+				.filter((p) => !p.isNew && existingPositionById.get(p.id) !== p.position)
+				.map((p) => client.from('item_images').update({ position: p.position }).eq('id', p.id))
+		);
+		const positionError = positionUpdates.find((r: { error: unknown }) => r.error)?.error;
+		if (positionError) throw positionError;
+
+		if (removed.length > 0) {
+			const { error } = await client
+				.from('item_images')
+				.delete()
+				.in(
+					'id',
+					removed.map((img) => img.id)
+				);
+			if (error) throw error;
+		}
+	} catch (err) {
+		// Best-effort cleanup of what this call created; never mask the real error.
+		if (insertedNewRows) await client.from('item_images').delete().in('id', newRows.map((r) => r.id));
+		if (uploadedNewPaths.length > 0) await client.storage.from('items').remove(uploadedNewPaths);
+		throw err;
+	}
+
+	// One batched call for every freshly uploaded image's signed URL.
+	const signedUrls = await getSignedUrls(
+		client,
+		'items',
+		planned.filter((p) => p.hasUpload).map((p) => `${itemId}/${p.id}`)
+	);
+
+	return planned.map((p) => ({
+		id: p.id,
+		position: p.position,
+		url: p.hasUpload ? signedUrls[`${itemId}/${p.id}`] : p.img.url || undefined,
+	}));
+}
 
 export const ITEMS_QUERY_KEY = ['items'];
 
@@ -22,27 +125,24 @@ export const useGetItems = () => {
 				.from('items')
 				.select(
 					`*,
-					lists:items_lists( 
+					lists:items_lists(
 						list_id,
 						list:lists!inner(
 							name,
 							child_list
 						)
-					)`
+					),
+					item_images(id, position)`
 				)
 				.eq('user_id', user.id)
-				.is('shopping_item', null);
+				.is('shopping_item', null)
+				.order('position', { foreignTable: 'item_images' });
 			if (error) throw error;
 
-			const signedUrls = await getSignedUrls(
-				client,
-				'items',
-				data.filter((i: any) => i.image_token).map((i: any) => `${i.id}`)
-			);
+			const signedUrls = await getSignedUrls(client, 'items', collectItemImagePaths(data as any));
 
 			return data.map((i: any) => {
-				// @ts-ignore
-				return { ...i, image: i.image_token ? signedUrls[`${i.id}`] : undefined };
+				return { ...i, images: resolveItemImages(i, signedUrls) };
 			}) as ItemType[];
 		},
 	});
@@ -53,17 +153,7 @@ export const useCreateItem = () => {
 	const { client, user } = useSupabase();
 
 	return useMutation(
-		async (item: Omit<ItemType, 'id' | 'user_id' | 'archived' | 'deleted' | 'created_at' | 'updated_at'>): Promise<ItemType> => {
-			console.log({
-				user_id: user.id,
-				name: item.name,
-				description: item.description,
-				links: item.links,
-				custom_fields: item.custom_fields,
-				image_token: item.image ? Date.now() : null,
-				shopping_item: item.shopping_item,
-			});
-
+		async (item: Omit<ItemType, 'id' | 'user_id' | 'archived' | 'deleted' | 'created_at' | 'updated_at' | 'images'> & { images?: ItemImageDraft[] }): Promise<ItemType> => {
 			const { data, error } = await client
 				.from('items')
 				.insert({
@@ -72,7 +162,6 @@ export const useCreateItem = () => {
 					description: item.description,
 					links: item.links,
 					custom_fields: item.custom_fields,
-					image_token: item.image ? Date.now() : null,
 					shopping_item: item.shopping_item,
 				})
 				.select('*')
@@ -82,16 +171,13 @@ export const useCreateItem = () => {
 			var newItem = data as Omit<ItemType, 'created_at' | 'updated_at'>;
 			newItem.lists = [];
 
-			// upload image if exists
-			if (item.image?.startsWith('data:')) {
-				const { error: imageError } = await client.storage.from('items').upload(`${data.id}`, await dataUrlToFile(item.image, 'avatar'), {
-					cacheControl: '3600',
-					upsert: true,
-				});
-				if (imageError) throw imageError;
-
-				// @ts-ignore
-				newItem.image = await getSignedUrl(client, 'items', `${data.id}`);
+			try {
+				newItem.images = await syncItemImages(client, newItem.id, user.id, item.images ?? [], []);
+			} catch (err) {
+				// Don't leave a half-created item behind: the dialog stays open on error, so a
+				// retry would otherwise create a duplicate. (Cascades to any item_images rows.)
+				await client.from('items').delete().eq('id', newItem.id);
+				throw err;
 			}
 
 			// Add list-group relationships
@@ -156,7 +242,7 @@ export const useUpdateItems = () => {
 	const { client, user } = useSupabase();
 
 	return useMutation(
-		async (item: Omit<ItemType, 'archived' | 'deleted' | 'created_at' | 'updated_at'>): Promise<ItemType> => {
+		async (item: Omit<ItemType, 'archived' | 'deleted' | 'created_at' | 'updated_at' | 'images'> & { images?: ItemImageDraft[] }): Promise<ItemType> => {
 			const { data, error } = await client
 				.from('items')
 				.update({
@@ -165,7 +251,6 @@ export const useUpdateItems = () => {
 					description: item.description,
 					links: item.links,
 					custom_fields: item.custom_fields,
-					image_token: item.image ? Date.now() : null,
 					shopping_item: item.shopping_item,
 				})
 				.eq('id', item.id)
@@ -173,19 +258,11 @@ export const useUpdateItems = () => {
 				.single();
 			if (error) throw error;
 
-			// upload image if exists
-			if (item.image?.startsWith('data:') && data) {
-				const { error: imageError } = await client.storage.from('items').upload(`${item.id}`, await dataUrlToFile(item.image, 'avatar'), {
-					cacheControl: '3600',
-					upsert: true,
-				});
-				if (imageError) throw imageError;
+			const { data: existingImagesData, error: existingImagesError } = await client.from('item_images').select('id, position').eq('item_id', item.id);
+			if (existingImagesError) throw existingImagesError;
+			const existingImages: ItemImage[] = (existingImagesData ?? []).map((img: any) => ({ id: img.id, position: img.position }));
 
-				// @ts-ignore
-				item.image = await getSignedUrl(client, 'items', `${data.id}`);
-			} else if (data.image_token === null) {
-				item.image = undefined;
-			}
+			const images = await syncItemImages(client, item.id, item.user_id, item.images ?? [], existingImages);
 
 			// update list-group relationships
 			const { data: listsData, error: ListsError } = await client.from('items_lists').select('*').eq('item_id', item.id);
@@ -222,7 +299,7 @@ export const useUpdateItems = () => {
 			// restore domains from DB
 			item.domains = data.domains;
 
-			return item as ItemType;
+			return { ...item, images } as ItemType;
 		},
 		{
 			onSuccess: async (item_updated: ItemType) => {

@@ -1,5 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 
+import { ItemImage } from './types';
+
 // Buckets are private - RLS on storage.objects decides who can actually get a
 // signed URL for a given file (see Giftamizer-Supabase's
 // 0011-private-storage-policies.sql). A signed URL is just a normal URL for
@@ -23,4 +25,22 @@ export async function getSignedUrls(client: SupabaseClient, bucket: string, path
 		if (entry.path) map[entry.path] = entry.error ? undefined : entry.signedUrl ?? undefined;
 	});
 	return map;
+}
+
+// Items live in the 'items' bucket at "{itemId}/{itemImagesId}" - these two
+// helpers collect every such path across a batch of items (for one shared
+// getSignedUrls call) and then resolve a single item's images[] back out of
+// that map, ordered by position.
+type ItemImageRow = { id: string; position: number };
+type ItemWithImages = { id: string; item_images?: ItemImageRow[] | null };
+
+export function collectItemImagePaths(items: ItemWithImages[]): string[] {
+	return items.flatMap((item) => (item.item_images ?? []).map((img) => `${item.id}/${img.id}`));
+}
+
+export function resolveItemImages(item: ItemWithImages, signedUrls: Record<string, string | undefined>): ItemImage[] {
+	return (item.item_images ?? [])
+		.slice()
+		.sort((a, b) => a.position - b.position)
+		.map((img) => ({ id: img.id, position: img.position, url: signedUrls[`${item.id}/${img.id}`] }));
 }

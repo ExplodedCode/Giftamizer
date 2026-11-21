@@ -7,7 +7,7 @@ import { useSupabase } from './useSupabase';
 import { GROUPS_QUERY_KEY } from './useGroup';
 import { ItemStatus, ItemStatuses, MemberItemType } from '../types';
 import { FakeDelay } from '.';
-import { getSignedUrl, getSignedUrls } from '../storageUrls';
+import { getSignedUrls, collectItemImagePaths, resolveItemImages } from '../storageUrls';
 
 const MEMBER_ITEMS_QUERY_KEY = ['items'];
 export const CLAIMED_ITEMS_QUERY_KEY = ['claimed_items'];
@@ -32,7 +32,7 @@ export const useGetMemberItems = (group_id: string, user_id: string, list_id?: s
 						.from('items')
 						.select(
 							`*,
-							items_lists!inner( 
+							items_lists!inner(
 								lists!inner(
 									lists_groups!inner(
 										group_id
@@ -43,7 +43,8 @@ export const useGetMemberItems = (group_id: string, user_id: string, list_id?: s
 								item_id,
 								user_id,
 								status
-							)`
+							),
+							item_images(id, position)`
 						)
 						.eq('user_id', user_id)
 						.eq('archived', false)
@@ -51,7 +52,8 @@ export const useGetMemberItems = (group_id: string, user_id: string, list_id?: s
 						.is('shopping_item', null)
 						.eq('user_id', user_id)
 						.eq('items_lists.lists.child_list', false)
-						.eq('items_lists.lists.lists_groups.group_id', group_id);
+						.eq('items_lists.lists.lists_groups.group_id', group_id)
+						.order('position', { foreignTable: 'item_images' });
 				} else {
 					res = await client
 						.from('items')
@@ -61,28 +63,25 @@ export const useGetMemberItems = (group_id: string, user_id: string, list_id?: s
 								item_id,
 								user_id,
 								status
-							)`
+							),
+							item_images(id, position)`
 						)
 						.eq('user_id', user_id)
-						.is('shopping_item', null);
+						.is('shopping_item', null)
+						.order('position', { foreignTable: 'item_images' });
 				}
 				if (res.error) throw res.error;
 
-				const signedUrls = await getSignedUrls(
-					client,
-					'items',
-					res.data.filter((i: any) => i.image_token).map((i: any) => `${i.id}`)
-				);
+				const signedUrls = await getSignedUrls(client, 'items', collectItemImagePaths(res.data as any));
 				return res.data.map((i: any) => {
-					// @ts-ignore
-					return { ...i, image: i.image_token ? signedUrls[`${i.id}`] : undefined };
+					return { ...i, images: resolveItemImages(i, signedUrls) };
 				}) as MemberItemType[];
 			} else {
 				var res = await client
 					.from('items')
 					.select(
 						`*,
-					items_lists!inner( 
+					items_lists!inner(
 						lists!inner(
 							lists_groups!inner(
 								group_id
@@ -93,24 +92,21 @@ export const useGetMemberItems = (group_id: string, user_id: string, list_id?: s
 						item_id,
 						user_id,
 						status
-					)`
+					),
+					item_images(id, position)`
 					)
 					.eq('user_id', user_id)
 					.eq('archived', false)
 					.eq('deleted', false)
 					.is('shopping_item', null)
 					.eq('items_lists.lists.id', list_id)
-					.eq('items_lists.lists.lists_groups.group_id', group_id);
+					.eq('items_lists.lists.lists_groups.group_id', group_id)
+					.order('position', { foreignTable: 'item_images' });
 				if (res.error) throw res.error;
 
-				const signedUrls = await getSignedUrls(
-					client,
-					'items',
-					res.data.filter((i: any) => i.image_token).map((i: any) => `${i.id}`)
-				);
+				const signedUrls = await getSignedUrls(client, 'items', collectItemImagePaths(res.data as any));
 				return res.data.map((i: any) => {
-					// @ts-ignore
-					return { ...i, image: i.image_token ? signedUrls[`${i.id}`] : undefined };
+					return { ...i, images: resolveItemImages(i, signedUrls) };
 				}) as MemberItemType[];
 			}
 		},
@@ -127,7 +123,7 @@ export const useRefreshItem = (group_id: string, user_id: string, list_id?: stri
 				.from('items')
 				.select(
 					`*,
-					items_lists( 
+					items_lists(
 						lists(
 							lists_groups(
 								group_id
@@ -138,7 +134,8 @@ export const useRefreshItem = (group_id: string, user_id: string, list_id?: stri
 						item_id,
 						user_id,
 						status
-					)`
+					),
+					item_images(id, position)`
 				)
 				.eq('id', item_id)
 				.eq('archived', false)
@@ -146,10 +143,11 @@ export const useRefreshItem = (group_id: string, user_id: string, list_id?: stri
 				.is('shopping_item', null)
 				.eq('items_lists.lists.id', list_id)
 				.eq('items_lists.lists.lists_groups.group_id', group_id)
+				.order('position', { foreignTable: 'item_images' })
 				.single();
 
-			// @ts-ignore
-			return { ...data, image: data.image_token ? await getSignedUrl(client, 'items', `${data.id}`) : undefined } as MemberItemType;
+			const signedUrls = await getSignedUrls(client, 'items', collectItemImagePaths([data as any]));
+			return { ...data, images: resolveItemImages(data as any, signedUrls) } as MemberItemType;
 		},
 		{
 			onSuccess: (update: MemberItemType) => {
@@ -245,7 +243,7 @@ export const useClaimedItems = () => {
 				.from('items')
 				.select(
 					`*,
-					items_lists( 
+					items_lists(
 						lists(
 							id,
 							name,
@@ -266,12 +264,14 @@ export const useClaimedItems = () => {
 						first_name,
 						last_name,
 						avatar_token
-					)`
+					),
+					item_images(id, position)`
 				)
 				.eq('status.user_id', user.id)
 				.eq('archived', false)
 				.eq('deleted', false)
-				.is('shopping_item', null);
+				.is('shopping_item', null)
+				.order('position', { foreignTable: 'item_images' });
 			if (error) throw error;
 
 			const { data: ShoppingItemData, error: ShoppingItemError } = await client
@@ -288,18 +288,16 @@ export const useClaimedItems = () => {
 						first_name,
 						last_name,
 						avatar_token
-					)`
+					),
+					item_images(id, position)`
 				)
 				.eq('user_id', user.id)
-				.not('shopping_item', 'is', null);
+				.not('shopping_item', 'is', null)
+				.order('position', { foreignTable: 'item_images' });
 			if (ShoppingItemError) throw ShoppingItemError;
 
 			const allItems = [...data, ...ShoppingItemData];
-			const itemImageUrls = await getSignedUrls(
-				client,
-				'items',
-				allItems.filter((i) => i.image_token).map((i) => `${i.id}`)
-			);
+			const itemImageUrls = await getSignedUrls(client, 'items', collectItemImagePaths(allItems as any));
 			const avatarUrls = await getSignedUrls(
 				client,
 				'avatars',
@@ -317,8 +315,7 @@ export const useClaimedItems = () => {
 			return allItems.map((i: any) => {
 				return {
 					...i,
-					// @ts-ignore
-					image: i.image_token ? itemImageUrls[`${i.id}`] : undefined,
+					images: resolveItemImages(i, itemImageUrls),
 
 					items_lists: i.items_lists?.map((il: any) => ({
 						...il,
