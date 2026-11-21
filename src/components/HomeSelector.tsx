@@ -1,4 +1,4 @@
-import { ClipboardList, Users } from 'lucide-react';
+import { ClipboardList, Newspaper, Users } from 'lucide-react';
 
 import { useGetGroups, useGetLists, useGetProfile } from '../lib/useSupabase';
 import { GiftIcon } from './SvgIcons';
@@ -28,6 +28,11 @@ export default function HomeSelector({ value, onChange, disabled }: HomeSelector
 
 	const getOptions = () => {
 		let options: HomeOption[] = [
+			{
+				name: 'Feed',
+				path: `/feed`,
+				type: '',
+			},
 			{
 				name: 'Items',
 				path: `/`,
@@ -77,6 +82,12 @@ export default function HomeSelector({ value, onChange, disabled }: HomeSelector
 	const optionIcon = (option: HomeOption) => {
 		if (option.type === '') {
 			switch (option.name) {
+				case 'Feed':
+					return (
+						<span className='flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground'>
+							<Newspaper className='size-4' />
+						</span>
+					);
 				case 'Items':
 					return (
 						<span className='flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground'>
