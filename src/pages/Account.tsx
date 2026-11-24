@@ -56,6 +56,8 @@ export default function Account() {
 	const [bio, setBio] = React.useState('');
 	const [home, setHome] = React.useState('/');
 
+	// the Feed is on by default
+	const [enableFeed, setEnableFeed] = React.useState(true);
 	const [enableLists, setEnableLists] = React.useState(false);
 	const [enableArchive, setEnableArchive] = React.useState(false);
 	const [enableTrash, setEnableTrash] = React.useState(false);
@@ -96,7 +98,8 @@ export default function Account() {
 				setBio(profile.bio);
 				setHome(profile.home);
 
-				setEnableLists(profile.enable_lists);
+				setEnableFeed(profile.enable_feed !== false);
+					setEnableLists(profile.enable_lists);
 				setEnableArchive(profile.enable_archive);
 				setEnableTrash(profile.enable_trash);
 
@@ -135,6 +138,7 @@ export default function Account() {
 		image: image,
 		bio: bio.trim(),
 		home: home,
+		enable_feed: enableFeed,
 		enable_lists: enableLists,
 		enable_archive: enableArchive,
 		enable_trash: enableTrash,
@@ -201,7 +205,7 @@ export default function Account() {
 		}
 
 		flushSave();
-	}, [image, home, enableLists, enableArchive, enableTrash, enableSnowFall, emailPromotional, emailInvites, flushSave]);
+	}, [image, home, enableFeed, enableLists, enableArchive, enableTrash, enableSnowFall, emailPromotional, emailInvites, flushSave]);
 
 	const handleDelete = async () => {
 		const { data, error } = await client.functions.invoke('delete', {
@@ -271,6 +275,18 @@ export default function Account() {
 
 				<div className='flex flex-col gap-4'>
 					<h2 className='text-lg font-semibold'>Features</h2>
+
+					<SettingRow
+						label='Feed'
+						helper='See what other people in your groups add and change. Turn off to hide the Feed page and its menu item.'
+						checked={enableFeed}
+						onCheckedChange={(checked) => {
+							setEnableFeed(checked);
+
+							// don't leave the Feed as the start page once it's turned off
+							if (!checked && home === '/feed') setHome('/');
+						}}
+					/>
 
 					<SettingRow
 						label='Lists'

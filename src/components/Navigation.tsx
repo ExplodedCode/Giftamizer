@@ -13,6 +13,7 @@ import {
 	listTourProgress,
 	shoppingTourProgress,
 	useActiveTourLeg,
+	useFeedUnreadCount,
 	SKIP_GROUP_TOUR,
 	SKIP_LIST_TOUR,
 	SKIP_SHOPPING_TOUR,
@@ -21,7 +22,7 @@ import { GroupType, ListType, UserRoles } from '../lib/useSupabase/types';
 
 import { TransitionGroup } from 'react-transition-group';
 import Snowfall from 'react-snowfall';
-import { Archive, ChevronDown, ChevronUp, CircleHelp, ClipboardList, LogOut, Menu, Monitor, Moon, Podcast, Settings, ShoppingCart, Sun, Trash2, Users, X } from 'lucide-react';
+import { Archive, ChevronDown, ChevronUp, CircleHelp, ClipboardList, LogOut, Menu, Monitor, Moon, Newspaper, Podcast, Settings, ShoppingCart, Sun, Trash2, Users, X } from 'lucide-react';
 
 import Notifications from './Notifications';
 import { TourSkipButton } from './TourTooltip';
@@ -34,6 +35,7 @@ import { useTheme, type ThemePreference } from './theme/ThemeProvider';
 import { TourHint } from './ui/tour-hint';
 import { Collapse } from './ui/collapse';
 import { Chip } from './ui/chip';
+import { NotificationBadge } from './ui/notification-badge';
 import { UserAvatar } from './ui/avatar';
 import { Spinner } from './ui/spinner';
 import { Separator } from './ui/separator';
@@ -148,6 +150,9 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 	const { data: groups } = useGetGroups();
 	const { data: lists } = useGetLists();
 	const { data: supportConfigured } = useGetSupportConfigured();
+	// the Feed is on unless the user explicitly turned it off in Settings
+	const feedEnabled = profile?.enable_feed !== false;
+	const { data: feedUnread = 0 } = useFeedUnreadCount(feedEnabled);
 
 	//
 	// user tour
@@ -252,6 +257,7 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 	const pinnedLists = lists ? [...lists.filter((l) => l.id === DEFAULT_LIST_ID), ...lists.filter((l) => l.id !== DEFAULT_LIST_ID)].filter((l) => l.pinned === true) : [];
 	const pinnedGroups = groups?.filter((g) => g.my_membership[0].pinned === true) ?? [];
 
+	const feedSelected = location.pathname.startsWith('/feed');
 	const itemsSelected = location.pathname === '/' || location.pathname === '/items';
 	const listsSelected =
 		location.pathname.startsWith('/lists') &&
@@ -276,6 +282,8 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 				return 2;
 			case location.pathname.startsWith('/shopping'):
 				return 3;
+			case location.pathname.startsWith('/feed'):
+				return 4;
 			default:
 				return -1;
 		}
@@ -416,6 +424,15 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 				)}
 			>
 				<nav className='flex flex-col gap-0.5 px-2'>
+					{feedEnabled && (
+						<Link to='/feed' className={navRowClasses(feedSelected, drawerOpen)}>
+							<NotificationBadge count={feedUnread}>
+								<Newspaper />
+							</NotificationBadge>
+							{drawerOpen && <span className='truncate'>Feed</span>}
+						</Link>
+					)}
+
 					<Link to='/items' className={navRowClasses(itemsSelected, drawerOpen)}>
 						<GiftIcon />
 						{drawerOpen && <span className='truncate'>Items</span>}
@@ -575,6 +592,23 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 
 			{/* ---------------------------- Mobile bottom nav ---------------------------- */}
 			<nav className='fixed inset-x-0 bottom-0 z-40 flex h-16 items-stretch border-t border-border bg-sidebar md:hidden'>
+				{feedEnabled && (
+					<button
+						type='button'
+						onClick={() => navigate('/feed')}
+						className={cn(
+							'flex flex-1 cursor-pointer flex-col items-center justify-center gap-0.5 text-xs font-medium transition-colors [&_svg]:size-5',
+							mobileNavValue === 4 ? 'text-primary' : 'text-muted-foreground',
+						)}
+					>
+						<span className='relative'>
+							<Newspaper />
+							{feedUnread > 0 && <span className='absolute -top-0.5 -right-1 size-2.5 rounded-full bg-destructive ring-2 ring-sidebar' aria-label='New activity' />}
+						</span>
+						Feed
+					</button>
+				)}
+
 				<button
 					type='button'
 					onClick={() => navigate('/items')}

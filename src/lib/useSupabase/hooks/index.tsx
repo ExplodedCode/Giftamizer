@@ -6,6 +6,7 @@ export * from './useLists';
 export * from './useGroup';
 export * from './useMember';
 export * from './useTour';
+export * from './useFeed';
 
 export function ExtractDomain(url: string) {
 	url = url.toLocaleLowerCase();

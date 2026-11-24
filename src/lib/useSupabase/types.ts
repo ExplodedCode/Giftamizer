@@ -53,6 +53,12 @@ export type ProfileType = {
 	avatar_token: number | null;
 	created_at?: string;
 	roles?: UserRole;
+	/** Feature switch for the Feed page and nav. On by default; only an explicit false turns it off. */
+	enable_feed?: boolean;
+	/** Feed categories (FeedCategory keys) the user has chosen to hide. */
+	feed_hidden?: string[];
+	/** When the user last opened the Feed - drives the unread badge. */
+	feed_seen_at?: string;
 };
 
 export interface UserRole {
@@ -297,3 +303,71 @@ export interface TourSteps {
 	shopping_filter?: boolean;
 	shopping_item?: boolean;
 }
+
+//#region Feed
+
+export type FeedEventType =
+	| 'item_added'
+	| 'item_updated'
+	| 'item_removed'
+	| 'member_joined'
+	| 'member_left'
+	| 'member_promoted'
+	| 'list_shared'
+	| 'secret_santa_drawn'
+	| 'group_updated'
+	| 'profile_updated';
+
+/** Categories a user can hide from their feed (profiles.feed_hidden). */
+export type FeedCategory = 'items_new' | 'items_updated' | 'items_claimed' | 'group_members' | 'group_lists' | 'secret_santa' | 'group_updated' | 'profile_updated';
+
+export const FEED_CATEGORIES: { key: FeedCategory; label: string; description: string }[] = [
+	{ key: 'items_new', label: 'New items', description: 'Someone adds an item to a list shared with you' },
+	{ key: 'items_updated', label: 'Edited items', description: 'Someone changes an item or its photos' },
+	{ key: 'items_claimed', label: 'Items you claimed', description: 'An item you claimed is edited, archived or deleted' },
+	{ key: 'group_members', label: 'Group members', description: 'People joining, leaving or becoming co-owners' },
+	{ key: 'group_lists', label: 'Separate lists', description: 'Someone adds a separate (child) list to a group' },
+	{ key: 'secret_santa', label: 'Secret Santa', description: 'Names drawn, and upcoming exchange dates' },
+	{ key: 'group_updated', label: 'Group changes', description: 'A group is renamed or gets a new photo' },
+	{ key: 'profile_updated', label: 'Profile changes', description: 'Someone updates their photo or bio' },
+];
+
+export interface FeedEvent {
+	id: string;
+	type: FeedEventType;
+	category: FeedCategory;
+	created_at: string;
+	payload: {
+		fields?: string[];
+		name?: string;
+		date?: string;
+		redraw?: boolean;
+		removed?: boolean;
+		reason?: string;
+		list_id?: string;
+		list_name?: string;
+		child_list?: boolean;
+		old_name?: string;
+		new_name?: string;
+	};
+	/** Groups where the viewer can see the item (item events only). */
+	group_ids: string[];
+	/** True only when the VIEWER claimed the item. */
+	claimed_by_me: boolean;
+	actor: { user_id: string; first_name: string; last_name: string; avatar_token: number | null; image?: string } | null;
+	group: { id: string; name: string; image_token: number | null; image?: string } | null;
+	item: { id: string; name: string; user_id: string; first_image_id: string | null; child_list_id: string | null; image?: string } | null;
+	subject: { user_id: string; first_name: string; last_name: string } | null;
+}
+
+export interface FeedCursor {
+	before: string;
+	before_id: string;
+}
+
+export interface FeedPage {
+	events: FeedEvent[];
+	nextCursor?: FeedCursor;
+}
+
+//#endregion

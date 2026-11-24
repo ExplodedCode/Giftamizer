@@ -95,11 +95,13 @@ export const useUpdateProfile = () => {
 					last_name: update.last_name,
 					bio: update.bio,
 					home: update.home,
+					enable_feed: update.enable_feed,
 					enable_lists: update.enable_lists,
 					enable_archive: update.enable_archive,
 					enable_trash: update.enable_trash,
 					enable_snowfall: update.enable_snowfall,
-					avatar_token: update.image ? Date.now() : -1,
+					// only touch the token when the photo really changes (a new upload, or removal) - it drives the Feed's "updated their photo" event
+					...(update.image?.startsWith('data:') ? { avatar_token: Date.now() } : update.image ? {} : { avatar_token: -1 }),
 				})
 				.eq('user_id', user.id)
 				.select(

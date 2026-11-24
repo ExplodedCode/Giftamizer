@@ -567,7 +567,8 @@ export const useUpdateGroup = () => {
 					name: update.group.name,
 					invite_link: update.group.invite_link,
 					secret_santa: update.group.secret_santa,
-					image_token: update.group.image ? Date.now() : null,
+					// only touch the token when the photo really changes (a new upload, or removal) - it drives the Feed's "changed the photo" event
+					...(update.group.image?.startsWith('data:') ? { image_token: Date.now() } : update.group.image ? {} : { image_token: null }),
 				})
 				.eq('id', update.group.id)
 				.select()
@@ -708,7 +709,8 @@ export const useInviteToGroup = () => {
 				.update({
 					name: update.group.name,
 					invite_link: update.group.invite_link,
-					image_token: update.group.image ? Date.now() : null,
+					// only touch the token when the photo really changes (a new upload, or removal) - it drives the Feed's "changed the photo" event
+					...(update.group.image?.startsWith('data:') ? { image_token: Date.now() } : update.group.image ? {} : { image_token: null }),
 				})
 				.eq('id', update.group.id)
 				.select()

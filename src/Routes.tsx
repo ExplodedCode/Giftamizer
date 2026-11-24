@@ -17,6 +17,7 @@ import UpdatePassword from './pages/UpdatePassword';
 import Navigation from './components/Navigation';
 
 import Items from './pages/Items';
+import Feed from './pages/Feed';
 import Lists from './pages/Lists';
 import Groups from './pages/Groups';
 import Group from './pages/Group';
@@ -98,6 +99,19 @@ export default function AppRoutes() {
 								user ? (
 									<ProtectedRoute>
 										<Items />
+									</ProtectedRoute>
+								) : (
+									<Landing />
+								)
+							}
+						/>
+
+						<Route
+							path='/feed'
+							element={
+								user ? (
+									<ProtectedRoute>
+										<Feed />
 									</ProtectedRoute>
 								) : (
 									<Landing />
