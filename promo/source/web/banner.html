@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Giftamizer channel banner</title>
+<script src="icons.js"></script>
+<style>
+@font-face { font-family: Inter; src: url(inter.woff2) format('woff2'); font-weight: 100 900; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 2560px; height: 1440px; overflow: hidden; font-family: Inter, sans-serif; -webkit-font-smoothing: antialiased; }
+body { position: relative; background: radial-gradient(1300px 1000px at 74% 50%, #10b981 0%, rgba(16, 185, 129, 0) 70%), linear-gradient(160deg, #04a777 0%, #059669 42%, #065f46 100%); }
+canvas { position: absolute; inset: 0; }
+/* Phones and phones-sized crops only ever show the middle 1546x423: everything that must be read lives in there. */
+.safe { position: absolute; left: 507px; top: 508.5px; width: 1546px; height: 423px; }
+.brand { position: absolute; left: 52px; top: 42px; display: flex; align-items: center; gap: 34px; color: #fff; font-size: 146px; font-weight: 780; letter-spacing: -.045em; line-height: 1; white-space: nowrap; }
+.brand svg { width: 146px; height: 146px; }
+.line { position: absolute; left: 58px; top: 224px; color: #fff; font-size: 56px; font-weight: 650; letter-spacing: -.025em; white-space: nowrap; }
+.line b { font-weight: 800; color: #fcd34d; }
+.url { position: absolute; left: 54px; top: 314px; background: #fff; color: #047857; border-radius: 99px; padding: 14px 34px 16px; font-size: 42px; font-weight: 780; letter-spacing: -.02em; line-height: 1; }
+.phone { position: absolute; border-radius: 78px; background: #0b0b0d; box-shadow: inset 0 0 0 3px #3a3a40, 0 70px 130px -30px rgba(0, 0, 0, .5), 0 24px 60px -18px rgba(0, 0, 0, .38); }
+.screen { position: absolute; inset: 17px; border-radius: 62px; overflow: hidden; background: #fff; }
+.screen img { position: absolute; left: 0; width: 100%; display: block; }
+.island { position: absolute; left: 50%; top: 29px; width: 134px; height: 38px; margin-left: -67px; border-radius: 99px; background: #000; }
+.ghost { position: absolute; color: #fff; opacity: .05; }
+</style>
+</head>
+<body>
+<canvas id="dots" width="2560" height="1440"></canvas>
+<div class="ghost" style="left: 830px; top: -250px; width: 640px; transform: rotate(-12deg)"></div>
+<div class="ghost" style="left: 820px; top: 1000px; width: 560px; transform: rotate(10deg)"></div>
+<div class="phone" id="p3"><div class="screen"><img alt="" /></div><div class="island"></div></div>
+<div class="phone" id="p2"><div class="screen"><img alt="" /></div><div class="island"></div></div>
+<div class="phone" id="p1"><div class="screen"><img alt="" /></div><div class="island"></div></div>
+<div class="safe">
+	<div class="brand"><span id="mark" style="display:flex"></span>Giftamizer</div>
+	<div class="line">Wish. Share. Give. <b>No duplicates.</b></div>
+	<div class="url">giftamizer.com</div>
+</div>
+<script type="module">
+const GIFT = 'M314.6,155.9l45.4,77.2h-1.7h-93.9c-28.8,0-52.2-23.3-52.2-52.2s23.3-52.2,52.2-52.2h2.9 C286.7,128.8,304.8,139.1,314.6,155.9z M149.6,180.9c0,18.8,4.6,36.5,12.5,52.2h-54.2c-23.1,0-41.7,18.6-41.7,41.7v83.5 c0,23.1,18.6,41.7,41.7,41.7h584.2c23.1,0,41.7-18.6,41.7-41.7v-83.5c0-23.1-18.6-41.7-41.7-41.7h-54.2c8-15.6,12.5-33.4,12.5-52.2 c0-63.4-51.4-114.7-114.7-114.7h-2.9c-41.6,0-80.2,22-101.3,57.9L400,177.7l-31.4-53.5c-21.1-36-59.7-58-101.3-58h-2.9 C201,66.2,149.6,117.6,149.6,180.9z M587.8,180.9c0,28.8-23.3,52.2-52.2,52.2h-93.9H440l45.4-77.2c9.9-16.8,27.9-27.1,47.3-27.1h2.9 C564.4,128.8,587.8,152.1,587.8,180.9z M107.9,441.7v229.5c0,34.6,28,62.6,62.6,62.6h187.8V441.7H107.9z M441.7,733.8h187.8 c34.6,0,62.6-28,62.6-62.6V441.7H441.7V733.8z';
+const svg = `<svg viewBox="0 0 800 800" fill="currentColor"><path d="${GIFT}"/></svg>`;
+document.getElementById('mark').innerHTML = svg;
+for (const g of document.querySelectorAll('.ghost')) g.innerHTML = svg;
+
+// screens chosen because they show people and lists, not branded products or a date
+const place = async (id, clip, frame, x, y, w, rot) => {
+	const c = await (await fetch(`/clips/${clip}/clip.json`)).json();
+	const p = document.getElementById(id);
+	Object.assign(p.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: w * (844 / 390) + 8 + 'px', transform: `rotate(${rot}deg)` });
+	const img = p.querySelector('img');
+	img.style.top = ((w - 34) / 390) * 44 + 'px';
+	img.src = `/clips/${clip}/${String(c.map[frame]).padStart(5, '0')}.jpg`;
+	await img.decode();
+};
+await document.fonts.load('780 40px Inter');
+await document.fonts.load('650 40px Inter');
+await place('p1', 'lists', 30, 1588, 318, 452, -5);
+await place('p2', 'groups', 20, 2030, 402, 420, 9);
+await place('p3', 'groups', 166, 36, 372, 420, -9);
+
+const rnd = (s) => {
+	const x = Math.sin(s * 127.1 + 311.7) * 43758.5453;
+	return x - Math.floor(x);
+};
+const g = document.getElementById('dots').getContext('2d');
+for (let i = 0; i < 70; i++) {
+	g.globalAlpha = 0.07 + 0.2 * rnd(i + 5);
+	g.fillStyle = '#fff';
+	g.beginPath();
+	g.arc(rnd(i + 1) * 2560, rnd(i + 2.2) * 1440, 3 + rnd(i + 3) * 9, 0, 7);
+	g.fill();
+}
+// confetti by the phones, kept off the words
+const col = ['#fbbf24', '#fb7185', '#ffffff', '#34d399', '#7dd3fc', '#f59e0b'];
+for (let i = 0; i < 90; i++) {
+	const x = rnd(i + 0.4) * 2560;
+	const y = rnd(i + 0.9) * 1440;
+	if (x > 490 && x < 1560 && y > 470 && y < 970) continue;
+	g.save();
+	g.globalAlpha = 0.9;
+	g.translate(x, y);
+	g.rotate(i * 1.3);
+	g.fillStyle = col[i % col.length];
+	const k = 13 + rnd(i + 0.2) * 15;
+	if (i % 3) g.fillRect(-k / 2, -k * 0.3, k, k * 0.6);
+	else {
+		g.beginPath();
+		g.arc(0, 0, k * 0.42, 0, 7);
+		g.fill();
+	}
+	g.restore();
+}
+window.READY = true;
+</script>
+</body>
+</html>
