@@ -87,7 +87,8 @@ function describe(event: FeedEvent, viewerId: string | undefined): { text: React
 
 		case 'list_shared':
 			return {
-				text: <>{actor} {event.payload.child_list ? 'added' : 'shared the list'} <Strong>{event.payload.list_name ?? 'a list'}</Strong> {event.payload.child_list ? 'to' : 'with'} {group}</>,
+				// only separate (child) lists are logged - they show up as their own person in the group
+				text: <>{actor} added <Strong>{event.payload.list_name ?? 'a list'}</Strong> to {group}</>,
 			};
 
 		case 'secret_santa_drawn':

@@ -324,7 +324,7 @@ export const FEED_CATEGORIES: { key: FeedCategory; label: string; description: s
 	{ key: 'items_updated', label: 'Edited items', description: 'Someone changes an item or its photos' },
 	{ key: 'items_claimed', label: 'Items you claimed', description: 'An item you claimed is edited, archived or deleted' },
 	{ key: 'group_members', label: 'Group members', description: 'People joining, leaving or becoming co-owners' },
-	{ key: 'group_lists', label: 'Shared lists', description: 'Someone shares a list with a group' },
+	{ key: 'group_lists', label: 'Separate lists', description: 'Someone adds a separate (child) list to a group' },
 	{ key: 'secret_santa', label: 'Secret Santa', description: 'Names drawn, and upcoming exchange dates' },
 	{ key: 'group_updated', label: 'Group changes', description: 'A group is renamed or gets a new photo' },
 	{ key: 'profile_updated', label: 'Profile changes', description: 'Someone updates their photo or bio' },
