@@ -53,6 +53,8 @@ export type ProfileType = {
 	avatar_token: number | null;
 	created_at?: string;
 	roles?: UserRole;
+	/** Feature switch for the Feed page and nav. On by default; only an explicit false turns it off. */
+	enable_feed?: boolean;
 	/** Feed categories (FeedCategory keys) the user has chosen to hide. */
 	feed_hidden?: string[];
 	/** When the user last opened the Feed - drives the unread badge. */

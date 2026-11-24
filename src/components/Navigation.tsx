@@ -150,7 +150,9 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 	const { data: groups } = useGetGroups();
 	const { data: lists } = useGetLists();
 	const { data: supportConfigured } = useGetSupportConfigured();
-	const { data: feedUnread = 0 } = useFeedUnreadCount();
+	// the Feed is on unless the user explicitly turned it off in Settings
+	const feedEnabled = profile?.enable_feed !== false;
+	const { data: feedUnread = 0 } = useFeedUnreadCount(feedEnabled);
 
 	//
 	// user tour
@@ -422,12 +424,14 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 				)}
 			>
 				<nav className='flex flex-col gap-0.5 px-2'>
-					<Link to='/feed' className={navRowClasses(feedSelected, drawerOpen)}>
-						<NotificationBadge count={feedUnread}>
-							<Newspaper />
-						</NotificationBadge>
-						{drawerOpen && <span className='truncate'>Feed</span>}
-					</Link>
+					{feedEnabled && (
+						<Link to='/feed' className={navRowClasses(feedSelected, drawerOpen)}>
+							<NotificationBadge count={feedUnread}>
+								<Newspaper />
+							</NotificationBadge>
+							{drawerOpen && <span className='truncate'>Feed</span>}
+						</Link>
+					)}
 
 					<Link to='/items' className={navRowClasses(itemsSelected, drawerOpen)}>
 						<GiftIcon />
@@ -588,20 +592,22 @@ const Navigation: React.FC<{ children: React.JSX.Element }> = ({ children }) => 
 
 			{/* ---------------------------- Mobile bottom nav ---------------------------- */}
 			<nav className='fixed inset-x-0 bottom-0 z-40 flex h-16 items-stretch border-t border-border bg-sidebar md:hidden'>
-				<button
-					type='button'
-					onClick={() => navigate('/feed')}
-					className={cn(
-						'flex flex-1 cursor-pointer flex-col items-center justify-center gap-0.5 text-xs font-medium transition-colors [&_svg]:size-5',
-						mobileNavValue === 4 ? 'text-primary' : 'text-muted-foreground',
-					)}
-				>
-					<span className='relative'>
-						<Newspaper />
-						{feedUnread > 0 && <span className='absolute -top-0.5 -right-1 size-2.5 rounded-full bg-destructive ring-2 ring-sidebar' aria-label='New activity' />}
-					</span>
-					Feed
-				</button>
+				{feedEnabled && (
+					<button
+						type='button'
+						onClick={() => navigate('/feed')}
+						className={cn(
+							'flex flex-1 cursor-pointer flex-col items-center justify-center gap-0.5 text-xs font-medium transition-colors [&_svg]:size-5',
+							mobileNavValue === 4 ? 'text-primary' : 'text-muted-foreground',
+						)}
+					>
+						<span className='relative'>
+							<Newspaper />
+							{feedUnread > 0 && <span className='absolute -top-0.5 -right-1 size-2.5 rounded-full bg-destructive ring-2 ring-sidebar' aria-label='New activity' />}
+						</span>
+						Feed
+					</button>
+				)}
 
 				<button
 					type='button'

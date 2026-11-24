@@ -39,6 +39,9 @@ export default function HomeSelector({ value, onChange, disabled }: HomeSelector
 				type: '',
 			},
 		];
+		// no Feed start page once the Feed is turned off
+		if (profile?.enable_feed === false) options = options.filter((o) => o.path !== '/feed');
+
 		if (profile?.enable_lists) {
 			options.push({
 				name: 'Lists',

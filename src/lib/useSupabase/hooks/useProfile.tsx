@@ -95,6 +95,7 @@ export const useUpdateProfile = () => {
 					last_name: update.last_name,
 					bio: update.bio,
 					home: update.home,
+					enable_feed: update.enable_feed,
 					enable_lists: update.enable_lists,
 					enable_archive: update.enable_archive,
 					enable_trash: update.enable_trash,

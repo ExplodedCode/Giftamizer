@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import moment from 'moment';
 import { Gift, RefreshCw } from 'lucide-react';
 
@@ -81,7 +81,18 @@ function UpcomingSecretSanta({ hidden }: { hidden: boolean }) {
 	);
 }
 
+// The route stays registered, but when the user has turned the Feed off in
+// Settings it just bounces to Items - before any feed data is fetched.
 export default function Feed() {
+	const { data: profile } = useGetProfile();
+
+	if (!profile) return null;
+	if (profile.enable_feed === false) return <Navigate to='/items' replace />;
+
+	return <FeedPage />;
+}
+
+function FeedPage() {
 	const { data: profile } = useGetProfile();
 	const feed = useGetFeed();
 	const markSeen = useMarkFeedSeen();

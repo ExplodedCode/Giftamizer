@@ -71,8 +71,11 @@ export const useGetFeed = () => {
 	});
 };
 
-/** Number of unseen feed events (capped at 99 by the database). Polled - the activity table is not on realtime. */
-export const useFeedUnreadCount = () => {
+/**
+ * Number of unseen feed events (capped at 99 by the database). Polled - the activity table is not on realtime.
+ * Pass enabled=false when the user has turned the Feed off, so nothing is fetched.
+ */
+export const useFeedUnreadCount = (enabled: boolean = true) => {
 	const { client, user } = useSupabase();
 
 	return useQuery({
@@ -82,7 +85,7 @@ export const useFeedUnreadCount = () => {
 			if (error) throw error;
 			return (data as number) ?? 0;
 		},
-		enabled: !!user,
+		enabled: !!user && enabled,
 		refetchInterval: 120_000,
 		refetchOnWindowFocus: true,
 		refetchOnMount: 'always',
