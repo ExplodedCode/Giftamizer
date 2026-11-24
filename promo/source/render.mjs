@@ -1,10 +1,12 @@
+// node render.mjs h|v thumb                   -> promo/youtube-thumbnail.jpg (1920x1080) | youtube-short-cover.jpg (1080x1920)
+// node render.mjs h banner | watermark | icon -> promo/youtube-banner.jpg (2560x1440) | youtube-watermark.png (600x600, transparent) | youtube-icon.png (800x800)
 // node render.mjs v cues                      -> WORK/cues.json (every tap and cut, for the soundtrack)
 // node render.mjs v|h still 0.5 1 2 ...      -> WORK/stills
 // node render.mjs v|h video out.mp4 [fps]     -> silent video
 import http from 'node:http';
 import { spawn } from 'node:child_process';
 import { launch, newPage, fs, path, sleep } from './cdp.mjs';
-import { APP, FFMPEG, SRC, SUPA, WORK } from './config.mjs';
+import { APP, FFMPEG, OUT, SRC, SUPA, WORK } from './config.mjs';
 
 // the app's own icons (lucide) as inline SVG
 function icons() {
@@ -20,8 +22,7 @@ function icons() {
 }
 const ICONS = icons();
 const [layout, mode, ...rest] = process.argv.slice(2);
-const W = layout === 'v' ? 1080 : 1920;
-const H = layout === 'v' ? 1920 : 1080;
+const [W, H] = mode === 'banner' ? [2560, 1440] : mode === 'watermark' ? [600, 600] : mode === 'icon' ? [800, 800] : layout === 'v' ? [1080, 1920] : [1920, 1080];
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json', '.jpg': 'image/jpeg', '.woff2': 'font/woff2', '.png': 'image/png' };
 const srv = http
 	.createServer((q, r) => {
@@ -49,9 +50,9 @@ const srv = http
 	.listen(0);
 const port = srv.address().port;
 const B = await launch({ dir: path.join(WORK, '.edge-render-' + layout), port: layout === 'v' ? 9401 : 9402 });
-const mk = async () => {
+const mk = async (page = '') => {
 	const p = await newPage(B.conn, { width: W, height: H, dsf: 1 });
-	await p.goto(`http://localhost:${port}/`);
+	await p.goto(`http://localhost:${port}/${page}`);
 	for (let i = 0; i < 200; i++) {
 		if (await p.eval('!!window.READY')) break;
 		await sleep(100);
@@ -63,7 +64,28 @@ const mk = async () => {
 	return p;
 };
 
-if (mode === 'cues') {
+if (mode === 'thumb') {
+	const p = await mk('thumb.html');
+	const out = path.join(OUT, layout === 'v' ? 'youtube-short-cover.jpg' : 'youtube-thumbnail.jpg');
+	fs.writeFileSync(out, await p.shot({ quality: 92 }));
+	console.log(out, (fs.statSync(out).size / 1e6).toFixed(2) + ' MB', p.logs);
+} else if (mode === 'banner') {
+	const p = await mk('banner.html');
+	const out = path.join(OUT, 'youtube-banner.jpg');
+	fs.writeFileSync(out, await p.shot({ quality: 92 }));
+	console.log(out, (fs.statSync(out).size / 1e6).toFixed(2) + ' MB', p.logs);
+} else if (mode === 'watermark') {
+	const p = await mk('watermark.html');
+	await p.s('Emulation.setDefaultBackgroundColorOverride', { color: { r: 0, g: 0, b: 0, a: 0 } });
+	const out = path.join(OUT, 'youtube-watermark.png');
+	fs.writeFileSync(out, await p.shot({ format: 'png', quality: undefined, optimizeForSpeed: false }));
+	console.log(out, (fs.statSync(out).size / 1e3).toFixed(0) + ' KB', p.logs);
+} else if (mode === 'icon') {
+	const p = await mk('icon.html');
+	const out = path.join(OUT, 'youtube-icon.png');
+	fs.writeFileSync(out, await p.shot({ format: 'png', quality: undefined, optimizeForSpeed: false }));
+	console.log(out, (fs.statSync(out).size / 1e3).toFixed(0) + ' KB', p.logs);
+} else if (mode === 'cues') {
 	const p = await mk();
 	fs.writeFileSync(path.join(WORK, 'cues.json'), JSON.stringify(await p.eval('cues()'), null, 1));
 } else if (mode === 'still') {

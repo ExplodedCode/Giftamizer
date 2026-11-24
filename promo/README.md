@@ -6,6 +6,10 @@ Written for an AI agent. Read all of it before starting.
 | --- | --- |
 | `giftamizer-promo-vertical-9x16.mp4` | 1080x1920, 60 fps, 56 s. The main cut: the phone UI is largest here |
 | `giftamizer-promo-landscape-16x9.mp4` | 1920x1080, same timing and sound |
+| `youtube-thumbnail.jpg`, `youtube-short-cover.jpg` | Thumbnail for the landscape video, cover for the Short. Remake with `node render.mjs h thumb` and `node render.mjs v thumb` |
+| `youtube-banner.jpg`, `youtube-watermark.png` | Channel banner and video watermark. Remake with `node render.mjs h banner` and `node render.mjs h watermark`. Keep all banner text inside the middle 1546x423 |
+| `youtube-icon.png` | Channel icon (800x800, cropped to a circle by YouTube). Remake with `node render.mjs h icon` |
+| `youtube.md` | Titles and descriptions for both uploads. The landscape cut is the main video and the vertical cut is a Short |
 | `source/` | Everything needed to record, score and render both again |
 
 The job is nearly always: **record the app again, keep everything else.** The owner approved the script, the tempo and the sounds. Don't rewrite captions, retime scenes or change the music to make it "better". Change them only where the app has changed or the owner asks.
