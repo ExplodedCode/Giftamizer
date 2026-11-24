@@ -99,7 +99,7 @@ export default function Account() {
 				setHome(profile.home);
 
 				setEnableFeed(profile.enable_feed !== false);
-					setEnableLists(profile.enable_lists);
+				setEnableLists(profile.enable_lists);
 				setEnableArchive(profile.enable_archive);
 				setEnableTrash(profile.enable_trash);
 
@@ -292,7 +292,7 @@ export default function Account() {
 						label='Lists'
 						helper={
 							<>
-								Allows you to create item lists and assign them to groups. <i>Even create seperate managed lists for your kids or pets</i>
+								Allows you to create item lists and assign them to groups. <i>Even create separate managed lists for your kids or pets</i>
 							</>
 						}
 						checked={enableLists}
