@@ -16,6 +16,7 @@ import {
 	groupSettingsTourProgress,
 } from '../lib/useSupabase';
 import { GroupType, Member, Profile, SecretSanta, SecretSantaStatus } from '../lib/useSupabase/types';
+import { describeUnsentInviteEmails } from '../lib/useSupabase/inviteEmails';
 import { TransitionGroup } from 'react-transition-group';
 
 import { Baby, LogOut, Mail, Save, Send, Settings, Share2, Trash2 } from 'lucide-react';
@@ -144,8 +145,9 @@ export default function GroupSettingsDialog({ group, owner }: GroupSettingsDialo
 				invites: selectedInviteUsers,
 				inviteUsersOwner: inviteUsersOwner,
 			})
-			.then(() => {
+			.then(({ unsentEmails }) => {
 				handleClose();
+				describeUnsentInviteEmails(unsentEmails).forEach((message) => enqueueSnackbar(`Invited! ${message}`, { variant: 'warning', autoHideDuration: 10000 }));
 			})
 			.catch((err) => {
 				enqueueSnackbar(`Unable to invite to group! ${err.message}`, { variant: 'error' });

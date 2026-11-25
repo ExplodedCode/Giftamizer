@@ -10,6 +10,7 @@ import { dataUrlToFile } from '../utils';
 import { LISTS_QUERY_KEY } from './useLists';
 import { FakeDelay, useGetProfile } from '.';
 import { getSignedUrl, getSignedUrls } from '../storageUrls';
+import { getUnsentInviteEmail, UnsentInviteEmail } from '../inviteEmails';
 
 export const GROUPS_QUERY_KEY = ['groups'];
 
@@ -702,8 +703,12 @@ export const useInviteToGroup = () => {
 		inviteUsersOwner: boolean;
 	}
 
+	interface GroupInviteResult extends GroupInvite {
+		unsentEmails: UnsentInviteEmail[];
+	}
+
 	return useMutation(
-		async (update: GroupInvite): Promise<GroupInvite> => {
+		async (update: GroupInvite): Promise<GroupInviteResult> => {
 			const { data, error: groupError } = await client
 				.from('groups')
 				.update({
@@ -731,6 +736,7 @@ export const useInviteToGroup = () => {
 				update.group.image = undefined;
 			}
 
+			const unsentEmails: UnsentInviteEmail[] = [];
 			for (const inviteUser of update.invites) {
 				if (inviteUser.user_id) {
 					const { error } = await client.from('group_members').insert({ group_id: update.group.id, user_id: inviteUser.user_id, owner: update.inviteUsersOwner });
@@ -747,7 +753,11 @@ export const useInviteToGroup = () => {
 								invited_by: `${profile?.first_name} ${profile?.last_name} `,
 							},
 						});
-						if (error) console.error(error);
+						if (error) {
+							console.error(error);
+							const unsent = await getUnsentInviteEmail(error, `${inviteUser.first_name ?? ''} ${inviteUser.last_name ?? ''}`.trim() || inviteUser.email);
+							if (unsent) unsentEmails.push(unsent);
+						}
 					}
 				} else {
 					const { error: inviteError } = await client.from('external_invites').insert({ group_id: update.group.id, email: inviteUser.email, owner: update.inviteUsersOwner });
@@ -764,15 +774,19 @@ export const useInviteToGroup = () => {
 								invited_by: `${profile?.first_name} ${profile?.last_name} `,
 							},
 						});
-						if (error) console.error(error);
+						if (error) {
+							console.error(error);
+							const unsent = await getUnsentInviteEmail(error, `${inviteUser.first_name ?? ''} ${inviteUser.last_name ?? ''}`.trim() || inviteUser.email);
+							if (unsent) unsentEmails.push(unsent);
+						}
 					}
 				}
 			}
 
-			return update;
+			return { ...update, unsentEmails };
 		},
 		{
-			onSuccess: (update: GroupInvite) => {
+			onSuccess: (update: GroupInviteResult) => {
 				// Google Analytics
 				ReactGA.event({
 					category: 'group',

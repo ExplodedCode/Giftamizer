@@ -8,6 +8,7 @@ import { Shuffle } from 'lucide-react';
 import { GroupType, Member, SecretSantaDrawings, SecretSantaStatus } from '../lib/useSupabase/types';
 import { useGetProfile, useSupabase, useUpdateGroup } from '../lib/useSupabase';
 import { getSignedUrl } from '../lib/useSupabase/storageUrls';
+import { describeUnsentInviteEmails, getUnsentInviteEmail, UnsentInviteEmail } from '../lib/useSupabase/inviteEmails';
 import SecretSantaSetup from './SecretSantaSetup';
 
 import { Button } from './ui/button';
@@ -81,24 +82,31 @@ export default function SecretSanta({ group, members }: SecretSantaProps) {
 			})
 			.then(async () => {
 				// send notifications
+				const unsentEmails: UnsentInviteEmail[] = [];
 				for (const drawing in drawings) {
 					if (!drawing.includes('_') && drawing !== user.id) {
+						const member = members.find((member) => member.user_id === drawing);
 						const { error } = await client.functions.invoke('invite/secret-santa', {
 							body: {
 								group: {
 									name: group.name,
 									id: group.id,
 								},
-								user: members.find((member) => member.user_id === drawing),
+								user: member,
 								invited_by: `${profile?.first_name} ${profile?.last_name} `,
 							},
 						});
-						if (error) console.error(error);
+						if (error) {
+							console.error(error);
+							const unsent = await getUnsentInviteEmail(error, `${member?.profile.first_name ?? ''} ${member?.profile.last_name ?? ''}`.trim() || 'a member');
+							if (unsent) unsentEmails.push(unsent);
+						}
 					}
 				}
 
 				setLoading(false);
 				handleClose();
+				describeUnsentInviteEmails(unsentEmails).forEach((message) => enqueueSnackbar(`Names drawn! ${message}`, { variant: 'warning', autoHideDuration: 10000 }));
 			})
 			.catch((err) => {
 				enqueueSnackbar(`Unable to update group! ${err.message}`, { variant: 'error' });
