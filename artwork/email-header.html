@@ -1,0 +1,151 @@
+<!-- Header image of the invite emails (600x280, rendered by render.mjs). Colors, chips and tiles follow the app's own components. -->
+<style>
+	.art { position: relative; width: 600px; height: 280px; overflow: hidden; color: #09090b; background: radial-gradient(360px 300px at 50% 64%, rgba(16, 185, 129, .95) 0%, rgba(16, 185, 129, 0) 72%), linear-gradient(155deg, #04a777 0%, #059669 42%, #065f46 100%); }
+	.art canvas { position: absolute; inset: 0; width: 600px; height: 280px; }
+	.mark { position: absolute; color: #fff; opacity: .09; }
+
+	.window { position: absolute; left: 156px; top: 34px; width: 288px; height: 300px; border-radius: 16px; overflow: hidden; background: #fafafa; box-shadow: 0 26px 50px -10px rgba(2, 44, 34, .6), 0 8px 22px -6px rgba(2, 44, 34, .45); }
+	.tabs { display: flex; align-items: center; height: 30px; padding: 0 12px; background: #e4e4e7; }
+	.tabs i { width: 8px; height: 8px; margin-right: 5px; border-radius: 50%; background: #a1a1aa; }
+	.tabs span { flex: 1; margin: 0 46px 0 12px; padding: 3px 0; border-radius: 7px; background: #fff; color: #52525b; font-size: 9.5px; font-weight: 500; text-align: center; }
+	.bar { display: flex; align-items: center; gap: 5px; height: 38px; padding: 0 26px; background: #fff; border-bottom: 1px solid #e4e4e7; font-size: 12.5px; font-weight: 600; letter-spacing: -.025em; }
+	.bar .g { width: 17px; height: 17px; color: #059669; }
+	.bar .sp { flex: 1; }
+	.bar .bell { width: 13px; height: 13px; color: #71717a; margin-right: 3px; }
+	.av { display: flex; align-items: center; justify-content: center; border-radius: 50%; color: #fff; font-weight: 600; background: #059669; flex: none; }
+	.bar .av { width: 20px; height: 20px; font-size: 9px; letter-spacing: 0; }
+	.crumb { display: flex; align-items: center; gap: 4px; padding: 10px 26px 9px; font-size: 9.5px; font-weight: 500; color: #71717a; }
+	.crumb b { color: #09090b; font-weight: 600; }
+	.grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 0 26px; }
+	.tile { border: 1px solid #e4e4e7; border-radius: 12px; background: #fff; overflow: hidden; box-shadow: 0 1px 2px rgba(0, 0, 0, .05); }
+	.tile .ph { height: 64px; display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 500; color: #fff; }
+	.tile p { padding: 7px 9px 8px; font-size: 9.5px; font-weight: 600; }
+
+	.ss { margin: 12px 26px 10px; padding: 13px 14px 14px; border-radius: 13px; color: #fff; background: linear-gradient(135deg, #059669, #047857); box-shadow: 0 1px 2px rgba(0, 0, 0, .05); }
+	.ss h3 { font-size: 13px; font-weight: 600; letter-spacing: -.02em; }
+	.ss p { margin-top: 3px; font-size: 9px; opacity: .9; }
+	.ss .pill { display: inline-flex; align-items: center; gap: 5px; margin-top: 8px; padding: 3px 9px 3px 3px; border-radius: 99px; background: #fff; color: #09090b; font-size: 9.5px; font-weight: 600; }
+	.ss .pill .av { width: 16px; height: 16px; font-size: 9px; background: #f59e0b; color: #451a03; }
+
+	.card { position: absolute; display: flex; align-items: center; gap: 11px; padding: 11px 16px 11px 11px; border-radius: 16px; background: #fff; box-shadow: 0 18px 36px -10px rgba(2, 44, 34, .55), 0 4px 12px -4px rgba(2, 44, 34, .3); white-space: nowrap; }
+	.card .ic { display: flex; align-items: center; justify-content: center; width: 46px; height: 46px; border-radius: 12px; flex: none; }
+	.card .ic > svg { width: 22px; height: 22px; }
+	.card .t { font-size: 13px; font-weight: 600; letter-spacing: -.015em; }
+	.chip { display: inline-flex; align-items: center; gap: 4px; margin-top: 5px; padding: 2px 7px 2px 6px; border: 1px solid currentColor; border-radius: 7px; font-size: 8.5px; font-weight: 600; letter-spacing: .03em; }
+	.chip svg { width: 10px; height: 10px; }
+	.sub { margin-top: 3px; font-size: 11px; color: #71717a; }
+
+	.emerald { background: #e6f5f0; color: #059669; }
+	.rose { background: #ffe9ed; color: #e11d48; }
+	.sky { background: #e7f6fd; color: #0284c7; }
+	.amber { background: #fef3e0; color: #d97706; }
+
+	[data-for] { display: none; }
+	.invite [data-for='invite'], .santa [data-for='santa'] { display: block; }
+	.invite .card[data-for='invite'], .santa .card[data-for='santa'] { display: flex; }
+</style>
+
+<div class="art {{variant}}">
+	<div class="mark" style="width: 300px; height: 300px; left: -92px; top: 26px; transform: rotate(-12deg)">{{gift}}</div>
+	<div class="mark" style="width: 240px; height: 240px; right: -70px; top: -62px; transform: rotate(14deg)">{{gift}}</div>
+	<canvas id="bits" width="1200" height="560"></canvas>
+
+	<div class="window">
+		<div class="tabs"><i></i><i></i><i></i><span>giftamizer.com</span></div>
+		<div class="bar">
+			<div class="g">{{gift}}</div>
+			Giftamizer
+			<div class="sp"></div>
+			<div class="bell">{{icon:bell}}</div>
+			<div class="av">A</div>
+		</div>
+
+		<div data-for="invite">
+			<div class="crumb">Groups <span>/</span> <b>Family</b></div>
+			<div class="grid">
+				<div class="tile"><div class="ph" style="background: #059669">M</div><p>Mom</p></div>
+				<div class="tile"><div class="ph" style="background: #0284c7">D</div><p>Dad</p></div>
+				<div class="tile"><div class="ph" style="background: #e11d48">L</div><p>Lily</p></div>
+				<div class="tile"><div class="ph" style="background: #f59e0b">J</div><p>Jack</p></div>
+				<div class="tile"><div class="ph" style="background: #0284c7">G</div><p>Grandma</p></div>
+				<div class="tile"><div class="ph" style="background: #059669">G</div><p>Grandpa</p></div>
+			</div>
+		</div>
+
+		<div data-for="santa">
+			<div class="ss">
+				<h3>Secret Santa</h3>
+				<p>You're getting a gift for:</p>
+				<span class="pill"><span class="av">?</span>Who could it be?</span>
+			</div>
+			<div class="grid">
+				<div class="tile"><div class="ph" style="background: #0284c7">B</div><p>Ben</p></div>
+				<div class="tile"><div class="ph" style="background: #e11d48">C</div><p>Carla</p></div>
+				<div class="tile"><div class="ph" style="background: #f59e0b">E</div><p>Erin</p></div>
+			</div>
+		</div>
+	</div>
+
+	<div class="card" data-for="invite" style="left: 11px; top: 84px; transform: rotate(-4deg)">
+		<div class="ic rose">{{icon:headphones}}</div>
+		<div>
+			<div class="t">Headphones</div>
+			<span class="chip" style="color: #059669">{{icon:gift}}AVAILABLE</span>
+		</div>
+	</div>
+	<div class="card" data-for="invite" style="left: 9px; top: 186px; transform: rotate(3deg)">
+		<div class="ic amber">{{icon:coffee}}</div>
+		<div>
+			<div class="t">Coffee maker</div>
+			<span class="chip" style="color: #d97706">{{icon:clock}}PLANNED</span>
+		</div>
+	</div>
+	<div class="card" data-for="invite" style="right: 10px; top: 128px; transform: rotate(4deg)">
+		<div class="ic sky">{{icon:bike}}</div>
+		<div>
+			<div class="t">Mountain bike</div>
+			<span class="chip" style="color: #dc2626">{{icon:check}}PURCHASED</span>
+		</div>
+	</div>
+
+	<div class="card" data-for="santa" style="left: 10px; top: 192px; transform: rotate(-4deg)">
+		<div class="ic rose">{{icon:shuffle}}</div>
+		<div>
+			<div class="t">Names are drawn</div>
+			<div class="sub">Who did you get?</div>
+		</div>
+	</div>
+	<div class="card" data-for="santa" style="right: 9px; top: 126px; transform: rotate(4deg)">
+		<div class="ic emerald">{{gift}}</div>
+		<div>
+			<div class="t">Their wishlist</div>
+			<div class="sub">Ready when you are</div>
+		</div>
+	</div>
+</div>
+
+<script>
+{
+	// fixed pseudo random numbers, so the picture is the same every time
+	const rnd = (s) => {
+		const x = Math.sin(s * 127.1 + 311.7) * 43758.5453;
+		return x - Math.floor(x);
+	};
+	const g = document.getElementById('bits').getContext('2d');
+	const santa = '{{variant}}' === 'santa';
+	for (let i = 0; i < (santa ? 110 : 34); i++) {
+		g.save();
+		g.globalAlpha = santa ? 0.15 + 0.5 * rnd(i + 5) : 0.85;
+		g.translate(rnd(i + 1) * 1200, rnd(i + 2.2) * 560);
+		g.rotate(i * 1.3);
+		const k = santa ? 2.5 + rnd(i + 3) * 5 : 9 + rnd(i + 3) * 7;
+		g.fillStyle = santa ? '#fff' : ['#fbbf24', '#fb7185', '#ffffff', '#6ee7b7', '#7dd3fc'][i % 5];
+		if (santa || i % 3 === 0) {
+			g.beginPath();
+			g.arc(0, 0, santa ? k : k * 0.45, 0, 7);
+			g.fill();
+		} else g.fillRect(-k / 2, -k * 0.3, k, k * 0.6);
+		g.restore();
+	}
+}
+</script>
