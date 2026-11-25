@@ -24,7 +24,7 @@ function TermsConditions() {
 			<div className='mx-auto max-w-4xl px-4 pt-8 pb-16 text-sm leading-relaxed [&_a]:text-primary [&_a]:underline-offset-4 hover:[&_a]:underline [&_li]:my-1 [&_p]:my-3 [&_strong]:font-semibold [&_strong]:text-foreground [&_ul]:my-3 [&_ul]:list-disc [&_ul]:pl-6'>
 				<h1 className='mb-4 text-2xl font-bold tracking-tight'>Terms &amp; Conditions</h1>
 				<p>
-					By downloading or using the app, these terms will automatically apply to you – you should make sure therefore that you read them carefully before using the app. You’re not allowed
+					By using the app, these terms will automatically apply to you – you should make sure therefore that you read them carefully before using the app. You’re not allowed
 					to copy, or modify the app, any part of the app, or our trademarks in any way. You’re not allowed to attempt to extract the source code of the app, and you also shouldn’t try to
 					translate the app into other languages, or make derivative versions. The app itself, and all the trade marks, copyright, database rights and other intellectual property rights
 					related to it, still belong to Evan Trowbridge.
@@ -34,17 +34,15 @@ function TermsConditions() {
 					services, at any time and for any reason. We will never charge you for the app or its services without making it very clear to you exactly what you’re paying for.
 				</p>
 				<p>
-					The Giftamizer app stores and processes personal data that you have provided to us, in order to provide my Service. It’s your responsibility to keep your phone and access to the
-					app secure. We therefore recommend that you do not jailbreak or root your phone, which is the process of removing software restrictions and limitations imposed by the official
-					operating system of your device. It could make your phone vulnerable to malware/viruses/malicious programs, compromise your phone’s security features and it could mean that the
-					Giftamizer app won’t work properly or at all.
+					The Giftamizer app stores and processes personal data that you have provided to us, in order to provide my Service. It’s your responsibility to keep your device and access to the
+					app secure.
 				</p>
 				<div>
 					<p>The app does use third party services that declare their own Terms and Conditions.</p> <p>Link to Terms and Conditions of third party service providers used by the app</p>
 					<ul>
 						<li>
 							<a href='https://policies.google.com/terms' target='_blank' rel='noopener noreferrer'>
-								Google Play Services
+								Google
 							</a>
 						</li>
 					</ul>
@@ -71,11 +69,8 @@ function TermsConditions() {
 					loss, direct or indirect, you experience as a result of relying wholly on this functionality of the app.
 				</p>
 				<p>
-					At some point, we may wish to update the app. The app is currently available on Android – the requirements for system(and for any additional systems we decide to extend the
-					availability of the app to) may change, and you’ll need to download the updates if you want to keep using the app. Evan Trowbridge does not promise that it will always update the
-					app so that it is relevant to you and/or works with the Android version that you have installed on your device. However, you promise to always accept updates to the application
-					when offered to you, We may also wish to stop providing the app, and may terminate use of it at any time without giving notice of termination to you. Unless we tell you otherwise,
-					upon any termination, (a) the rights and licenses granted to you in these terms will end; (b) you must stop using the app, and (if needed) delete it from your device.
+					At some point, we may wish to update the app. We may also wish to stop providing the app, and may terminate use of it at any time without giving notice of termination to you.
+					Unless we tell you otherwise, upon any termination, (a) the rights and licenses granted to you in these terms will end; (b) you must stop using the app.
 				</p>
 				<p>
 					<strong>Changes to This Terms and Conditions</strong>
