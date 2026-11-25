@@ -7,7 +7,7 @@ import Copyright from './Copyright';
 import { GiftIcon } from '../components/SvgIcons';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
-import { cn } from '../lib/utils';
+import { cn, useMediaQuery } from '../lib/utils';
 
 function FeatureCard({ icon, iconClass, title, description }: { icon: React.ReactNode; iconClass: string; title: string; description: string }) {
 	return (
@@ -21,7 +21,28 @@ function FeatureCard({ icon, iconClass, title, description }: { icon: React.Reac
 	);
 }
 
+function YouTubeVideo({ id, title, className }: { id: string; title: string; className?: string }) {
+	return (
+		<div className={cn('overflow-hidden rounded-xl border border-border bg-black shadow-md', className)}>
+			<iframe
+				className='block size-full'
+				src={`https://www.youtube-nocookie.com/embed/${id}?rel=0&playsinline=1`}
+				title={title}
+				loading='lazy'
+				referrerPolicy='strict-origin-when-cross-origin'
+				allow='encrypted-media; fullscreen; picture-in-picture; web-share'
+				allowFullScreen
+			/>
+		</div>
+	);
+}
+
+// Touch screens with a phone-sized short side. Checking both sides keeps the answer the same when a phone is rotated, so the video isn't swapped while it plays.
+const PHONE_QUERY = '(pointer: coarse) and (max-width: 599.95px), (pointer: coarse) and (max-height: 599.95px)';
+
 function Landing() {
+	const isPhone = useMediaQuery(PHONE_QUERY);
+
 	return (
 		<div className='min-h-dvh bg-background'>
 			{/* Top nav */}
@@ -82,6 +103,12 @@ function Landing() {
 					anything you'd like to receive - from your favourite bottle of wine or perfect pair of shoes to a new mountain bike or weekend away. Share with your friends or family and invite
 					them to share with you!
 				</p>
+				{/* The Short on phones, the landscape video everywhere else */}
+				{isPhone ? (
+					<YouTubeVideo key='short' id='8VP9u40YHXE' title='Never Get a Duplicate Gift Again' className='mx-auto mt-10 aspect-[9/16] w-full max-w-80' />
+				) : (
+					<YouTubeVideo key='video' id='1qkf98fRIek' title='Gift Giving, Sorted: Shared Wishlists & Secret Santa' className='mt-10 aspect-video w-full' />
+				)}
 			</section>
 
 			{/* Features */}
